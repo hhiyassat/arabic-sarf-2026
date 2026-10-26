@@ -13,31 +13,27 @@
 ================================================================================
 ```
 WORDS=4
-SYLLABLES=11
-CV=6
-CVV=3
-CVC=2
+SYLLABLES=8
+CV=5
+CVV=2
+CVC=1
 CVVC=0
 CVCC=0
 CVVCC=0
-SIX_TOTAL=11
+SIX_TOTAL=8
 OTHER=0
 POISON=0
 EVENTS:
   DIVINE_NAME=1
-  HAMZAT_WASL=1
-  HAMZAT_WASL_REALIZED_a=1
   HAMZA_UNIFIED=1
   INITIAL_SHADDA_IGNORED=1
-  MADD_ALIF=1
   MADD_WAW_YA=2
-  SHADDA_SPLIT=2
-  SOLAR_LAM_DELETED=1
+  SHADDA_SPLIT=1
   TANWIN=2
 ```
 
 إِنَّ            ءِنْ . نَ                                CVC CV
-اللَّهَ          ءَلْ . لَا . هَ                          CVC CVV CV
+اللَّهَ          لفظ الجلالة (لا يُعالَج)
 غَفُورٌ          غَ . فُو . رٌ                            CV CVV CV
 رَّحِيمٌ         رَ . حِي . مٌ                            CV CVV CV
 
@@ -72,32 +68,30 @@ EVENTS:
 ================================================================================
 ```
 WORDS=5
-SYLLABLES=15
-CV=7
-CVV=3
-CVC=5
+SYLLABLES=12
+CV=6
+CVV=2
+CVC=4
 CVVC=0
 CVCC=0
 CVVCC=0
-SIX_TOTAL=15
+SIX_TOTAL=12
 OTHER=0
 POISON=0
 EVENTS:
   DIVINE_NAME=1
-  HAMZAT_WASL=3
-  HAMZAT_WASL_REALIZED_a=2
+  HAMZAT_WASL=2
+  HAMZAT_WASL_REALIZED_a=1
   HAMZA_UNIFIED=1
-  MADD_ALIF=1
   MADD_WAW_YA=2
-  SHADDA_SPLIT=3
+  SHADDA_SPLIT=2
   SILENT_ALIF_FARIQA=1
-  SOLAR_LAM_DELETED=1
   WASL_INTERNAL_AFTER_PROCLITIC=1
 ```
 
 وَاعْلَمُوٓا     وَعْ . لَ . مُو                          CVC CV CVV
 أَنَّ            ءَنْ . نَ                                CVC CV
-اللَّهَ          ءَلْ . لَا . هَ                          CVC CVV CV
+اللَّهَ          لفظ الجلالة (لا يُعالَج)
 مَعَ             مَ . عَ                                  CV CV
 الْمُتَّقِينَ    ءَلْ . مُتْ . تَ . قِي . نَ              CVC CVC CV CVV CV
 
@@ -129,6 +123,7 @@ SIX_TOTAL=13
 OTHER=0
 POISON=0
 EVENTS:
+  DIVINE_NAME=0
   HAMZAT_WASL=2
   HAMZAT_WASL_REALIZED_a=2
   HAMZA_UNIFIED=1
@@ -170,6 +165,7 @@ SIX_TOTAL=10
 OTHER=0
 POISON=0
 EVENTS:
+  DIVINE_NAME=0
   HAMZAT_WASL=1
   HAMZAT_WASL_REALIZED_a=1
   HAMZA_UNIFIED=1
@@ -219,6 +215,7 @@ OTHER=0
 POISON=0
 EVENTS:
   DAGGER_ALIF=1
+  DIVINE_NAME=0
   HAMZA_UNIFIED=1
   MADD_ALIF=1
   MADD_WAW_YA=1
@@ -247,31 +244,27 @@ EVENTS:
 ================================================================================
 ```
 WORDS=4
-SYLLABLES=10
-CV=3
-CVV=2
-CVC=5
+SYLLABLES=7
+CV=2
+CVV=1
+CVC=4
 CVVC=0
 CVCC=0
 CVVCC=0
-SIX_TOTAL=10
+SIX_TOTAL=7
 OTHER=0
 POISON=0
 EVENTS:
   DIVINE_NAME=1
-  HAMZAT_WASL=1
-  HAMZAT_WASL_REALIZED_a=1
   HAMZA_UNIFIED=1
-  MADD_ALIF=1
   MADD_WAW_YA=1
-  SHADDA_SPLIT=2
-  SOLAR_LAM_DELETED=1
+  SHADDA_SPLIT=1
 ```
 
 إِنْ             ءِنْ                                     CVC
 كُنْتُمْ         كُنْ . تُمْ                              CVC CVC
 تُحِبُّونَ       تُ . حِبْ . بُو . نَ                     CV CVC CVV CV
-اللَّهَ          ءَلْ . لَا . هَ                          CVC CVV CV
+اللَّهَ          لفظ الجلالة (لا يُعالَج)
 
 ################################################################################
 
@@ -301,6 +294,7 @@ SIX_TOTAL=4
 OTHER=0
 POISON=0
 EVENTS:
+  DIVINE_NAME=0
   HAMZA_UNIFIED=1
   MADD_WAW_YA=2
   SILENT_ALIF_FARIQA=1
@@ -366,6 +360,7 @@ OTHER=0
 POISON=0
 EVENTS:
   DAGGER_ALIF=1
+  DIVINE_NAME=0
   HAMZAT_WASL=1
   HAMZAT_WASL_REALIZED_a=1
   HAMZA_UNIFIED=1

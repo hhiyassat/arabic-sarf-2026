@@ -4,7 +4,10 @@
     "original": "وَمَا كَانَ ٱللَّهُ",
     "normalized": "وَمَا كَانَ اللَّهُ",
     "script": "uthmani",
-    "ref": { "surah": 8, "ayah": 33 }
+    "ref": {
+      "surah": 8,
+      "ayah": 33
+    }
   },
   "tokens": [
     {
@@ -15,48 +18,138 @@
           "score": 0.85,
           "status": "selected",
           "segments": [
-            { "role": "proclitic", "form": "وَ", "char_span": [0, 1], "clitic_type": "conjunction",
-              "pos": "particle", "particle": { "governing": false, "effect": "none" } },
-            { "role": "stem", "form": "مَا", "char_span": [1, 3], "pos": "particle",
+            {
+              "role": "proclitic",
+              "form": "وَ",
+              "char_span": [
+                0,
+                1
+              ],
+              "clitic_type": "conjunction",
+              "pos": "particle",
               "particle": {
-                "operator_ids": ["ما_النفي_الحالي"],
+                "governing": false,
+                "effect": "none"
+              }
+            },
+            {
+              "role": "stem",
+              "form": "مَا",
+              "char_span": [
+                1,
+                3
+              ],
+              "pos": "particle",
+              "particle": {
+                "operator_ids": [
+                  "ما_النفي_الحالي"
+                ],
                 "catalog_group": "3",
                 "governing": false,
                 "effect": "none"
-              } }
+              }
+            }
           ],
           "evidence": [
-            { "source": "catalog", "id": "ما_النفي_الحالي" },
-            { "source": "rule", "note": "دخلت على فعل ماضٍ ناقص، فلا تعمل عمل ليس" }
+            {
+              "source": "catalog",
+              "id": "ما_النفي_الحالي"
+            },
+            {
+              "source": "rule",
+              "note": "دخلت على فعل ماضٍ ناقص، فلا تعمل عمل ليس"
+            }
           ]
         },
         {
           "score": 0.1,
           "status": "candidate",
           "segments": [
-            { "role": "proclitic", "form": "وَ", "char_span": [0, 1], "clitic_type": "conjunction",
-              "pos": "particle", "particle": { "governing": false, "effect": "none" } },
-            { "role": "stem", "form": "مَا", "char_span": [1, 3], "pos": "noun",
+            {
+              "role": "proclitic",
+              "form": "وَ",
+              "char_span": [
+                0,
+                1
+              ],
+              "clitic_type": "conjunction",
+              "pos": "particle",
+              "particle": {
+                "governing": false,
+                "effect": "none"
+              }
+            },
+            {
+              "role": "stem",
+              "form": "مَا",
+              "char_span": [
+                1,
+                3
+              ],
+              "pos": "noun",
               "noun": {
                 "subtype": "relative",
-                "derivation": { "class": "jamid" },
-                "definiteness": "definite", "definite_by": "relative",
-                "inflection": { "status": "mabni", "build_mark": "sukun" }
-              } }
+                "derivation": {
+                  "class": "jamid"
+                },
+                "definiteness": "definite",
+                "definite_by": "relative",
+                "inflection": {
+                  "status": "mabni",
+                  "build_mark": "sukun"
+                }
+              }
+            }
           ],
-          "evidence": [ { "source": "catalog", "id": "ما_الموصولية" } ]
+          "evidence": [
+            {
+              "source": "catalog",
+              "id": "ما_الموصولية"
+            }
+          ]
         },
         {
           "score": 0.05,
           "status": "rejected",
           "segments": [
-            { "role": "proclitic", "form": "وَ", "char_span": [0, 1], "clitic_type": "oath",
-              "pos": "particle", "particle": { "operator_ids": ["وَ_القسم"], "catalog_group": "1",
-                                               "governing": true, "effect": "jarr" } },
-            { "role": "stem", "form": "مَا", "char_span": [1, 3], "pos": "particle",
-              "particle": { "governing": false, "effect": "none" } }
+            {
+              "role": "proclitic",
+              "form": "وَ",
+              "char_span": [
+                0,
+                1
+              ],
+              "clitic_type": "oath",
+              "pos": "particle",
+              "particle": {
+                "operator_ids": [
+                  "وَ_القسم"
+                ],
+                "catalog_group": "1",
+                "governing": true,
+                "effect": "jarr"
+              }
+            },
+            {
+              "role": "stem",
+              "form": "مَا",
+              "char_span": [
+                1,
+                3
+              ],
+              "pos": "particle",
+              "particle": {
+                "governing": false,
+                "effect": "none"
+              }
+            }
           ],
-          "evidence": [ { "source": "rule", "note": "واو القسم لا تدخل على «ما»" } ]
+          "evidence": [
+            {
+              "source": "rule",
+              "note": "واو القسم لا تدخل على «ما»"
+            }
+          ]
         }
       ]
     },
@@ -68,55 +161,67 @@
           "score": 0.95,
           "status": "selected",
           "segments": [
-            { "role": "stem", "form": "كَانَ", "char_span": [0, 3], "pos": "verb",
+            {
+              "role": "stem",
+              "form": "كَانَ",
+              "char_span": [
+                0,
+                3
+              ],
+              "pos": "verb",
               "lemma": "كَانَ",
-              "root": { "radicals": ["ك", "و", "ن"], "soundness": "ajwaf", "weak_positions": ["ayn"] },
-              "pattern": { "wazn": "فَعَلَ", "augmented": false, "ilal": "قلب الواو ألفاً: كَوَنَ ← كَانَ" },
+              "root": {
+                "radicals": [
+                  "ك",
+                  "و",
+                  "ن"
+                ],
+                "soundness": "ajwaf",
+                "weak_positions": [
+                  "ayn"
+                ]
+              },
+              "pattern": {
+                "wazn": "فَعَلَ",
+                "augmented": false,
+                "ilal": "قلب الواو ألفاً: كَوَنَ ← كَانَ"
+              },
               "verb": {
-                "tense": "past", "voice": "active",
-                "subject": { "person": 3, "number": "singular", "gender": "masc", "function": "subject" },
-                "inflection": { "status": "mabni", "build_mark": "fatha" },
+                "tense": "past",
+                "voice": "active",
+                "subject": {
+                  "person": 3,
+                  "number": "singular",
+                  "gender": "masc",
+                  "function": "subject"
+                },
+                "inflection": {
+                  "status": "mabni",
+                  "build_mark": "fatha"
+                },
                 "conjugability": "mutasarrif",
                 "completeness": "naqis",
-                "form": "I", "bab": "a-u"
-              } }
+                "form": "I",
+                "bab": "a-u"
+              }
+            }
           ],
-          "evidence": [ { "source": "catalog", "id": "كان_الدلالة_على_الزمن_الماضي" } ]
+          "evidence": [
+            {
+              "source": "catalog",
+              "id": "كان_الدلالة_على_الزمن_الماضي"
+            }
+          ]
         }
       ]
     },
     {
       "index": 2,
       "surface": "ٱللَّهُ",
-      "fixed_lexeme": { "lexeme_id": "ALLAH", "kind": "divine_name" },
-      "analyses": [
-        {
-          "score": 1.0,
-          "status": "selected",
-          "segments": [
-            { "role": "stem", "form": "اللَّهُ", "char_span": [0, 4], "pos": "noun", "lemma": "اللَّه",
-              "noun": {
-                "subtype": "proper",
-                "derivation": { "class": "jamid" },
-                "agreement": { "gender": "masc", "number": "singular" },
-                "definiteness": "definite", "definite_by": "proper",
-                "inflection": { "status": "murab", "case": "nom", "marker": "damma",
-                                "marker_kind": "original", "observed_mark": "ُ" }
-              } }
-          ],
-          "evidence": [ { "source": "lexicon", "id": "divine_name" } ]
-        }
-      ]
-    }
-  ],
-  "dependencies": [
-    {
-      "governor":  { "token": 1, "analysis": 0, "segment": 0 },
-      "dependent": { "token": 2, "analysis": 0, "segment": 0 },
-      "operator_id": "كان_الدلالة_على_الزمن_الماضي",
-      "expected": { "case": "nom" },
-      "observed": { "case": "nom", "mark": "ُ" },
-      "consistent": true
+      "fixed_lexeme": {
+        "lexeme_id": "ALLAH",
+        "kind": "divine_name"
+      }
     }
   ]
 }

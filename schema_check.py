@@ -6,7 +6,7 @@ schema_check.py — مدقِّق JSON Schema مصغَّر بالمكتبة ال�
 يدعم ما تستعمله مخططات المستودع فقط:
   type، enum، const، required، properties، additionalProperties(false)، items،
   minItems/maxItems، minLength/maxLength، minimum/maximum، $ref (داخل الملف وبين الملفات)،
-  allOf، if/then، not، anyOf.
+  allOf، if/then/else، not، anyOf.
 أي كلمة مفتاحية أخرى في المخطط تُرفض صراحةً بدل تجاهلها بصمت.
 
 الاستعمال:
@@ -20,7 +20,7 @@ import json, os, sys
 SUPPORTED = {'$schema', '$id', '$defs', 'title', 'description', 'examples', '$comment',
              'type', 'enum', 'const', 'required', 'properties', 'additionalProperties', 'items',
              'minItems', 'maxItems', 'minLength', 'maxLength', 'minimum', 'maximum',
-             '$ref', 'allOf', 'if', 'then', 'not', 'anyOf'}
+             '$ref', 'allOf', 'if', 'then', 'else', 'not', 'anyOf'}
 
 TYPES = {
     'object': lambda x: isinstance(x, dict),
@@ -105,8 +105,10 @@ class Validator:
             out.append(f'{path}: لا يطابق أيّاً من بدائل anyOf')
         if 'not' in s and self._ok(x, s['not'], base):
             out.append(f'{path}: يطابق ما يمنعه «not»')
-        if 'if' in s and self._ok(x, s['if'], base) and 'then' in s:
-            self._check(x, s['then'], base, path, out)
+        if 'if' in s:
+            branch = 'then' if self._ok(x, s['if'], base) else 'else'
+            if branch in s:
+                self._check(x, s[branch], base, path, out)
 
 
 if __name__ == '__main__':

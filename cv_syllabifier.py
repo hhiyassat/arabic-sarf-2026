@@ -32,8 +32,9 @@ LEXICAL_MADD = OrderedDict([
     ('الرَّحْمَن', 'الرَّحْمَان'),
 ])
 
-# لفظ الجلالة: اسم علم جامد لا تصريف له — يُعرَف كلمةً واحدة بما يتصل به من سوابق،
-# ويُعطى صورة ثابتة واحدة (لَّاه بألف مدّ) بدل مطابقة أجزاء من الكلمة.
+# لفظ الجلالة: ليس كمثله شيء — يُعرَف كلمةً واحدة بكل صيغها وما يتصل به، ولا يُعالَج:
+# لا يُقطَّع ولا يدخل في عدّ المقاطع، ويُعرض كما هو موسوماً «لفظ الجلالة».
+# divine_name() تعيد الصيغة الثابتة (لَّاه) لمن يحتاجها، ولا يستعملها التقطيع.
 #   [ءَ][وَ|فَ][بِ|تَ|كَ] + (ال | لِ) + لَّ + ه + [حركة] + [مَّ]
 #   ٱللَّه، لِلَّه، فَلِلَّه، بِٱللَّه، تَٱللَّه، وَٱللَّه، ءَآللَّه، ٱللَّهُمَّ — ولا يطابق ٱللَّهْو
 _SHADDA_FATHA = '(?:\u0651\u064E?|\u064E\u0651|\u064E)?'   # علامات الاسم نفسه اختيارية: صورته ثابتة
@@ -77,10 +78,6 @@ def tokenize(word):
 
 # ---------- Stage 1: Normalize ----------
 def normalize(word, ev):
-    fixed = divine_name(word)
-    if fixed is not None:
-        word = fixed
-        ev['DIVINE_NAME'] += 1
     for k, v in LEXICAL_MADD.items():
         if k in word:
             word = word.replace(k, v)
@@ -339,7 +336,9 @@ def render(s):
 def run(text):
     ev = Events()
     raw_words = text.split()
-    segs = [cvmap(normalize(w, ev), ev) for w in raw_words]
+    divine = {i for i, w in enumerate(raw_words) if divine_name(w) is not None}
+    ev['DIVINE_NAME'] += len(divine)
+    segs = [[] if i in divine else cvmap(normalize(w, ev), ev) for i, w in enumerate(raw_words)]
     phon = resolve(segs, ev)
     stream = []
     for wi, ph in enumerate(phon):
@@ -357,7 +356,7 @@ def run(text):
         rows.append((render(s), pat, verdict, sorted(s['words'])))
         if verdict != 'OK':
             others.append((render(s), pat, verdict, [raw_words[w] for w in sorted(s['words'])]))
-    return dict(counts=counts, rows=rows, others=others, events=ev,
+    return dict(counts=counts, rows=rows, others=others, events=ev, divine_words=sorted(divine),
                 cv_line=cv_line, n_words=len(raw_words), n_syll=len(sylls), phon=phon, raw_words=raw_words)
 
 def word_view(res):
@@ -369,6 +368,9 @@ def word_view(res):
         key = ws[0] if ws else -1
         by_word.setdefault(key, []).append((rend, pat))
     for wi, w in enumerate(res['raw_words']):
+        if wi in res.get('divine_words', ()):
+            lines.append(f"{w:<16} لفظ الجلالة (لا يُعالَج)")
+            continue
         items = by_word.get(wi, [])
         lines.append(f"{w:<16} {' . '.join(r for r, _ in items):<40} {' '.join(p for _, p in items)}")
     return '\n'.join(lines)

@@ -41,8 +41,15 @@
     "token": {
       "type": "object",
       "description": "كلمة مكتوبة (ما بين فراغين)",
-      "required": ["index", "surface", "analyses"],
+      "required": ["index", "surface"],
       "additionalProperties": false,
+      "allOf": [
+        { "if": { "properties": { "fixed_lexeme": { "properties": { "kind": { "const": "divine_name" } } } },
+                  "required": ["fixed_lexeme"] },
+          "then": { "not": { "anyOf": [ { "required": ["analyses"] }, { "required": ["syllables"] } ] } },
+          "else": { "required": ["analyses"] },
+          "description": "لفظ الجلالة بكل صيغه لا يُعالَج: لا تحليل ولا مقاطع؛ وكل كلمة غيره لها تحليل واحد على الأقل" }
+      ],
       "properties": {
         "index":      { "type": "integer", "minimum": 0 },
         "surface":    { "type": "string", "description": "الكلمة كما وردت" },
@@ -63,7 +70,7 @@
 
     "fixed_lexeme": {
       "type": "object",
-      "description": "كلمة من قائمة مغلقة تُعرَف قبل التحليل ولا تُحلَّل صرفياً: لفظ الجلالة، الأعلام الأعجمية…",
+      "description": "كلمة من قائمة مغلقة تُعرَف قبل التحليل ولا تُحلَّل صرفياً: لفظ الجلالة، الأعلام الأعجمية… ولفظ الجلالة بكل صيغه وما يتصل به لا يُعالَج أصلاً (انظر token)",
       "required": ["lexeme_id", "kind"],
       "additionalProperties": false,
       "properties": {

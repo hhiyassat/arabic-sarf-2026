@@ -162,6 +162,10 @@ def verse_html(a, idx):
         word = words[wi] if wi < len(words) else raw_words[wi]
         sylls = by_word.get(wi, [])
         cvpat = ' '.join(s['cv'] for s in sylls)
+        if wi in a['syll'].get('divine_words', ()):
+            rows.append(f'<tr><td class="num">{wi}</td><td class="word">{esc(word)}</td>'
+                        '<td colspan="3" class="muted">لفظ الجلالة — لا يُعالَج</td></tr>')
+            continue
         rows.append(
             '<tr>'
             f'<td class="num">{wi}</td>'

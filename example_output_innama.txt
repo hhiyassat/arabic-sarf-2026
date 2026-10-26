@@ -24,6 +24,7 @@ SIX_TOTAL=11
 OTHER=0
 POISON=0
 EVENTS:
+  DIVINE_NAME=0
   HAMZAT_WASL=1
   HAMZAT_WASL_REALIZED_a=1
   HAMZA_UNIFIED=3
@@ -61,31 +62,30 @@ EVENTS:
 ================================================================================
 ```
 WORDS=6
-SYLLABLES=18
-CV=8
-CVV=5
-CVC=5
+SYLLABLES=15
+CV=7
+CVV=4
+CVC=4
 CVVC=0
 CVCC=0
 CVVCC=0
-SIX_TOTAL=18
+SIX_TOTAL=15
 OTHER=0
 POISON=0
 EVENTS:
   DAGGER_ALIF=1
   DIVINE_NAME=1
-  HAMZAT_WASL=3
-  HAMZAT_WASL_REALIZED_a=2
+  HAMZAT_WASL=2
+  HAMZAT_WASL_REALIZED_a=1
   HAMZA_UNIFIED=2
-  MADD_ALIF=4
-  SHADDA_SPLIT=2
-  SOLAR_LAM_DELETED=1
+  MADD_ALIF=3
+  SHADDA_SPLIT=1
   WASL_INTERNAL_AFTER_PROCLITIC=1
 ```
 
 إِنَّمَا         ءِنْ . نَ . مَا                          CVC CV CVV
 يَخْشَى          يَخْ . شَا                               CVC CVV
-اللَّهَ          ءَلْ . لَا . هَ                          CVC CVV CV
+اللَّهَ          لفظ الجلالة (لا يُعالَج)
 مِنْ             مِنْ                                     CVC
 عِبَادِهِ        عِ . بَا . دِ . هِ                       CV CVV CV CV
 الْعُلَمَٰٓؤُا   ءَلْ . عُ . لَ . مَا . ءُ                CVC CV CV CVV CV
@@ -134,6 +134,7 @@ POISON=0
 EVENTS:
   ALIF_MAQSURA_AS_YA=1
   DAGGER_ALIF=3
+  DIVINE_NAME=0
   HAMZA_UNIFIED=6
   INITIAL_SHADDA_IGNORED=1
   MADD_ALIF=4
@@ -190,6 +191,7 @@ OTHER=0
 POISON=0
 EVENTS:
   DAGGER_ALIF=1
+  DIVINE_NAME=0
   HAMZAT_WASL=1
   HAMZAT_WASL_REALIZED_a=1
   HAMZA_UNIFIED=1
@@ -236,6 +238,7 @@ SIX_TOTAL=13
 OTHER=0
 POISON=0
 EVENTS:
+  DIVINE_NAME=0
   HAMZAT_WASL=1
   HAMZAT_WASL_REALIZED_a=1
   HAMZA_UNIFIED=2
@@ -292,6 +295,7 @@ OTHER=0
 POISON=0
 EVENTS:
   DAGGER_ALIF=1
+  DIVINE_NAME=0
   MADD_ALIF=1
   SHADDA_SPLIT=1
 ```
@@ -315,31 +319,27 @@ EVENTS:
 ================================================================================
 ```
 WORDS=4
-SYLLABLES=11
-CV=6
-CVV=3
-CVC=2
+SYLLABLES=8
+CV=5
+CVV=2
+CVC=1
 CVVC=0
 CVCC=0
 CVVCC=0
-SIX_TOTAL=11
+SIX_TOTAL=8
 OTHER=0
 POISON=0
 EVENTS:
   DIVINE_NAME=1
-  HAMZAT_WASL=1
-  HAMZAT_WASL_REALIZED_a=1
   HAMZA_UNIFIED=1
   INITIAL_SHADDA_IGNORED=1
-  MADD_ALIF=1
   MADD_WAW_YA=2
-  SHADDA_SPLIT=2
-  SOLAR_LAM_DELETED=1
+  SHADDA_SPLIT=1
   TANWIN=2
 ```
 
 إِنَّ            ءِنْ . نَ                                CVC CV
-اللَّهَ          ءَلْ . لَا . هَ                          CVC CVV CV
+اللَّهَ          لفظ الجلالة (لا يُعالَج)
 غَفُورٌ          غَ . فُو . رٌ                            CV CVV CV
 رَّحِيمٌ         رَ . حِي . مٌ                            CV CVV CV
 
