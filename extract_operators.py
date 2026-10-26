@@ -34,31 +34,33 @@ UTHMANI_MAP = {
     'ۦ': 'ي',          # ياء الصلة الصغيرة
 }
 UTHMANI_DROP = set(chr(c) for c in range(0x06D6, 0x06EE)) - set(UTHMANI_MAP) | {'۟', 'ـ'}
+MADD_AFTER_FATHA = re.compile('(\u064E\u0651?|\u0651\u064E)\u0622')
+WAQF_ALIF = '\u06E0'   # ۠ : ألف تُنطق وقفاً لا وصلاً (أَنَا۠، ٱلظُّنُونَا۠)
 
 MADD_LETTERS = set('اويىآ')
 UTHMANI_SIGNS = {'ٱ'} | set(chr(c) for c in range(0x06D6, 0x06EE))
 
-def uthmani_normalize(text, implicit_sukun=None):
+def uthmani_normalize(text, implicit_sukun=None, keep_waqf_alif=False):
     """
     implicit_sukun: في الرسم العثماني الحرف العاري (غير المدّي) ساكن مُخفى/مدغم (تَدَايَنتُم).
     None ⇒ يُفعَّل تلقائياً إن ظهرت علامات عثمانية في النص.
     """
     text = unicodedata.normalize('NFC', text)
+    # «آ» بعد فتحة = ألف مدّ عليها علامة المدّ العثمانية لا همزة: إِنَّمَآ، جَآءَ (وتبقى همزةً بعد ساكن: ٱلْقُرْآنُ)
+    text = MADD_AFTER_FATHA.sub(r'\1ا', text)
     if implicit_sukun is None:
         implicit_sukun = any(ch in UTHMANI_SIGNS for ch in text)
     out = []
     for ch in text:
         if ch in UTHMANI_MAP:
             out.append(UTHMANI_MAP[ch])
-        elif ch in UTHMANI_DROP:
+        elif ch in UTHMANI_DROP and not (keep_waqf_alif and ch == WAQF_ALIF):
             continue
         else:
             out.append(ch)
     text = ' '.join(''.join(out).split())
     if not implicit_sukun:
         return text
-    # NFC يركّب ا + ٓ (علامة المدّ العثمانية) في «آ»؛ وسط الكلمة هي ألف مدّ لا همزة: إِنَّمَآ، جَآءَ
-    text = ' '.join(w[0] + w[1:].replace('آ', 'ا') for w in text.split())
     words = []
     for w in text.split():
         toks = letters(w)
@@ -117,12 +119,34 @@ def letters(word):
     for ch in word:
         if ch == TATWEEL:
             continue
-        if ch in MARKS:
+        if ch in MARKS or ch == WAQF_ALIF:
             if out:
                 out[-1][1].add(ch)
         else:
             out.append([ch, set()])
     return [(l, frozenset(m)) for l, m in out]
+
+def resolve_waqf_alif(text, mode):
+    """
+    ألف ۠ : تُحذف في الوصل وتبقى مدّاً في الوقف.
+    WASL_RUN: الوقف في آخر كلمة فقط؛ WAQF_RUN: كل كلمة موقوف عليها.
+    → (text, events)
+    """
+    words = text.split()
+    ev = {}
+    for i, w in enumerate(words):
+        if WAQF_ALIF not in w:
+            continue
+        waqf = mode == 'WAQF_RUN' or i == len(words) - 1
+        toks = letters(w)
+        if waqf:
+            toks = [(l, m - {WAQF_ALIF}) for l, m in toks]
+            ev['WAQF_ALIF_KEPT'] = ev.get('WAQF_ALIF_KEPT', 0) + 1
+        else:
+            toks = [(l, m) for l, m in toks if WAQF_ALIF not in m]
+            ev['WAQF_ALIF_DROPPED_WASL'] = ev.get('WAQF_ALIF_DROPPED_WASL', 0) + 1
+        words[i] = ''.join(l + ''.join(sorted(m)) for l, m in toks)
+    return ' '.join(words), ev
 
 LOOSE = str.maketrans({'أ': 'ا', 'إ': 'ا', 'آ': 'ا', 'ٱ': 'ا', 'ى': 'ي', 'ة': 'ه'})
 
@@ -318,8 +342,12 @@ def _match_word(cat, word, wi, toks):
         hit = False
         # 2. الكلمة كاملة
         for op, n, how in cat.by_plain(t, cat.single):
-            emit(op, (off, len(toks)), 'whole_word' + tag, n, conf_of(n, len(t)),
-                 note=None if how == 'strict' else 'مطابقة مرنة للهمزات')
+            if op['plain'] in ALIF_TO_YA and SHADDA in t[-1][1]:
+                emit(op, (off, len(toks) - 1), 'operator+suffix' + tag, n, conf_of(n, len(t)),
+                     host_rest='ي', note='ياء المتكلم مدغمة في ياء الحرف')
+            else:
+                emit(op, (off, len(toks)), 'whole_word' + tag, n, conf_of(n, len(t)),
+                     note=None if how == 'strict' else 'مطابقة مرنة للهمزات')
             hit = True
         if hit:
             return True
@@ -516,8 +544,10 @@ def align(found, by_word, words):
 def analyze(cat, verse, mode='WASL_RUN', idgham=True):
     text = uthmani_normalize(verse)
     words, found = extract(cat, text)
-    syll_text, jev = (assimilate_junctions(text) if idgham and mode == 'WASL_RUN' else (text, {}))
+    syll_text, wev = resolve_waqf_alif(uthmani_normalize(verse, keep_waqf_alif=True), mode)
+    syll_text, jev = (assimilate_junctions(syll_text) if idgham and mode == 'WASL_RUN' else (syll_text, {}))
     res = cv.run(syll_text, mode)
+    res['events'].update(wev)
     res['events'].update(jev)
     found = align(found, syllables_by_word(res), words)
     return dict(verse=verse, normalized=text, syllabified_text=syll_text, mode=mode,

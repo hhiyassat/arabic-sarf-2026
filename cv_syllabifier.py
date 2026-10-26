@@ -99,6 +99,13 @@ def cvmap(toks, ev):
         nxt = toks[i + 1] if i + 1 < n else None
         is_last = (i == n - 1)
 
+        # --- ى متحركة أو مشددة: ياء صامتة لا ألف مقصورة (إِلَىَّ، عَلَىَّ = إلى/على + ياء المتكلم) ---
+        if L == 'ى' and (vowel_of(mk) or SHADDA in mk):
+            L = 'ي'; ev['ALIF_MAQSURA_AS_YA'] += 1
+        # --- ى بعد كسرة: ياء مدّ في الرسم العثماني (فِى، رَبِّى، إِنِّى) ---
+        elif L == 'ى' and not mk and prev_v == 'i' and seg and seg[-1][0] == 'V':
+            seg[-1] = ('VV', 'ii'); ev['MADD_YA_AS_ALIF_MAQSURA'] += 1; i += 1; continue
+
         # --- ا / ى ---
         if L in ('ا', 'ى'):
             if L == 'ى' and i > 0 and tanwin_of(toks[i - 1][1]) == FATHATAN:

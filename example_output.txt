@@ -439,8 +439,8 @@ EVENTS:
 MODE=WASL_RUN
 WORDS=8
 SYLLABLES=20
-CV=6
-CVV=3
+CV=5
+CVV=4
 CVC=10
 CVVC=1
 CVCC=0
@@ -449,16 +449,17 @@ SIX_TOTAL=20
 OTHER=0
 POISON=0
 EVENTS:
-  HAMZAT_WASL=4
+  HAMZAT_WASL=3
   HAMZAT_WASL_ELIDED=2
   HAMZA_UNIFIED=1
   LEXICAL_MADD_INSERTION=2
   MADD_ALIF=2
   MADD_WAW_YA=2
+  MADD_YA_AS_ALIF_MAQSURA=1
   SHADDA_SPLIT=4
   SOLAR_LAM_DELETED=2
   WAQF_FINAL_VOWEL_DROPPED=1
-  WASL_INTERNAL_AFTER_PROCLITIC=2
+  WASL_INTERNAL_AFTER_PROCLITIC=1
 ```
 
 قُلْ             قُلْ                                     CVC
@@ -466,7 +467,7 @@ EVENTS:
 كُنْتُمْ         كُنْ . تُمْ                              CVC CVC
 تُحِبُّونَ       تُ . حِبْ . بُو . نَلْ                   CV CVC CVV CVC
 اللَّهَ          لَا . هَ                                 CVV CV
-فَاتَّبِعُونِى   فَتْ . تَ . بِ . عُو . نِ                CVC CV CV CVV CV
+فَاتَّبِعُونِى   فَتْ . تَ . بِ . عُو . نِي               CVC CV CV CVV CVV
 يُحْبِبْكُمُ     يُحْ . بِبْ . كُ . مُلْ                  CVC CVC CV CVC
 اللَّهُ          لَاهْ                                    CVVC
 
