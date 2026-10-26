@@ -5,7 +5,8 @@
   "D1": "مثنى أسماء الإشارة معرب ملحق بالمثنى (هَذَانِ/هَذَيْنِ، هَاتَانِ/هَاتَيْنِ، ذَانِكَ، تَانِكَ، ذَيْنِ)",
   "D2": "الكلمات المعربة في ملفات المبنيات تبقى موسومة «معرب» (غَدًا، اللَّيْلَةَ، بِضْع، أَيّ)",
   "D3": "الصيغ العامية تُحذف",
-  "D4": "حروف الجر على لغات قليلة تُحذف من الجر (كَيْ، لَعَلَّ، مَتَى، لَوْلَا)"
+  "D4": "حروف الجر على لغات قليلة تُحذف من الجر (كَيْ، لَعَلَّ، مَتَى، لَوْلَا)",
+  "D5": "الصيغ التسع غير الموثّقة تُحذف (هات، هُنَاكَة، ذَاهَ، ثَمَّكَ، هَاهُنَاكَ، أولاءهم، كأَيٍّ، أَوَى، أَفِي)"
  },
  "files": {
   "pronouns_classification": [
@@ -458,39 +459,39 @@
    },
    {
     "id": 35,
-    "hold": true,
     "reason": "«هات» غير موثّقة اسمَ إشارة",
-    "basis": "needs_attestation"
+    "basis": "decision:D5",
+    "delete": true
    },
    {
     "id": 46,
-    "hold": true,
     "reason": "«هُنَاكَة» غير موثّقة",
-    "basis": "needs_attestation"
+    "basis": "decision:D5",
+    "delete": true
    },
    {
     "id": 47,
-    "hold": true,
     "reason": "«ذَاهَ» غير موثّقة",
-    "basis": "needs_attestation"
+    "basis": "decision:D5",
+    "delete": true
    },
    {
     "id": 50,
-    "hold": true,
     "reason": "«ثَمَّكَ» غير موثّقة",
-    "basis": "needs_attestation"
+    "basis": "decision:D5",
+    "delete": true
    },
    {
     "id": 51,
-    "hold": true,
     "reason": "«هَاهُنَاكَ» غير موثّقة",
-    "basis": "needs_attestation"
+    "basis": "decision:D5",
+    "delete": true
    },
    {
     "id": 52,
-    "hold": true,
     "reason": "«أولاءهم» غير موثّقة",
-    "basis": "needs_attestation"
+    "basis": "decision:D5",
+    "delete": true
    },
    {
     "id": 32,
@@ -700,9 +701,9 @@
    },
    {
     "id": 5,
-    "hold": true,
     "reason": "«كأَيٍّ» غير موثّقة بهذا الرسم",
-    "basis": "needs_attestation"
+    "basis": "decision:D5",
+    "delete": true
    }
   ],
   "verb_name": [
@@ -1051,15 +1052,15 @@
    },
    {
     "id": 6,
-    "hold": true,
     "reason": "«أَوَى» غير موثّقة حرفَ جواب",
-    "basis": "needs_attestation"
+    "basis": "decision:D5",
+    "delete": true
    },
    {
     "id": 7,
-    "hold": true,
     "reason": "«أَفِي» غير موثّقة حرفَ جواب",
-    "basis": "needs_attestation"
+    "basis": "decision:D5",
+    "delete": true
    }
   ],
   "preposition_meanings": [

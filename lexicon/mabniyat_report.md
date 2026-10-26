@@ -40,21 +40,9 @@
 
 ## التصحيحات المطبّقة من `data_fixes/mabniyat_corrections.json`
 
-- حذف: 53، تعديل: 56، إضافة: 21
-- معلّقة حتى التوثيق: 9 (في `mabniyat_held.jsonl`)
+- حذف: 62، تعديل: 56، إضافة: 21
+- معلّقة حتى التوثيق: 0 (في `mabniyat_held.jsonl`)
 - إصلاح البنية: 5 عنوان قسم، 10 مثال أُلحق بسجله
-
-**المعلّقة:**
-
-- `demonstrative_pronouns` (35): «هات» غير موثّقة اسمَ إشارة
-- `demonstrative_pronouns` (46): «هُنَاكَة» غير موثّقة
-- `demonstrative_pronouns` (47): «ذَاهَ» غير موثّقة
-- `demonstrative_pronouns` (50): «ثَمَّكَ» غير موثّقة
-- `demonstrative_pronouns` (51): «هَاهُنَاكَ» غير موثّقة
-- `demonstrative_pronouns` (52): «أولاءهم» غير موثّقة
-- `kinaya_names` (5): «كأَيٍّ» غير موثّقة بهذا الرسم
-- `letters_answers` (6): «أَوَى» غير موثّقة حرفَ جواب
-- `letters_answers` (7): «أَفِي» غير موثّقة حرفَ جواب
 
 ## ملاحظات الملفات
 
