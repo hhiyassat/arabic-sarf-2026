@@ -630,7 +630,7 @@ class Converter:
             if e.get('noun', {}).get('inflection', {}).get('build_mark') is None:
                 e.get('noun', {}).get('inflection', {}).pop('build_mark', None)
             if e['category'] != 'attached_pronoun' and len(e['plain']) > 1:
-                rows = [x for w in e['form'].split() for x in cv.run(w, 'WAQF_RUN')['rows']]
+                rows = [x for w in e['form'].split() for x in cv.run(w)['rows']]
                 if (e.get('noun') or {}).get('inflection', {}).get('status') == 'murab' and rows:
                     rows = rows[:-1]          # المعرب يُستشهد به بلا حركة إعراب على آخره
                 bad = [(rend, pat) for rend, pat, ver, _ in rows if ver != 'OK']

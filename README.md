@@ -14,11 +14,12 @@
 
 ## التشغيل (Python 3 فقط، بلا مكتبات خارجية)
 
+النص يُعالَج كما هو: كل كلمة تُقطَّع مستقلّة بحركاتها المكتوبة، بلا وصل بين الكلمات ولا وقف في آخرها. والتنوين حركة واحدة من جنسه، وهمزة الوصل في أول الكلمة تُنطق ابتداءً.
+
 ```
 python3 extract_operators.py "إِنَّ ٱللَّهَ غَفُورٌ رَّحِيمٌ"
 python3 extract_operators.py -f verses.txt            # آية في كل سطر
 python3 extract_operators.py -f verses.txt --json     # JSON Lines
-python3 extract_operators.py -f verses.txt --mode WAQF_RUN --no-idgham
 python3 extract_operators.py --uthmani on "مِن قَبْلِ"  # عامِل النص عثمانياً (auto/on/off): يُدرج السكون الضمني
 python3 cv_syllabifier.py verse.txt                   # التقطيع وحده
 python3 syllable_report.py -f verses.txt verses_inna.txt verses_innama.txt verses_allah.txt -o reports/syllable_report.html

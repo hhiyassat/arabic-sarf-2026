@@ -5,6 +5,8 @@ cv_syllabifier.py — محوّل CV رباعي الطبقات للعربية (و
     Normalize ∘ CVmap ∘ Syllabify ∘ Classify
 لا تُطبَّق قوانين المقاطع كقيود؛ يُقطَّع بالتعريف فقط (كل نواة تأخذ الصامت الذي قبلها)
 ثم يُعَدّ ما خرج. أي نوع خارج الستة يُبلَّغ OTHER مع المقدمة المخروقة.
+النص يُعالَج كما هو: كل كلمة مستقلة، بلا وصل بين الكلمات ولا وقف في آخرها؛
+والتنوين حركة واحدة من جنسه (نواته TV وتُعدّ V).
 """
 import sys, re, json, hashlib
 from collections import Counter, OrderedDict
@@ -21,8 +23,6 @@ TANWIN = {FATHATAN: 'a', DAMMATAN: 'u', KASRATAN: 'i'}
 HAMZA_FORMS = {'أ': 'ء', 'إ': 'ء', 'ؤ': 'ء', 'ئ': 'ء', 'ء': 'ء'}
 SOLAR = set('تثدذرزسشصضطظلن')
 PROCLITIC_FATHA = set('وف')            # وَ / فَ قبل همزة الوصل
-DAMMA_BEFORE_WASL = ('كُمْ', 'هُمْ', 'تُمْ')   # قائمة مغلقة: تُحرَّك بالضم عند الوصل
-FATHA_BEFORE_WASL = ('مِنْ',)                 # قائمة مغلقة: تُحرَّك بالفتح عند الوصل
 
 # قاموس مغلق: ألف محذوفة خطاً (تُدرَج قبل المعالجة)
 LEXICAL_MADD = OrderedDict([
@@ -194,7 +194,9 @@ def cvmap(toks, ev):
             i += 1; continue
 
         # --- صامت عادي ---
-        if SHADDA in mk:
+        if SHADDA in mk and i == 0:
+            ev['INITIAL_SHADDA_IGNORED'] += 1      # شدة أول الكلمة إدغام من الكلمة السابقة: ظاهرة عابرة للحدود
+        elif SHADDA in mk:
             seg.append(('C', L)); ev['SHADDA_SPLIT'] += 1
         seg.append(('C', L))
         tw = tanwin_of(mk); v = vowel_of(mk)
@@ -215,75 +217,42 @@ def cvmap(toks, ev):
         i += 1
     return seg
 
-# ---------- Stage 3: resolve junctions (ابتداء/وصل/وقف) ----------
-def resolve(words_seg, raw_words, mode, ev):
+# ---------- Stage 3: resolve (كل كلمة كما كُتبت) ----------
+def resolve(words_seg, ev):
     """
-    mode='WASL_RUN' : النص سلسلة واحدة؛ ابتداء في أول كلمة فقط، وقف في آخرها فقط
-    mode='WAQF_RUN' : كل كلمة مفردة: ابتداء في أولها، وقف في آخرها
-    → list of per-word phoneme lists (C / V / VV), plus junction events
+    النص كما هو: كل كلمة مستقلة، بلا وصل بين الكلمات ولا وقف في آخرها.
+    - همزة الوصل في أول الكلمة تُنطق ابتداءً (ءَ مع لام التعريف والمشدّد، وءِ في غيرهما)،
+      وبعد سابقة داخل الكلمة لا تُنطق (فَٱكْتُبُوهُ)
+    - التاء المربوطة تبقى «ة» صامتاً
+    - التنوين حركة واحدة من جنسه (نواة TV)، بلا نون مضافة
+    → list of per-word phoneme lists
     """
     out = []
-    N = len(words_seg)
-    for wi, seg in enumerate(words_seg):
-        seg = list(seg)
-        initial = (mode == 'WAQF_RUN') or wi == 0
-        final = (mode == 'WAQF_RUN') or wi == N - 1
+    for seg in words_seg:
         ph = []
-        # --- بداية الكلمة ---
-        k = 0
-        while k < len(seg):
-            s = seg[k]
+        for k, s in enumerate(seg):
             if s[0] == 'HW':
-                if initial or (k > 0 and ph):          # ابتداء مطلق، أو همزة وصل بعد سابقة داخل الكلمة (فَاكْتُبُوهُ)
-                    if k > 0 and ph:
-                        ev['WASL_INTERNAL_AFTER_PROCLITIC'] += 1   # تُحذف
+                if ph:
+                    ev['WASL_INTERNAL_AFTER_PROCLITIC'] += 1          # لا تُنطق بعد سابقة
+                else:
+                    nxt = seg[k + 1] if k + 1 < len(seg) else None
+                    third_u = (k + 3 < len(seg) and seg[k + 1][0] == 'C' and seg[k + 2][0] == 'C'
+                               and seg[k + 3][0] == 'V' and seg[k + 3][1] == 'u')
+                    if (nxt and nxt[0] == 'C' and nxt[1] == 'ل') or \
+                            (nxt and nxt[0] == 'C' and k + 2 < len(seg) and seg[k + 2][0] == 'C' and seg[k + 1][1] == seg[k + 2][1]):
+                        v = 'a'                    # لام التعريف
+                    elif third_u:
+                        v = 'u'                    # الثالث مضموم: اُكْتُبْ، اُخْرُجْ
                     else:
-                        nxt = seg[k + 1] if k + 1 < len(seg) else None
-                        v = 'a' if (nxt and nxt[0] == 'C' and nxt[1] == 'ل') or \
-                                   (nxt and nxt[0] == 'C' and k + 2 < len(seg) and seg[k + 2][0] == 'C' and seg[k + 1][1] == seg[k + 2][1]) \
-                            else 'i'
-                        ph += [('C', 'ء'), ('V', v)]
-                        ev['HAMZAT_WASL_REALIZED_' + v] += 1
-                else:
-                    # وصل عبر حدّ كلمة: عالج نهاية الكلمة السابقة
-                    prev = out[-1]
-                    if prev and prev[-1][0] == 'VV':
-                        prev[-1] = ('V', prev[-1][1][0]); ev['VV_SHORTENED_BEFORE_WASL'] += 1
-                    elif prev and prev[-1][0] == 'C':
-                        rw = raw_words[wi - 1]
-                        if rw.endswith(DAMMA_BEFORE_WASL):
-                            prev.append(('V', 'u')); ev['C_PLUS_DAMMA_BEFORE_WASL'] += 1
-                        elif rw.endswith(FATHA_BEFORE_WASL):
-                            prev.append(('V', 'a')); ev['C_PLUS_FATHA_BEFORE_WASL'] += 1
-                        else:
-                            prev.append(('V', 'i')); ev['C_PLUS_KASRA_BEFORE_WASL'] += 1
-                    ev['HAMZAT_WASL_ELIDED'] += 1
-                k += 1; continue
-            if s[0] == 'TAA':
-                tail_only_vowel = all(x[0] in ('V', 'TANWIN') for x in seg[k + 1:])
-                if final and tail_only_vowel:
-                    ph.append(('C', 'h')); ev['WAQF_TAA_TO_HA'] += 1
-                else:
-                    ph.append(('C', 't'))
-                k += 1; continue
-            if s[0] == 'TANWIN':
-                if final and k == len(seg) - 1:
-                    after_taa = (k >= 1 and seg[k - 1][0] == 'TAA')
-                    if s[1] == 'a' and not after_taa:
-                        ph.append(('VV', 'aa')); ev['WAQF_TANWIN_NASB_TO_ALIF'] += 1
-                    elif after_taa:
-                        ev['WAQF_TANWIN_DROPPED_AFTER_TAA'] += 1
-                    else:
-                        ev['WAQF_TANWIN_DROPPED'] += 1
-                else:
-                    ph += [('V', s[1]), ('C', 'ن')]
-                k += 1; continue
-            if s[0] == 'POISON':
-                ph.append(s); k += 1; continue
-            ph.append(s); k += 1
-        # وقف: حذف الحركة القصيرة الأخيرة
-        if final and ph and ph[-1][0] == 'V':
-            ph.pop(); ev['WAQF_FINAL_VOWEL_DROPPED'] += 1
+                        v = 'i'
+                    ph += [('C', 'ء'), ('V', v)]
+                    ev['HAMZAT_WASL_REALIZED_' + v] += 1
+            elif s[0] == 'TAA':
+                ph.append(('C', 'ة'))
+            elif s[0] == 'TANWIN':
+                ph.append(('TV', s[1]))
+            else:
+                ph.append(s)
         out.append(ph)
     return out
 
@@ -298,6 +267,13 @@ def syllabify(stream):
     cur_word = -1
     for item in stream:
         if item[0] == '#':
+            if cur is not None and pending_C:       # لا يعبر مقطع حدّ الكلمة
+                cur['coda'] += pending_C; pending_C = []
+            elif pending_C:
+                sylls.append({'onset': [], 'nuc': None, 'coda': pending_C, 'words': set(pending_words), 'poison': None})
+                pending_C = []
+            if cur is not None:
+                sylls.append(cur); cur = None
             cur_word = item[1]; pending_words = {cur_word}; continue
         if item[0] == 'POISON':
             # يُغلق كل شيء ويُسجَّل مقطع سُمّ
@@ -342,7 +318,8 @@ def classify(s):
 # ---------- rendering ----------
 AR_V = {'a': FATHA, 'u': DAMMA, 'i': KASRA}
 AR_MADD = {'aa': 'ا', 'uu': 'و', 'ii': 'ي'}
-AR_C = {'h': 'ه', 't': 'ت'}
+AR_C = {}
+AR_TANWIN = {'a': FATHATAN, 'u': DAMMATAN, 'i': KASRATAN}
 def render(s):
     if s.get('poison') is not None:
         return '⟪' + s['poison'] + '⟫'
@@ -350,6 +327,8 @@ def render(s):
     if s['nuc'] is not None:
         if s['nuc'][0] == 'V':
             r += AR_V[s['nuc'][1]]
+        elif s['nuc'][0] == 'TV':
+            r += AR_TANWIN[s['nuc'][1]]
         else:
             r += AR_V[s['nuc'][1][0]] + AR_MADD[s['nuc'][1]]
     for c in s['coda']:
@@ -357,11 +336,11 @@ def render(s):
     return r
 
 # ---------- driver ----------
-def run(text, mode):
+def run(text):
     ev = Events()
     raw_words = text.split()
     segs = [cvmap(normalize(w, ev), ev) for w in raw_words]
-    phon = resolve(segs, raw_words, mode, ev)
+    phon = resolve(segs, ev)
     stream = []
     for wi, ph in enumerate(phon):
         stream.append(('#', wi))
@@ -378,11 +357,11 @@ def run(text, mode):
         rows.append((render(s), pat, verdict, sorted(s['words'])))
         if verdict != 'OK':
             others.append((render(s), pat, verdict, [raw_words[w] for w in sorted(s['words'])]))
-    return dict(mode=mode, counts=counts, rows=rows, others=others, events=ev,
+    return dict(counts=counts, rows=rows, others=others, events=ev,
                 cv_line=cv_line, n_words=len(raw_words), n_syll=len(sylls), phon=phon, raw_words=raw_words)
 
 def word_view(res):
-    """عرض كل كلمة بمقاطعها (في WASL_RUN قد يمتد مقطع عبر حدّ كلمتين؛ يُعرَض مع الكلمة التي تحوي نواته)"""
+    """عرض كل كلمة بمقاطعها"""
     lines = []
     # إعادة بناء بحسب الكلمات: كل مقطع يُنسب لكلمة نواته (أول كلمة في words إن تعددت)
     by_word = {}
@@ -400,7 +379,7 @@ def report(res):
     n_other = sum(v for k, v in c.items() if k not in SIX and k != 'POISON')
     n_poison = c.get('POISON', 0)
     out = []
-    out.append(f"```\nMODE={res['mode']}\nWORDS={res['n_words']}\nSYLLABLES={res['n_syll']}")
+    out.append(f"```\nWORDS={res['n_words']}\nSYLLABLES={res['n_syll']}")
     for k in SIX:
         out.append(f"{k}={c[k]}")
     out.append(f"SIX_TOTAL={n_ok}\nOTHER={n_other}\nPOISON={n_poison}")
@@ -416,9 +395,7 @@ def report(res):
 
 if __name__ == '__main__':
     text = open(sys.argv[1], encoding='utf-8').read().strip() if len(sys.argv) > 1 else sys.stdin.read().strip()
-    for mode in ('WASL_RUN', 'WAQF_RUN'):
-        res = run(text, mode)
-        print(report(res))
-        print()
-        print(word_view(res))
-        print('\n' + '=' * 80 + '\n')
+    res = run(text)
+    print(report(res))
+    print()
+    print(word_view(res))

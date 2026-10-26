@@ -11,7 +11,7 @@
 
 الاستعمال:
   python3 syllable_report.py -f verses.txt verses_inna.txt verses_innama.txt -o syllable_report.html
-  python3 syllable_report.py "نص آية" -o out.html [--mode WASL_RUN|WAQF_RUN] [--uthmani auto|on|off]
+  python3 syllable_report.py "نص آية" -o out.html [--uthmani auto|on|off]
 """
 import sys, os, html, argparse
 from collections import Counter, OrderedDict
@@ -192,7 +192,7 @@ def verse_html(a, idx):
     return '\n'.join(head) + table + summ, c
 
 
-def build_html(analyses, mode):
+def build_html(analyses):
     body = []
     grand = Counter()
     sections = []
@@ -201,9 +201,6 @@ def build_html(analyses, mode):
         grand += c
         sections.append(s)
 
-    mode_note = ('في الوصل يُنسب المقطع العابر لحدّ كلمتين إلى الكلمة التي فيها نواته.'
-                 if mode == 'WASL_RUN' else
-                 'في الوقف تُقطَّع كل كلمة مستقلّة كما يُوقَف عليها.')
 
     # مفتاح الألوان
     key = ['<div class="key">']
@@ -214,7 +211,7 @@ def build_html(analyses, mode):
 
     header = [
         '<h1>تقرير الكلمات ومقاطعها</h1>',
-        f'<div class="muted">الوضع: <b>{esc(mode)}</b> — {esc(mode_note)}</div>',
+        '<div class="muted">النص كما هو: كل كلمة تُقطَّع مستقلّة بحركاتها المكتوبة، بلا وصل ولا وقف؛ والتنوين حركة واحدة من جنسه.</div>',
         f'<div class="muted">عدد الآيات: {len(analyses)} — النطاق: أنماط CV فقط (بلا أحكام تجويد صوتية).</div>',
         '<div class="card">',
         '<div class="muted">الملخّص الإجمالي:</div>',
@@ -243,7 +240,6 @@ def main():
     ap.add_argument('verse', nargs='*', help='نص الآية (أو استعمل -f)')
     ap.add_argument('-f', '--file', nargs='+', help='ملف أو أكثر، آية في كل سطر')
     ap.add_argument('-o', '--out', default='syllable_report.html', help='ملف HTML الناتج')
-    ap.add_argument('--mode', default='WASL_RUN', choices=['WASL_RUN', 'WAQF_RUN'])
     ap.add_argument('--uthmani', default='auto', choices=['auto', 'on', 'off'],
                     help='المعاملة العثمانية: auto/on/off (كما في extract_operators.py)')
     ap.add_argument('--catalog', nargs='+',
@@ -266,8 +262,8 @@ def main():
         sys.exit('لا آيات للمعالجة.')
 
     cat = E.Catalog(args.catalog)
-    analyses = [E.analyze(cat, v, args.mode, uthmani=args.uthmani) for v in verses]
-    doc, grand = build_html(analyses, args.mode)
+    analyses = [E.analyze(cat, v, uthmani=args.uthmani) for v in verses]
+    doc, grand = build_html(analyses)
 
     with open(args.out, 'w', encoding='utf-8') as fh:
         fh.write(doc)

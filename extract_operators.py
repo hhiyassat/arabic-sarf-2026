@@ -36,12 +36,11 @@ UTHMANI_MAP = {
 }
 UTHMANI_DROP = set(chr(c) for c in range(0x06D6, 0x06EE)) - set(UTHMANI_MAP) | {'۟', 'ـ'}
 MADD_AFTER_FATHA = re.compile('(\u064E\u0651?|\u0651\u064E)\u0622')
-WAQF_ALIF = '\u06E0'   # ۠ : ألف تُنطق وقفاً لا وصلاً (أَنَا۠، ٱلظُّنُونَا۠)
 
 MADD_LETTERS = set('اويىآ')
 UTHMANI_SIGNS = {'ٱ'} | set(chr(c) for c in range(0x06D6, 0x06EE))
 
-def uthmani_normalize(text, implicit_sukun=None, keep_waqf_alif=False):
+def uthmani_normalize(text, implicit_sukun=None):
     """
     implicit_sukun: في الرسم العثماني الحرف العاري (غير المدّي) ساكن مُخفى/مدغم (تَدَايَنتُم).
     None ⇒ يُفعَّل تلقائياً إن ظهرت علامات عثمانية في النص.
@@ -55,7 +54,7 @@ def uthmani_normalize(text, implicit_sukun=None, keep_waqf_alif=False):
     for ch in text:
         if ch in UTHMANI_MAP:
             out.append(UTHMANI_MAP[ch])
-        elif ch in UTHMANI_DROP and not (keep_waqf_alif and ch == WAQF_ALIF):
+        elif ch in UTHMANI_DROP:          # ومنها ۠: تُحذف العلامة وتبقى الألف مدّاً كما رُسمت
             continue
         else:
             out.append(ch)
@@ -76,43 +75,6 @@ def uthmani_normalize(text, implicit_sukun=None, keep_waqf_alif=False):
         words.append(''.join(rebuilt))
     return ' '.join(words)
 
-# ---------- الإدغام عبر حدّ الكلمة (للتقطيع وصلاً فقط؛ لا يمسّ نص المطابقة) ----------
-TANWIN_TO_SHORT = {FATHATAN: FATHA, DAMMATAN: DAMMA, KASRATAN: KASRA}
-
-def assimilate_junctions(text):
-    """
-    الرسم العثماني يدلّ على الإدغام بشدّة على أول الكلمة التالية:
-      لَن نَّبْرَحَ   : الحرف نفسه   ⇒ تُحذف الشدة (النون المكتوبة هي النصف الأول)
-      مِن رَّبِّهِمْ  : حرفان مختلفان ⇒ يُحذف الساكن المدغَم من آخر الأولى
-      أَجَلٍ مُّسَمًّى: تنوين مدغَم   ⇒ التنوين حركة قصيرة (وتُحذف ألف/ياء التنوين بعده)
-    → (text, events)
-    """
-    words = [letters(w) for w in text.split()]
-    ev = {}
-    def bump(k):
-        ev[k] = ev.get(k, 0) + 1
-    for i in range(len(words) - 1):
-        a, b = words[i], words[i + 1]
-        if not a or not b or SHADDA not in b[0][1]:
-            continue
-        # آخر حرف حقيقي في الأولى (تجاوز ألف/ياء تنوين النصب)
-        j = len(a) - 1
-        if a[j][0] in ('ا', 'ى') and j > 0 and FATHATAN in a[j - 1][1]:
-            j -= 1
-        L, mk = a[j]
-        tw = next((m for m in mk if m in TANWIN_TO_SHORT), None)
-        if tw:
-            a[j] = (L, (mk - {tw}) | {TANWIN_TO_SHORT[tw]})
-            del a[j + 1:]
-            bump('IDGHAM_TANWIN')
-        elif not (mk - {SUKUN}) and L not in MADD_LETTERS:
-            if L == b[0][0]:
-                b[0] = (b[0][0], b[0][1] - {SHADDA}); bump('IDGHAM_MITHLAYN')
-            else:
-                del a[j]; bump('IDGHAM_MUTAQARIBAYN')
-    out = [''.join(l + ''.join(sorted(m)) for l, m in w) for w in words]
-    return ' '.join(out), ev
-
 # ---------- أدوات الحروف ----------
 def letters(word):
     """→ [(letter, frozenset(marks))] مع حذف التطويل"""
@@ -120,34 +82,12 @@ def letters(word):
     for ch in word:
         if ch == TATWEEL:
             continue
-        if ch in MARKS or ch == WAQF_ALIF:
+        if ch in MARKS:
             if out:
                 out[-1][1].add(ch)
         else:
             out.append([ch, set()])
     return [(l, frozenset(m)) for l, m in out]
-
-def resolve_waqf_alif(text, mode):
-    """
-    ألف ۠ : تُحذف في الوصل وتبقى مدّاً في الوقف.
-    WASL_RUN: الوقف في آخر كلمة فقط؛ WAQF_RUN: كل كلمة موقوف عليها.
-    → (text, events)
-    """
-    words = text.split()
-    ev = {}
-    for i, w in enumerate(words):
-        if WAQF_ALIF not in w:
-            continue
-        waqf = mode == 'WAQF_RUN' or i == len(words) - 1
-        toks = letters(w)
-        if waqf:
-            toks = [(l, m - {WAQF_ALIF}) for l, m in toks]
-            ev['WAQF_ALIF_KEPT'] = ev.get('WAQF_ALIF_KEPT', 0) + 1
-        else:
-            toks = [(l, m) for l, m in toks if WAQF_ALIF not in m]
-            ev['WAQF_ALIF_DROPPED_WASL'] = ev.get('WAQF_ALIF_DROPPED_WASL', 0) + 1
-        words[i] = ''.join(l + ''.join(sorted(m)) for l, m in toks)
-    return ' '.join(words), ev
 
 LOOSE = str.maketrans({'أ': 'ا', 'إ': 'ا', 'آ': 'ا', 'ٱ': 'ا', 'ى': 'ي', 'ة': 'ه'})
 
@@ -507,13 +447,9 @@ def syllables_by_word(res):
     return by_word
 
 def isolated_cv(form):
-    """تقطيع العامل منفرداً (ابتداءً) بلا وقف — لمعرفة بنيته المقطعية الذاتية"""
-    ev = cv.Events()
-    seg = cv.cvmap(cv.normalize(form.replace(' ', ''), ev), ev)
-    # ابتداء دون وقف: نُمرِّر كلمة وهمية بعده ثم نأخذ مقاطع الكلمة الأولى
-    ph = cv.resolve([seg, [('C', 'ء'), ('V', 'a')]], [form, 'ءَ'], 'WASL_RUN', ev)[0]
-    sylls = cv.syllabify([('#', 0)] + ph)
-    return [dict(syl=cv.render(s), cv=cv.classify(s)[0]) for s in sylls]
+    """تقطيع العامل منفرداً كما كُتب — لمعرفة بنيته المقطعية الذاتية"""
+    r = cv.run(form)
+    return [dict(syl=rend, cv=pat) for rend, pat, _, _ in r['rows']]
 
 def align(found, by_word, words):
     for f in found:
@@ -542,25 +478,20 @@ def align(found, by_word, words):
         f.setdefault('isolated', isolated_cv(f['operator']))
     return found
 
-def analyze(cat, verse, mode='WASL_RUN', idgham=True, uthmani='auto'):
+def analyze(cat, verse, uthmani='auto'):
+    """النص كما هو: التقطيع على النص المطبَّع نفسه، كل كلمة مستقلة، بلا وصل ولا وقف"""
     isk = {'auto': None, 'on': True, 'off': False}[uthmani]   # auto←None (تلقائي) / on←True / off←False
     text = uthmani_normalize(verse, implicit_sukun=isk)
     words, found = extract(cat, text)
-    syll_text, wev = resolve_waqf_alif(uthmani_normalize(verse, implicit_sukun=isk, keep_waqf_alif=True), mode)
-    syll_text, jev = (assimilate_junctions(syll_text) if idgham and mode == 'WASL_RUN' else (syll_text, {}))
-    res = cv.run(syll_text, mode)
-    res['events'].update(wev)
-    res['events'].update(jev)
+    res = cv.run(text)
     found = align(found, syllables_by_word(res), words)
-    return dict(verse=verse, normalized=text, syllabified_text=syll_text, mode=mode,
+    return dict(verse=verse, normalized=text, syllabified_text=text,
                 words=words, operators=found, syll=res)
 
 # ---------- report ----------
 def text_report(a):
     out = [f"الآية:    {a['verse']}", f"المُطبَّع: {a['normalized']}"]
-    if a['syllabified_text'] != a['normalized']:
-        out.append(f"للتقطيع: {a['syllabified_text']}")
-    out += [f"الوضع:    {a['mode']}", '']
+    out.append('')
     out.append(f"العوامل المستخرجة: {len(a['operators'])}")
     out.append('-' * 80)
     for f in a['operators']:
@@ -600,11 +531,9 @@ if __name__ == '__main__':
                                          os.path.join(here, 'operators_catalog_split_vocalized.csv'))
                              if os.path.exists(p)],
                     help='ملف أو أكثر (.jsonl/.csv)؛ الأول أساس وما بعده يضيف العوامل الغائبة فقط')
-    ap.add_argument('--mode', default='WASL_RUN', choices=['WASL_RUN', 'WAQF_RUN'])
     ap.add_argument('--uthmani', default='auto', choices=['auto', 'on', 'off'],
                     help='المعاملة العثمانية (السكون الضمني): auto=تلقائي بوجود علامة عثمانية، on=دائماً، off=أبداً')
     ap.add_argument('--json', action='store_true', help='إخراج JSON Lines')
-    ap.add_argument('--no-idgham', action='store_true', help='لا تُطبَّق قواعد الإدغام عبر حدود الكلمات')
     args = ap.parse_args()
 
     cat = Catalog(args.catalog)
@@ -616,7 +545,7 @@ if __name__ == '__main__':
         verses = [l.strip() for l in sys.stdin if l.strip()]
 
     for v in verses:
-        a = analyze(cat, v, args.mode, idgham=not args.no_idgham, uthmani=args.uthmani)
+        a = analyze(cat, v, uthmani=args.uthmani)
         if args.json:
             print(json.dumps(to_json(a), ensure_ascii=False))
         else:
