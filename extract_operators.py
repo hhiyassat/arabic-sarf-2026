@@ -32,6 +32,7 @@ UTHMANI_MAP = {
     'ۡ': SUKUN,        # السكون العثماني (رأس الخاء)
     'ۥ': 'و',          # واو الصلة الصغيرة
     'ۦ': 'ي',          # ياء الصلة الصغيرة
+    'ۧ': 'ي',          # الياء الصغيرة (إِبْرَٰهِـۧمَ)
 }
 UTHMANI_DROP = set(chr(c) for c in range(0x06D6, 0x06EE)) - set(UTHMANI_MAP) | {'۟', 'ـ'}
 MADD_AFTER_FATHA = re.compile('(\u064E\u0651?|\u0651\u064E)\u0622')
@@ -541,10 +542,11 @@ def align(found, by_word, words):
         f.setdefault('isolated', isolated_cv(f['operator']))
     return found
 
-def analyze(cat, verse, mode='WASL_RUN', idgham=True):
-    text = uthmani_normalize(verse)
+def analyze(cat, verse, mode='WASL_RUN', idgham=True, uthmani='auto'):
+    isk = {'auto': None, 'on': True, 'off': False}[uthmani]   # auto←None (تلقائي) / on←True / off←False
+    text = uthmani_normalize(verse, implicit_sukun=isk)
     words, found = extract(cat, text)
-    syll_text, wev = resolve_waqf_alif(uthmani_normalize(verse, keep_waqf_alif=True), mode)
+    syll_text, wev = resolve_waqf_alif(uthmani_normalize(verse, implicit_sukun=isk, keep_waqf_alif=True), mode)
     syll_text, jev = (assimilate_junctions(syll_text) if idgham and mode == 'WASL_RUN' else (syll_text, {}))
     res = cv.run(syll_text, mode)
     res['events'].update(wev)
@@ -599,6 +601,8 @@ if __name__ == '__main__':
                              if os.path.exists(p)],
                     help='ملف أو أكثر (.jsonl/.csv)؛ الأول أساس وما بعده يضيف العوامل الغائبة فقط')
     ap.add_argument('--mode', default='WASL_RUN', choices=['WASL_RUN', 'WAQF_RUN'])
+    ap.add_argument('--uthmani', default='auto', choices=['auto', 'on', 'off'],
+                    help='المعاملة العثمانية (السكون الضمني): auto=تلقائي بوجود علامة عثمانية، on=دائماً، off=أبداً')
     ap.add_argument('--json', action='store_true', help='إخراج JSON Lines')
     ap.add_argument('--no-idgham', action='store_true', help='لا تُطبَّق قواعد الإدغام عبر حدود الكلمات')
     args = ap.parse_args()
@@ -612,7 +616,7 @@ if __name__ == '__main__':
         verses = [l.strip() for l in sys.stdin if l.strip()]
 
     for v in verses:
-        a = analyze(cat, v, args.mode, idgham=not args.no_idgham)
+        a = analyze(cat, v, args.mode, idgham=not args.no_idgham, uthmani=args.uthmani)
         if args.json:
             print(json.dumps(to_json(a), ensure_ascii=False))
         else:
