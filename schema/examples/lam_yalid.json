@@ -1,0 +1,86 @@
+{
+  "schema_version": "1.0",
+  "text": {
+    "original": "لَمْ يَلِدْ",
+    "normalized": "لَمْ يَلِدْ",
+    "script": "uthmani",
+    "ref": { "surah": 112, "ayah": 3 }
+  },
+  "tokens": [
+    {
+      "index": 0,
+      "surface": "لَمْ",
+      "analyses": [
+        {
+          "score": 0.9,
+          "status": "selected",
+          "segments": [
+            {
+              "role": "stem", "form": "لَمْ", "char_span": [0, 2], "syllable_span": [0, 1],
+              "pos": "particle",
+              "particle": {
+                "operator_ids": ["لم_نفي_الماضي_المتصل_بالحال"],
+                "catalog_group": "6",
+                "governing": true,
+                "effect": "jazm_one"
+              }
+            }
+          ],
+          "evidence": [ { "source": "catalog", "id": "لم_نفي_الماضي_المتصل_بالحال" } ]
+        }
+      ],
+      "syllables": [ { "text": "لَمْ", "cv": "CVC", "verdict": "OK" } ]
+    },
+    {
+      "index": 1,
+      "surface": "يَلِدْ",
+      "analyses": [
+        {
+          "score": 0.95,
+          "status": "selected",
+          "segments": [
+            {
+              "role": "stem", "form": "يَلِدْ", "char_span": [0, 3], "syllable_span": [0, 2],
+              "pos": "verb",
+              "lemma": "وَلَدَ",
+              "root": { "radicals": ["و", "ل", "د"], "soundness": "mithal", "weak_positions": ["fa"] },
+              "pattern": { "wazn": "يَفْعِلُ", "augmented": false, "ilal": "حذف فاء المثال الواوي في المضارع: يَوْلِدُ ← يَلِدُ" },
+              "verb": {
+                "tense": "imperfect",
+                "voice": "active",
+                "subject": { "person": 3, "number": "singular", "gender": "masc", "function": "subject" },
+                "inflection": {
+                  "status": "murab", "mood": "jussive",
+                  "marker": "sukun", "marker_kind": "original", "observed_mark": "ْ"
+                },
+                "conjugability": "mutasarrif",
+                "completeness": "tamm",
+                "transitivity": "transitive_1",
+                "form": "I",
+                "bab": "a-i"
+              }
+            }
+          ],
+          "evidence": [
+            { "source": "vocalization", "note": "السكون مكتوب على الدال" },
+            { "source": "governor", "id": "لم_نفي_الماضي_المتصل_بالحال", "note": "لم تجزم المضارع" }
+          ]
+        }
+      ],
+      "syllables": [
+        { "text": "يَ", "cv": "CV", "verdict": "OK" },
+        { "text": "لِدْ", "cv": "CVC", "verdict": "OK" }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "governor":  { "token": 0, "analysis": 0, "segment": 0 },
+      "dependent": { "token": 1, "analysis": 0, "segment": 0 },
+      "operator_id": "لم_نفي_الماضي_المتصل_بالحال",
+      "expected": { "mood": "jussive" },
+      "observed": { "mood": "jussive", "mark": "ْ" },
+      "consistent": true
+    }
+  ]
+}

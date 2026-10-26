@@ -1,0 +1,389 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/hhiyassat/arabic-sarf-2026/schema/morph_analysis.schema.json",
+  "title": "Arabic morphological analysis of a text",
+  "description": "ناتج المحلل الصرفي لنصّ مكتوب: كل كلمة لها تحليل واحد أو أكثر مرتّبة بالاحتمال. التحليل نصّي فقط: الحالة الإعرابية تُؤخذ من العلامة المكتوبة على الكلمة، ولا يدخل الوصل والوقف ولا أحكام الأداء.",
+  "type": "object",
+  "required": ["schema_version", "text", "tokens"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "text": {
+      "type": "object",
+      "required": ["original"],
+      "additionalProperties": false,
+      "properties": {
+        "original":   { "type": "string", "description": "النص كما ورد" },
+        "normalized": { "type": "string", "description": "بعد تطبيع الرسم العثماني" },
+        "script":     { "enum": ["uthmani", "imlaai", "unknown"] },
+        "ref": { "$ref": "#/$defs/verse_ref" }
+      }
+    },
+    "tokens": { "type": "array", "items": { "$ref": "#/$defs/token" } },
+    "dependencies": {
+      "type": "array",
+      "description": "روابط العامل بالمعمول عبر الكلمات",
+      "items": { "$ref": "#/$defs/governance" }
+    }
+  },
+
+  "$defs": {
+
+    "verse_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "surah": { "type": "integer", "minimum": 1, "maximum": 114 },
+        "ayah":  { "type": "integer", "minimum": 1 }
+      }
+    },
+
+    "token": {
+      "type": "object",
+      "description": "كلمة مكتوبة (ما بين فراغين)",
+      "required": ["index", "surface", "analyses"],
+      "additionalProperties": false,
+      "properties": {
+        "index":      { "type": "integer", "minimum": 0 },
+        "surface":    { "type": "string", "description": "الكلمة كما وردت" },
+        "normalized": { "type": "string" },
+        "fixed_lexeme": { "$ref": "#/$defs/fixed_lexeme" },
+        "analyses": {
+          "type": "array", "minItems": 1,
+          "description": "كل التحاليل الممكنة مرتّبة تنازلياً بالدرجة؛ الأول هو المرجَّح",
+          "items": { "$ref": "#/$defs/analysis" }
+        },
+        "syllables": {
+          "type": "array",
+          "description": "مقاطع الكلمة من cv_syllabifier",
+          "items": { "$ref": "#/$defs/syllable" }
+        }
+      }
+    },
+
+    "fixed_lexeme": {
+      "type": "object",
+      "description": "كلمة من قائمة مغلقة تُعرَف قبل التحليل ولا تُحلَّل صرفياً: لفظ الجلالة، الأعلام الأعجمية…",
+      "required": ["lexeme_id", "kind"],
+      "additionalProperties": false,
+      "properties": {
+        "lexeme_id": { "type": "string", "examples": ["ALLAH", "IBRAHIM"] },
+        "kind": { "enum": ["divine_name", "foreign_proper", "closed_class", "other"] },
+        "note": { "type": "string" }
+      }
+    },
+
+    "analysis": {
+      "type": "object",
+      "required": ["score", "segments"],
+      "additionalProperties": false,
+      "properties": {
+        "score": { "type": "number", "minimum": 0, "maximum": 1, "description": "درجة التحليل (احتمال أو ثقة)" },
+        "status": { "enum": ["selected", "candidate", "rejected"] },
+        "segments": {
+          "type": "array", "minItems": 1,
+          "description": "مكوّنات الكلمة بالترتيب: سوابق، جذع واحد، لواحق",
+          "items": { "$ref": "#/$defs/segment" }
+        },
+        "evidence": {
+          "type": "array",
+          "description": "ما بُني عليه التحليل (قواعد، فهرس، معجم، عامل)",
+          "items": { "$ref": "#/$defs/evidence" }
+        }
+      }
+    },
+
+    "evidence": {
+      "type": "object",
+      "required": ["source"],
+      "additionalProperties": false,
+      "properties": {
+        "source": { "enum": ["rule", "catalog", "lexicon", "governor", "vocalization", "prior"] },
+        "id":     { "type": "string", "description": "معرّف القاعدة أو مدخل الفهرس، مثل ب_الإلصاق أو operator+kaffa" },
+        "note":   { "type": "string" }
+      }
+    },
+
+    "segment": {
+      "type": "object",
+      "required": ["role", "form"],
+      "additionalProperties": false,
+      "properties": {
+        "role": { "enum": ["proclitic", "stem", "suffix", "enclitic"],
+                  "description": "proclitic سابقة، stem الجذع، suffix لاحقة إعرابية/صرفية، enclitic ضمير متصل" },
+        "form": { "type": "string", "description": "صورة المكوّن المكتوبة بتشكيلها" },
+        "char_span": { "$ref": "#/$defs/span", "description": "موضع المكوّن في الكلمة المطبَّعة (حروف لا علامات)" },
+        "syllable_span": { "$ref": "#/$defs/span", "description": "المقاطع التي يقع فيها المكوّن (قد يشترك مكوّنان في مقطع)" },
+        "clitic_type": { "$ref": "#/$defs/clitic_type" },
+        "suffix_type": { "$ref": "#/$defs/suffix_type" },
+        "pronoun": { "$ref": "#/$defs/pronoun" },
+        "pos": { "enum": ["noun", "verb", "particle"], "description": "للجذع وللسوابق والضمائر" },
+        "noun": { "$ref": "#/$defs/noun" },
+        "verb": { "$ref": "#/$defs/verb" },
+        "particle": { "$ref": "#/$defs/particle" },
+        "root": { "$ref": "#/$defs/root" },
+        "pattern": { "$ref": "#/$defs/pattern" },
+        "lemma": { "type": "string", "description": "المدخل المعجمي (المفرد المذكر للاسم، الماضي المسند للغائب للفعل)" }
+      },
+      "allOf": [
+        { "if": { "properties": { "role": { "const": "stem" } } },
+          "then": { "required": ["pos"] } },
+        { "if": { "properties": { "pos": { "const": "noun" } }, "required": ["pos"] },
+          "then": { "required": ["noun"], "not": { "anyOf": [ { "required": ["verb"] }, { "required": ["particle"] } ] } } },
+        { "if": { "properties": { "pos": { "const": "verb" } }, "required": ["pos"] },
+          "then": { "required": ["verb"], "not": { "anyOf": [ { "required": ["noun"] }, { "required": ["particle"] } ] } } },
+        { "if": { "properties": { "pos": { "const": "particle" } }, "required": ["pos"] },
+          "then": { "required": ["particle"], "not": { "anyOf": [ { "required": ["noun"] }, { "required": ["verb"] } ] } } },
+        { "if": { "properties": { "role": { "const": "proclitic" } } },
+          "then": { "required": ["clitic_type"] } },
+        { "if": { "properties": { "role": { "const": "enclitic" } } },
+          "then": { "required": ["pronoun"] } },
+        { "if": { "properties": { "role": { "const": "suffix" } } },
+          "then": { "required": ["suffix_type"] } }
+      ]
+    },
+
+    "span": {
+      "type": "array", "items": { "type": "integer", "minimum": 0 },
+      "minItems": 2, "maxItems": 2,
+      "description": "[بداية, نهاية) نصف مفتوح"
+    },
+
+    "clitic_type": {
+      "enum": ["conjunction", "preposition", "oath", "future", "interrogative",
+               "emphasis_lam", "imperative_lam", "definite_article", "vocative", "resumption_fa"],
+      "description": "وَ/فَ عطف، بِ/لِ/كَ جر، وَ/تَ/بِ قسم، سَ استقبال، ءَ استفهام، لَ توكيد، لِ/لْ أمر، ال تعريف، يَا نداء موصولة، فَ جواب"
+    },
+
+    "suffix_type": {
+      "enum": ["case_ending", "tanwin", "dual", "sound_masc_plural", "sound_fem_plural",
+               "feminine_taa", "subject_marker", "mood_marker", "energetic_nun", "nisba", "other"],
+      "description": "اللواحق غير الضميرية: علامة الإعراب، التنوين، علامة التثنية والجمع، تاء التأنيث، ضمير الرفع المتصل بالفعل (علامة إسناد)، نون التوكيد، ياء النسب"
+    },
+
+    "pronoun": {
+      "type": "object",
+      "required": ["person", "number"],
+      "additionalProperties": false,
+      "properties": {
+        "person": { "enum": [1, 2, 3] },
+        "number": { "enum": ["singular", "dual", "plural"] },
+        "gender": { "enum": ["masc", "fem", "common"] },
+        "function": { "enum": ["subject", "object", "possessive", "governed_by_particle"],
+                      "description": "فاعل، مفعول به، مضاف إليه، اسم لحرف ناسخ أو مجرور بحرف" }
+      }
+    },
+
+    "agreement": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "gender": { "enum": ["masc", "fem"] },
+        "gender_kind": { "enum": ["real", "figurative"], "description": "حقيقي / مجازي" },
+        "fem_marker": { "enum": ["taa_marbuta", "alif_maqsura", "alif_mamduda", "none"] },
+        "number": { "enum": ["singular", "dual", "plural", "collective"] },
+        "plural_type": { "enum": ["sound_masc", "sound_fem", "broken", "ism_jam", "ism_jins_jami"],
+                         "description": "جمع مذكر سالم، مؤنث سالم، تكسير، اسم جمع (قوم)، اسم جنس جمعي (شجر)" },
+        "broken_plural_kind": { "enum": ["qilla", "kathra", "muntaha_al_jumu"] }
+      },
+      "allOf": [
+        { "if": { "properties": { "number": { "const": "plural" } }, "required": ["number"] },
+          "then": { "required": ["plural_type"] } },
+        { "if": { "properties": { "plural_type": { "const": "broken" } }, "required": ["plural_type"] },
+          "then": { "required": ["broken_plural_kind"] } }
+      ]
+    },
+
+    "inflection": {
+      "type": "object",
+      "description": "معرب أو مبني، وعلامته كما هي مكتوبة",
+      "required": ["status"],
+      "additionalProperties": false,
+      "properties": {
+        "status": { "enum": ["murab", "mabni"] },
+        "case": { "enum": ["nom", "acc", "gen"], "description": "للاسم المعرب: رفع، نصب، جر" },
+        "mood": { "enum": ["indicative", "subjunctive", "jussive"], "description": "للمضارع المعرب: رفع، نصب، جزم" },
+        "marker": {
+          "enum": ["damma", "fatha", "kasra", "sukun", "dammatan", "fathatan", "kasratan",
+                   "waw", "alif", "ya", "nun_retained", "nun_deleted", "implicit"],
+          "description": "العلامة: حركة، أو حرف (الأسماء الخمسة، المثنى، الجمع)، أو ثبوت النون وحذفها (الأفعال الخمسة)، أو مقدّرة"
+        },
+        "marker_kind": { "enum": ["original", "substitute"], "description": "أصلية / فرعية (نائبة)" },
+        "observed_mark": { "type": "string", "description": "العلامة المكتوبة فعلاً على آخر الكلمة، كما هي في النص" },
+        "build_mark": { "enum": ["damma", "fatha", "kasra", "sukun", "deletion"], "description": "للمبني: علامة البناء" }
+      },
+      "allOf": [
+        { "if": { "properties": { "status": { "const": "mabni" } } },
+          "then": { "not": { "anyOf": [ { "required": ["case"] }, { "required": ["mood"] } ] } } }
+      ]
+    },
+
+    "derivation": {
+      "type": "object",
+      "required": ["class"],
+      "additionalProperties": false,
+      "properties": {
+        "class": { "enum": ["jamid", "mushtaq"] },
+        "jamid_type": { "enum": ["concrete", "abstract", "masdar", "masdar_mimi", "masdar_sinai",
+                                 "masdar_marra", "masdar_hayah"],
+                        "description": "اسم ذات، اسم معنى، مصدر صريح، ميمي، صناعي، مرّة، هيئة" },
+        "mushtaq_type": { "enum": ["active_participle", "passive_participle", "adjective",
+                                   "intensive", "elative", "noun_of_time", "noun_of_place", "noun_of_instrument"],
+                          "description": "اسم فاعل، اسم مفعول، صفة مشبهة، صيغة مبالغة، اسم تفضيل، اسم زمان، اسم مكان، اسم آلة" }
+      },
+      "allOf": [
+        { "if": { "properties": { "class": { "const": "jamid" } } },
+          "then": { "not": { "required": ["mushtaq_type"] } } },
+        { "if": { "properties": { "class": { "const": "mushtaq" } } },
+          "then": { "required": ["mushtaq_type"], "not": { "required": ["jamid_type"] } } }
+      ]
+    },
+
+    "noun": {
+      "type": "object",
+      "required": ["subtype", "inflection"],
+      "additionalProperties": false,
+      "properties": {
+        "subtype": { "enum": ["common", "proper", "pronoun", "demonstrative", "relative", "interrogative",
+                              "conditional", "adverbial", "number", "ism_fiil", "kinaya"],
+                     "description": "اسم عام، علم، ضمير منفصل، إشارة، موصول، استفهام، شرط، ظرف، عدد، اسم فعل، كناية (كم، كذا)" },
+        "derivation": { "$ref": "#/$defs/derivation" },
+        "agreement": { "$ref": "#/$defs/agreement" },
+        "definiteness": { "enum": ["definite", "indefinite"] },
+        "definite_by": { "enum": ["pronoun", "proper", "demonstrative", "relative", "article", "idafa", "vocative"] },
+        "inflection": { "$ref": "#/$defs/inflection" },
+        "diptote": { "type": "boolean", "description": "ممنوع من الصرف" },
+        "final_type": { "enum": ["sahih", "maqsur", "manqus", "mamdud"], "description": "صحيح الآخر، مقصور، منقوص، ممدود" },
+        "five_nouns": { "type": "boolean", "description": "من الأسماء الخمسة" },
+        "diminutive": { "type": "boolean" },
+        "nisba": { "type": "boolean" }
+      },
+      "allOf": [
+        { "if": { "properties": { "definiteness": { "const": "definite" } }, "required": ["definiteness"] },
+          "then": { "required": ["definite_by"] } }
+      ]
+    },
+
+    "verb": {
+      "type": "object",
+      "required": ["tense", "voice", "subject", "inflection"],
+      "additionalProperties": false,
+      "properties": {
+        "tense": { "enum": ["past", "imperfect", "imperative"] },
+        "voice": { "enum": ["active", "passive"] },
+        "subject": { "$ref": "#/$defs/pronoun", "description": "الإسناد: الشخص والعدد والجنس" },
+        "inflection": { "$ref": "#/$defs/inflection" },
+        "conjugability": { "enum": ["mutasarrif", "jamid"], "description": "متصرف / جامد (نعم، بئس، ليس، عسى)" },
+        "completeness": { "enum": ["tamm", "naqis"], "description": "تام / ناقص (كان وأخواتها، كاد وأخواتها)" },
+        "transitivity": { "enum": ["intransitive", "transitive_1", "transitive_2", "transitive_3"] },
+        "form": { "enum": ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X",
+                           "QI", "QII", "QIII", "QIV"],
+                  "description": "الوزن: الثلاثي المجرد I والمزيد II–X، والرباعي المجرد QI والمزيد QII–QIV" },
+        "bab": { "enum": ["a-u", "a-i", "a-a", "i-a", "u-u", "i-i"],
+                 "description": "باب الثلاثي المجرد: حركة عين الماضي–المضارع (نَصَرَ يَنْصُرُ = a-u)" },
+        "energetic": { "enum": ["none", "heavy", "light"], "description": "التوكيد بالنون" }
+      },
+      "allOf": [
+        { "if": { "properties": { "tense": { "const": "past" } } },
+          "then": { "properties": { "inflection": { "properties": { "status": { "const": "mabni" } } } } } },
+        { "if": { "properties": { "tense": { "const": "imperative" } } },
+          "then": { "properties": { "inflection": { "properties": { "status": { "const": "mabni" } } },
+                                    "subject": { "properties": { "person": { "const": 2 } } } } } },
+        { "if": { "properties": { "form": { "const": "I" } }, "required": ["form"] },
+          "then": { "required": ["bab"] } }
+      ]
+    },
+
+    "particle": {
+      "type": "object",
+      "required": ["governing"],
+      "additionalProperties": false,
+      "properties": {
+        "operator_ids": { "type": "array", "items": { "type": "string" },
+                          "description": "معرّفات المعاني المرشحة من operators_catalog، مرتّبة بالاحتمال" },
+        "catalog_group": { "type": "string", "description": "رقم المجموعة في الفهرس" },
+        "governing": { "type": "boolean", "description": "عامل / غير عامل" },
+        "effect": { "enum": ["jarr", "nasb_verb", "jazm_one", "jazm_two", "nasb_ism_raf_khabar",
+                             "raf_ism_nasb_khabar", "nasb", "none"],
+                    "description": "جرّ، نصب المضارع، جزم فعل، جزم فعلين، إنّ وأخواتها، ما/لا العاملتان عمل ليس، نصب (الاستثناء، المعية، النداء)، لا عمل" },
+        "kaffa": { "type": "boolean", "description": "مكفوف بـ«ما» الكافة" }
+      }
+    },
+
+    "root": {
+      "type": "object",
+      "required": ["radicals"],
+      "additionalProperties": false,
+      "properties": {
+        "radicals": { "type": "array", "items": { "type": "string", "minLength": 1, "maxLength": 1 },
+                      "minItems": 2, "maxItems": 5 },
+        "soundness": { "enum": ["salim", "mahmuz", "mudaaf", "mithal", "ajwaf", "naqis", "lafif_mafruq", "lafif_maqrun"],
+                       "description": "سالم، مهموز، مضعّف، مثال، أجوف، ناقص، لفيف مفروق، لفيف مقرون" },
+        "hamza_position": { "enum": ["fa", "ayn", "lam"], "description": "للمهموز: موضع الهمزة" },
+        "weak_positions": { "type": "array", "items": { "enum": ["fa", "ayn", "lam"] } }
+      }
+    },
+
+    "pattern": {
+      "type": "object",
+      "required": ["wazn"],
+      "additionalProperties": false,
+      "properties": {
+        "wazn": { "type": "string", "description": "الميزان الصرفي بتشكيله، مثل فَاعِل أو مُفْعِل أو اسْتَفْعَلَ" },
+        "augmented": { "type": "boolean", "description": "مزيد" },
+        "added_letters": { "type": "array", "items": { "type": "string" }, "description": "حروف الزيادة (سألتمونيها)" },
+        "ilal": { "type": "string", "description": "وصف الإعلال أو الإبدال إن وقع (قَوَلَ ← قَالَ)" }
+      }
+    },
+
+    "syllable": {
+      "type": "object",
+      "required": ["text", "cv"],
+      "additionalProperties": false,
+      "properties": {
+        "text": { "type": "string" },
+        "cv": { "enum": ["CV", "CVV", "CVC", "CVVC", "CVCC", "CVVCC", "OTHER", "POISON"] },
+        "verdict": { "type": "string" }
+      }
+    },
+
+    "governance": {
+      "type": "object",
+      "description": "عامل في كلمة يعمل في كلمة أخرى، مع مقارنة المتوقَّع بالعلامة المكتوبة",
+      "required": ["governor", "dependent", "expected"],
+      "additionalProperties": false,
+      "properties": {
+        "governor":  { "$ref": "#/$defs/segment_ref" },
+        "dependent": { "$ref": "#/$defs/segment_ref" },
+        "operator_id": { "type": "string" },
+        "expected": {
+          "type": "object", "additionalProperties": false,
+          "properties": {
+            "case": { "enum": ["nom", "acc", "gen"] },
+            "mood": { "enum": ["indicative", "subjunctive", "jussive"] }
+          }
+        },
+        "observed": {
+          "type": "object", "additionalProperties": false,
+          "properties": {
+            "case": { "enum": ["nom", "acc", "gen"] },
+            "mood": { "enum": ["indicative", "subjunctive", "jussive"] },
+            "mark": { "type": "string" }
+          }
+        },
+        "consistent": { "type": "boolean", "description": "هل وافقت العلامةُ المكتوبة عملَ العامل؟ false = التباس أو خطأ تشكيل" }
+      }
+    },
+
+    "segment_ref": {
+      "type": "object",
+      "required": ["token", "analysis", "segment"],
+      "additionalProperties": false,
+      "properties": {
+        "token":    { "type": "integer", "minimum": 0 },
+        "analysis": { "type": "integer", "minimum": 0 },
+        "segment":  { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}
