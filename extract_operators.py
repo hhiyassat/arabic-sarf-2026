@@ -57,6 +57,8 @@ def uthmani_normalize(text, implicit_sukun=None):
     text = ' '.join(''.join(out).split())
     if not implicit_sukun:
         return text
+    # NFC يركّب ا + ٓ (علامة المدّ العثمانية) في «آ»؛ وسط الكلمة هي ألف مدّ لا همزة: إِنَّمَآ، جَآءَ
+    text = ' '.join(w[0] + w[1:].replace('آ', 'ا') for w in text.split())
     words = []
     for w in text.split():
         toks = letters(w)
@@ -179,6 +181,15 @@ PROCLITICS = {
     'ت': {FATHA},
 }
 CONJ = {'و', 'ف'}   # عاطفتان تُقشَّران قبل البحث
+
+# ما الكافة بعد إنّ وأخواتها: تكفّها عن العمل (إلا ليت فيجوز فيها الوجهان)
+KAFFA_GROUPS = {'2'}
+KAFFA_EFFECT = {
+    'إن': 'مكفوفة عن العمل؛ أداة حصر وقصر — ما بعدها مبتدأ وخبر أو جملة فعلية',
+    'أن': 'مكفوفة عن العمل؛ تفيد الحصر — ما بعدها مبتدأ وخبر أو جملة فعلية',
+    'ليت': 'يجوز إعمالها (نصب الاسم ورفع الخبر) وإهمالها',
+    None: 'مكفوفة عن العمل — ما بعدها مبتدأ وخبر أو جملة فعلية',
+}
 
 def _csv_rows(path):
     """الفهرس المسطّح (CSV) → صفوف بصيغة JSONL؛ معنى واحد لكل صف وبلا prior"""
@@ -332,6 +343,25 @@ def _match_word(cat, word, wi, toks):
             if ok:
                 emit(op, (off, off + k), 'operator+suffix' + tag, n, conf_of(n, k), host_rest=rest)
                 hit = True
+        if hit:
+            return True
+        # 3a. إنّ وأخواتها + ما الكافة (إِنَّمَا، أَنَّمَا، كَأَنَّمَا، لَكِنَّمَا، لَيْتَمَا، لَعَلَّمَا)
+        for op in cat.single:
+            if op['group'] not in KAFFA_GROUPS:
+                continue
+            k = len(op['toks'])
+            if len(t) != k + 2 or plain(t[:k], True) != plain(op['toks'], True) or plain(t[k:]) != 'ما':
+                continue
+            ok, n = vocal_compatible(t[:k], op['toks'])
+            if not ok or vowel(t[k][1]) not in (FATHA, None):
+                continue
+            emit(op, (off, off + k), 'operator+kaffa' + tag, n, conf_of(n, k), host_rest='ما',
+                 note='مكفوفة بـ«ما» الكافة: تدخل على الجملتين الاسمية والفعلية')
+            effect = KAFFA_EFFECT.get(op['plain'], KAFFA_EFFECT[None])
+            results[-1]['kaffa'] = 'مَا'
+            for m in results[-1]['meanings']:
+                m['effect'] = effect
+            hit = True
         if hit:
             return True
         # 3b. أداة نداء موصولة رسماً (يَا + أَيُّهَا)

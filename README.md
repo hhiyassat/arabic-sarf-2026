@@ -8,7 +8,7 @@
 | `cv_syllabifier.py` | محوّل CV رباعي الطبقات: Normalize ∘ CVmap ∘ Syllabify ∘ Classify |
 | `operators_catalog.jsonl` | الفهرس الأساسي (المعاني، والاحتمالات، وعلامات التمييز) |
 | `operators_catalog_split_vocalized.csv` | فهرس مكمّل؛ يُضاف منه ما ليس في الأساس فقط (إِنَّ، أَنَّ) |
-| `verses*.txt` / `example_output*` | آيات الاختبار ونتائجها |
+| `verses*.txt` / `example_output*` | آيات الاختبار ونتائجها (`verses_innama.txt`: إنّ وأخواتها + ما الكافة) |
 
 ## التشغيل (Python 3 فقط، بلا مكتبات خارجية)
 
