@@ -1,0 +1,1206 @@
+{
+ "version": 1,
+ "description": "تصحيحات 02_mabniyat: تُطبَّق على المصدر قبل التحويل، ولا يُعدَّل المصدر نفسه",
+ "decisions": {
+  "D1": "مثنى أسماء الإشارة معرب ملحق بالمثنى (هَذَانِ/هَذَيْنِ، هَاتَانِ/هَاتَيْنِ، ذَانِكَ، تَانِكَ، ذَيْنِ)",
+  "D2": "الكلمات المعربة في ملفات المبنيات تبقى موسومة «معرب» (غَدًا، اللَّيْلَةَ، بِضْع، أَيّ)",
+  "D3": "الصيغ العامية تُحذف",
+  "D4": "حروف الجر على لغات قليلة تُحذف من الجر (كَيْ، لَعَلَّ، مَتَى، لَوْلَا)"
+ },
+ "files": {
+  "pronouns_classification": [
+   {
+    "id": 45,
+    "set": {
+     "pronoun_form": "أَنْتَ"
+    },
+    "reason": "pronoun_form كان «نَحْنُ»",
+    "basis": "fact"
+   },
+   {
+    "id": 55,
+    "set": {
+     "pronoun": "إِيَّايَ",
+     "pronoun_form": "إِيَّايَ"
+    },
+    "reason": "إِيَّايَّ: لا شدة على ياء المتكلم",
+    "basis": "orthography"
+   },
+   {
+    "add": {
+     "pronoun": "إِيَّاهُمْ",
+     "pronoun_form": "إِيَّاهُمْ",
+     "example": "إِيَّاهُمْ أَكْرَمْتُ",
+     "category": "ضمير نصب منفصل",
+     "meaning": "الغائب",
+     "form": "لجمع المذكر"
+    },
+    "reason": "خانة الغائبين ناقصة من الضمائر المنفصلة للنصب",
+    "basis": "grammar"
+   },
+   {
+    "id": 66,
+    "delete": true,
+    "reason": "صيغ ثلاث في سجل واحد؛ حلّت محلها ثلاثة سجلات",
+    "basis": "fact"
+   },
+   {
+    "add": {
+     "pronoun": "تاء المتكلم",
+     "pronoun_form": "تُ",
+     "example": "قَرَأْتُ",
+     "category": "ضمير رفع متصل",
+     "meaning": "المتكلم",
+     "form": "للمفرد المذكر والمؤنث"
+    },
+    "reason": "فصل السجل 66",
+    "basis": "grammar"
+   },
+   {
+    "add": {
+     "pronoun": "تاء المخاطب",
+     "pronoun_form": "تَ",
+     "example": "قَرَأْتَ",
+     "category": "ضمير رفع متصل",
+     "meaning": "المخاطب",
+     "form": "للمفرد المذكر"
+    },
+    "reason": "فصل السجل 66",
+    "basis": "grammar"
+   },
+   {
+    "add": {
+     "pronoun": "تاء المخاطبة",
+     "pronoun_form": "تِ",
+     "example": "قَرَأْتِ",
+     "category": "ضمير رفع متصل",
+     "meaning": "المخاطب",
+     "form": "للمفردة المؤنثة"
+    },
+    "reason": "فصل السجل 66",
+    "basis": "grammar"
+   },
+   {
+    "id": 67,
+    "set": {
+     "form": "لجمع المذكر"
+    },
+    "reason": "«مع المذكر» لا تذكر العدد",
+    "basis": "fact"
+   },
+   {
+    "id": 71,
+    "delete": true,
+    "reason": "قائمة صيغ مختلطة لا سجل واحد",
+    "basis": "fact"
+   },
+   {
+    "id": 72,
+    "set": {
+     "form": "للمفرد المذكر"
+    },
+    "reason": "الهاء للمذكر، وللمؤنث «ها»",
+    "basis": "grammar"
+   },
+   {
+    "id": 73,
+    "set": {
+     "form": "للمفرد المذكر"
+    },
+    "reason": "الكاف المفتوحة للمذكر، وللمؤنث «كِ»",
+    "basis": "grammar"
+   },
+   {
+    "id": 74,
+    "set": {
+     "pronoun_form": "ي"
+    },
+    "reason": "«يِ» ليست صيغة ياء المتكلم",
+    "basis": "orthography"
+   },
+   {
+    "id": 75,
+    "set": {
+     "form": "للمفرد المذكر"
+    },
+    "reason": "الهاء للمذكر",
+    "basis": "grammar"
+   },
+   {
+    "id": 76,
+    "set": {
+     "form": "للمفرد المذكر"
+    },
+    "reason": "الكاف المفتوحة للمذكر",
+    "basis": "grammar"
+   },
+   {
+    "id": 78,
+    "set": {
+     "form": "للمفرد المذكر"
+    },
+    "reason": "الهاء المكسورة بعد الكسرة هي هاء المذكر",
+    "basis": "grammar"
+   },
+   {
+    "id": 79,
+    "set": {
+     "form": "للمفردة المؤنثة"
+    },
+    "reason": "الكاف المكسورة للمؤنثة",
+    "basis": "grammar"
+   },
+   {
+    "id": 81,
+    "set": {
+     "form": "للمفرد المذكر"
+    },
+    "reason": "الهاء للمذكر",
+    "basis": "grammar"
+   },
+   {
+    "id": 82,
+    "set": {
+     "form": "للمفرد المذكر"
+    },
+    "reason": "الكاف المفتوحة للمذكر",
+    "basis": "grammar"
+   },
+   {
+    "id": 85,
+    "set": {
+     "form": "لجمع المذكر",
+     "category": "ضمير نصب وجر متصل"
+    },
+    "reason": "«كُمْ» لجمع المذكر (والمؤنث «كُنَّ»)، ولا يكون للرفع",
+    "basis": "grammar"
+   },
+   {
+    "add": {
+     "pronoun": "تاء المخاطبَين",
+     "pronoun_form": "تُمَا",
+     "example": "قَرَأْتُمَا",
+     "category": "ضمير رفع متصل",
+     "meaning": "المخاطب",
+     "form": "لمثنى المذكر والمؤنث"
+    },
+    "reason": "إكمال نموذج الضمائر المتصلة",
+    "basis": "grammar"
+   },
+   {
+    "add": {
+     "pronoun": "تاء المخاطبِين",
+     "pronoun_form": "تُمْ",
+     "example": "قَرَأْتُمْ",
+     "category": "ضمير رفع متصل",
+     "meaning": "المخاطب",
+     "form": "لجمع المذكر"
+    },
+    "reason": "إكمال نموذج الضمائر المتصلة",
+    "basis": "grammar"
+   },
+   {
+    "add": {
+     "pronoun": "تاء المخاطبات",
+     "pronoun_form": "تُنَّ",
+     "example": "قَرَأْتُنَّ",
+     "category": "ضمير رفع متصل",
+     "meaning": "المخاطب",
+     "form": "لجمع المؤنث"
+    },
+    "reason": "إكمال نموذج الضمائر المتصلة",
+    "basis": "grammar"
+   },
+   {
+    "add": {
+     "pronoun": "هاء الغائبة",
+     "pronoun_form": "هَا",
+     "example": "أَكْرَمْتُهَا",
+     "category": "ضمير نصب وجر متصل",
+     "meaning": "الغائب",
+     "form": "للمفردة المؤنثة"
+    },
+    "reason": "إكمال نموذج الضمائر المتصلة",
+    "basis": "grammar"
+   },
+   {
+    "add": {
+     "pronoun": "هاء الغائبَين",
+     "pronoun_form": "هُمَا",
+     "example": "أَكْرَمْتُهُمَا",
+     "category": "ضمير نصب وجر متصل",
+     "meaning": "الغائب",
+     "form": "لمثنى المذكر والمؤنث"
+    },
+    "reason": "إكمال نموذج الضمائر المتصلة",
+    "basis": "grammar"
+   },
+   {
+    "add": {
+     "pronoun": "هاء الغائبِين",
+     "pronoun_form": "هُمْ",
+     "example": "أَكْرَمْتُهُمْ",
+     "category": "ضمير نصب وجر متصل",
+     "meaning": "الغائب",
+     "form": "لجمع المذكر"
+    },
+    "reason": "إكمال نموذج الضمائر المتصلة",
+    "basis": "grammar"
+   },
+   {
+    "add": {
+     "pronoun": "هاء الغائبات",
+     "pronoun_form": "هُنَّ",
+     "example": "أَكْرَمْتُهُنَّ",
+     "category": "ضمير نصب وجر متصل",
+     "meaning": "الغائب",
+     "form": "لجمع المؤنث"
+    },
+    "reason": "إكمال نموذج الضمائر المتصلة",
+    "basis": "grammar"
+   },
+   {
+    "add": {
+     "pronoun": "كاف المخاطبَين",
+     "pronoun_form": "كُمَا",
+     "example": "أَكْرَمْتُكُمَا",
+     "category": "ضمير نصب وجر متصل",
+     "meaning": "المخاطب",
+     "form": "لمثنى المذكر والمؤنث"
+    },
+    "reason": "إكمال نموذج الضمائر المتصلة",
+    "basis": "grammar"
+   },
+   {
+    "add": {
+     "pronoun": "كاف المخاطبات",
+     "pronoun_form": "كُنَّ",
+     "example": "أَكْرَمْتُكُنَّ",
+     "category": "ضمير نصب وجر متصل",
+     "meaning": "المخاطب",
+     "form": "لجمع المؤنث"
+    },
+    "reason": "إكمال نموذج الضمائر المتصلة",
+    "basis": "grammar"
+   }
+  ],
+  "hidden_pronouns": [
+   {
+    "id": 3,
+    "delete": true,
+    "reason": "«اعْمَلِي»: الياء ضمير بارز، لا مستتر",
+    "basis": "grammar"
+   },
+   {
+    "id": 6,
+    "delete": true,
+    "reason": "«يَعْمَلُونَ»: الواو ضمير بارز",
+    "basis": "grammar"
+   },
+   {
+    "id": 7,
+    "delete": true,
+    "reason": "«يَقْرَأْنَ»: النون ضمير بارز",
+    "basis": "grammar"
+   },
+   {
+    "id": 9,
+    "delete": true,
+    "reason": "مثال «اعْمَلِي» لتقدير «أنتَ»؛ والقاعدة الصحيحة في السجل 2",
+    "basis": "grammar"
+   },
+   {
+    "id": 10,
+    "delete": true,
+    "reason": "«يعملون»: الواو بارزة، والتقدير «أنتَ» يخالف المرجع",
+    "basis": "grammar"
+   },
+   {
+    "id": 11,
+    "delete": true,
+    "reason": "تكرار السجل 7، والنون بارزة",
+    "basis": "duplicate"
+   },
+   {
+    "add": {
+     "example": "أَنْتَ تَعْمَلُ بِجِدٍّ.",
+     "type": "ضمير مستتر تقديره (أنتَ)",
+     "reference": "المخاطب",
+     "form": "للمفرد المذكر",
+     "ruling": "مستتر وجوبا",
+     "reason": "المضارع المبدوء بتاء المخاطب"
+    },
+    "reason": "خانة ناقصة: المضارع للمخاطب",
+    "basis": "grammar"
+   },
+   {
+    "add": {
+     "example": "أَحْمَدُ عَمِلَ بِإِخْلَاصٍ.",
+     "type": "ضمير مستتر تقديره (هو)",
+     "reference": "الغائب",
+     "form": "للمفرد المذكر",
+     "ruling": "مستتر جوازا",
+     "reason": "الماضي المسند إلى الغائب"
+    },
+    "reason": "خانة ناقصة: الماضي للغائب",
+    "basis": "grammar"
+   },
+   {
+    "add": {
+     "example": "سَلْوَى عَمِلَتْ بِإِخْلَاصٍ.",
+     "type": "ضمير مستتر تقديره (هي)",
+     "reference": "الغائب",
+     "form": "للمفردة المؤنثة",
+     "ruling": "مستتر جوازا",
+     "reason": "الماضي المسند إلى الغائبة"
+    },
+    "reason": "خانة ناقصة: الماضي للغائبة",
+    "basis": "grammar"
+   }
+  ],
+  "demonstrative_pronouns": [
+   {
+    "id": 19,
+    "delete": true,
+    "reason": "تكرار «هَذَانِ» (15) بلا تشكيل وبحالة تخالف D1",
+    "basis": "decision:D1"
+   },
+   {
+    "id": 20,
+    "delete": true,
+    "reason": "تكرار «هَاتَانِ» (16) بلا تشكيل وبحالة تخالف D1",
+    "basis": "decision:D1"
+   },
+   {
+    "id": 24,
+    "delete": true,
+    "reason": "تكرار «ذَانِكَ» (10) بلا تشكيل وبحالة تخالف D1",
+    "basis": "decision:D1"
+   },
+   {
+    "id": 25,
+    "delete": true,
+    "reason": "تكرار «تَانِكَ» (8) بلا تشكيل وبحالة تخالف D1",
+    "basis": "decision:D1"
+   },
+   {
+    "id": 36,
+    "set": {
+     "grammatical_status": "معرب"
+    },
+    "reason": "«ذَيْنِ» مثنى",
+    "basis": "decision:D1"
+   },
+   {
+    "id": 33,
+    "set": {
+     "name": "ذَا"
+    },
+    "reason": "تشكيل",
+    "basis": "orthography"
+   },
+   {
+    "id": 34,
+    "set": {
+     "name": "ذِهِ"
+    },
+    "reason": "تشكيل",
+    "basis": "orthography"
+   },
+   {
+    "id": 37,
+    "set": {
+     "name": "أُولَالِكَ"
+    },
+    "reason": "تشكيل",
+    "basis": "orthography"
+   },
+   {
+    "id": 38,
+    "delete": true,
+    "reason": "«ثَم» تكرار «ثَمَّ» (31) بلا شدة",
+    "basis": "duplicate"
+   },
+   {
+    "id": 40,
+    "set": {
+     "name": "أُولَاءِكَ"
+    },
+    "reason": "تشكيل",
+    "basis": "orthography"
+   },
+   {
+    "id": 43,
+    "set": {
+     "name": "أُولَئِكُمْ"
+    },
+    "reason": "تشكيل",
+    "basis": "orthography"
+   },
+   {
+    "id": 49,
+    "set": {
+     "name": "أُولَاءِكُمْ"
+    },
+    "reason": "تشكيل",
+    "basis": "orthography"
+   },
+   {
+    "id": 53,
+    "set": {
+     "name": "تِهِ",
+     "gender": "مؤنث",
+     "number_classification": "مفرد",
+     "distance": "قريب"
+    },
+    "reason": "توحيد القيم وتشكيل الآخر",
+    "basis": "orthography"
+   },
+   {
+    "id": 35,
+    "hold": true,
+    "reason": "«هات» غير موثّقة اسمَ إشارة",
+    "basis": "needs_attestation"
+   },
+   {
+    "id": 46,
+    "hold": true,
+    "reason": "«هُنَاكَة» غير موثّقة",
+    "basis": "needs_attestation"
+   },
+   {
+    "id": 47,
+    "hold": true,
+    "reason": "«ذَاهَ» غير موثّقة",
+    "basis": "needs_attestation"
+   },
+   {
+    "id": 50,
+    "hold": true,
+    "reason": "«ثَمَّكَ» غير موثّقة",
+    "basis": "needs_attestation"
+   },
+   {
+    "id": 51,
+    "hold": true,
+    "reason": "«هَاهُنَاكَ» غير موثّقة",
+    "basis": "needs_attestation"
+   },
+   {
+    "id": 52,
+    "hold": true,
+    "reason": "«أولاءهم» غير موثّقة",
+    "basis": "needs_attestation"
+   },
+   {
+    "id": 32,
+    "set": {
+     "name": "ثَمَّةَ"
+    },
+    "reason": "حركة البناء على الآخر",
+    "basis": "orthography"
+   }
+  ],
+  "relative_pronouns": [
+   {
+    "id": 4,
+    "delete": true,
+    "reason": "تكرار «مَا» (17) بلا تشكيل",
+    "basis": "duplicate"
+   },
+   {
+    "id": 19,
+    "delete": true,
+    "reason": "«ذات» الطائية ليست في الجرد المرجعي",
+    "basis": "grammar"
+   },
+   {
+    "id": 29,
+    "delete": true,
+    "reason": "«اللَّذِينَ» خطأ: الجمع الَّذِينَ والمثنى اللَّذَيْنِ",
+    "basis": "grammar"
+   },
+   {
+    "id": 30,
+    "delete": true,
+    "reason": "«أُولَاءِ» اسم إشارة؛ الموصول «الأُلَى»",
+    "basis": "grammar"
+   },
+   {
+    "id": 33,
+    "delete": true,
+    "reason": "«اللَّهُمَّ» من صور لفظ الجلالة، ليست موصولاً",
+    "basis": "grammar"
+   },
+   {
+    "id": 34,
+    "delete": true,
+    "reason": "«مَنْ ذَا» تركيب: مَنْ + ذَا",
+    "basis": "grammar"
+   },
+   {
+    "id": 35,
+    "delete": true,
+    "reason": "«مَهْمَا» اسم شرط",
+    "basis": "grammar"
+   },
+   {
+    "id": 37,
+    "delete": true,
+    "reason": "«كَمَا» الكاف + ما",
+    "basis": "grammar"
+   },
+   {
+    "id": 38,
+    "delete": true,
+    "reason": "عامية",
+    "basis": "decision:D3"
+   },
+   {
+    "id": 39,
+    "delete": true,
+    "reason": "عامية",
+    "basis": "decision:D3"
+   },
+   {
+    "id": 40,
+    "delete": true,
+    "reason": "عامية",
+    "basis": "decision:D3"
+   },
+   {
+    "id": 41,
+    "delete": true,
+    "reason": "عامية",
+    "basis": "decision:D3"
+   },
+   {
+    "id": 42,
+    "delete": true,
+    "reason": "عامية",
+    "basis": "decision:D3"
+   },
+   {
+    "id": 43,
+    "delete": true,
+    "reason": "سجل اختبار «بب»",
+    "basis": "junk"
+   },
+   {
+    "id": 44,
+    "delete": true,
+    "reason": "سجل اختبار «سالم قنديل»",
+    "basis": "junk"
+   },
+   {
+    "id": 45,
+    "delete": true,
+    "reason": "سجل اختبار «مبني»",
+    "basis": "junk"
+   },
+   {
+    "id": 47,
+    "delete": true,
+    "reason": "سجل اختبار «g / dfg»",
+    "basis": "junk"
+   },
+   {
+    "id": 46,
+    "set": {
+     "name": "ذُو"
+    },
+    "reason": "«ذُو» الطائية بالضم",
+    "basis": "orthography"
+   },
+   {
+    "id": 48,
+    "delete": true,
+    "reason": "تكرار السجل 46",
+    "basis": "duplicate"
+   },
+   {
+    "id": 36,
+    "set": {
+     "_status": "معرب"
+    },
+    "reason": "أَيّ الموصولة معربة إلا في حالة واحدة",
+    "basis": "decision:D2"
+   },
+   {
+    "add": {
+     "name": "الْأُلَى",
+     "number": "جمع",
+     "gender": "مذكر",
+     "example": "جَاءَ الأُلَى فَازُوا",
+     "grammatical_analysis": "اسم موصول للجمع مبني على السكون"
+    },
+    "reason": "موصول خاص ناقص من الملف",
+    "basis": "grammar"
+   },
+   {
+    "add": {
+     "name": "أَلْ",
+     "number": "مفرد",
+     "gender": "للجنسين",
+     "example": "جَاءَ الضَّارِبُ زَيْدًا",
+     "grammatical_analysis": "«أل» الموصولة الداخلة على الوصف الصريح"
+    },
+    "reason": "موصول عام ناقص من الملف",
+    "basis": "grammar"
+   }
+  ],
+  "built_in_adverbs": [
+   {
+    "id": 5,
+    "set": {
+     "_status": "معرب"
+    },
+    "reason": "«غَدًا» ظرف معرب منصوب",
+    "basis": "decision:D2"
+   },
+   {
+    "id": 6,
+    "set": {
+     "_status": "معرب"
+    },
+    "reason": "«اللَّيْلَةَ» ظرف معرب منصوب",
+    "basis": "decision:D2"
+   },
+   {
+    "id": 7,
+    "delete": true,
+    "reason": "«ثُمَّ» حرف عطف، والظرف «ثَمَّ» في السجل 11",
+    "basis": "grammar"
+   },
+   {
+    "id": 17,
+    "set": {
+     "adverb": "أَيْنَ"
+    },
+    "reason": "شدة وسكون على الياء",
+    "basis": "orthography"
+   },
+   {
+    "id": 4,
+    "set": {
+     "adverb": "الْآنَ"
+    },
+    "reason": "سكون لام التعريف",
+    "basis": "orthography"
+   }
+  ],
+  "kinaya_names": [
+   {
+    "id": 9,
+    "set": {
+     "_status": "معرب"
+    },
+    "reason": "«بِضْع» معرب",
+    "basis": "decision:D2"
+   },
+   {
+    "id": 5,
+    "hold": true,
+    "reason": "«كأَيٍّ» غير موثّقة بهذا الرسم",
+    "basis": "needs_attestation"
+   }
+  ],
+  "verb_name": [
+   {
+    "id": 70,
+    "set": {
+     "tense": "مضارع"
+    },
+    "reason": "المعنى «أتألم» مضارع",
+    "basis": "fact"
+   },
+   {
+    "id": 93,
+    "set": {
+     "name": "هَيْهَاتَ"
+    },
+    "reason": "المشهور هَيْهَاتَ",
+    "basis": "orthography"
+   },
+   {
+    "id": 74,
+    "delete": true,
+    "reason": "«بَسْ» عامية",
+    "basis": "decision:D3"
+   },
+   {
+    "add": {
+     "name": "رُوَيْدَ",
+     "tense": "أمر",
+     "type": "منقول",
+     "meaning": "أَمْهِلْ",
+     "example": "رُوَيْدَ زَيْدًا"
+    },
+    "reason": "في الفهرس (المجموعة 9) وغائب عن الملف",
+    "basis": "grammar"
+   },
+   {
+    "add": {
+     "name": "هَاءَ",
+     "tense": "أمر",
+     "type": "مرتجل",
+     "meaning": "خُذْ",
+     "example": "هَاءَ دِرْهَمًا"
+    },
+    "reason": "في الفهرس (المجموعة 9) وغائب عن الملف",
+    "basis": "grammar"
+   },
+   {
+    "add": {
+     "name": "حَيَّهَلَ",
+     "tense": "أمر",
+     "type": "مرتجل",
+     "meaning": "أَقْبِلْ أو أَسْرِعْ",
+     "example": "حَيَّهَلَ الصَّلَاةَ"
+    },
+    "reason": "في الفهرس (المجموعة 9) وغائب عن الملف",
+    "basis": "grammar"
+   },
+   {
+    "id": 86,
+    "set": {
+     "name": "إِلَيْكَ عَنْ"
+    },
+    "reason": "سكون «عَنْ»",
+    "basis": "orthography"
+   }
+  ],
+  "jazm_tools": [
+   {
+    "id": 15,
+    "set": {
+     "_status": "معرب"
+    },
+    "reason": "«أَيّ» الشرطية معربة",
+    "basis": "decision:D2"
+   },
+   {
+    "id": 16,
+    "set": {
+     "_status": "معرب"
+    },
+    "reason": "«أَيّ» الشرطية معربة",
+    "basis": "decision:D2"
+   },
+   {
+    "id": 17,
+    "set": {
+     "_status": "معرب"
+    },
+    "reason": "«أَيّ» الشرطية معربة",
+    "basis": "decision:D2"
+   },
+   {
+    "id": 18,
+    "set": {
+     "_status": "معرب"
+    },
+    "reason": "«أَيّ» الشرطية معربة",
+    "basis": "decision:D2"
+   },
+   {
+    "id": 19,
+    "set": {
+     "category": "اسم شرط جازم يجزم فعلين مضارعين"
+    },
+    "reason": "التصنيف «اسم» ناقص",
+    "basis": "fact"
+   },
+   {
+    "id": 20,
+    "set": {
+     "category": "اسم شرط جازم يجزم فعلين مضارعين"
+    },
+    "reason": "التصنيف «اسم» ناقص",
+    "basis": "fact"
+   },
+   {
+    "id": 19,
+    "set": {
+     "tool": "أَيْنَمَا"
+    },
+    "reason": "حركة الميم",
+    "basis": "orthography"
+   }
+  ],
+  "conditional_letters_tools": [
+   {
+    "id": 14,
+    "set": {
+     "particle": "مَهْمَا"
+    },
+    "reason": "تشكيل",
+    "basis": "orthography"
+   },
+   {
+    "id": 15,
+    "delete": true,
+    "reason": "تكرار «لَوْمَا» (5)",
+    "basis": "duplicate"
+   }
+  ],
+  "vocative_particles": [
+   {
+    "id": 6,
+    "delete": true,
+    "reason": "«أَيُّهَا» منادى + ها التنبيه، ليست حرف نداء",
+    "basis": "grammar"
+   }
+  ],
+  "interrogative_tools_categories": [
+   {
+    "id": 1,
+    "set": {
+     "tool": "مَنْ"
+    },
+    "reason": "تشكيل (النوع «اسم استفهام» يحسمه)",
+    "basis": "orthography"
+   },
+   {
+    "id": 2,
+    "set": {
+     "tool": "مَنْ ذَا"
+    },
+    "reason": "تشكيل (النوع «اسم استفهام» يحسمه)",
+    "basis": "orthography"
+   },
+   {
+    "id": 3,
+    "set": {
+     "tool": "مَا"
+    },
+    "reason": "تشكيل (النوع «اسم استفهام» يحسمه)",
+    "basis": "orthography"
+   },
+   {
+    "id": 4,
+    "set": {
+     "tool": "مَاذَا"
+    },
+    "reason": "تشكيل (النوع «اسم استفهام» يحسمه)",
+    "basis": "orthography"
+   },
+   {
+    "id": 5,
+    "set": {
+     "tool": "مَتَى"
+    },
+    "reason": "تشكيل (النوع «اسم استفهام» يحسمه)",
+    "basis": "orthography"
+   },
+   {
+    "id": 6,
+    "set": {
+     "tool": "أَيَّانَ"
+    },
+    "reason": "تشكيل (النوع «اسم استفهام» يحسمه)",
+    "basis": "orthography"
+   },
+   {
+    "id": 7,
+    "set": {
+     "tool": "أَيْنَ"
+    },
+    "reason": "تشكيل (النوع «اسم استفهام» يحسمه)",
+    "basis": "orthography"
+   },
+   {
+    "id": 8,
+    "set": {
+     "tool": "أَنَّى"
+    },
+    "reason": "تشكيل (النوع «اسم استفهام» يحسمه)",
+    "basis": "orthography"
+   },
+   {
+    "id": 9,
+    "set": {
+     "tool": "كَمْ"
+    },
+    "reason": "تشكيل (النوع «اسم استفهام» يحسمه)",
+    "basis": "orthography"
+   },
+   {
+    "id": 10,
+    "set": {
+     "tool": "كَيْفَ"
+    },
+    "reason": "تشكيل (النوع «اسم استفهام» يحسمه)",
+    "basis": "orthography"
+   },
+   {
+    "id": 11,
+    "set": {
+     "tool": "أَيّ"
+    },
+    "reason": "تشكيل (النوع «اسم استفهام» يحسمه)",
+    "basis": "orthography"
+   },
+   {
+    "id": 11,
+    "set": {
+     "_status": "معرب"
+    },
+    "reason": "«أَيّ» الاستفهامية معربة",
+    "basis": "decision:D2"
+   },
+   {
+    "id": 12,
+    "delete": true,
+    "reason": "تكرار سجلات interrogative_letters_tools",
+    "basis": "duplicate"
+   },
+   {
+    "id": 13,
+    "delete": true,
+    "reason": "تكرار سجلات interrogative_letters_tools",
+    "basis": "duplicate"
+   },
+   {
+    "id": 14,
+    "delete": true,
+    "reason": "تكرار سجلات interrogative_letters_tools",
+    "basis": "duplicate"
+   },
+   {
+    "id": 15,
+    "delete": true,
+    "reason": "تكرار سجلات interrogative_letters_tools",
+    "basis": "duplicate"
+   },
+   {
+    "id": 16,
+    "delete": true,
+    "reason": "تكرار سجلات interrogative_letters_tools",
+    "basis": "duplicate"
+   },
+   {
+    "id": 17,
+    "delete": true,
+    "reason": "تكرار سجلات interrogative_letters_tools",
+    "basis": "duplicate"
+   }
+  ],
+  "coordinating_conjunctions": [
+   {
+    "id": 3,
+    "set": {
+     "letter": "ثُمَّ"
+    },
+    "reason": "الشدة",
+    "basis": "orthography"
+   },
+   {
+    "id": 17,
+    "delete": true,
+    "reason": "«لا» مع الأمر ناهية لا عاطفة",
+    "basis": "grammar"
+   },
+   {
+    "id": 20,
+    "delete": true,
+    "reason": "تكرار",
+    "basis": "duplicate"
+   },
+   {
+    "id": 21,
+    "delete": true,
+    "reason": "تكرار",
+    "basis": "duplicate"
+   },
+   {
+    "id": 22,
+    "delete": true,
+    "reason": "تكرار",
+    "basis": "duplicate"
+   },
+   {
+    "id": 23,
+    "delete": true,
+    "reason": "تكرار",
+    "basis": "duplicate"
+   },
+   {
+    "id": 4,
+    "set": {
+     "letter": "حَتَّى"
+    },
+    "reason": "فتحة التاء المشددة",
+    "basis": "orthography"
+   },
+   {
+    "id": 10,
+    "set": {
+     "letter": "حَتَّى"
+    },
+    "reason": "فتحة التاء المشددة",
+    "basis": "orthography"
+   }
+  ],
+  "letters_answers": [
+   {
+    "id": 8,
+    "delete": true,
+    "reason": "«نَعَمَّا» نِعْمَ + ما، ليست حرف جواب",
+    "basis": "grammar"
+   },
+   {
+    "id": 6,
+    "hold": true,
+    "reason": "«أَوَى» غير موثّقة حرفَ جواب",
+    "basis": "needs_attestation"
+   },
+   {
+    "id": 7,
+    "hold": true,
+    "reason": "«أَفِي» غير موثّقة حرفَ جواب",
+    "basis": "needs_attestation"
+   }
+  ],
+  "preposition_meanings": [
+   {
+    "id": 19,
+    "delete": true,
+    "reason": "سجل فارغ",
+    "basis": "junk"
+   },
+   {
+    "id": 51,
+    "delete": true,
+    "reason": "لغة قليلة",
+    "basis": "decision:D4"
+   },
+   {
+    "id": 52,
+    "delete": true,
+    "reason": "لغة قليلة",
+    "basis": "decision:D4"
+   },
+   {
+    "id": 53,
+    "delete": true,
+    "reason": "لغة قليلة",
+    "basis": "decision:D4"
+   },
+   {
+    "id": 54,
+    "delete": true,
+    "reason": "لغة قليلة",
+    "basis": "decision:D4"
+   }
+  ],
+  "present_tense_building_cases": [
+   {
+    "id": 2,
+    "set": {
+     "example": "لَأَنْصُرَنْ"
+    },
+    "reason": "نون التوكيد الخفيفة ساكنة",
+    "basis": "grammar"
+   }
+  ],
+  "grammatical_construction_cases": [
+   {
+    "id": 4,
+    "delete": true,
+    "reason": "رأس جدول مستورد",
+    "basis": "junk"
+   },
+   {
+    "id": 3,
+    "section_header": true,
+    "reason": "عنوان قسم: يصير حقل section للسجلات بعده",
+    "basis": "structure"
+   },
+   {
+    "id": 10,
+    "section_header": true,
+    "reason": "عنوان قسم: يصير حقل section للسجلات بعده",
+    "basis": "structure"
+   },
+   {
+    "id": 16,
+    "section_header": true,
+    "reason": "عنوان قسم: يصير حقل section للسجلات بعده",
+    "basis": "structure"
+   },
+   {
+    "id": 37,
+    "section_header": true,
+    "reason": "عنوان قسم: يصير حقل section للسجلات بعده",
+    "basis": "structure"
+   },
+   {
+    "id": 44,
+    "section_header": true,
+    "reason": "عنوان قسم: يصير حقل section للسجلات بعده",
+    "basis": "structure"
+   },
+   {
+    "id": 19,
+    "continuation": true,
+    "reason": "مثال تابع للسجل قبله: يُلحق بأمثلته",
+    "basis": "structure"
+   },
+   {
+    "id": 20,
+    "continuation": true,
+    "reason": "مثال تابع للسجل قبله: يُلحق بأمثلته",
+    "basis": "structure"
+   },
+   {
+    "id": 21,
+    "continuation": true,
+    "reason": "مثال تابع للسجل قبله: يُلحق بأمثلته",
+    "basis": "structure"
+   },
+   {
+    "id": 24,
+    "continuation": true,
+    "reason": "مثال تابع للسجل قبله: يُلحق بأمثلته",
+    "basis": "structure"
+   },
+   {
+    "id": 25,
+    "continuation": true,
+    "reason": "مثال تابع للسجل قبله: يُلحق بأمثلته",
+    "basis": "structure"
+   },
+   {
+    "id": 26,
+    "continuation": true,
+    "reason": "مثال تابع للسجل قبله: يُلحق بأمثلته",
+    "basis": "structure"
+   },
+   {
+    "id": 27,
+    "continuation": true,
+    "reason": "مثال تابع للسجل قبله: يُلحق بأمثلته",
+    "basis": "structure"
+   },
+   {
+    "id": 30,
+    "continuation": true,
+    "reason": "مثال تابع للسجل قبله: يُلحق بأمثلته",
+    "basis": "structure"
+   },
+   {
+    "id": 32,
+    "continuation": true,
+    "reason": "مثال تابع للسجل قبله: يُلحق بأمثلته",
+    "basis": "structure"
+   },
+   {
+    "id": 33,
+    "continuation": true,
+    "reason": "مثال تابع للسجل قبله: يُلحق بأمثلته",
+    "basis": "structure"
+   }
+  ]
+ }
+}

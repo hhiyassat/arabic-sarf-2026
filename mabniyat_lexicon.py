@@ -10,7 +10,7 @@ mabniyat_lexicon.py — محوِّل data/02_mabniyat إلى معجم الكلم
     lexicon/mabniyat_rejected.jsonl  سجلات مرفوضة مع أسبابها (قائمة عمل لتصحيح المصدر)
     lexicon/mabniyat_report.md       ملخّص لكل ملف، ومقارنة بـ operators_catalog
 
-المبادئ (من وثيقة النظرية T04، T06، T19i):
+المبادئ:
 - لا تخمين: الصيغة غير المشكولة تُرفض ولا يُفترض لها تشكيل (مِنْ ≠ مَنْ).
 - التصحيح الإملائي الآلي محصور في ما لا لبس فيه، ويُسجَّل في normalizations.
 - كل رفض له سبب صريح، وكل قبول يطابق المخطط.
@@ -93,6 +93,10 @@ def last_mark(form):
         return 'sukun'          # المختوم بحرف مدّ مبني على السكون (أَنَا، هُمَا)
     return None
 
+def stated_status(r):
+    """الحالة المصرَّح بها في السجل: من التصحيحات (_status) أو من النسخة المصحَّحة (grammatical_status)"""
+    return r.get('_status') or r.get('grammatical_status')
+
 def has_tanwin(form):
     return any(m & TANWIN for _, m in eo.letters(form))
 
@@ -133,16 +137,16 @@ def agreement(gender, number):
     return a or None
 
 META_FIELDS = {'id', 'al_bab_althani_id', 'section_id', 'category_id', 'created_at', 'updated_at',
-               'edited_by', 'is_deleted', 'editor2'}   # حقول إدارية لا تصف الكلمة
+               'edited_by', 'is_deleted', 'editor2', '_added'}   # حقول إدارية لا تصف الكلمة
 
 BUILD = {'ضم': 'damma', 'فتح': 'fatha', 'كسر': 'kasra', 'سكون': 'sukun'}
 
 # ---------- مراجع المقارنة ----------
-# الموصولات بحسب الوثيقة N08 (الخاص والعام وأل وذو وذا)، بصيغها في المثنى والجمع
-N08_RELATIVES = {'الذي', 'التي', 'اللذان', 'اللذين', 'اللتان', 'اللتين', 'الذين', 'الالي', 'اللائي',
+# جرد الموصولات المرجعي (الخاص والعام وأل وذو وذا، كما في قطر الندى)، بصيغها في المثنى والجمع
+REF_RELATIVES = {'الذي', 'التي', 'اللذان', 'اللذين', 'اللتان', 'اللتين', 'الذين', 'الالي', 'اللائي',
                  'اللاتي', 'من', 'ما', 'اي', 'ال', 'ذو', 'ذا'}
-# تشكيل N08 كما ورد في الوثيقة (يُقارن بعد حذف حركة الآخر)
-N08_VOCALIZED = {'الَّذِي', 'الَّتِي', 'اللَّذَانِ', 'اللَّذَيْنِ', 'اللَّتَانِ', 'اللَّتَيْنِ', 'الَّذِينَ', 'الأُلَى',
+# تشكيل الجرد المرجعي (يُقارن بعد حذف حركة الآخر)
+REF_RELATIVES_VOCALIZED = {'الَّذِي', 'الَّتِي', 'اللَّذَانِ', 'اللَّذَيْنِ', 'اللَّتَانِ', 'اللَّتَيْنِ', 'الَّذِينَ', 'الْأُلَى',
                  'اللَّائِي', 'اللَّاتِي', 'مَنْ', 'مَا', 'أَيّ', 'أَلْ', 'ذُو', 'ذَا'}
 
 def drop_final_mark(form):
@@ -157,6 +161,8 @@ PARADIGM_CELLS = [(1, 'singular', 'common'), (1, 'plural', 'common'), (2, 'singu
 IYYA_SUFFIXES = {'يَ', 'نَا', 'كَ', 'كِ', 'كُمَا', 'كُمْ', 'كُنَّ', 'هُ', 'هَا', 'هُمَا', 'هُمْ', 'هُنَّ'}
 REF_ATTACHED = {'رفع': ['تُ', 'نَا', 'تَ', 'تِ', 'تُمَا', 'تُمْ', 'تُنَّ', 'ا', 'وا', 'نَ', 'ي'],
                 'نصب/جر': ['ي', 'نَا', 'كَ', 'كِ', 'كُمَا', 'كُمْ', 'كُنَّ', 'هُ', 'هَا', 'هُمَا', 'هُمْ', 'هُنَّ']}
+# صيغ صوتية للضمير نفسه بعد الكسرة أو الياء (بِهِ، عَلَيْهِمْ): مقبولة ولا تُعدّ خانات مستقلة
+ATTACHED_VARIANTS = {'هِ', 'هِمَا', 'هِمْ', 'هِنَّ'}
 HIDDEN_ALLOWED = {'أنا', 'نحن', 'أنتَ', 'هو', 'هي'}   # لا يستتر إلا هذه (المفرد غير المخاطبة، ونحن)
 
 
@@ -167,6 +173,9 @@ class Converter:
         self.cand = []                       # مداخل مرشحة قبل الدمج
         self.rejected = []
         self.rejected_ids = set()
+        self.held = []
+        self.corrected_data = {}
+        self.fixes = {}
         self.stats = defaultdict(Counter)
         self.notes = defaultdict(list)       # ملاحظات تقرير لكل ملف
         self.validator = Validator(os.path.join(os.path.dirname(os.path.abspath(__file__)),
@@ -177,7 +186,53 @@ class Converter:
         with open(os.path.join(self.src, name + '.json'), encoding='utf-8') as f:
             d = json.load(f)
         self.stats[name]['in'] += len(d['data'])
-        return d['data']
+        return self.corrected(name, d['data'])
+
+    def corrected(self, name, data):
+        """تطبيق data_fixes على سجلات الملف: حذف، تعديل، إضافة، تعليق، وإصلاح البنية"""
+        fixes = self.fixes.get(name, [])
+        if not fixes:
+            return data
+        by_id = defaultdict(list)
+        for x in fixes:
+            if 'id' in x:
+                by_id[x['id']].append(x)
+        out, section = [], None
+        for r in data:
+            r = dict(r)
+            fx = by_id.get(r['id'], [])
+            if any(x.get('delete') for x in fx):
+                self.stats[name]['deleted (correction)'] += 1
+                continue
+            if any(x.get('hold') for x in fx):
+                self.held.append({'source': {'file': name, 'id': r['id']}, 'record': r,
+                                  'reason': next(x['reason'] for x in fx if x.get('hold'))})
+                self.stats[name]['held'] += 1
+                continue
+            if any(x.get('section_header') for x in fx):
+                section = r.get('description')
+                self.stats[name]['section headers'] += 1
+                continue
+            if any(x.get('continuation') for x in fx) and out:
+                prev = out[-1]
+                prev['example'] = ' | '.join(v for v in (prev.get('example'), r.get('example')) if v and v != 'nan')
+                self.stats[name]['merged continuations'] += 1
+                continue
+            for x in fx:
+                if 'set' in x:
+                    r.update(x['set'])
+                    self.stats[name]['edited (correction)'] += 1
+            if section and 'section' not in r and name == 'grammatical_construction_cases':
+                r['section'] = section
+            out.append(r)
+        next_id = 9001
+        for x in fixes:
+            if 'add' in x:
+                out.append(dict(x['add'], id=next_id, _added=x['reason']))
+                next_id += 1
+                self.stats[name]['added (correction)'] += 1
+        self.corrected_data[name] = out
+        return out
 
     def reject(self, file, rid, raw, reasons):
         self.rejected.append({'source': {'file': file, 'id': rid}, 'form_original': raw, 'reasons': reasons})
@@ -188,6 +243,8 @@ class Converter:
     def add(self, file, rid, raw, category, pos, *, noun=None, particle=None, pronoun=None, extra=None,
             meanings=(), examples=(), warnings=(), split_forms=False, status_src='file_scope'):
         forms = [p.strip() for p in re.split(r'\s+-\s+|\s*/\s*', raw)] if split_forms else [raw]
+        self._added_reason = None if rid < 9000 else next(
+            (r.get('_added') for r in self.corrected_data.get(file, []) if r['id'] == rid), None)
         for raw1 in forms:
             form, norm, problems = normalize_form(raw1)
             if problems:
@@ -209,6 +266,10 @@ class Converter:
             e['warnings'] = list(warnings)
             e['_status_src'] = status_src
             self.cand.append(e)
+        if self._added_reason:
+            for e in self.cand[-len(forms):]:
+                if e['sources'][0]['id'] == rid and not any(w.startswith('مضاف بتصحيح') for w in e['warnings']):
+                    e['warnings'].append('مضاف بتصحيح: ' + self._added_reason)
 
     def catalog_ids(self, form, groups=None):
         p = loose(form)
@@ -251,16 +312,20 @@ class Converter:
                          meanings=[cat], examples=[r['example']])
             elif 'متصل' in cat or 'مشترك' in cat:
                 raw = r['pronoun_form'] or ''
-                attached_in_file['رفع' if 'رفع' in cat else 'نصب/جر'].add(normalize_form(raw)[0].lstrip('ـ'))
+                slots = ['رفع', 'نصب/جر'] if 'مشترك' in cat else ['رفع' if 'رفع' in cat else 'نصب/جر']
+                for sl in slots:
+                    attached_in_file[sl].add(normalize_form(raw)[0].lstrip('ـ'))
                 if len(raw.split()) > 1:
                     self.reject(f, r['id'], raw, ['صيغ متعددة في سجل واحد بخصائص مشتركة: لا تُنسب الخصائص لكل صيغة دون تخمين'])
                     continue
                 if person in (2, 3) and number == 'singular' and gender == 'common':
                     self.reject(f, r['id'], raw, [f'خصائص مستحيلة: «{r["form"]}» والمفرد المخاطب والغائب يفرّق بين المذكر والمؤنث'])
                     continue
-                slot = 'رفع' if 'رفع' in cat else 'نصب/جر'
-                fn = ('subject' if 'رفع' in cat else 'governed_by_particle' if ('إِنَّ' in r['pronoun'] or 'بِحَرْفِ' in r['pronoun'])
-                      else 'possessive' if 'جر' in cat else 'object' if 'نصب' in cat else None)
+                slot = slots[0]
+                fns = (['subject', 'object', 'possessive'] if 'مشترك' in cat else ['subject'] if 'رفع' in cat
+                       else ['governed_by_particle'] if ('إِنَّ' in r['pronoun'] or 'بِحَرْفِ' in r['pronoun'])
+                       else ['object', 'possessive'] if ('نصب' in cat and 'جر' in cat)
+                       else ['possessive'] if 'جر' in cat else ['object'] if 'نصب' in cat else [])
                 pron = {'person': person, 'number': number}
                 if gender:
                     pron['gender'] = gender
@@ -268,13 +333,14 @@ class Converter:
                     self.reject(f, r['id'], raw, ['الشخص أو العدد غير مستخرج من الحقول meaning/form'])
                     continue
                 form, _, _ = normalize_form(raw)
-                if form.lstrip('ـ') not in REF_ATTACHED[slot]:
+                if form.lstrip('ـ') not in REF_ATTACHED[slot] and form.lstrip('ـ') not in ATTACHED_VARIANTS:
                     self.reject(f, r['id'], raw, [f'«{form}» ليست من صيغ الضمائر المتصلة ({slot})']); continue
-                attached_seen[slot].add(form.lstrip('ـ'))
+                for sl in slots:
+                    attached_seen[sl].add(form.lstrip('ـ'))
                 self.add(f, r['id'], raw, 'attached_pronoun', 'noun',
                          noun={'subtype': 'pronoun', 'definiteness': 'definite', 'definite_by': 'pronoun',
                                'inflection': {'status': 'mabni'}},
-                         pronoun=pron, extra={'functions': [fn] if fn else [], 'case_slot': slot},
+                         pronoun=pron, extra={'functions': fns, 'case_slot': ' + '.join(slots)},
                          meanings=[r['pronoun']], examples=[r['example']])
         # اكتمال النموذج
         for case, label in (('nom', 'المنفصلة للرفع'), ('acc', 'المنفصلة للنصب')):
@@ -346,23 +412,24 @@ class Converter:
             if eo.cv.divine_name(form) is not None:
                 self.reject(f, r['id'], r['name'], ['لفظ الجلالة (اللَّهُمَّ) ليس اسماً موصولاً']); continue
             p = loose(form)
-            if p not in N08_RELATIVES:
-                self.reject(f, r['id'], r['name'], ['ليست في جرد الموصولات N08 من وثيقة النظرية']); continue
-            ref_v = {drop_final_mark(unicodedata.normalize('NFC', x)) for x in N08_VOCALIZED}
+            if p not in REF_RELATIVES:
+                self.reject(f, r['id'], r['name'], ['ليست في جرد الموصولات المرجعي']); continue
+            ref_v = {drop_final_mark(unicodedata.normalize('NFC', x)) for x in REF_RELATIVES_VOCALIZED}
             if drop_final_mark(form) not in ref_v:
-                self.reject(f, r['id'], r['name'], [f'تشكيل «{form}» يخالف صيغة N08 في الوثيقة']); continue
+                self.reject(f, r['id'], r['name'], [f'تشكيل «{form}» يخالف الصيغة في الجرد المرجعي']); continue
             n = parse_number(r['number'])
             if p.startswith(('اللذ', 'اللت')) and n != 'dual':
                 self.reject(f, r['id'], r['name'], [f'صيغة مثنى موسومة «{r["number"]}»']); continue
+            murab = stated_status(r) == 'معرب'
             noun = {'subtype': 'relative', 'definiteness': 'definite', 'definite_by': 'relative',
-                    'inflection': {'status': 'mabni'}}
+                    'inflection': {'status': 'murab' if murab else 'mabni'}}
             g = parse_gender(r['gender'])
             general = p in ('من', 'ما', 'اي', 'ال', 'ذو', 'ذا')
             if not general:
                 a = agreement(g, n)
                 if a:
                     noun['agreement'] = a
-            self.add(f, r['id'], r['name'], 'relative', 'noun', noun=noun,
+            self.add(f, r['id'], r['name'], 'relative', 'noun', noun=noun, status_src='record' if murab else 'file_scope',
                      extra={'general': general or None},
                      meanings=[r['grammatical_analysis']], examples=[r['example']])
 
@@ -372,6 +439,11 @@ class Converter:
             form, _, problems = normalize_form(r['adverb'])
             if problems:
                 self.reject(f, r['id'], r['adverb'], problems); continue
+            if stated_status(r) == 'معرب':
+                self.add(f, r['id'], r['adverb'], 'adverb', 'noun', status_src='record',
+                         noun={'subtype': 'adverbial', 'inflection': {'status': 'murab'}},
+                         meanings=[r['syntactic_analysis'], r['semantic_analysis']], examples=[r['example_sentence']])
+                continue
             bm = BUILD.get((r['adverb_type'] or '').strip())
             lm = last_mark(form)
             reasons = []
@@ -401,7 +473,7 @@ class Converter:
                      extra={'tense': tense_map.get(t, t), 'origin': (r['type'] or '').strip()},
                      meanings=[r['meaning']], examples=[r['example']], warnings=warn)
         g9 = {loose(op['form']) for op in self.cat.ops.values() if op['group'] == '9'}
-        have = {loose(r['name']) for r in json.load(open(os.path.join(self.src, f + '.json'), encoding='utf-8'))['data']}
+        have = {loose(e['form']) for e in self.cand if e['category'] == 'verb_name'}
         miss = sorted(g9 - have)
         if miss:
             self.notes[f].append('أسماء أفعال في operators_catalog (المجموعة 9) غائبة عن الملف: ' + '، '.join(miss))
@@ -409,8 +481,9 @@ class Converter:
     def kinaya(self):
         f = 'kinaya_names'
         for r in self.rows(f):
-            self.add(f, r['id'], r['name'], 'kinaya', 'noun',
-                     noun={'subtype': 'kinaya', 'inflection': {'status': 'mabni'}},
+            murab = stated_status(r) == 'معرب'
+            self.add(f, r['id'], r['name'], 'kinaya', 'noun', status_src='record' if murab else 'file_scope',
+                     noun={'subtype': 'kinaya', 'inflection': {'status': 'murab' if murab else 'mabni'}},
                      extra={'kind': r['type']}, meanings=[r['meaning_usage']], examples=[r['example']],
                      )
 
@@ -557,8 +630,10 @@ class Converter:
             if e.get('noun', {}).get('inflection', {}).get('build_mark') is None:
                 e.get('noun', {}).get('inflection', {}).pop('build_mark', None)
             if e['category'] != 'attached_pronoun' and len(e['plain']) > 1:
-                bad = [(rend, pat) for w in e['form'].split()
-                       for rend, pat, ver, _ in cv.run(w, 'WAQF_RUN')['rows'] if ver != 'OK']
+                rows = [x for w in e['form'].split() for x in cv.run(w, 'WAQF_RUN')['rows']]
+                if (e.get('noun') or {}).get('inflection', {}).get('status') == 'murab' and rows:
+                    rows = rows[:-1]          # المعرب يُستشهد به بلا حركة إعراب على آخره
+                bad = [(rend, pat) for rend, pat, ver, _ in rows if ver != 'OK']
                 if bad:
                     e.setdefault('warnings', []).append(
                         'التقطيع: ' + '، '.join(f'«{x}» {p}' for x, p in bad) + ' (تشكيل ناقص في المصدر)')
@@ -607,6 +682,18 @@ def write_report(conv, final, path, cross):
         rej = {k[len('rejected: '):]: v for k, v in s.items() if k.startswith('rejected: ')}
         L.append(f"| `{f}` | {s['in']} | {s['accepted_records']} | {s['merged_duplicates'] or ''} | "
                  f"{sum(rej.values()) or ''} | {'؛ '.join(f'{k} ({v})' for k, v in sorted(rej.items(), key=lambda x: -x[1]))} |")
+    corr = Counter()
+    for f in files:
+        for k in ('deleted (correction)', 'edited (correction)', 'added (correction)', 'held',
+                  'section headers', 'merged continuations'):
+            corr[k] += st[f][k]
+    if sum(corr.values()):
+        L += ['', '## التصحيحات المطبّقة من `data_fixes/mabniyat_corrections.json`', '',
+              f"- حذف: {corr['deleted (correction)']}، تعديل: {corr['edited (correction)']}، إضافة: {corr['added (correction)']}",
+              f"- معلّقة حتى التوثيق: {corr['held']} (في `mabniyat_held.jsonl`)",
+              f"- إصلاح البنية: {corr['section headers']} عنوان قسم، {corr['merged continuations']} مثال أُلحق بسجله"]
+        if conv.held:
+            L += ['', '**المعلّقة:**', ''] + [f"- `{h['source']['file']}` ({h['source']['id']}): {h['reason']}" for h in conv.held]
     L += ['', '## ملاحظات الملفات', '']
     for f in files:
         for n in conv.notes.get(f, []):
@@ -627,10 +714,17 @@ def main():
     ap = argparse.ArgumentParser(description='تحويل 02_mabniyat إلى معجم الكلمات المغلقة')
     ap.add_argument('--src', default=os.path.join(here, 'data', '02_mabniyat'))
     ap.add_argument('--out', default=os.path.join(here, 'lexicon'))
+    ap.add_argument('--fixes', default=os.path.join(here, 'data_fixes', 'mabniyat_corrections.json'),
+                    help='ملف التصحيحات؛ «none» لتعطيله')
+    ap.add_argument('--write-corrected', metavar='DIR',
+                    help='اكتب نسخة مصحَّحة من ملفات المصدر (البنية نفسها) في DIR')
     args = ap.parse_args()
     cat = eo.Catalog([p for p in (os.path.join(here, 'operators_catalog.jsonl'),
                                   os.path.join(here, 'operators_catalog_split_vocalized.csv')) if os.path.exists(p)])
     conv = Converter(args.src, cat)
+    if args.fixes != 'none' and os.path.exists(args.fixes):
+        with open(args.fixes, encoding='utf-8') as fh:
+            conv.fixes = json.load(fh)['files']
     conj = set()
     for r in json.load(open(os.path.join(args.src, 'coordinating_conjunctions.json'), encoding='utf-8'))['data']:
         fm, _, _ = normalize_form(r['letter'])
@@ -646,8 +740,37 @@ def main():
     with open(os.path.join(args.out, 'mabniyat_rejected.jsonl'), 'w', encoding='utf-8') as fh:
         for r in conv.rejected:
             fh.write(json.dumps(r, ensure_ascii=False) + '\n')
+    with open(os.path.join(args.out, 'mabniyat_held.jsonl'), 'w', encoding='utf-8') as fh:
+        for r in conv.held:
+            fh.write(json.dumps(r, ensure_ascii=False) + '\n')
     write_report(conv, final, os.path.join(args.out, 'mabniyat_report.md'), cross)
-    print(f'مقبولة: {len(final)}  مرفوضة: {len(conv.rejected)}  → {args.out}/')
+    if args.write_corrected:
+        write_corrected(args.src, args.write_corrected, conv.corrected_data)
+    print(f'مقبولة: {len(final)}  مرفوضة: {len(conv.rejected)}  معلّقة: {len(conv.held)}  → {args.out}/')
+
+
+def write_corrected(src, dst, corrected):
+    """نسخة مصحَّحة من المصدر بالبنية نفسها؛ الحقول الداخلية تصير حقولاً صريحة"""
+    os.makedirs(dst, exist_ok=True)
+    for name in sorted(f[:-5] for f in os.listdir(src) if f.endswith('.json')):
+        with open(os.path.join(src, name + '.json'), encoding='utf-8') as fh:
+            d = json.load(fh)
+        if name in corrected:
+            rows = []
+            for r in corrected[name]:
+                r = dict(r)
+                if '_status' in r:
+                    r['grammatical_status'] = r.pop('_status')
+                if '_added' in r:
+                    r['added_reason'] = r.pop('_added')
+                rows.append(r)
+            d['data'] = rows
+            if 'total' in d:
+                d['total'] = len(rows)
+            if 'pagination' in d:
+                d['pagination'].update(total=len(rows), to=len(rows))
+        with open(os.path.join(dst, name + '.json'), 'w', encoding='utf-8') as fh:
+            json.dump(d, fh, ensure_ascii=False, indent=1)
 
 
 if __name__ == '__main__':
