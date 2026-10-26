@@ -6,7 +6,7 @@ cv_syllabifier.py — محوّل CV رباعي الطبقات للعربية (و
 لا تُطبَّق قوانين المقاطع كقيود؛ يُقطَّع بالتعريف فقط (كل نواة تأخذ الصامت الذي قبلها)
 ثم يُعَدّ ما خرج. أي نوع خارج الستة يُبلَّغ OTHER مع المقدمة المخروقة.
 """
-import sys, json, hashlib
+import sys, re, json, hashlib
 from collections import Counter, OrderedDict
 
 # ---------- Unicode ----------
@@ -26,13 +26,35 @@ FATHA_BEFORE_WASL = ('مِنْ',)                 # قائمة مغلقة: تُ�
 
 # قاموس مغلق: ألف محذوفة خطاً (تُدرَج قبل المعالجة)
 LEXICAL_MADD = OrderedDict([
-    ('اللَّه', 'اللَّاه'),
-    ('لِلَّه', 'لِلَّاه'),
     ('ذَلِك', 'ذَالِك'),
     ('هَذَا', 'هَاذَا'),
     ('هَذِه', 'هَاذِه'),
     ('الرَّحْمَن', 'الرَّحْمَان'),
 ])
+
+# لفظ الجلالة: اسم علم جامد لا تصريف له — يُعرَف كلمةً واحدة بما يتصل به من سوابق،
+# ويُعطى صورة ثابتة واحدة (لَّاه بألف مدّ) بدل مطابقة أجزاء من الكلمة.
+#   [ءَ][وَ|فَ][بِ|تَ|كَ] + (ال | لِ) + لَّ + ه + [حركة] + [مَّ]
+#   ٱللَّه، لِلَّه، فَلِلَّه، بِٱللَّه، تَٱللَّه، وَٱللَّه، ءَآللَّه، ٱللَّهُمَّ — ولا يطابق ٱللَّهْو
+_SHADDA_FATHA = '(?:\u0651\u064E?|\u064E\u0651|\u064E)?'   # علامات الاسم نفسه اختيارية: صورته ثابتة
+DIVINE_NAME = re.compile(
+    '^(?P<q>[ءأ]\u064E)?(?P<conj>[وف]\u064E)?(?P<prep>ب\u0650|ت\u064E|ك\u064E)?'
+    '(?P<art>[اٱآ]\u064E?ل\u0652?|ل\u0650)'
+    'ل' + _SHADDA_FATHA + '\u0670?ه'
+    '(?P<tail>[\u064E\u064F\u0650\u0652]?(?:م(?:\u0651\u064E|\u064E\u0651|\u0651))?)$')
+
+def divine_name(word):
+    """→ الصورة الثابتة لِلفظ الجلالة، أو None إن لم تكن الكلمة لفظَ الجلالة"""
+    m = DIVINE_NAME.match(word)
+    if not m:
+        return None
+    pre = (m['q'] or '') + (m['conj'] or '') + (m['prep'] or '')
+    core = 'لَّاه' + m['tail']
+    if m['art'].startswith('ل'):                  # لِلَّه: لام الجر + الاسم، سقطت همزة الوصل ولام التعريف
+        return pre + 'لِ' + core
+    if m['q']:                                    # ءَآللَّه: همزة الاستفهام + همزة الوصل ⇒ مدّ، ولام مشددة
+        return pre + 'ا' + core
+    return pre + 'ال' + core                      # ٱللَّه: ال + لام مشددة (شمسية)
 
 SIX = ['CV', 'CVV', 'CVC', 'CVVC', 'CVCC', 'CVVCC']
 
@@ -55,6 +77,10 @@ def tokenize(word):
 
 # ---------- Stage 1: Normalize ----------
 def normalize(word, ev):
+    fixed = divine_name(word)
+    if fixed is not None:
+        word = fixed
+        ev['DIVINE_NAME'] += 1
     for k, v in LEXICAL_MADD.items():
         if k in word:
             word = word.replace(k, v)

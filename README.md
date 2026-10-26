@@ -21,7 +21,11 @@ python3 extract_operators.py -f verses.txt --json     # JSON Lines
 python3 extract_operators.py -f verses.txt --mode WAQF_RUN --no-idgham
 python3 extract_operators.py --uthmani on "مِن قَبْلِ"  # عامِل النص عثمانياً (auto/on/off): يُدرج السكون الضمني
 python3 cv_syllabifier.py verse.txt                   # التقطيع وحده
-python3 syllable_report.py -f verses.txt verses_inna.txt verses_innama.txt -o reports/syllable_report.html
+python3 syllable_report.py -f verses.txt verses_inna.txt verses_innama.txt verses_allah.txt -o reports/syllable_report.html
 ```
 
 خيار `--uthmani {auto,on,off}` (الافتراضي `auto`): يتحكّم في المعاملة العثمانية (السكون الضمني غير المكتوب). `auto` يكتشف تلقائياً بوجود علامة عثمانية (مثل ٱ)؛ `on` يعامل النص عثمانياً دائماً؛ `off` لا يعامله أبداً. مفيد للنص العثماني القصير بلا علامات (`--uthmani on "مِن قَبْلِ"`). متوفّر في `extract_operators.py` و`syllable_report.py`.
+
+## لفظ الجلالة
+
+اسم علم جامد لا تصريف له، فيُعرَف كلمةً واحدة بما يتصل به من سوابق (وَ، فَ، بِ، تَ، لِ، وهمزة الاستفهام ءَ) ولاحقة «ـمَّ»، ويُعطى صورة ثابتة واحدة `لَّاه` بألف مدّ (`divine_name` في `cv_syllabifier.py`). أمثلته في `verses_allah.txt`: ٱللَّه، لِلَّه، فَلِلَّه، تَٱللَّه، ءَآللَّه، ٱللَّهُمَّ — ولا يطابق ما يشبهه رسماً مثل ٱللَّهْو.
