@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/hhiyassat/arabic-sarf-2026/schema/lexicon_entry.schema.json",
+  "title": "Closed-class lexicon entry",
+  "description": "مدخل في معجم الكلمات المغلقة (المبنيات والأدوات). كائنات noun وparticle وpronoun هي نفسها المعرَّفة في morph_analysis.schema.json، فما يُقبل هنا يُنسخ إلى التحليل كما هو.",
+  "type": "object",
+  "required": ["entry_id", "form", "plain", "category", "pos", "sources"],
+  "additionalProperties": false,
+  "properties": {
+    "entry_id": { "type": "string" },
+    "form": { "type": "string", "minLength": 1, "description": "الصيغة المشكولة بعد التطبيع الإملائي" },
+    "form_original": { "type": "string", "description": "الصيغة كما وردت في المصدر إن اختلفت" },
+    "plain": { "type": "string", "minLength": 1, "description": "الحروف بلا علامات" },
+    "category": { "enum": ["separate_pronoun", "attached_pronoun", "demonstrative", "relative",
+                           "adverb", "verb_name", "kinaya", "conditional_noun", "interrogative_noun",
+                           "particle"] },
+    "pos": { "enum": ["noun", "particle"] },
+    "noun": { "$ref": "morph_analysis.schema.json#/$defs/noun" },
+    "particle": { "$ref": "morph_analysis.schema.json#/$defs/particle" },
+    "pronoun": { "$ref": "morph_analysis.schema.json#/$defs/pronoun" },
+    "extra": { "type": "object", "description": "خصائص من المصدر لا مكان لها في مخطط التحليل (القرب والبعد، المكان، أصل اسم الفعل وزمنه…)" },
+    "meanings": { "type": "array", "items": { "type": "string" } },
+    "examples": { "type": "array", "items": { "type": "string" } },
+    "sources": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "required": ["file", "id"], "additionalProperties": false,
+        "properties": { "file": { "type": "string" }, "id": { "type": "integer" } }
+      }
+    },
+    "normalizations": { "type": "array", "items": { "type": "string" }, "description": "تصحيحات إملائية آلية طُبّقت، لكلٍّ سببها" },
+    "warnings": { "type": "array", "items": { "type": "string" }, "description": "ملاحظات لا تمنع القبول وتحتاج مراجعة" }
+  },
+  "allOf": [
+    { "if": { "properties": { "pos": { "const": "noun" } } },
+      "then": { "required": ["noun"], "not": { "required": ["particle"] } } },
+    { "if": { "properties": { "pos": { "const": "particle" } } },
+      "then": { "required": ["particle"], "not": { "required": ["noun"] } } },
+    { "if": { "properties": { "category": { "const": "attached_pronoun" } } },
+      "then": { "required": ["pronoun"] } }
+  ]
+}

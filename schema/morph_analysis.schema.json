@@ -187,8 +187,6 @@
         "broken_plural_kind": { "enum": ["qilla", "kathra", "muntaha_al_jumu"] }
       },
       "allOf": [
-        { "if": { "properties": { "number": { "const": "plural" } }, "required": ["number"] },
-          "then": { "required": ["plural_type"] } },
         { "if": { "properties": { "plural_type": { "const": "broken" } }, "required": ["plural_type"] },
           "then": { "required": ["broken_plural_kind"] } }
       ]
@@ -260,7 +258,12 @@
       },
       "allOf": [
         { "if": { "properties": { "definiteness": { "const": "definite" } }, "required": ["definiteness"] },
-          "then": { "required": ["definite_by"] } }
+          "then": { "required": ["definite_by"] } },
+        { "if": { "properties": { "subtype": { "enum": ["common", "proper"] },
+                                  "agreement": { "properties": { "number": { "const": "plural" } }, "required": ["number"] } },
+                  "required": ["subtype", "agreement"] },
+          "then": { "properties": { "agreement": { "required": ["plural_type"] } } },
+          "description": "نوع الجمع مطلوب للاسم العام والعلم فقط؛ الضمائر والإشارة والموصول جموعها وضعية بلا نوع" }
       ]
     },
 

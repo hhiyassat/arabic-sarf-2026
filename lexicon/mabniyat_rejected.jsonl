@@ -1,0 +1,74 @@
+{"source": {"file": "pronouns_classification", "id": 45}, "form_original": "أَنْتَ", "reasons": ["تعارض: pronoun «أَنْتَ» ≠ pronoun_form «نَحْنُ»"]}
+{"source": {"file": "pronouns_classification", "id": 55}, "form_original": "إِيَّايَّ", "reasons": ["لاحقة «إِيَّا» ليست ضميراً متصلاً: «يَّ»"]}
+{"source": {"file": "pronouns_classification", "id": 66}, "form_original": "تُ تِ تَ", "reasons": ["صيغ متعددة في سجل واحد بخصائص مشتركة: لا تُنسب الخصائص لكل صيغة دون تخمين"]}
+{"source": {"file": "pronouns_classification", "id": 67}, "form_original": "وا", "reasons": ["الشخص أو العدد غير مستخرج من الحقول meaning/form"]}
+{"source": {"file": "pronouns_classification", "id": 71}, "form_original": "تُ تُ تِ  نا  نّ ا وا  ي", "reasons": ["صيغ متعددة في سجل واحد بخصائص مشتركة: لا تُنسب الخصائص لكل صيغة دون تخمين"]}
+{"source": {"file": "pronouns_classification", "id": 72}, "form_original": "ـهُ", "reasons": ["خصائص مستحيلة: «للمفرد المذكر والمؤنث» والمفرد المخاطب والغائب يفرّق بين المذكر والمؤنث"]}
+{"source": {"file": "pronouns_classification", "id": 73}, "form_original": "كَ", "reasons": ["خصائص مستحيلة: «للمفرد المذكر والمؤنث» والمفرد المخاطب والغائب يفرّق بين المذكر والمؤنث"]}
+{"source": {"file": "pronouns_classification", "id": 74}, "form_original": "يِ", "reasons": ["«يِ» ليست من صيغ الضمائر المتصلة (نصب/جر)"]}
+{"source": {"file": "pronouns_classification", "id": 75}, "form_original": "ـهُ", "reasons": ["خصائص مستحيلة: «للمفرد المذكر والمؤنث» والمفرد المخاطب والغائب يفرّق بين المذكر والمؤنث"]}
+{"source": {"file": "pronouns_classification", "id": 76}, "form_original": "كَ", "reasons": ["خصائص مستحيلة: «للمفرد المذكر والمؤنث» والمفرد المخاطب والغائب يفرّق بين المذكر والمؤنث"]}
+{"source": {"file": "pronouns_classification", "id": 78}, "form_original": "ـهِ", "reasons": ["خصائص مستحيلة: «للمفرد المذكر والمؤنث» والمفرد المخاطب والغائب يفرّق بين المذكر والمؤنث"]}
+{"source": {"file": "pronouns_classification", "id": 79}, "form_original": "كِ", "reasons": ["خصائص مستحيلة: «للمفرد المذكر والمؤنث» والمفرد المخاطب والغائب يفرّق بين المذكر والمؤنث"]}
+{"source": {"file": "pronouns_classification", "id": 81}, "form_original": "ـهُ", "reasons": ["خصائص مستحيلة: «للمفرد المذكر والمؤنث» والمفرد المخاطب والغائب يفرّق بين المذكر والمؤنث"]}
+{"source": {"file": "pronouns_classification", "id": 82}, "form_original": "كَ", "reasons": ["خصائص مستحيلة: «للمفرد المذكر والمؤنث» والمفرد المخاطب والغائب يفرّق بين المذكر والمؤنث"]}
+{"source": {"file": "hidden_pronouns", "id": 3}, "form_original": "ضمير مستتر تقديره (أنتِ)", "reasons": ["المستتر لا يكون «أنتِ»: لا يستتر إلا أنا، نحن، أنتَ، هو، هي"]}
+{"source": {"file": "hidden_pronouns", "id": 6}, "form_original": "ضمير مستتر تقديره (هم)", "reasons": ["المستتر لا يكون «هم»: لا يستتر إلا أنا، نحن، أنتَ، هو، هي"]}
+{"source": {"file": "hidden_pronouns", "id": 7}, "form_original": "ضمير مستتر تقديره (هنّ)", "reasons": ["المستتر لا يكون «هنّ»: لا يستتر إلا أنا، نحن، أنتَ، هو، هي"]}
+{"source": {"file": "hidden_pronouns", "id": 9}, "form_original": "ضمير مستتر تقديره (أنتَ)", "reasons": ["المثال «اعْمَلِي» فيه ياء المخاطبة البارزة"]}
+{"source": {"file": "hidden_pronouns", "id": 10}, "form_original": "ضمير مستتر تقديره (أنتَ)", "reasons": ["تعارض: التقدير «أنتَ» والمرجع «الغائب»"]}
+{"source": {"file": "hidden_pronouns", "id": 11}, "form_original": "ضمير مستترتقديره (هنّ)", "reasons": ["المستتر لا يكون «هنّ»: لا يستتر إلا أنا، نحن، أنتَ، هو، هي"]}
+{"source": {"file": "demonstrative_pronouns", "id": 19}, "form_original": "هذان", "reasons": ["غير مشكولة: لا يُفترض لها تشكيل"]}
+{"source": {"file": "demonstrative_pronouns", "id": 20}, "form_original": "هاتان", "reasons": ["غير مشكولة: لا يُفترض لها تشكيل"]}
+{"source": {"file": "demonstrative_pronouns", "id": 24}, "form_original": "ذانك", "reasons": ["غير مشكولة: لا يُفترض لها تشكيل"]}
+{"source": {"file": "demonstrative_pronouns", "id": 25}, "form_original": "تانك", "reasons": ["غير مشكولة: لا يُفترض لها تشكيل"]}
+{"source": {"file": "demonstrative_pronouns", "id": 33}, "form_original": "ذا", "reasons": ["غير مشكولة: لا يُفترض لها تشكيل"]}
+{"source": {"file": "demonstrative_pronouns", "id": 34}, "form_original": "ذه", "reasons": ["غير مشكولة: لا يُفترض لها تشكيل"]}
+{"source": {"file": "demonstrative_pronouns", "id": 35}, "form_original": "هات", "reasons": ["غير مشكولة: لا يُفترض لها تشكيل"]}
+{"source": {"file": "demonstrative_pronouns", "id": 37}, "form_original": "أولالك", "reasons": ["غير مشكولة: لا يُفترض لها تشكيل"]}
+{"source": {"file": "demonstrative_pronouns", "id": 40}, "form_original": "أولاءك", "reasons": ["غير مشكولة: لا يُفترض لها تشكيل"]}
+{"source": {"file": "demonstrative_pronouns", "id": 43}, "form_original": "أولئكم", "reasons": ["غير مشكولة: لا يُفترض لها تشكيل"]}
+{"source": {"file": "demonstrative_pronouns", "id": 49}, "form_original": "أولاءكُم", "reasons": ["مشكولة جزئياً: الحرف الأول «أ» بلا حركة"]}
+{"source": {"file": "demonstrative_pronouns", "id": 52}, "form_original": "أولاءهم", "reasons": ["غير مشكولة: لا يُفترض لها تشكيل"]}
+{"source": {"file": "relative_pronouns", "id": 4}, "form_original": "ما", "reasons": ["غير مشكولة: لا يُفترض لها تشكيل"]}
+{"source": {"file": "relative_pronouns", "id": 19}, "form_original": "ذَاْتِ", "reasons": ["ليست في جرد الموصولات N08 من وثيقة النظرية"]}
+{"source": {"file": "relative_pronouns", "id": 29}, "form_original": "اَلَّلَذِيْنَ", "reasons": ["تشكيل «اللَّذِينَ» يخالف صيغة N08 في الوثيقة"]}
+{"source": {"file": "relative_pronouns", "id": 30}, "form_original": "أُوْلَاْءِ", "reasons": ["ليست في جرد الموصولات N08 من وثيقة النظرية"]}
+{"source": {"file": "relative_pronouns", "id": 33}, "form_original": "اَلَّلَهُمَّ", "reasons": ["لفظ الجلالة (اللَّهُمَّ) ليس اسماً موصولاً"]}
+{"source": {"file": "relative_pronouns", "id": 34}, "form_original": "مَنْ ذَاْ", "reasons": ["ليست في جرد الموصولات N08 من وثيقة النظرية"]}
+{"source": {"file": "relative_pronouns", "id": 35}, "form_original": "مَهْمَاْ", "reasons": ["ليست في جرد الموصولات N08 من وثيقة النظرية"]}
+{"source": {"file": "relative_pronouns", "id": 37}, "form_original": "كَمَاْ", "reasons": ["ليست في جرد الموصولات N08 من وثيقة النظرية"]}
+{"source": {"file": "relative_pronouns", "id": 38}, "form_original": "يَاْ اَلِّلِيْ", "reasons": ["ليست في جرد الموصولات N08 من وثيقة النظرية"]}
+{"source": {"file": "relative_pronouns", "id": 39}, "form_original": "هُوْمَاْ", "reasons": ["ليست في جرد الموصولات N08 من وثيقة النظرية"]}
+{"source": {"file": "relative_pronouns", "id": 40}, "form_original": "هِيْمَاْ", "reasons": ["ليست في جرد الموصولات N08 من وثيقة النظرية"]}
+{"source": {"file": "relative_pronouns", "id": 41}, "form_original": "هَاْدُوْكَ", "reasons": ["ليست في جرد الموصولات N08 من وثيقة النظرية"]}
+{"source": {"file": "relative_pronouns", "id": 42}, "form_original": "هَاذُوْلَاْ", "reasons": ["ليست في جرد الموصولات N08 من وثيقة النظرية"]}
+{"source": {"file": "relative_pronouns", "id": 43}, "form_original": "بب", "reasons": ["غير مشكولة: لا يُفترض لها تشكيل"]}
+{"source": {"file": "relative_pronouns", "id": 44}, "form_original": "سالم قنديل", "reasons": ["غير مشكولة: لا يُفترض لها تشكيل"]}
+{"source": {"file": "relative_pronouns", "id": 45}, "form_original": "مبني", "reasons": ["غير مشكولة: لا يُفترض لها تشكيل"]}
+{"source": {"file": "relative_pronouns", "id": 46}, "form_original": "ذَو", "reasons": ["تشكيل «ذَو» يخالف صيغة N08 في الوثيقة"]}
+{"source": {"file": "relative_pronouns", "id": 47}, "form_original": "g", "reasons": ["حروف لاتينية في الصيغة", "غير مشكولة: لا يُفترض لها تشكيل"]}
+{"source": {"file": "relative_pronouns", "id": 48}, "form_original": "ذَو", "reasons": ["تشكيل «ذَو» يخالف صيغة N08 في الوثيقة"]}
+{"source": {"file": "built_in_adverbs", "id": 5}, "form_original": "غَدًا", "reasons": ["التنوين علامة إعراب: الكلمة معربة لا مبنية"]}
+{"source": {"file": "built_in_adverbs", "id": 7}, "form_original": "ثُمَّ", "reasons": ["الصيغة نفسها حرف عطف في coordinating_conjunctions"]}
+{"source": {"file": "built_in_adverbs", "id": 17}, "form_original": "أَيَّْنَ", "reasons": ["شدة وسكون معاً على «ي»"]}
+{"source": {"file": "kinaya_names", "id": 5}, "form_original": "كأَيٍّ", "reasons": ["مشكولة جزئياً: الحرف الأول «ك» بلا حركة"]}
+{"source": {"file": "vocative_particles", "id": 6}, "form_original": "أَيُّهَا", "reasons": ["الملف نفسه يصنّفه «اسم نداء للقريب»: ليس حرف نداء"]}
+{"source": {"file": "interrogative_tools_categories", "id": 1}, "form_original": "من", "reasons": ["غير مشكولة: لا يُفترض لها تشكيل"]}
+{"source": {"file": "interrogative_tools_categories", "id": 2}, "form_original": "من ذا", "reasons": ["غير مشكولة: لا يُفترض لها تشكيل"]}
+{"source": {"file": "interrogative_tools_categories", "id": 3}, "form_original": "ما", "reasons": ["غير مشكولة: لا يُفترض لها تشكيل"]}
+{"source": {"file": "interrogative_tools_categories", "id": 4}, "form_original": "ماذا", "reasons": ["غير مشكولة: لا يُفترض لها تشكيل"]}
+{"source": {"file": "interrogative_tools_categories", "id": 5}, "form_original": "متى", "reasons": ["غير مشكولة: لا يُفترض لها تشكيل"]}
+{"source": {"file": "interrogative_tools_categories", "id": 6}, "form_original": "أيّان", "reasons": ["مشكولة جزئياً: الحرف الأول «أ» بلا حركة"]}
+{"source": {"file": "interrogative_tools_categories", "id": 7}, "form_original": "أين", "reasons": ["غير مشكولة: لا يُفترض لها تشكيل"]}
+{"source": {"file": "interrogative_tools_categories", "id": 8}, "form_original": "أنَّى", "reasons": ["مشكولة جزئياً: الحرف الأول «أ» بلا حركة"]}
+{"source": {"file": "interrogative_tools_categories", "id": 9}, "form_original": "كم", "reasons": ["غير مشكولة: لا يُفترض لها تشكيل"]}
+{"source": {"file": "interrogative_tools_categories", "id": 10}, "form_original": "كيف", "reasons": ["غير مشكولة: لا يُفترض لها تشكيل"]}
+{"source": {"file": "interrogative_tools_categories", "id": 11}, "form_original": "أيّ", "reasons": ["مشكولة جزئياً: الحرف الأول «أ» بلا حركة"]}
+{"source": {"file": "interrogative_tools_categories", "id": 12}, "form_original": "هل", "reasons": ["غير مشكولة: لا يُفترض لها تشكيل"]}
+{"source": {"file": "interrogative_tools_categories", "id": 13}, "form_original": "الهمزة", "reasons": ["غير مشكولة: لا يُفترض لها تشكيل"]}
+{"source": {"file": "interrogative_tools_categories", "id": 14}, "form_original": "الهمزة", "reasons": ["غير مشكولة: لا يُفترض لها تشكيل"]}
+{"source": {"file": "interrogative_tools_categories", "id": 15}, "form_original": "الهمزة", "reasons": ["غير مشكولة: لا يُفترض لها تشكيل"]}
+{"source": {"file": "interrogative_tools_categories", "id": 16}, "form_original": "الهمزة", "reasons": ["غير مشكولة: لا يُفترض لها تشكيل"]}
+{"source": {"file": "interrogative_tools_categories", "id": 17}, "form_original": "الهمزة", "reasons": ["غير مشكولة: لا يُفترض لها تشكيل"]}
+{"source": {"file": "preposition_meanings", "id": 19}, "form_original": "عن", "reasons": ["غير مشكولة: لا يُفترض لها تشكيل"]}
