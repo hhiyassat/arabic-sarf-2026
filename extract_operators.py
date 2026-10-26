@@ -251,8 +251,6 @@ FUSED_GROUPS = {'4'}   # أدوات نداء تُوصَل رسماً بما بع
 
 def match_word(cat, word, wi):
     """→ قائمة تطابقات للكلمة wi؛ الخنجرية تُجرَّب ألفاً ثم محذوفة، ويُقدَّم ما وجد عاملاً حرّاً"""
-    if cv.divine_name(word) is not None:
-        return []                      # لفظ الجلالة بكل صيغه لا يُعالَج: لا يُستخرج منه عامل
     first = _match_word(cat, word, wi, match_letters(word, True))
     if DAGGER_ALIF not in word or any(not f['method'].startswith('proclitic') for f in first):
         return first
@@ -397,8 +395,9 @@ def _match_word(cat, word, wi, toks):
         return results
     # عامل حرّ بعد حرف جر متصل: بِأَنَّهُمْ، لِأَنَّ، كَأَنْ …
     inner = len(toks) > 2 and toks[0][0] in ('ب', 'ل', 'ك') and lexical(1, toks[1:], tag='+proclitic')
-    if not proclitic(0, toks, lexical_rest=inner) and conj:
-        proclitic(1, toks[1:])                    # فَلْيَكْتُبْ، فَبِمَا
+    divine = cv.divine_name(word) is not None     # ما بعد السابقة لفظ الجلالة: السابقة حرف يقيناً (لا أمر ولا أصل)
+    if not proclitic(0, toks, lexical_rest=inner or divine) and conj:
+        proclitic(1, toks[1:], lexical_rest=divine)   # فَلْيَكْتُبْ، فَبِمَا، فَلِلَّهِ
     return results
 
 def match_multi(cat, words):

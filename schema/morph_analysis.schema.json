@@ -41,14 +41,13 @@
     "token": {
       "type": "object",
       "description": "كلمة مكتوبة (ما بين فراغين)",
-      "required": ["index", "surface"],
+      "required": ["index", "surface", "analyses"],
       "additionalProperties": false,
       "allOf": [
         { "if": { "properties": { "fixed_lexeme": { "properties": { "kind": { "const": "divine_name" } } } },
                   "required": ["fixed_lexeme"] },
-          "then": { "not": { "anyOf": [ { "required": ["analyses"] }, { "required": ["syllables"] } ] } },
-          "else": { "required": ["analyses"] },
-          "description": "لفظ الجلالة بكل صيغه لا يُعالَج: لا تحليل ولا مقاطع؛ وكل كلمة غيره لها تحليل واحد على الأقل" }
+          "then": { "not": { "required": ["syllables"] } },
+          "description": "لفظ الجلالة بكل صيغه لا يُقطَّع: لا syllables له؛ ويُحلَّل ويُستخرج منه العامل كغيره" }
       ],
       "properties": {
         "index":      { "type": "integer", "minimum": 0 },
@@ -70,7 +69,7 @@
 
     "fixed_lexeme": {
       "type": "object",
-      "description": "كلمة من قائمة مغلقة تُعرَف قبل التحليل ولا تُحلَّل صرفياً: لفظ الجلالة، الأعلام الأعجمية… ولفظ الجلالة بكل صيغه وما يتصل به لا يُعالَج أصلاً (انظر token)",
+      "description": "كلمة من قائمة مغلقة تُعرَف قبل التحليل ولا تُحلَّل صرفياً: لفظ الجلالة، الأعلام الأعجمية… ولفظ الجلالة بكل صيغه لا يُقطَّع (انظر token)",
       "required": ["lexeme_id", "kind"],
       "additionalProperties": false,
       "properties": {

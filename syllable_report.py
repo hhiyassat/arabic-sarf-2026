@@ -164,7 +164,8 @@ def verse_html(a, idx):
         cvpat = ' '.join(s['cv'] for s in sylls)
         if wi in a['syll'].get('divine_words', ()):
             rows.append(f'<tr><td class="num">{wi}</td><td class="word">{esc(word)}</td>'
-                        '<td colspan="3" class="muted">لفظ الجلالة — لا يُعالَج</td></tr>')
+                        '<td colspan="2" class="muted">لفظ الجلالة — لا يُقطَّع</td>'
+                        f'<td>{ops_html(ops_by_word.get(wi, []))}</td></tr>')
             continue
         rows.append(
             '<tr>'

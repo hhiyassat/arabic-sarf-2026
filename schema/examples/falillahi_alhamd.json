@@ -4,10 +4,7 @@
     "original": "فَلِلَّهِ ٱلْحَمْدُ",
     "normalized": "فَلِلَّهِ الْحَمْدُ",
     "script": "uthmani",
-    "ref": {
-      "surah": 45,
-      "ayah": 36
-    }
+    "ref": { "surah": 45, "ayah": 36 }
   },
   "tokens": [
     {
@@ -17,8 +14,55 @@
       "fixed_lexeme": {
         "lexeme_id": "ALLAH",
         "kind": "divine_name",
-        "note": "لفظ الجلالة بكل صيغه وما يتصل به لا يُعالَج: لا تحليل ولا مقاطع ولا عامل يُستخرج منه"
-      }
+        "note": "اسم علم جامد لا تصريف له؛ يُعرَف كلمةً واحدة بسوابقه ولا يُحلَّل جذرُه ولا وزنه"
+      },
+      "analyses": [
+        {
+          "score": 1.0,
+          "status": "selected",
+          "segments": [
+            {
+              "role": "proclitic", "form": "فَ", "char_span": [0, 1],
+              "clitic_type": "resumption_fa",
+              "pos": "particle",
+              "particle": { "governing": false, "effect": "none" }
+            },
+            {
+              "role": "proclitic", "form": "لِ", "char_span": [1, 2],
+              "clitic_type": "preposition",
+              "pos": "particle",
+              "particle": {
+                "operator_ids": ["ل_الملك", "ل_الاختصاص"],
+                "catalog_group": "1",
+                "governing": true,
+                "effect": "jarr"
+              }
+            },
+            {
+              "role": "stem", "form": "لَّهِ", "char_span": [2, 4],
+              "pos": "noun",
+              "lemma": "اللَّه",
+              "noun": {
+                "subtype": "proper",
+                "derivation": { "class": "jamid" },
+                "agreement": { "gender": "masc", "number": "singular" },
+                "definiteness": "definite",
+                "definite_by": "proper",
+                "inflection": {
+                  "status": "murab", "case": "gen",
+                  "marker": "kasra", "marker_kind": "original", "observed_mark": "ِ"
+                },
+                "diptote": false,
+                "final_type": "sahih"
+              }
+            }
+          ],
+          "evidence": [
+            { "source": "lexicon", "id": "divine_name", "note": "قائمة الألفاظ الجامدة المغلقة" },
+            { "source": "catalog", "id": "ل_الملك" }
+          ]
+        }
+      ]
     },
     {
       "index": 1,
@@ -30,67 +74,43 @@
           "status": "selected",
           "segments": [
             {
-              "role": "proclitic",
-              "form": "الْ",
-              "char_span": [
-                0,
-                2
-              ],
+              "role": "proclitic", "form": "الْ", "char_span": [0, 2],
               "clitic_type": "definite_article"
             },
             {
-              "role": "stem",
-              "form": "حَمْدُ",
-              "char_span": [
-                2,
-                5
-              ],
+              "role": "stem", "form": "حَمْدُ", "char_span": [2, 5],
               "pos": "noun",
               "lemma": "حَمْد",
-              "root": {
-                "radicals": [
-                  "ح",
-                  "م",
-                  "د"
-                ],
-                "soundness": "salim"
-              },
-              "pattern": {
-                "wazn": "فَعْل",
-                "augmented": false
-              },
+              "root": { "radicals": ["ح", "م", "د"], "soundness": "salim" },
+              "pattern": { "wazn": "فَعْل", "augmented": false },
               "noun": {
                 "subtype": "common",
-                "derivation": {
-                  "class": "jamid",
-                  "jamid_type": "masdar"
-                },
-                "agreement": {
-                  "gender": "masc",
-                  "number": "singular"
-                },
+                "derivation": { "class": "jamid", "jamid_type": "masdar" },
+                "agreement": { "gender": "masc", "number": "singular" },
                 "definiteness": "definite",
                 "definite_by": "article",
                 "inflection": {
-                  "status": "murab",
-                  "case": "nom",
-                  "marker": "damma",
-                  "marker_kind": "original",
-                  "observed_mark": "ُ"
+                  "status": "murab", "case": "nom",
+                  "marker": "damma", "marker_kind": "original", "observed_mark": "ُ"
                 },
                 "diptote": false,
                 "final_type": "sahih"
               }
             }
           ],
-          "evidence": [
-            {
-              "source": "vocalization",
-              "note": "الضمة مكتوبة على الدال"
-            }
-          ]
+          "evidence": [ { "source": "vocalization", "note": "الضمة مكتوبة على الدال" } ]
         }
       ]
+    }
+  ],
+  "dependencies": [
+    {
+      "governor":  { "token": 0, "analysis": 0, "segment": 1 },
+      "dependent": { "token": 0, "analysis": 0, "segment": 2 },
+      "operator_id": "ل_الملك",
+      "expected": { "case": "gen" },
+      "observed": { "case": "gen", "mark": "ِ" },
+      "consistent": true
     }
   ]
 }
