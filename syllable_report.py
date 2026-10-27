@@ -13,7 +13,7 @@
   python3 syllable_report.py -f verses.txt verses_inna.txt verses_innama.txt -o syllable_report.html
   python3 syllable_report.py "نص آية" -o out.html [--uthmani auto|on|off]
 """
-import sys, os, html, argparse
+import sys, os, html, argparse, unicodedata
 from collections import Counter, OrderedDict
 
 import extract_operators as E
@@ -46,6 +46,36 @@ def syl_type(cv):
 
 def esc(s):
     return html.escape('' if s is None else str(s))
+
+
+# ── تصنيف خبري/إنشائي ──
+# القرار: الإنشائي = الطلبي (النداء، الأمر، التمني) + غير الطلبي (المدح والذمّ)؛ والباقي خبري.
+# بنودٌ مفتوحة (T12) مصنّفة الآن خبريةً: التعجب (هَيْهَاتَ/شَتَّانَ/سُرْعَانَ)،
+# والقسم (وَ/تَ)، والترجي (لَعَلَّ/عَسَى)، ولَوْ وكَمْ ورُبَّ.
+def _nfc(s):
+    return unicodedata.normalize('NFC', s or '')
+
+INSHAI_CLASSES = {'التوكيد والتمني', 'التقييم الرافعة فقط'}  # ليت؛ ونِعْمَ بِئْسَ سَاءَ حَبَّذَا
+# اسم فعلٍ فيه تعجّب — مفتوح، خبريٌّ الآن (NFC لتجنُّب اختلاف ترتيب الشدّة والحركة)
+TAAJJUB_KHABARI = {_nfc(x) for x in ('هَيْهَاتَ', 'شَتَّانَ', 'سُرْعَانَ')}
+
+
+def op_mood(f):
+    """خبري/إنشائي لعامل واحد بحسب صنفه."""
+    c = f.get('operator_class') or ''
+    if 'نداء' in c:
+        return 'إنشائي'
+    if c in INSHAI_CLASSES:
+        return 'إنشائي'
+    if c == 'الأوامر والتعجب الإعرابية':
+        # أسماء أفعال الأمر إنشائية؛ وأسماء أفعال التعجب خبريةٌ الآن (بند مفتوح)
+        return 'خبري' if _nfc(f.get('operator')) in TAAJJUB_KHABARI else 'إنشائي'
+    return 'خبري'
+
+
+def verse_mood(ops):
+    """الآية إنشائيةٌ إن كان فيها عاملٌ إنشائيّ، وإلا فخبرية."""
+    return 'إنشائية' if any(op_mood(f) == 'إنشائي' for f in ops) else 'خبرية'
 
 
 CSS = """
@@ -97,6 +127,15 @@ td.cv{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:16px;direction
 .key{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
 .total{font-size:18px}
 .total .pill{font-size:17px;padding:4px 12px}
+.mood{display:inline-block;font-size:14px;font-weight:700;padding:1px 9px;border-radius:999px;
+  border:1px solid currentColor;vertical-align:middle}
+h2 .mood{font-size:16px}
+.mood-in{color:#8e24aa;background:rgba(142,36,170,.10)}   /* إنشائي */
+.mood-kh{color:#2e7d32;background:rgba(46,125,50,.10)}    /* خبري  */
+@media (prefers-color-scheme: dark){
+  .mood-in{color:#ce93d8;background:rgba(206,147,216,.15)}
+  .mood-kh{color:#a5d6a7;background:rgba(165,214,167,.15)}
+}
 """
 
 
@@ -117,7 +156,10 @@ def ops_html(ops):
         return '<span class="muted">—</span>'
     out = []
     for f in ops:
-        bits = [f'<b>{esc(f["operator"])}</b>']
+        mood = op_mood(f)
+        mcls = 'mood-in' if mood == 'إنشائي' else 'mood-kh'
+        bits = [f'<b>{esc(f["operator"])}</b>',
+                f'<span class="mood {mcls}">{esc(mood)}</span>']
         bits.append(f'<span class="meta">مج {esc(f["group"])}: {esc(f["operator_class"])}</span>')
         meth = esc(f['method'])
         if f.get('host_rest'):
@@ -177,7 +219,9 @@ def verse_html(a, idx):
             '</tr>'
         )
 
-    head = [f'<h2>الآية {idx}</h2>',
+    vmood = verse_mood(a['operators'])
+    vcls = 'mood-in' if vmood == 'إنشائية' else 'mood-kh'
+    head = [f'<h2>الآية {idx} <span class="mood {vcls}">{esc(vmood)}</span></h2>',
             f'<div class="card"><div class="orig">{esc(a["verse"])}</div>']
     head.append(f'<div class="muted">المُطبَّع: {esc(a["normalized"])}</div>')
     if a['syllabified_text'] != a['normalized']:
@@ -214,6 +258,18 @@ def build_html(analyses):
         key.append(f'<span class="chip {cls}">{esc(t)}<small>{esc(TYPE_LABEL[t].split(" — ")[-1])}</small></span>')
     key.append('</div>')
 
+    # عدّ خبري/إنشائي: على مستوى الآيات والعوامل
+    v_in = sum(1 for a in analyses if verse_mood(a['operators']) == 'إنشائية')
+    op_moods = Counter(op_mood(f) for a in analyses for f in a['operators'])
+    mood_pills = (
+        '<div class="summary">'
+        f'<span class="pill">آيات: <span class="mood mood-in">إنشائية</span> {v_in}'
+        f' · <span class="mood mood-kh">خبرية</span> {len(analyses) - v_in}</span>'
+        f'<span class="pill">عوامل: <span class="mood mood-in">إنشائي</span> {op_moods.get("إنشائي", 0)}'
+        f' · <span class="mood mood-kh">خبري</span> {op_moods.get("خبري", 0)}</span>'
+        '</div>'
+    )
+
     header = [
         '<h1>تقرير الكلمات ومقاطعها</h1>',
         '<div class="muted">النص كما هو: كل كلمة تُقطَّع مستقلّة بحركاتها المكتوبة، بلا وصل ولا وقف؛ والتنوين حركة واحدة من جنسه.</div>',
@@ -223,6 +279,14 @@ def build_html(analyses):
         summary_pills(grand, 'total'),
         '<div class="muted" style="margin-top:6px">مفتاح الألوان:</div>',
         ''.join(key),
+        '</div>',
+        '<div class="card">',
+        '<div class="muted">خبري/إنشائي — الإنشائيُّ هو الطلبيُّ (النداء والأمر والتمني) '
+        'وغيرُ الطلبيِّ (المدح والذمّ: نِعْمَ، بِئْسَ، سَاءَ، حَبَّذَا)؛ وما سواه خبريّ. '
+        'الآية إنشائيةٌ إن كان فيها عاملٌ إنشائيّ.</div>',
+        '<div class="muted">بنودٌ مفتوحة (مصنّفة خبريةً الآن): التعجب (هَيْهَاتَ/شَتَّانَ/سُرْعَانَ)، '
+        'والقسم (وَ/تَ)، والترجي (لَعَلَّ/عَسَى)، ولَوْ وكَمْ ورُبَّ.</div>',
+        mood_pills,
         '</div>',
     ]
 
