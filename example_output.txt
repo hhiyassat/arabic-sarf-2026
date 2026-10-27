@@ -47,6 +47,7 @@ POISON=0
 EVENTS:
   DIVINE_NAME=0
   HAMZAT_WASL=1
+  HAMZAT_WASL_REALIZED_u=1
   HAMZA_UNIFIED=2
   INITIAL_SHADDA_IGNORED=1
   MADD_ALIF=3
@@ -55,7 +56,6 @@ EVENTS:
   SILENT_ALIF_FARIQA=1
   SILENT_ALIF_TANWIN=1
   TANWIN=3
-  WASL_INTERNAL_AFTER_PROCLITIC=1
 ```
 
 يَٰٓأَيُّهَا     [يَٰٓ: عامل] | ءَيْ . يُ . هَا               CVC CV CVV
@@ -67,7 +67,7 @@ EVENTS:
 إِلَىٰٓ          [إِلَىٰٓ: عامل]                              
 أَجَلٍ           ءَ . جَ . لٍ                                 CV CV CV
 مُّسَمًّى        مُ . سَمْ . مً                               CV CVC CV
-فَاكْتُبُوهُ     فَكْ . تُ . بُو | [هُ: مبني]                 CVC CV CVV
+فَاكْتُبُوهُ     [فَ: مبني] | ءُكْ . تُ . بُو | [هُ: مبني]    CVC CV CVV
 
 ################################################################################
 
@@ -113,12 +113,12 @@ POISON=0
 EVENTS:
   DIVINE_NAME=0
   HAMZAT_WASL=1
+  HAMZAT_WASL_REALIZED_i=1
   MADD_WAW_YA=2
   SILENT_ALIF_FARIQA=1
-  WASL_INTERNAL_AFTER_PROCLITIC=1
 ```
 
-وَامْسَحُوا      وَمْ . سَ . حُو                              CVC CV CVV
+وَامْسَحُوا      [وَ: عامل] | ءِمْ . سَ . حُو                 CVC CV CVV
 بِرُءُوسِكُمْ    [بِ: عامل] | رُ . ءُو . سِ | [كُمْ: مبني]    CV CVV CV
 
 ################################################################################
@@ -384,16 +384,16 @@ POISON=0
 EVENTS:
   DIVINE_NAME=0
   HAMZAT_WASL=1
+  HAMZAT_WASL_REALIZED_a=1
   INITIAL_SHADDA_IGNORED=1
   MADD_ALIF=1
   TANWIN=1
-  WASL_INTERNAL_AFTER_PROCLITIC=1
 ```
 
 فَلْيَكْتُبْ     [فَلْ: مبني+عامل] | يَكْ . تُبْ              CVC CVC
 بَّيْنَكُمْ      بَيْ . نَ | [كُمْ: مبني]                     CVC CV
 كَاتِبٌ          كَا . تِ . بٌ                                CVV CV CV
-بِالْعَدْلِ      بِلْ . عَدْ . لِ                             CVC CVC CV
+بِالْعَدْلِ      [بِ: عامل] | ءَلْ . عَدْ . لِ                CVC CVC CV
 
 ################################################################################
 
@@ -432,10 +432,10 @@ POISON=0
 EVENTS:
   DIVINE_NAME=2
   HAMZAT_WASL=1
+  HAMZAT_WASL_REALIZED_i=1
   MADD_WAW_YA=2
   MADD_YA_AS_ALIF_MAQSURA=1
   SHADDA_SPLIT=2
-  WASL_INTERNAL_AFTER_PROCLITIC=1
 ```
 
 قُلْ             قُلْ                                         CVC
@@ -443,7 +443,7 @@ EVENTS:
 كُنْتُمْ         [كُنْ: عامل] | [تُمْ: مبني]                  
 تُحِبُّونَ       تُ . حِبْ . بُو . نَ                         CV CVC CVV CV
 اللَّهَ          [اللَّهَ: لفظ الجلالة]                       
-فَاتَّبِعُونِى   فَتْ . تَ . بِ . عُو . نِي                   CVC CV CV CVV CVV
+فَاتَّبِعُونِى   [فَ: مبني] | ءِتْ . تَ . بِ . عُو . نِي      CVC CV CV CVV CVV
 يُحْبِبْكُمُ     يُحْ . بِبْ | [كُمُ: مبني]                   CVC CVC
 اللَّهُ          [اللَّهُ: لفظ الجلالة]                       
 

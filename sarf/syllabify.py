@@ -81,6 +81,7 @@ def cvmap(toks, ev):
         # --- لام التعريف ---
         if L == 'ل' and not mk and seg and seg[-1][0] == 'HW':
             if nxt is not None and SHADDA in nxt[1] and nxt[0] in SOLAR:
+                seg[-1] = ('HW', 'al')                            # همزة وصل أل (تُفتح ابتداءً)
                 ev['SOLAR_LAM_DELETED'] += 1; i += 1; continue   # الشمسية: اللام محذوفة والحرف مشدد
             seg.append(('POISON', L)); ev['POISON_BARE_LAM'] += 1; i += 1; continue
         if L == 'ل' and not mk and nxt is not None and SHADDA in nxt[1] and nxt[0] in SOLAR \
@@ -154,9 +155,8 @@ def resolve(words_seg, ev):
                     nxt = seg[k + 1] if k + 1 < len(seg) else None
                     third_u = (k + 3 < len(seg) and seg[k + 1][0] == 'C' and seg[k + 2][0] == 'C'
                                and seg[k + 3][0] == 'V' and seg[k + 3][1] == 'u')
-                    if (nxt and nxt[0] == 'C' and nxt[1] == 'ل') or \
-                            (nxt and nxt[0] == 'C' and k + 2 < len(seg) and seg[k + 2][0] == 'C' and seg[k + 1][1] == seg[k + 2][1]):
-                        v = 'a'                    # لام التعريف
+                    if s == ('HW', 'al') or (nxt and nxt[0] == 'C' and nxt[1] == 'ل'):
+                        v = 'a'                    # لام التعريف (القمرية، أو الشمسية المدغمة)
                     elif third_u:
                         v = 'u'                    # الثالث مضموم: اُكْتُبْ، اُخْرُجْ
                     else:

@@ -80,13 +80,13 @@ EVENTS:
   DIVINE_NAME=1
   HAMZAT_WASL=2
   HAMZAT_WASL_REALIZED_a=1
+  HAMZAT_WASL_REALIZED_i=1
   MADD_WAW_YA=2
   SHADDA_SPLIT=1
   SILENT_ALIF_FARIQA=1
-  WASL_INTERNAL_AFTER_PROCLITIC=1
 ```
 
-وَاعْلَمُوٓا     وَعْ . لَ . مُو                              CVC CV CVV
+وَاعْلَمُوٓا     [وَ: عامل] | ءِعْ . لَ . مُو                 CVC CV CVV
 أَنَّ            [أَنَّ: عامل]                                
 اللَّهَ          [اللَّهَ: لفظ الجلالة]                       
 مَعَ             مَ . عَ                                      CV CV
