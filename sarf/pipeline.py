@@ -9,10 +9,12 @@ sarf.pipeline — تشغيل المراحل بالترتيب على كائن و�
     normalize  → normalized                 التطبيع (sarf.normalize)
     match      → words, candidates          مطابقة العوامل (sarf.match)
     evidence   → (status في candidates)     نفي المرشَّح بالكتابة (sarf.evidence)
-    syllabify  → syll                       التقطيع (sarf.syllabify)
-    align      → operators                  ربط العامل بمقاطعه (sarf.align)
+    segment    → segments, relations        الخانات وأنواعها، والعامل ← المعمول (sarf.segment)
+    syllabify  → syll                       تقطيع الوحدات المعربة وحدها (sarf.segment)
+    align      → operators                  ربط العامل بخانته وعلاقته (sarf.align)
 
-موضع المقشِّر (حين يُكتب): مرحلة بين normalize وmatch.
+المقشِّر بعد المطابقة والنفي لأنه يبني خانات العوامل منها؛ وحين يُكتب تقشير زوائد البنية
+(سألتمونيها) تصير المطابقة على الخانات.
 
 result() يعيد القاموس نفسه الذي كانت analyze تعيده (verse, normalized, syllabified_text,
 words, operators, syll)، فتبقى الاختبارات والنواتج السابقة محكّاً لأي تغيير في التركيب.
@@ -20,8 +22,9 @@ words, operators, syll)، فتبقى الاختبارات والنواتج ال�
 from .normalize import uthmani_normalize
 from .match import extract
 from .evidence import reject_candidates
-from .align import syllables_by_word, align
-from . import syllabify as cv
+from .align import align
+from .segment import segment, syllabify_units
+from .lexicon import MabniLexicon
 
 UTHMANI = {'auto': None, 'on': True, 'off': False}   # auto←None (تلقائي) / on←True / off←False
 
@@ -41,7 +44,8 @@ class VerseContext:
     def result(self):
         """الناتج بصيغة analyze: النص كما هو، والتقطيع على النص المطبَّع نفسه"""
         return dict(verse=self.verse, normalized=self.normalized, syllabified_text=self.normalized,
-                    words=self.words, operators=self.operators, syll=self.syll)
+                    words=self.words, operators=self.operators, segments=self.segments,
+                    relations=self.relations, syll=self.syll)
 
 
 class Stage:
@@ -53,39 +57,47 @@ class Stage:
 
 
 # ---------- المراحل ----------
-def _normalize(ctx, cat):
+def _normalize(ctx, res):
     ctx.normalized = uthmani_normalize(ctx.verse, implicit_sukun=UTHMANI[ctx.uthmani])
     return f"{len(ctx.normalized.split())} كلمة"
 
-def _match(ctx, cat):
-    ctx.words, ctx.candidates = extract(cat, ctx.normalized)
+def _match(ctx, res):
+    ctx.words, ctx.candidates = extract(res.cat, ctx.normalized)
     return f"{len(ctx.candidates)} مرشَّحاً"
 
-def _evidence(ctx, cat):
+def _evidence(ctx, res):
     ctx.candidates = reject_candidates(ctx.candidates, ctx.words)
     n = sum(f['status'] == 'rejected' for f in ctx.candidates)
     return f"مرفوضة بالكتابة: {n}"
 
-def _syllabify(ctx, cat):
-    ctx.syll = cv.run(ctx.normalized)
+def _segment(ctx, res):
+    ctx.segments, ctx.relations = segment(ctx.words, ctx.candidates, res.lex)
+    n = sum(len(s['slots']) for s in ctx.segments)
+    return f"{n} خانة، {len(ctx.relations)} علاقة"
+
+def _syllabify(ctx, res):
+    ctx.syll = syllabify_units(ctx.segments)
     return f"{ctx.syll['n_syll']} مقطعاً"
 
-def _align(ctx, cat):
-    ctx.operators = align(ctx.candidates, syllables_by_word(ctx.syll), ctx.words)
+def _align(ctx, res):
+    ctx.operators = align(ctx.candidates, ctx.segments, ctx.relations)
     return f"{len(ctx.operators)} عاملاً مربوطاً"
 
 STAGES = [
     Stage('normalize', _normalize, (), ('normalized',), 'التطبيع: العثماني إلى إملائي'),
     Stage('match', _match, ('normalized',), ('words', 'candidates'), 'مطابقة العوامل بحسب الفهرس'),
     Stage('evidence', _evidence, ('words', 'candidates'), (), 'نفي المرشَّح بالكتابة'),
-    Stage('syllabify', _syllabify, ('normalized',), ('syll',), 'التقطيع CV'),
-    Stage('align', _align, ('words', 'candidates', 'syll'), ('operators',), 'ربط العامل بمقاطعه'),
+    Stage('segment', _segment, ('words', 'candidates'), ('segments', 'relations'),
+          'الخانات (عامل، مبني، معرب) والعامل ← المعمول'),
+    Stage('syllabify', _syllabify, ('segments',), ('syll',), 'تقطيع الوحدات المعربة وحدها'),
+    Stage('align', _align, ('candidates', 'segments', 'relations'), ('operators',), 'ربط العامل بخانته وعلاقته'),
 ]
 
 
 class Pipeline:
-    def __init__(self, cat, stages=None):
+    def __init__(self, cat, stages=None, lex=None):
         self.cat = cat
+        self.lex = lex if lex is not None else MabniLexicon()
         self.stages = list(stages or STAGES)
 
     def names(self):
@@ -107,7 +119,7 @@ class Pipeline:
                 missing = [f for f in st.requires if not ctx.has(f)]
                 if missing:
                     raise RuntimeError(f"المرحلة {st.name} تحتاج {', '.join(missing)}، ولم تُنتجه مرحلة قبلها")
-                ctx.log.append((st.name, st.fn(ctx, self.cat)))
+                ctx.log.append((st.name, st.fn(ctx, self)))
                 ctx.done.append(st.name)
             if st.name == until:
                 break

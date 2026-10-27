@@ -3,6 +3,30 @@
 sarf.output_text — الناتج النصي وJSON لتحليل الآية.
 """
 from . import syllabify as cv
+from .segment import unit_view
+
+
+def relation_text(r):
+    """العامل ← المعمول: الحالة المتوقَّعة والعلامة المكتوبة"""
+    if r is None:
+        return '—'
+    if r['note'] and r['target'] is None:
+        return r['note']
+    t = r['target']
+    if t is None:
+        return 'لا معمول في النص'
+    out = f"{t['text']} ({t['type']})"
+    if r['expected']:
+        out += f"  متوقَّع: {r['expected']}"
+    if r['observed'] == 'محلاً':
+        out += f"  في محلّ {r['expected']}" if r['expected'] else '  مبني'
+    elif r['observed']:
+        out += f"  مكتوب: {r['observed']}"
+    if r['consistent'] is not None:
+        out += '  ✓' if r['consistent'] else '  ✗ يخالف العلامة المكتوبة'
+    if r['note']:
+        out += f"  — {r['note']}"
+    return out
 
 def text_report(a):
     out = [f"الآية:    {a['verse']}", f"المُطبَّع: {a['normalized']}"]
@@ -17,9 +41,10 @@ def text_report(a):
                    + (f"  ملاحظة: {f['note']}" if f.get('note') else ''))
         if f.get('reject_reason'):
             out.append(f"     سبب الرفض: {f['reject_reason']}")
-        out.append(f"     المقاطع في السياق: {' . '.join(s['syl'] for s in f['syllables'])}   [{f['cv']}]")
-        out.append(f"     العامل منفرداً:    {' . '.join(s['syl'] for s in f['isolated'])}   "
-                   f"[{' '.join(s['cv'] for s in f['isolated'])}]")
+        if f.get('slot'):
+            out.append(f"     الخانة: [{f['slot']['text']}] عامل — لا يُقطَّع")
+        if f.get('status') != 'rejected':
+            out.append(f"     المعمول: {relation_text(f.get('relation'))}")
         out.append(f"     المعاني المرشحة:  " + ' | '.join(
             f"{m['label']} ({m['prior'] if m['prior'] is not None else '—'})" for m in f['meanings']))
         out.append(f"     العمل: {top['effect']}")
@@ -27,7 +52,7 @@ def text_report(a):
     out.append('=' * 80)
     out.append(cv.report(a['syll']))
     out.append('')
-    out.append(cv.word_view(a['syll']))
+    out.append(unit_view(a['segments']))
     return '\n'.join(out)
 
 def to_json(a):

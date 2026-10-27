@@ -73,14 +73,21 @@ def match_letters(word, expand_dagger=True):
             out.append((L, mk - {DAGGER_ALIF, 'ٓ'}))
     return out
 
+HOLLOW_GROUPS = {'10', '11'}                       # كَانَ، صَارَ، بَاتَ، كَادَ
+HOLLOW_SUFFIXES = ['تُمْ', 'تُمَا', 'تُنَّ', 'تُ', 'تَ', 'تِ', 'نَا', 'نَ']   # ضمائر الرفع المتحركة
+
 FUSED_GROUPS = {'4'}   # أدوات نداء تُوصَل رسماً بما بعدها: يَٰٓأَيُّهَا
 
 def match_word(cat, word, wi):
     """→ قائمة تطابقات للكلمة wi؛ الخنجرية تُجرَّب ألفاً ثم محذوفة، ويُقدَّم ما وجد عاملاً حرّاً"""
     first = _match_word(cat, word, wi, match_letters(word, True))
+    for f in first:
+        f['expanded'] = True               # char_span على حروف الكلمة بعد مدّ الخنجرية ألفاً
     if DAGGER_ALIF not in word or any(not f['method'].startswith('proclitic') for f in first):
         return first
     second = _match_word(cat, word, wi, match_letters(word, False))
+    for f in second:
+        f['expanded'] = False
     if any(not f['method'].startswith('proclitic') for f in second):
         return second
     return first
@@ -140,6 +147,17 @@ def _match_word(cat, word, wi, toks):
             ok, n = vocal_compatible(t[:k], otoks)
             if ok:
                 emit(op, (off, off + k), 'operator+suffix' + tag, n, conf_of(n, k), host_rest=rest)
+                hit = True
+        # 3c. الأجوف من كان وأخواتها مع ضمير الرفع المتحرك: تُحذف عينه (كَانَ ← كُنْتُمْ، صَارَ ← صِرْنَا)
+        for op in cat.single:
+            if op['group'] not in HOLLOW_GROUPS or len(op['toks']) != 3 or op['toks'][1][0] != 'ا':
+                continue
+            if len(t) <= 2 or plain(t[:2]) != op['toks'][0][0] + op['toks'][2][0] or SUKUN not in t[1][1]:
+                continue
+            rest = t[2:]
+            if any(plain(rest) == _strip_marks(s) for s in HOLLOW_SUFFIXES):
+                emit(op, (off, off + 2), 'operator+suffix' + tag, 0, 'medium', host_rest=plain(rest),
+                     note='أجوف: حُذفت عينه مع ضمير الرفع المتحرك')
                 hit = True
         # اجتماع تحليلي اسم الفعل: مطابقة كاملة + مطابقة مع لاحقة ⇒ ثقة كليهما medium
         if g9_whole and any(r['method'].startswith('operator+suffix') for r in results):

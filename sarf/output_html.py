@@ -10,6 +10,7 @@ from collections import Counter, OrderedDict
 from .syllabify import SIX
 from .align import syllables_by_word
 from .mood import op_mood, has_inshai_operator
+from .output_text import relation_text
 
 # أنواع المقاطع التي نعدّها/نلوّنها: الستة + OTHER + POISON
 TYPES = SIX + ['OTHER', 'POISON']
@@ -80,6 +81,8 @@ td.cv{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:16px;direction
 .t-CVVC{color:var(--c-CVVC)}.t-CVCC{color:var(--c-CVCC)} .t-CVVCC{color:var(--c-CVVCC)}
 .t-OTHER{color:var(--warnfg);background:var(--warnbg);border-color:var(--warnfg)}
 .t-POISON{color:var(--poisonfg);background:var(--poisonbg);border-color:var(--poisonfg);font-weight:700}
+.t-FIXED{color:var(--muted);border-style:dashed}
+.t-FIXED small{direction:rtl;font-family:inherit}
 .op{display:block;font-size:16px;line-height:1.7;margin:2px 0;padding-right:8px;border-right:3px solid var(--border)}
 .op b{font-size:19px}
 .op .meta{color:var(--muted)}
@@ -134,6 +137,8 @@ def ops_html(ops):
         bits.append(f'<span class="meta">{meth}</span>')
         if f.get('reject_reason'):
             bits.append(f'<span class="meta">({esc(f["reject_reason"])})</span>')
+        elif f.get('relation'):
+            bits.append(f'<span class="meta">المعمول: {esc(relation_text(f["relation"]))}</span>')
         out.append('<span class="op">' + ' — '.join(bits) + '</span>')
     return ''.join(out)
 
@@ -171,19 +176,21 @@ def verse_html(a, idx):
     rows = []
     for wi in range(n_words):
         word = words[wi] if wi < len(words) else raw_words[wi]
-        sylls = by_word.get(wi, [])
-        cvpat = ' '.join(s['cv'] for s in sylls)
-        if wi in a['syll'].get('divine_words', ()):
-            rows.append(f'<tr><td class="num">{wi}</td><td class="word">{esc(word)}</td>'
-                        '<td colspan="2" class="muted">لفظ الجلالة — لا يُقطَّع</td>'
-                        f'<td>{ops_html(ops_by_word.get(wi, []))}</td></tr>')
-            continue
+        units = a['segments'][wi]['units']
+        cells, pats = [], []
+        for u in units:
+            if u['kind'] == 'معرب':
+                cells.append(chips_html(u['syllables']))
+                pats.append(' '.join(s['cv'] for s in u['syllables']))
+            else:
+                cells.append(f'<span class="chip t-FIXED">{esc(u["text"])}<small>{esc(u["label"])}</small></span>')
+                pats.append('—')
         rows.append(
             '<tr>'
             f'<td class="num">{wi}</td>'
             f'<td class="word">{esc(word)}</td>'
-            f'<td>{chips_html(sylls)}</td>'
-            f'<td class="cv">{esc(cvpat)}</td>'
+            f'<td>{"".join(cells)}</td>'
+            f'<td class="cv">{esc(" | ".join(pats))}</td>'
             f'<td>{ops_html(ops_by_word.get(wi, []))}</td>'
             '</tr>'
         )
@@ -252,6 +259,8 @@ def build_html(analyses):
     header = [
         '<h1>تقرير الكلمات ومقاطعها</h1>',
         '<div class="muted">النص كما هو: كل كلمة تُقطَّع مستقلّة بحركاتها المكتوبة، بلا وصل ولا وقف؛ والتنوين حركة واحدة من جنسه.</div>',
+        '<div class="muted">الكلمة تُجزَّأ خانات: العامل (من الفهرس) والمبني (من معجم المبنيات، وأل، والضمير المتصل، وحرف العطف) '
+        'لا يُقطَّعان ويُعرض وسمهما، ولفظ الجلالة لا يُقطَّع، والمعرب وحده يُقطَّع. ولا تُفصل خانة تبدأ بساكن عمّا قبلها.</div>',
         f'<div class="muted">عدد الآيات: {len(analyses)} — النطاق: أنماط CV فقط (بلا أحكام تجويد صوتية).</div>',
         '<div class="card">',
         '<div class="muted">الملخّص الإجمالي:</div>',
