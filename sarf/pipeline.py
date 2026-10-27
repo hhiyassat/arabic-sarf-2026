@@ -10,7 +10,7 @@ sarf.pipeline — تشغيل المراحل بالترتيب على كائن و�
     match      → words, candidates          مطابقة العوامل (sarf.match)
     evidence   → (status في candidates)     نفي المرشَّح بالكتابة (sarf.evidence)
     segment    → segments, relations        الخانات وأنواعها، والعامل ← المعمول (sarf.segment)
-    syllabify  → syll                       تقطيع الوحدات المعربة وحدها (sarf.segment)
+    syllabify  → syll                       تقطيع ما ليس عاملاً ولا مبنياً (sarf.segment)
     align      → operators                  ربط العامل بخانته وعلاقته (sarf.align)
 
 المقشِّر بعد المطابقة والنفي لأنه يبني خانات العوامل منها؛ وحين يُكتب تقشير زوائد البنية
@@ -88,8 +88,8 @@ STAGES = [
     Stage('match', _match, ('normalized',), ('words', 'candidates'), 'مطابقة العوامل بحسب الفهرس'),
     Stage('evidence', _evidence, ('words', 'candidates'), (), 'نفي المرشَّح بالكتابة'),
     Stage('segment', _segment, ('words', 'candidates'), ('segments', 'relations'),
-          'الخانات (عامل، مبني، معرب) والعامل ← المعمول'),
-    Stage('syllabify', _syllabify, ('segments',), ('syll',), 'تقطيع الوحدات المعربة وحدها'),
+          'الخانات (عامل، مبني، أل، جذع) والعامل ← المعمول'),
+    Stage('syllabify', _syllabify, ('segments',), ('syll',), 'تقطيع ما ليس عاملاً ولا مبنياً'),
     Stage('align', _align, ('candidates', 'segments', 'relations'), ('operators',), 'ربط العامل بخانته وعلاقته'),
 ]
 

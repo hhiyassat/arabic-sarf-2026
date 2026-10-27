@@ -3,17 +3,21 @@
 sarf.segment — المقشِّر: تجزئة الكلمة إلى خانات (slots) لكلٍّ منها نوع، وربط العامل بمعموله.
 
 أنواع الخانات:
-    عامل          من فهرس العوامل (يؤثّر فيما بعده)        لا يُقطَّع، ويُعرض «عامل»
-    مبني          من معجم المبنيات، وأل، والضمير المتصل،  لا يُقطَّع، ويُعرض «مبني»
-                  وحرف العطف، وما الكافة
-    معرب          ما بقي (الجذع)                            يُقطَّع CV
-    لفظ الجلالة   ليس كمثله شيء                             لا يُقطَّع
+    عامل          من فهرس العوامل (يؤثّر فيما بعده)         لا يُقطَّع، ويُعرض «عامل»
+    مبني          ما في ملف المبنيات (02_mabniyat) وحده:     لا يُقطَّع، ويُعرض «مبني»
+                  كلمةً كاملة، أو حرف عطف، أو ما الكافة، أو ضميراً متصلاً (بصوره: sarf.lexicon)
+    أل            أل التعريف: ليست في الملف                 تُقطَّع مع جذعها
+    جذع           ما بقي، ومنه الفعل الماضي والأمر           يُقطَّع CV
+                  (مبنيان، لكنهما ليسا في الملف)
+    لفظ الجلالة   ليس كمثله شيء                              لا يُقطَّع
+    ما لم يجده المقشِّر في الملف من حرف عطف أو ضمير (نون الوقاية في «نِي») يصير جذعاً ويُقطَّع.
 
 شرط الفصل بين خانتين: أن تبدأ الثانية بحرف متحرك، فيكون حدّ الخانة حدَّ مقطع.
 والشدة على الحدّ تُفكّ: نصفها الأول (الساكن) للخانة السابقة، ونصفها الثاني للتالية
 (النَّاسِ = [ءَنْ: أل][نَاسِ]). وإن بدأت الثانية بساكن أو بهمزة وصل فلا فصل، وتُضمّ الخانتان
 في وحدة واحدة (وَٱمْسَحُوا، فَلْيَكْتُبْ ← [فَلْ][يَكْتُبْ]).
-الوحدة التي فيها خانة معربة تُقطَّع كلها، وما سواها لا يُقطَّع.
+وتُضمّ الخانات المتجاورة التي تُقطَّع (أل، جذع) في وحدة واحدة. والوحدة التي فيها خانة تُقطَّع
+تُقطَّع كلها، وما سواها لا يُقطَّع.
 
 العلاقة: لكل عامل غير مرفوض معمولٌ هو الخانة التالية في كلمته، أو أول خانة في الكلمة التالية
 (بعد حرف العطف وأل). وحكم المعمول من مجموعة العامل في الفهرس، ويُقارَن بالعلامة المكتوبة
@@ -28,7 +32,9 @@ from .divine import divine_name
 from .match import PRON_SUFFIXES, match_letters, vocal_compatible
 from . import syllabify as cv
 
-AMIL, MABNI, MURAB, DIVINE = 'عامل', 'مبني', 'معرب', 'لفظ الجلالة'
+AMIL, MABNI, ARTICLE, STEM, DIVINE = 'عامل', 'مبني', 'أل', 'جذع', 'لفظ الجلالة'
+CUT_TYPES = {ARTICLE, STEM}                                  # ما يُقطَّع
+CUT, FIXED = 'cut', 'fixed'                                  # نوع الوحدة
 
 MOVING = {FATHA, DAMMA, KASRA, FATHATAN, DAMMATAN, KASRATAN}
 STEM_SUFFIXES = [s for s in PRON_SUFFIXES if s != 'ي']      # ياء المتكلم وحدها ملتبسة بياء المدّ
@@ -73,7 +79,7 @@ def _slot(word, offs, a, b, typ, role, **kw):
     return s
 
 def _host(word, toks, offs, a, b, lex, at_word_start):
-    """خانات ما ليس عاملاً: مبني من المعجم كاملاً، أو [أل][جذع معرب][ضمير متصل]"""
+    """خانات ما ليس عاملاً: مبني من المعجم كاملاً، أو [أل][جذع][ضمير متصل]"""
     text = word[offs[a][0]:offs[b - 1][1]]
     hits = lex.lookup(text) if lex else []
     if hits:
@@ -82,7 +88,7 @@ def _host(word, toks, offs, a, b, lex, at_word_start):
     slots = []
     if b - a > 2 and toks[a][0] == 'ا' and toks[a + 1][0] == 'ل' and \
             (not toks[a + 1][1] or toks[a + 1][1] == {SUKUN}):
-        slots.append(_slot(word, offs, a, a + 2, MABNI, 'article', note='أل التعريف'))
+        slots.append(_slot(word, offs, a, a + 2, ARTICLE, 'article', note='أل التعريف: ليست في ملف المبنيات'))
         a += 2
     tail = None
     for suf in sorted(STEM_SUFFIXES, key=lambda s: -len(letters(s))):
@@ -96,7 +102,7 @@ def _host(word, toks, offs, a, b, lex, at_word_start):
             b -= k
             break
     if b > a:
-        slots.append(_slot(word, offs, a, b, MURAB, 'stem'))
+        slots.append(_slot(word, offs, a, b, STEM, 'stem'))
     if tail:
         slots.append(tail)
     return slots
@@ -148,11 +154,21 @@ def segment_word(word, wi, cands, lex):
         if op:
             slots.append(op)
             pos = op['span'][1]
-    # 3. الوحدات: تُضمّ الخانة إلى سابقتها إن بدأت بغير متحرك
+    # 3. المبني لا يكون إلا ما في الملف: ما لم يُوجد فيه من حرف عطف أو كافة أو ضمير يصير جذعاً
+    for s in slots:
+        if s['type'] == MABNI and s['role'] in ('conj', 'kaffa', 'enclitic'):
+            e = lex.attested(s['text']) if lex else None
+            if e:
+                s['lexicon'] = [e['entry_id']]
+            else:
+                s['type'] = STEM
+                s['note'] = (s.get('note') or '') + ': ليس في ملف المبنيات'
+    # 4. الوحدات: تُضمّ الخانة إلى سابقتها إن بدأت بغير متحرك، أو كانتا كلتاهما مما يُقطَّع
     units = []
     for i, s in enumerate(slots):
         s['index'] = i
-        if units and not _moving(toks[s['span'][0]]):
+        if units and (not _moving(toks[s['span'][0]]) or
+                      (s['type'] in CUT_TYPES and units[-1][-1]['type'] in CUT_TYPES)):
             units[-1].append(s)
         else:
             units.append([s])
@@ -162,10 +178,10 @@ def segment_word(word, wi, cands, lex):
         types = [s['type'] for s in us]
         if DIVINE in types:
             kind, label = DIVINE, DIVINE
-        elif MURAB in types:
-            kind, label = MURAB, None
+        elif CUT_TYPES & set(types):
+            kind, label = CUT, None
         else:
-            kind = 'fixed'
+            kind = FIXED
             label = '+'.join(dict.fromkeys(types))
         for s in us:
             s['unit'] = j
@@ -234,7 +250,7 @@ def relate(segs, cands):
     return rels
 
 
-# ---------- التقطيع على الوحدات المعربة ----------
+# ---------- التقطيع على الوحدات التي تُقطَّع ----------
 def segment(words, cands, lex):
     segs = [segment_word(w, wi, [c for c in cands if c['word_index'] == wi or
                                  (c['method'] == 'multi_word' and c['words_span'][0] <= wi < c['words_span'][1])],
@@ -246,7 +262,7 @@ def segment(words, cands, lex):
     return segs, rels
 
 def syllabify_units(segs):
-    """تقطيع الوحدات المعربة وحدها → ناتج بصيغة cv.run (counts، rows، events …)"""
+    """تقطيع الوحدات التي تُقطَّع وحدها → ناتج بصيغة cv.run (counts، rows، events …)"""
     from collections import Counter
     events, counts = cv.Events(), Counter()
     rows, others, cv_line = [], [], []
@@ -256,7 +272,7 @@ def syllabify_units(segs):
         if any(u['kind'] == DIVINE for u in seg['units']):
             divine_words.append(wi)
         for u in seg['units']:
-            if u['kind'] != MURAB:
+            if u['kind'] != CUT:
                 continue
             r = cv.run(u['text'])
             events.update(r['events'])
@@ -272,12 +288,12 @@ def syllabify_units(segs):
                 cv_line=cv_line, n_words=len(segs), n_syll=len(rows), raw_words=[s['word'] for s in segs])
 
 def unit_view(segs):
-    """كل كلمة بوحداتها: المعرب بمقاطعه، وما سواه بوسمه"""
+    """كل كلمة بوحداتها: ما يُقطَّع بمقاطعه، وما سواه بوسمه"""
     lines = []
     for seg in segs:
         parts, pats = [], []
         for u in seg['units']:
-            if u['kind'] == MURAB:
+            if u['kind'] == CUT:
                 parts.append(' . '.join(s['syl'] for s in u['syllables']))
                 pats += [s['cv'] for s in u['syllables']]
             else:
