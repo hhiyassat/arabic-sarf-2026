@@ -55,27 +55,30 @@ def esc(s):
 def _nfc(s):
     return unicodedata.normalize('NFC', s or '')
 
-INSHAI_CLASSES = {'التوكيد والتمني', 'التقييم الرافعة فقط'}  # ليت؛ ونِعْمَ بِئْسَ سَاءَ حَبَّذَا
-# اسم فعلٍ فيه تعجّب — مفتوح، خبريٌّ الآن (NFC لتجنُّب اختلاف ترتيب الشدّة والحركة)
-TAAJJUB_KHABARI = {_nfc(x) for x in ('هَيْهَاتَ', 'شَتَّانَ', 'سُرْعَانَ')}
+# ── تصنيف خبري/إنشائي بالعامل في بابه (المفتاح: الصيغة بعد NFC، والمجموعة) كما في سجل T14 ──
+# الإنشائي 18 وحدةً فقط، وكل ما عداها خبري. المقارنة بعد NFC لاختلاف ترتيب العلامات بين الفهرس والكود.
+MOOD = {(_nfc(form), group): 'in' for form, group in (
+    # المجموعة 4 — النداء الخمسة
+    ('يَا', '4'), ('أَيَا', '4'), ('هَيَا', '4'), ('أَيْ', '4'), ('أَ', '4'),
+    # المجموعة 6 — لام الأمر ولا الناهية
+    ('لِ', '6'), ('لَا', '6'),
+    # المجموعة 2 — التمني
+    ('لَيْتَ', '2'),
+    # المجموعة 9 — أسماء أفعال الأمر الستة (دون أسماء أفعال التعجب)
+    ('رُوَيْدَ', '9'), ('بَلْهَ', '9'), ('دُونَكَ', '9'), ('عَلَيْكَ', '9'), ('هَاءَ', '9'), ('حَيَّهَلَ', '9'),
+    # المجموعة 12 — المدح والذم (إنشائي غير طلبي)
+    ('نِعْمَ', '12'), ('بِئْسَ', '12'), ('سَاءَ', '12'), ('حَبَّذَا', '12'),
+)}
 
 
 def op_mood(f):
-    """خبري/إنشائي لعامل واحد بحسب صنفه."""
-    c = f.get('operator_class') or ''
-    if 'نداء' in c:
-        return 'إنشائي'
-    if c in INSHAI_CLASSES:
-        return 'إنشائي'
-    if c == 'الأوامر والتعجب الإعرابية':
-        # أسماء أفعال الأمر إنشائية؛ وأسماء أفعال التعجب خبريةٌ الآن (بند مفتوح)
-        return 'خبري' if _nfc(f.get('operator')) in TAAJJUB_KHABARI else 'إنشائي'
-    return 'خبري'
+    """خبري/إنشائي لعاملٍ واحد بمفتاحه (الصيغة، المجموعة)."""
+    return 'إنشائي' if MOOD.get((_nfc(f.get('operator')), f.get('group'))) == 'in' else 'خبري'
 
 
-def verse_mood(ops):
-    """الآية إنشائيةٌ إن كان فيها عاملٌ إنشائيّ، وإلا فخبرية."""
-    return 'إنشائية' if any(op_mood(f) == 'إنشائي' for f in ops) else 'خبرية'
+def has_inshai_operator(ops):
+    """هل في الآية عاملٌ إنشائيٌّ غير مرفوض؟ (لا يشمل الإنشاء بالصيغ — T13)"""
+    return any(op_mood(f) == 'إنشائي' and f.get('status') != 'rejected' for f in ops)
 
 
 CSS = """
@@ -132,9 +135,11 @@ td.cv{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:16px;direction
 h2 .mood{font-size:16px}
 .mood-in{color:#8e24aa;background:rgba(142,36,170,.10)}   /* إنشائي */
 .mood-kh{color:#2e7d32;background:rgba(46,125,50,.10)}    /* خبري  */
+.mood-rej{color:#b71c1c;background:rgba(183,28,28,.10)}   /* مرفوضة بالكتابة */
 @media (prefers-color-scheme: dark){
   .mood-in{color:#ce93d8;background:rgba(206,147,216,.15)}
   .mood-kh{color:#a5d6a7;background:rgba(165,214,167,.15)}
+  .mood-rej{color:#ef9a9a;background:rgba(239,154,154,.15)}
 }
 """
 
@@ -156,15 +161,20 @@ def ops_html(ops):
         return '<span class="muted">—</span>'
     out = []
     for f in ops:
-        mood = op_mood(f)
-        mcls = 'mood-in' if mood == 'إنشائي' else 'mood-kh'
-        bits = [f'<b>{esc(f["operator"])}</b>',
-                f'<span class="mood {mcls}">{esc(mood)}</span>']
+        if f.get('status') == 'rejected':
+            badge = '<span class="mood mood-rej">مرفوضة بالكتابة</span>'
+        else:
+            mood = op_mood(f)
+            mcls = 'mood-in' if mood == 'إنشائي' else 'mood-kh'
+            badge = f'<span class="mood {mcls}">{esc(mood)}</span>'
+        bits = [f'<b>{esc(f["operator"])}</b>', badge]
         bits.append(f'<span class="meta">مج {esc(f["group"])}: {esc(f["operator_class"])}</span>')
         meth = esc(f['method'])
         if f.get('host_rest'):
             meth += f' · بقية={esc(f["host_rest"])}'
         bits.append(f'<span class="meta">{meth}</span>')
+        if f.get('reject_reason'):
+            bits.append(f'<span class="meta">({esc(f["reject_reason"])})</span>')
         out.append('<span class="op">' + ' — '.join(bits) + '</span>')
     return ''.join(out)
 
@@ -219,9 +229,10 @@ def verse_html(a, idx):
             '</tr>'
         )
 
-    vmood = verse_mood(a['operators'])
-    vcls = 'mood-in' if vmood == 'إنشائية' else 'mood-kh'
-    head = [f'<h2>الآية {idx} <span class="mood {vcls}">{esc(vmood)}</span></h2>',
+    has_in = has_inshai_operator(a['operators'])
+    vlabel = 'فيها عامل إنشائي' if has_in else 'ليس فيها عامل إنشائي'
+    vcls = 'mood-in' if has_in else 'mood-kh'
+    head = [f'<h2>الآية {idx} <span class="mood {vcls}">{esc(vlabel)}</span></h2>',
             f'<div class="card"><div class="orig">{esc(a["verse"])}</div>']
     head.append(f'<div class="muted">المُطبَّع: {esc(a["normalized"])}</div>')
     if a['syllabified_text'] != a['normalized']:
@@ -258,15 +269,24 @@ def build_html(analyses):
         key.append(f'<span class="chip {cls}">{esc(t)}<small>{esc(TYPE_LABEL[t].split(" — ")[-1])}</small></span>')
     key.append('</div>')
 
-    # عدّ خبري/إنشائي: على مستوى الآيات والعوامل
-    v_in = sum(1 for a in analyses if verse_mood(a['operators']) == 'إنشائية')
-    op_moods = Counter(op_mood(f) for a in analyses for f in a['operators'])
+    # عدّ خبري/إنشائي: الآيات بوجود عاملٍ إنشائيّ؛ والمرشَّحات بحالتها (المرفوض صنفٌ ثالث)
+    v_in = sum(1 for a in analyses if has_inshai_operator(a['operators']))
+    n_in = n_kh = n_rej = 0
+    for a in analyses:
+        for f in a['operators']:
+            if f.get('status') == 'rejected':
+                n_rej += 1
+            elif op_mood(f) == 'إنشائي':
+                n_in += 1
+            else:
+                n_kh += 1
     mood_pills = (
         '<div class="summary">'
-        f'<span class="pill">آيات: <span class="mood mood-in">إنشائية</span> {v_in}'
-        f' · <span class="mood mood-kh">خبرية</span> {len(analyses) - v_in}</span>'
-        f'<span class="pill">عوامل: <span class="mood mood-in">إنشائي</span> {op_moods.get("إنشائي", 0)}'
-        f' · <span class="mood mood-kh">خبري</span> {op_moods.get("خبري", 0)}</span>'
+        f'<span class="pill">الآيات: <span class="mood mood-in">فيها عامل إنشائي</span> {v_in}'
+        f' · <span class="mood mood-kh">ليس فيها</span> {len(analyses) - v_in}</span>'
+        f'<span class="pill">المرشَّحات: <span class="mood mood-in">إنشائي</span> {n_in}'
+        f' · <span class="mood mood-kh">خبري</span> {n_kh}'
+        f' · <span class="mood mood-rej">مرفوضة بالكتابة</span> {n_rej}</span>'
         '</div>'
     )
 
@@ -281,11 +301,13 @@ def build_html(analyses):
         ''.join(key),
         '</div>',
         '<div class="card">',
-        '<div class="muted">خبري/إنشائي — الإنشائيُّ هو الطلبيُّ (النداء والأمر والتمني) '
-        'وغيرُ الطلبيِّ (المدح والذمّ: نِعْمَ، بِئْسَ، سَاءَ، حَبَّذَا)؛ وما سواه خبريّ. '
-        'الآية إنشائيةٌ إن كان فيها عاملٌ إنشائيّ.</div>',
-        '<div class="muted">بنودٌ مفتوحة (مصنّفة خبريةً الآن): التعجب (هَيْهَاتَ/شَتَّانَ/سُرْعَانَ)، '
-        'والقسم (وَ/تَ)، والترجي (لَعَلَّ/عَسَى)، ولَوْ وكَمْ ورُبَّ.</div>',
+        '<div class="muted">خبري/إنشائي (بالعامل، كما في سجل T14): الإنشائي الطلبي هو النداء، '
+        'والأمر بلام الأمر وأسماء أفعال الأمر، والنهي، والتمني. والإنشائي غير الطلبي هو المدح والذم '
+        '(نِعْمَ، بِئْسَ، سَاءَ، حَبَّذَا). وما سواهما خبري، ومنه القسم والرجاء بقرار صاحب النظرية.</div>',
+        '<div class="muted">بنود مفتوحة، مصنّفة الآن خبرية: التعجب (هَيْهَاتَ، شَتَّانَ، سُرْعَانَ)، ولَوْ، وكَمْ، ورُبَّ.</div>',
+        '<div class="muted">لا يشمل وسم الآية الإنشاء بالصيغ (فعل الأمر، اللهم، همزة الاستفهام). '
+        'فمصدر الطلب في «اُخْرُجْ» صيغة الأمر لا عامل (T13).</div>',
+        '<div class="muted">المرشَّح المرفوض بالكتابة لا يُعَدّ إنشائياً ولا خبرياً، ولا يدخل في وسم الآية.</div>',
         mood_pills,
         '</div>',
     ]

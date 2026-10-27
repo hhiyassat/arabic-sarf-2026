@@ -281,6 +281,7 @@ def _match_word(cat, word, wi, toks):
         if tag is None:
             tag = '' if off == 0 else '+conj'
         hit = False
+        g9_whole = False
         # 2. الكلمة كاملة
         for op, n, how in cat.by_plain(t, cat.single):
             if op['plain'] in ALIF_TO_YA and SHADDA in t[-1][1]:
@@ -289,10 +290,12 @@ def _match_word(cat, word, wi, toks):
             else:
                 emit(op, (off, len(toks)), 'whole_word' + tag, n, conf_of(n, len(t)),
                      note=None if how == 'strict' else 'مطابقة مرنة للهمزات')
+                if op['group'] == '9':
+                    g9_whole = True       # اسم فعل: لا نكتفِ بالمطابقة الكاملة، بل نجرّب «عامل + لاحقة» أيضاً
             hit = True
-        if hit:
+        if hit and not g9_whole:
             return True
-        # 3. عامل + لاحقة
+        # 3. عامل + لاحقة  (ويُجرَّب أيضاً بعد مطابقة اسم فعل كاملة: عَلَيْكَ ← عَلَى + كَ)
         for op in cat.single:
             mode = SUFFIX_GROUPS.get(op['group'])
             if not mode:
@@ -312,6 +315,11 @@ def _match_word(cat, word, wi, toks):
             if ok:
                 emit(op, (off, off + k), 'operator+suffix' + tag, n, conf_of(n, k), host_rest=rest)
                 hit = True
+        # اجتماع تحليلي اسم الفعل: مطابقة كاملة + مطابقة مع لاحقة ⇒ ثقة كليهما medium
+        if g9_whole and any(r['method'].startswith('operator+suffix') for r in results):
+            for r in results:
+                if r['method'].startswith(('whole_word', 'operator+suffix')):
+                    r['confidence'] = 'medium'
         if hit:
             return True
         # 3a. إنّ وأخواتها + ما الكافة (إِنَّمَا، أَنَّمَا، كَأَنَّمَا، لَكِنَّمَا، لَيْتَمَا، لَعَلَّمَا)
@@ -479,11 +487,71 @@ def align(found, by_word, words):
         f.setdefault('isolated', isolated_cv(f['operator']))
     return found
 
+# ---------- Stage 1b: نفي المرشَّح بالكتابة (القرار 7: العامل يُتحقَّق منه بالكتابة) ----------
+RAF_PREFIX = set('يتأن')   # حروف المضارعة لثبوت نون الرفع
+
+def _last_haraka(toks):
+    """الحركة الأخيرة لمعمولٍ فعليّ، بعد نزع ضميرٍ متصل (الأطول أولاً، وبقاء حرفين)، أو None."""
+    toks = list(toks)
+    for suf in sorted(PRON_SUFFIXES, key=lambda s: len(_strip_marks(s)), reverse=True):
+        sl = len(_strip_marks(suf))
+        if len(toks) - sl >= 2 and plain(toks[-sl:]) == _strip_marks(suf):
+            toks = toks[:-sl]
+            break
+    if not toks:
+        return None
+    mk = toks[-1][1]
+    for h in (FATHATAN, DAMMATAN, KASRATAN, FATHA, DAMMA, KASRA, SUKUN):
+        if h in mk:
+            return h
+    return None
+
+def _noon_raf(toks):
+    """ثبوت نون الرفع: تبدأ بحرف مضارعة، وتنتهي بـ ونَ/ينَ (نون مفتوحة) أو انِ (نون مكسورة)."""
+    if len(toks) < 3 or toks[0][0] not in RAF_PREFIX:
+        return False
+    (l2, _), (l1, m1) = toks[-2], toks[-1]
+    if l1 != 'ن':
+        return False
+    return (l2 in ('و', 'ي') and FATHA in m1) or (l2 == 'ا' and KASRA in m1)
+
+def _target_after(f, words):
+    """رموز المعمول: بقيّة الكلمة بعد السابقة (proclitic)، أو الكلمة التالية."""
+    if f['method'].startswith('proclitic'):
+        return match_letters(f['word'], True)[f['char_span'][1]:]
+    nxt = f['word_index'] + 1
+    return match_letters(words[nxt], True) if nxt < len(words) else None
+
+def reject_candidates(found, words):
+    """يضيف status/reject_reason لكل مرشَّح؛ والمرفوض يبقى في القائمة ومعه سببه (مبدأ المخطط)."""
+    CASE = {FATHA: 'منصوب', DAMMA: 'مرفوع'}
+    for f in found:
+        f['status'], f['reject_reason'] = 'candidate', None
+    for f in found:
+        op = _strip_marks(f['operator'])
+        tgt = _target_after(f, words)
+        if not tgt:
+            continue
+        h = _last_haraka(tgt)
+        # R1/R2: لام الأمر ولا الناهية (المجموعة 6) — تُرفض إن كان الفعل بعدها غير مجزوم كتابةً
+        if f['group'] == '6' and op in ('ل', 'لا'):
+            reason = CASE.get(h) or ('ثبوت النون' if _noon_raf(tgt) else None)
+            if reason:
+                f['status'] = 'rejected'
+                f['reject_reason'] = f'الفعل بعدها غير مجزوم كتابةً ({reason})'
+        # R3: اسم الفعل الناصب للمفعول (المجموعة 9) — تُرفض إن كان ما بعده مرفوعاً كتابةً
+        elif f['group'] == '9' and op in ('رويد', 'بله', 'دونك', 'عليك'):
+            if h in (DAMMA, DAMMATAN):
+                f['status'] = 'rejected'
+                f['reject_reason'] = 'ما بعده مرفوع كتابةً، واسم الفعل ينصب مفعوله'
+    return found
+
 def analyze(cat, verse, uthmani='auto'):
     """النص كما هو: التقطيع على النص المطبَّع نفسه، كل كلمة مستقلة، بلا وصل ولا وقف"""
     isk = {'auto': None, 'on': True, 'off': False}[uthmani]   # auto←None (تلقائي) / on←True / off←False
     text = uthmani_normalize(verse, implicit_sukun=isk)
     words, found = extract(cat, text)
+    found = reject_candidates(found, words)
     res = cv.run(text)
     found = align(found, syllables_by_word(res), words)
     return dict(verse=verse, normalized=text, syllabified_text=text,
@@ -498,9 +566,11 @@ def text_report(a):
     for f in a['operators']:
         top = f['meanings'][0]
         out.append(f"[{f['word_index']}] {f['word']}  ⟵  {f['operator']}  (مج {f['group']}: {f['operator_class']})")
-        out.append(f"     طريقة={f['method']}  ثقة={f['confidence']}"
+        out.append(f"     طريقة={f['method']}  ثقة={f['confidence']}  الحكم={f.get('status', 'candidate')}"
                    + (f"  بقية={f['host_rest']}" if f.get('host_rest') else '')
                    + (f"  ملاحظة: {f['note']}" if f.get('note') else ''))
+        if f.get('reject_reason'):
+            out.append(f"     سبب الرفض: {f['reject_reason']}")
         out.append(f"     المقاطع في السياق: {' . '.join(s['syl'] for s in f['syllables'])}   [{f['cv']}]")
         out.append(f"     العامل منفرداً:    {' . '.join(s['syl'] for s in f['isolated'])}   "
                    f"[{' '.join(s['cv'] for s in f['isolated'])}]")
