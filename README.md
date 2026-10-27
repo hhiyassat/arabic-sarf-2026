@@ -16,7 +16,8 @@
 | `sarf/match.py` | مطابقة العوامل في الكلمة |
 | `sarf/evidence.py` | نفي المرشَّح بالكتابة |
 | `sarf/align.py` | ربط العامل بمقاطع كلمته |
-| `sarf/analyze.py` | تحليل آية: تطبيع ← مطابقة ← نفي ← تقطيع ← ربط |
+| `sarf/pipeline.py` | تشغيل المراحل بالترتيب على كائن واحد للآية: normalize ← match ← evidence ← syllabify ← align |
+| `sarf/analyze.py` | تحليل آية بكل المراحل (يمرّ بالـ pipeline) |
 | `sarf/mood.py` | خبري/إنشائي بالعامل في بابه (سجل T14) |
 | `sarf/output_text.py`، `sarf/output_html.py` | الناتج النصي وJSON، وتقرير HTML |
 
@@ -24,6 +25,7 @@
 
 | الملف | الوظيفة |
 |---|---|
+| `pipeline.py` | تشغيل المراحل وفحص ناتج كل مرحلة: `--stages`، `--until`، `--skip`، `--dump` |
 | `extract_operators.py` | استخراج العوامل وتقطيع الآية (نص أو JSON Lines) |
 | `cv_syllabifier.py` | التقطيع وحده |
 | `syllable_report.py` | تقرير HTML: جدول لكل آية، صفٌّ لكل كلمة بمقاطعها ونمط CV والعوامل |
