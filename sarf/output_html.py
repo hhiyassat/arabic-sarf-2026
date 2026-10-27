@@ -1,0 +1,284 @@
+# -*- coding: utf-8 -*-
+"""
+sarf.output_html — تقرير HTML: الكلمات ومقاطعها.
+لكل آية: جدول صفٌّ لكل كلمة (الرقم، الكلمة، المقاطع ملوّنة حسب النوع، نمط CV، العوامل)،
+مع ملخّص أنواع المقاطع للآية، وملخّص إجمالي في رأس الصفحة.
+"""
+import html
+from collections import Counter, OrderedDict
+
+from .syllabify import SIX
+from .align import syllables_by_word
+from .mood import op_mood, has_inshai_operator
+
+# أنواع المقاطع التي نعدّها/نلوّنها: الستة + OTHER + POISON
+TYPES = SIX + ['OTHER', 'POISON']
+
+# أسماء عربية موجزة للعرض في المفتاح والملخّص
+TYPE_LABEL = OrderedDict([
+    ('CV',    'CV — ساكن+حركة'),
+    ('CVV',   'CVV — ساكن+مدّ'),
+    ('CVC',   'CVC — مغلق قصير'),
+    ('CVVC',  'CVVC — مغلق بمدّ'),
+    ('CVCC',  'CVCC — مغلق بساكنين'),
+    ('CVVCC', 'CVVCC — مغلق بمدّ وساكنين'),
+    ('OTHER', 'OTHER — نمط خارج الستة'),
+    ('POISON','POISON — تشكيل ناقص'),
+])
+
+
+def syl_type(cv):
+    """نوع المقطع لأغراض العدّ/التلوين: ستّة معروفة، أو POISON، أو OTHER."""
+    if cv == 'POISON':
+        return 'POISON'
+    if cv in SIX:
+        return cv
+    return 'OTHER'
+
+
+def esc(s):
+    return html.escape('' if s is None else str(s))
+
+
+CSS = """
+:root{
+  --bg:#ffffff; --fg:#1a1a1a; --muted:#666; --card:#f6f7f9; --border:#d9dde3;
+  --th:#eceff3; --warnbg:#fff3cd; --warnfg:#7a5b00; --poisonbg:#f8d7da; --poisonfg:#842029;
+  --c-CV:#1565c0;    --c-CVV:#00838f;   --c-CVC:#6a1b9a;
+  --c-CVVC:#ef6c00;  --c-CVCC:#ad1457;  --c-CVVCC:#283593;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#15181d; --fg:#e8eaed; --muted:#9aa0a6; --card:#1e232b; --border:#333a44;
+    --th:#242b34; --warnbg:#4a3d00; --warnfg:#ffe08a; --poisonbg:#5a1f24; --poisonfg:#ffb3b8;
+    --c-CV:#64b5f6;    --c-CVV:#4dd0e1;   --c-CVC:#ce93d8;
+    --c-CVVC:#ffb74d;  --c-CVCC:#f48fb1;  --c-CVVCC:#9fa8da;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--fg);
+  font-family:"Noto Naskh Arabic","Geeza Pro","Scheherazade New","Segoe UI",system-ui,sans-serif;
+  font-size:20px; line-height:1.9; padding:20px 16px 60px;
+}
+h1{font-size:28px;margin:0 0 6px}
+h2{font-size:23px;margin:34px 0 8px;border-top:2px solid var(--border);padding-top:16px}
+.muted{color:var(--muted);font-size:16px;line-height:1.7}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin:12px 0}
+.orig{font-size:24px;line-height:2.1}
+table{border-collapse:collapse;width:100%;margin:10px 0;font-size:20px}
+th,td{border:1px solid var(--border);padding:8px 10px;text-align:right;vertical-align:top}
+th{background:var(--th);font-size:17px;font-weight:700;white-space:nowrap}
+td.num{color:var(--muted);text-align:center;font-size:17px;width:3ch}
+td.word{font-size:24px;white-space:nowrap}
+td.cv{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:16px;direction:ltr;text-align:left;color:var(--muted)}
+.chip{display:inline-block;margin:2px 3px;padding:3px 10px;border-radius:8px;font-size:21px;
+  border:1px solid currentColor;line-height:1.6}
+.chip small{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;opacity:.75;direction:ltr;margin-right:5px}
+.t-CV{color:var(--c-CV)}    .t-CVV{color:var(--c-CVV)}   .t-CVC{color:var(--c-CVC)}
+.t-CVVC{color:var(--c-CVVC)}.t-CVCC{color:var(--c-CVCC)} .t-CVVCC{color:var(--c-CVVCC)}
+.t-OTHER{color:var(--warnfg);background:var(--warnbg);border-color:var(--warnfg)}
+.t-POISON{color:var(--poisonfg);background:var(--poisonbg);border-color:var(--poisonfg);font-weight:700}
+.op{display:block;font-size:16px;line-height:1.7;margin:2px 0;padding-right:8px;border-right:3px solid var(--border)}
+.op b{font-size:19px}
+.op .meta{color:var(--muted)}
+.summary{font-size:16px;margin:8px 0;display:flex;flex-wrap:wrap;gap:6px}
+.pill{display:inline-block;padding:2px 9px;border-radius:999px;border:1px solid var(--border)}
+.pill b{font-family:ui-monospace,Menlo,Consolas,monospace}
+.key{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.total{font-size:18px}
+.total .pill{font-size:17px;padding:4px 12px}
+.mood{display:inline-block;font-size:14px;font-weight:700;padding:1px 9px;border-radius:999px;
+  border:1px solid currentColor;vertical-align:middle}
+h2 .mood{font-size:16px}
+.mood-in{color:#8e24aa;background:rgba(142,36,170,.10)}   /* إنشائي */
+.mood-kh{color:#2e7d32;background:rgba(46,125,50,.10)}    /* خبري  */
+.mood-rej{color:#b71c1c;background:rgba(183,28,28,.10)}   /* مرفوضة بالكتابة */
+@media (prefers-color-scheme: dark){
+  .mood-in{color:#ce93d8;background:rgba(206,147,216,.15)}
+  .mood-kh{color:#a5d6a7;background:rgba(165,214,167,.15)}
+  .mood-rej{color:#ef9a9a;background:rgba(239,154,154,.15)}
+}
+"""
+
+
+def chips_html(sylls):
+    """شارات المقاطع ملوّنة حسب النوع."""
+    out = []
+    for s in sylls:
+        t = syl_type(s['cv'])
+        out.append(
+            f'<span class="chip t-{esc(t)}" title="{esc(s["cv"])}">'
+            f'{esc(s["syl"])}<small>{esc(s["cv"])}</small></span>'
+        )
+    return ''.join(out) if out else '<span class="muted">—</span>'
+
+
+def ops_html(ops):
+    if not ops:
+        return '<span class="muted">—</span>'
+    out = []
+    for f in ops:
+        if f.get('status') == 'rejected':
+            badge = '<span class="mood mood-rej">مرفوضة بالكتابة</span>'
+        else:
+            mood = op_mood(f)
+            mcls = 'mood-in' if mood == 'إنشائي' else 'mood-kh'
+            badge = f'<span class="mood {mcls}">{esc(mood)}</span>'
+        bits = [f'<b>{esc(f["operator"])}</b>', badge]
+        bits.append(f'<span class="meta">مج {esc(f["group"])}: {esc(f["operator_class"])}</span>')
+        meth = esc(f['method'])
+        if f.get('host_rest'):
+            meth += f' · بقية={esc(f["host_rest"])}'
+        bits.append(f'<span class="meta">{meth}</span>')
+        if f.get('reject_reason'):
+            bits.append(f'<span class="meta">({esc(f["reject_reason"])})</span>')
+        out.append('<span class="op">' + ' — '.join(bits) + '</span>')
+    return ''.join(out)
+
+
+def summary_pills(counter, extra_class=''):
+    out = []
+    for t in TYPES:
+        n = counter.get(t, 0)
+        if n == 0 and t in ('OTHER', 'POISON'):
+            continue
+        cls = f't-{t}' if t in ('OTHER', 'POISON') and n else ''
+        out.append(f'<span class="pill {cls}"><b>{esc(t)}</b>: {n}</span>')
+    return f'<div class="summary {extra_class}">' + ''.join(out) + '</div>'
+
+
+def verse_counter(by_word):
+    c = Counter()
+    for wi in by_word:
+        for s in by_word[wi]:
+            c[syl_type(s['cv'])] += 1
+    return c
+
+
+def verse_html(a, idx):
+    by_word = syllables_by_word(a['syll'])
+    n_words = a['syll']['n_words']
+    raw_words = a['syll']['raw_words']
+    words = a['words']
+
+    # عوامل مفهرسة بحسب رقم الكلمة
+    ops_by_word = {}
+    for f in a['operators']:
+        ops_by_word.setdefault(f['word_index'], []).append(f)
+
+    rows = []
+    for wi in range(n_words):
+        word = words[wi] if wi < len(words) else raw_words[wi]
+        sylls = by_word.get(wi, [])
+        cvpat = ' '.join(s['cv'] for s in sylls)
+        if wi in a['syll'].get('divine_words', ()):
+            rows.append(f'<tr><td class="num">{wi}</td><td class="word">{esc(word)}</td>'
+                        '<td colspan="2" class="muted">لفظ الجلالة — لا يُقطَّع</td>'
+                        f'<td>{ops_html(ops_by_word.get(wi, []))}</td></tr>')
+            continue
+        rows.append(
+            '<tr>'
+            f'<td class="num">{wi}</td>'
+            f'<td class="word">{esc(word)}</td>'
+            f'<td>{chips_html(sylls)}</td>'
+            f'<td class="cv">{esc(cvpat)}</td>'
+            f'<td>{ops_html(ops_by_word.get(wi, []))}</td>'
+            '</tr>'
+        )
+
+    has_in = has_inshai_operator(a['operators'])
+    vlabel = 'فيها عامل إنشائي' if has_in else 'ليس فيها عامل إنشائي'
+    vcls = 'mood-in' if has_in else 'mood-kh'
+    head = [f'<h2>الآية {idx} <span class="mood {vcls}">{esc(vlabel)}</span></h2>',
+            f'<div class="card"><div class="orig">{esc(a["verse"])}</div>']
+    head.append(f'<div class="muted">المُطبَّع: {esc(a["normalized"])}</div>')
+    if a['syllabified_text'] != a['normalized']:
+        head.append(f'<div class="muted">للتقطيع: {esc(a["syllabified_text"])}</div>')
+    head.append('</div>')
+
+    table = (
+        '<table><thead><tr>'
+        '<th>#</th><th>الكلمة</th><th>المقاطع</th><th>نمط CV</th><th>العوامل</th>'
+        '</tr></thead><tbody>' + ''.join(rows) + '</tbody></table>'
+    )
+
+    c = verse_counter(by_word)
+    total = sum(c.values())
+    summ = (f'<div class="muted">مجموع المقاطع: {total}'
+            f' (SYLLABLES={a["syll"]["n_syll"]})</div>' + summary_pills(c))
+    return '\n'.join(head) + table + summ, c
+
+
+def build_html(analyses):
+    body = []
+    grand = Counter()
+    sections = []
+    for i, a in enumerate(analyses, 1):
+        s, c = verse_html(a, i)
+        grand += c
+        sections.append(s)
+
+
+    # مفتاح الألوان
+    key = ['<div class="key">']
+    for t in TYPES:
+        cls = f't-{t}'
+        key.append(f'<span class="chip {cls}">{esc(t)}<small>{esc(TYPE_LABEL[t].split(" — ")[-1])}</small></span>')
+    key.append('</div>')
+
+    # عدّ خبري/إنشائي: الآيات بوجود عاملٍ إنشائيّ؛ والمرشَّحات بحالتها (المرفوض صنفٌ ثالث)
+    v_in = sum(1 for a in analyses if has_inshai_operator(a['operators']))
+    n_in = n_kh = n_rej = 0
+    for a in analyses:
+        for f in a['operators']:
+            if f.get('status') == 'rejected':
+                n_rej += 1
+            elif op_mood(f) == 'إنشائي':
+                n_in += 1
+            else:
+                n_kh += 1
+    mood_pills = (
+        '<div class="summary">'
+        f'<span class="pill">الآيات: <span class="mood mood-in">فيها عامل إنشائي</span> {v_in}'
+        f' · <span class="mood mood-kh">ليس فيها</span> {len(analyses) - v_in}</span>'
+        f'<span class="pill">المرشَّحات: <span class="mood mood-in">إنشائي</span> {n_in}'
+        f' · <span class="mood mood-kh">خبري</span> {n_kh}'
+        f' · <span class="mood mood-rej">مرفوضة بالكتابة</span> {n_rej}</span>'
+        '</div>'
+    )
+
+    header = [
+        '<h1>تقرير الكلمات ومقاطعها</h1>',
+        '<div class="muted">النص كما هو: كل كلمة تُقطَّع مستقلّة بحركاتها المكتوبة، بلا وصل ولا وقف؛ والتنوين حركة واحدة من جنسه.</div>',
+        f'<div class="muted">عدد الآيات: {len(analyses)} — النطاق: أنماط CV فقط (بلا أحكام تجويد صوتية).</div>',
+        '<div class="card">',
+        '<div class="muted">الملخّص الإجمالي:</div>',
+        summary_pills(grand, 'total'),
+        '<div class="muted" style="margin-top:6px">مفتاح الألوان:</div>',
+        ''.join(key),
+        '</div>',
+        '<div class="card">',
+        '<div class="muted">خبري/إنشائي (بالعامل، كما في سجل T14): الإنشائي الطلبي هو النداء، '
+        'والأمر بلام الأمر وأسماء أفعال الأمر، والنهي، والتمني. والإنشائي غير الطلبي هو المدح والذم '
+        '(نِعْمَ، بِئْسَ، سَاءَ، حَبَّذَا). وما سواهما خبري، ومنه القسم والرجاء بقرار صاحب النظرية.</div>',
+        '<div class="muted">بنود مفتوحة، مصنّفة الآن خبرية: التعجب (هَيْهَاتَ، شَتَّانَ، سُرْعَانَ)، ولَوْ، وكَمْ، ورُبَّ.</div>',
+        '<div class="muted">لا يشمل وسم الآية الإنشاء بالصيغ (فعل الأمر، اللهم، همزة الاستفهام). '
+        'فمصدر الطلب في «اُخْرُجْ» صيغة الأمر لا عامل (T13).</div>',
+        '<div class="muted">المرشَّح المرفوض بالكتابة لا يُعَدّ إنشائياً ولا خبرياً، ولا يدخل في وسم الآية.</div>',
+        mood_pills,
+        '</div>',
+    ]
+
+    doc = [
+        '<!doctype html>',
+        '<html lang="ar" dir="rtl"><head><meta charset="utf-8">',
+        '<meta name="viewport" content="width=device-width, initial-scale=1">',
+        '<title>تقرير الكلمات ومقاطعها</title>',
+        f'<style>{CSS}</style></head><body>',
+        '\n'.join(header),
+        '\n'.join(sections),
+        '</body></html>',
+    ]
+    return '\n'.join(doc), grand
