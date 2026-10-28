@@ -164,6 +164,11 @@ def segment_word(word, wi, cands, lex):
         if op:
             slots.append(op)
             pos = op['span'][1]
+    # ياء الحرف المدغمة في ياء المتكلم (إِلَىَّ): نصف الشدة الأول للعامل، والثاني للضمير
+    for i, s in enumerate(slots[:-1]):
+        if s['type'] == AMIL and any('مدغمة' in (c.get('note') or '') for c in s.get('cands', [])):
+            s['text'] += 'يْ'
+            slots[i + 1]['text'] = 'يَ'
     # 3. المبني لا يكون إلا ما في الملف: ما لم يُوجد فيه من حرف عطف أو كافة أو ضمير يصير جذعاً
     for s in slots:
         if s['type'] == MABNI and s['role'] in ('conj', 'kaffa', 'enclitic'):
@@ -195,7 +200,8 @@ def segment_word(word, wi, cands, lex):
             label = '+'.join(dict.fromkeys(types))
         for s in us:
             s['unit'] = j
-        out_units.append(dict(text=word[offs[a][0]:offs[b - 1][1]], kind=kind, label=label,
+        text = word[offs[a][0]:offs[b - 1][1]] if kind == CUT else ''.join(s['text'] for s in us)
+        out_units.append(dict(text=text, kind=kind, label=label,
                               slots=[s['index'] for s in us], syllables=[]))
     for s in slots:
         s.pop('cands', None)
@@ -216,9 +222,11 @@ def _observed(seg, slot):
     return None
 
 def _target(segs, wi, si):
-    seg = segs[wi]
-    if si + 1 < len(seg['slots']):
-        return wi, si + 1
+    """المعمول: الخانة التالية في الكلمة، أو أول خانة في الكلمة التالية؛ وأل لا تكون معمولاً
+    بل الجذع بعدها (بِٱلْعَدْلِ: بِ ← عَدْلِ)، ولا حرف العطف في أول الكلمة التالية"""
+    for t in segs[wi]['slots'][si + 1:]:
+        if t['role'] != 'article':
+            return wi, t['index']
     if wi + 1 < len(segs):
         for t in segs[wi + 1]['slots']:
             if t['role'] not in ('conj', 'article'):
