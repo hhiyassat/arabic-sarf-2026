@@ -30,6 +30,13 @@ R = {
     ('mudari', 'ت', 'ان'): ['أَنْتُمَا', 'هُمَا'],
     ('mudari', 'ي', 'ن'): ['هُنَّ'],
     ('mudari', 'ت', 'ن'): ['أَنْتُنَّ'],
+    # «ـُوا» بعد حرفين: واو الجمع، أو واو الأصل في الناقص وبعدها ألف زائدة رسماً (يَدۡعُواْ، يَتۡلُواْ)
+    ('mudari', 'ي', 'وا؟'): ['هُوَ', 'هُمْ'],
+    ('mudari', 'ت', 'وا؟'): ['أَنْتَ', 'هِيَ', 'أَنْتُمْ'],
+    ('mudari', 'ن', 'وا؟'): ['نَحْنُ'],
+    ('mudari', 'أ', 'وا؟'): ['أَنَا'],
+    # أَفۡعِلۡ: مضارع المتكلم مجزوماً، أو أمر أَفۡعَلَ (أَمۡهِلۡهُمۡ)
+    ('mudari', 'أ', 'أفعل'): ['أَنَا', 'أَنْتَ'],
     # الماضي
     ('madi', None, ''): ['هُوَ'],
     ('madi', None, 'تْ'): ['هِيَ'],
@@ -83,8 +90,8 @@ def signature(text, info):
         suf = info.get('suffix')
         if suf in ('تُ', 'تَ', 'تِ'):
             return 'تَ' if FATHA in m1 else 'تِ' if KASRA in m1 else 'تُ'
-        if suf in ('وا', 'و'):
-            return 'وا'
+        if suf in ('وا', 'و') or L1 == 'ا' and not m1 and L2 == 'و' and m2 & {SUKUN, DAMMA} and FATHA in m3:
+            return 'وا'                                    # ورَمَوۡا، ٱشۡتَرَوُا
         if suf in ('تْ', 'تُمْ', 'تُمَا', 'تُنَّ', 'نَا'):
             return suf
         if L1 == 'ا' and not m1 and L2 == 'ت' and FATHA in m2 and SUKUN not in m3:
@@ -95,15 +102,27 @@ def signature(text, info):
             return 'نَ'                                    # كَتَبْنَ
         return ''
     # المضارع والأمر
+    if L1 == 'و' and m1 == {SUKUN} and FATHA in m2 or L1 == 'ن' and FATHA in m1 and L2 == 'و' and m2 == {SUKUN} \
+            and FATHA in m3:
+        return 'ون'                                        # جمع الناقص: تَخۡشَوۡهُمۡ، يَخۡشَوۡنَ
+    if L1 == 'ن' and FATHA in m1 and L2 == 'و' and not m2 and DAMMA in m3 and info['kind'] == 'mudari' and n == 4:
+        return ''                                          # يَكُونَ: الواو والنون أصليتان في المفرد الأجوف
+    if info.get('suffix') == 'وا' and info['kind'] == 'mudari' and n == 5:
+        return 'وا؟'                                       # ي + حرفان + ـُوا: يَدۡعُواْ (مفرد) أم يَدۡعُوا (جمع)؟
     if info.get('suffix') in ('وا', 'و') or L1 == 'ن' and FATHA in m1 and L2 == 'و' and not m2 and DAMMA in m3 or \
-            L1 == 'ن' and SHADDA in m1 and L2 == 'و' and DAMMA in m2:
-        return 'ون'                                        # ولَتَرَوُنَّ: واو الجماعة قبل نون التوكيد
+            L1 == 'ن' and SHADDA in m1 and FATHA in m1 and DAMMA in m2:
+        return 'ون'                                        # لَتَرَوُنَّ، لَتَرۡكَبُنَّ: الجمع قبل نون التوكيد (والواو محذوفة)
+    if L1 == 'ن' and SHADDA in m1 and FATHA in m1 and KASRA in m2:
+        return 'ين'                                        # المخاطبة قبل نون التوكيد
     if info.get('suffix') == 'ي' or L1 == 'ن' and FATHA in m1 and L2 == 'ي' and not m2 and KASRA in m3:
         return 'ين'
     if L1 == 'ن' and KASRA in m1 and L2 == 'ا' and not m2 or L1 == 'ا' and not m1 and FATHA in m2 and n > 3:
         return 'ان'
     if L1 == 'ن' and FATHA in m1 and SUKUN in m2 and SHADDA not in m1:
         return 'ن'
+    if info['kind'] == 'mudari' and info.get('prefix') == 'أ' and FATHA in toks[0][1] and m1 == {SUKUN} and \
+            KASRA in m2 and n == 4 and SUKUN in toks[1][1]:
+        return 'أفعل'                                      # أَمۡهِلۡ: مضارع المتكلم أو أمر أَفۡعَلَ
     return ''
 
 
@@ -134,15 +153,24 @@ def voice(text, info):
     if info.get('object'):
         toks = toks[:-len(letters(info['object']))]
     if info['kind'] == 'madi':
+        # فُعِلَ: ضمّ الأول وكسرٌ بعده (قُتِلَ، كُوِّرَتۡ، أُزۡلِفَتۡ)؛ وضمّ أول الأجوف المعلوم بلا كسر (زُرۡتُمۡ)
         core = toks[1:] if len(toks) > 2 and toks[0][0] in ('و', 'ف') and toks[0][1] == {FATHA} else toks
-        return 'passive' if core and DAMMA in core[0][1] else 'active'
+        # والمضعَّف: ضمّ الأول ثم شدة (حُقَّتۡ، مُدَّتۡ)، إلا نون «كُنَّا» المدغمة في الضمير
+        doubled = len(core) > 1 and SHADDA in core[1][1] and core[1][0] != 'ن'
+        # وفُوعِلَ وأُفۡعِلَ من المعتل: ضمٌّ ثم واو مدّ (أُوتُوا، قُوتِلُوا)
+        doubled = doubled or len(core) > 2 and core[1][0] == 'و' and not core[1][1]
+        return 'passive' if core and DAMMA in core[0][1] and (any(KASRA in m for _, m in core[1:]) or doubled) \
+            else 'active'
     if info['kind'] != 'mudari' or not toks or DAMMA not in toks[0][1]:
         return 'active'
-    sig = signature(text, info)
-    k = {'ون': 2, 'ين': 2, 'ان': 2}.get(sig, 0)
-    if sig in ('ون',) and info.get('suffix') in ('وا', 'و'):
-        k = 2 if info['suffix'] == 'وا' else 1
-    body = toks[:len(toks) - k] if k else toks
+    # الجسم: بلا النون الأخيرة وحروف الإسناد (ـونَ، ـينَ، ـانِ، ـُوا، ـنَّ)
+    body = list(toks)
+    if body and body[-1][0] == 'ن':
+        body = body[:-1]
+    if body and body[-1][0] == 'ا' and not body[-1][1]:
+        body = body[:-1]
+    if body and body[-1][0] in ('و', 'ي', 'ا') and not body[-1][1]:
+        body = body[:-1]
     if len(body) < 3:
         return 'active'
     pen = body[-2]

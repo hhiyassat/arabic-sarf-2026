@@ -33,12 +33,14 @@ LAWAHIQ = set('هكنيوامت')                        # حروف اللواح
 MUDARI = {'أ', 'ن', 'ي', 'ت'}
 TANWIN = {FATHATAN, DAMMATAN, KASRATAN}
 WASL_NOUNS = {'اسم', 'ابن', 'ابنة', 'ابنم', 'امرؤ', 'امرئ', 'امرأ', 'امرأة', 'اثنان', 'اثنين',
-              'اثنتان', 'اثنتين', 'است', 'امرأت', 'ابنت', 'اثنا', 'اثنت'}   # أسماء تبدأ بهمزة وصل (وصورها قبل الضمير)
+              'اثنتان', 'اثنتين', 'است', 'امرأت', 'ابنت', 'اثنا', 'اثنت', 'اثنتا', 'اثنتي', 'اثني'}   # أسماء تبدأ بهمزة وصل (وصورها قبل الضمير)
 OBJ_SUFFIXES = sorted((s for s in PRON_SUFFIXES if s != 'ي'), key=lambda s: -len(letters(s)))
 MIN_STEM = 3
 MARK_MOOD = {FATHA: 'نصب', DAMMA: 'رفع', SUKUN: 'جزم'}
 MADD = set('اويىآ')
-PROCLITIC_LETTERS = set('وفلبكءأ')                 # حروف تسبق الكلمة متصلةً بها (والهمزة للاستفهام)
+PROCLITIC_LETTERS = set('وفلبكءأ')
+# مركّبات مبنية بإدغام، وأسماء ملازمة للإضافة تُكتب بواو وألف (ليست في ملف المبنيات)
+CLOSED_COMPOUNDS = {'ممن', 'عمن', 'مما', 'عما', 'ألوا', 'أولوا', 'أولي', 'أولات'}                 # حروف تسبق الكلمة متصلةً بها (والهمزة للاستفهام)
 # ضمائر الرفع المنفصلة: صورتها تشبه الماضي مع ضمير (أَنْتَ = أَنْ + تَ) فتُستثنى
 RAF_PRONOUNS = {'أنا', 'أنت', 'أنتما', 'أنتم', 'أنتن', 'هو', 'هي', 'هما', 'هم', 'هن', 'نحن'}
 
@@ -106,12 +108,33 @@ def _closed(toks):
         toks[0] = ('إ', toks[0][1])               # ئِنۡ بعد فصل اللام: «إِنۡ»
     if _mabni(text_of(toks)):
         return True
-    if len(toks) > 2 and toks[0][0] in PROCLITIC_LETTERS and toks[0][1] & {FATHA, KASRA}:
-        rest = list(toks[1:])
-        if rest[0][0] == 'ئ':
-            rest[0] = ('إ', rest[0][1])          # لَئِنۡ: همزة «إن» على ياء بعد اللام
-        return _mabni(text_of(rest))
+    if plain(toks) in CLOSED_COMPOUNDS:
+        return True
+    for k in (1, 2):                              # سابقة أو سابقتان: أَوَلَمۡ، أَفَإِن
+        if len(toks) > k + 1 and all(toks[i][0] in PROCLITIC_LETTERS and toks[i][1] & {FATHA, KASRA}
+                                     for i in range(k)):
+            rest = list(toks[k:])
+            if rest[0][0] == 'ئ':
+                rest[0] = ('إ', rest[0][1])      # لَئِنۡ: همزة «إن» على ياء بعد اللام
+            if _mabni(text_of(rest)) or plain(rest) in CLOSED_COMPOUNDS:
+                return True
     return False
+
+
+def _wasl_amr_shape(toks):
+    """أمر الثلاثي بهمزة الوصل: ٱ + ثلاثة أحرف أولها ساكن غير مشدد (ٱنظُرۡ، وَٱجۡعَلۡ)؛ فـ«نا» بعده مفعول"""
+    t = toks[1:] if len(toks) > 1 and toks[0][0] in ('و', 'ف') and FATHA in toks[0][1] else toks
+    return len(t) == 4 and t[0][0] == 'ا' and not t[0][1] and SUKUN in t[1][1] and SHADDA not in t[1][1]
+
+
+def _mudari_shape(toks):
+    """شكل المضارع بعد حرفه: المفتوح يليه ساكن (يَدۡعُوا، يَسۡتَغۡفِرُوا) أو تاء مفتوحة (يَتَفَعَّلُوا)؛
+    والمضموم يليه فتح أو سكون (يُعَلِّمُوا، يُخۡرِجُوا، يُقۡتَلُوا)"""
+    (_, m0), (L1, m1) = toks[0], toks[1]
+    hollow = len(toks) > 2 and toks[2][0] in ('و', 'ي', 'ا') and not toks[2][1]    # يَقُولُوا، يُقِيمُوا
+    if FATHA in m0:
+        return SUKUN in m1 or hollow or L1 == 'ت' and FATHA in m1 and len(toks) >= 5
+    return bool(m1 & {FATHA, SUKUN}) or hollow
 
 
 def _wasl_kind(toks, suffix):
@@ -121,12 +144,19 @@ def _wasl_kind(toks, suffix):
     الماضي: واو الجماعة في غير ذلك (ٱنقَلَبُوا، ٱتَّبَعُوا)، أو آخره فتح أو ألف مقصورة بعد فتح (ٱتَّخَذَ، ٱبۡتَلَىٰ)،
            وما سواه لا يُحكم فيه (ٱبۡتِغَآءَ: مصدر)"""
     body, last, pen = toks[1:], toks[-1], toks[-2]
+    if DAMMA in body[0][1]:
+        return 'madi'                                    # ٱتُّبِعُوا، ٱضۡطُرَّ: مجهول الماضي (الأمر لا يُضمّ أوله)
     if suffix == 'ي':
         return 'amr'
     if suffix in ('وا', 'و'):
         if len(body) <= 2 or len(body) == 3 and SUKUN in body[0][1] and SHADDA not in body[0][1] or \
-                KASRA in pen[1]:
+                KASRA in pen[1] or pen[0] == 'ي' and not pen[1]:      # ٱسۡتَعِينُوا: الياء مدٌّ بعد كسر
             return 'amr'
+        return 'madi'
+    # ضمير الفاعل في الماضي بعد ساكن: ٱسۡتَكۡبَرۡتُمۡ، فَٱدَّٰرَأۡتُمۡ (لا أمر لسكون الميم)
+    n = len(toks)
+    if n >= 4 and toks[-2][0] == 'ت' and DAMMA in toks[-2][1] and toks[-1][0] == 'م' and SUKUN in toks[-3][1] or \
+            n >= 3 and last[0] == 'ت' and last[1] & {FATHA, DAMMA, KASRA} and SUKUN in pen[1]:
         return 'madi'
     if last[0] == 'ت' and last[1] == {SUKUN} and FATHA in pen[1]:
         return 'madi'                                    # ٱنكَدَرَتۡ: تاء التأنيث
@@ -155,8 +185,12 @@ def stem_info(text):
         return info
     ev = info['evidence']
     if plain(toks) in RAF_PRONOUNS or len(toks) > 2 and toks[0][0] in PROCLITIC_LETTERS and \
-            FATHA in toks[0][1] and plain(toks[1:]) in RAF_PRONOUNS:
+            FATHA in toks[0][1] and plain(toks[1:]) in RAF_PRONOUNS or \
+            len(toks) > 2 and toks[0][0] == 'ه' and plain(toks[1:]) in RAF_PRONOUNS:   # هَٰٓأَنتُمۡ: ها التنبيه
         ev.append('ضمير رفع منفصل')             # وبعد سابقة: فَأَنتَ، ءَأَنتُمۡ
+        return info
+    if plain(toks) in CLOSED_COMPOUNDS:
+        ev.append('مركّب مبني أو اسم ملازم للإضافة')
         return info
     # اسم: تنوين، أو أل، أو تاء مربوطة
     if toks[-1][1] & TANWIN or len(toks) > 1 and toks[-1][0] in ('ا', 'ى') and not toks[-1][1] and \
@@ -173,7 +207,7 @@ def stem_info(text):
     # إلا «نا» على حرف جرّ تنقلب ألفه ياءً (عَلَيْنَا، إِلَيْنَا، لَدَيْنَا)
     if len(toks) >= 4 and toks[-1][0] == 'ا' and not toks[-1][1] and toks[-2][0] == 'ن' and \
             toks[-2][1] == {FATHA} and SUKUN in toks[-3][1] and \
-            plain(toks[:-3] + [('ى', frozenset())]) not in ALIF_TO_YA:
+            plain(toks[:-3] + [('ى', frozenset())]) not in ALIF_TO_YA and not _wasl_amr_shape(toks[:-2]):
         info.update(pos='verb', kind='madi', suffix='نَا'); ev.append('ضمير الرفع «نَا» بعد ساكن')
         return info
     # لاحقة: الضمير المتصل (مفعول به) يُنزع قبل الحكم
@@ -192,7 +226,9 @@ def stem_info(text):
     n = len(toks)
     last_L, last_m = toks[-1]
     # واو الجماعة بالألف الفارقة (أو قبل الضمير بلا ألف: فَٱكْتُبُوهُ)
-    if n >= 3 and last_L == 'ا' and not last_m and toks[-2][0] == 'و' and not toks[-2][1] and DAMMA in toks[-3][1]:
+    if n >= 3 and last_L == 'ا' and not last_m and toks[-2][0] == 'و' and not toks[-2][1] and DAMMA in toks[-3][1] \
+            and not (toks[0][0] == 'م' and DAMMA in toks[0][1]):
+        # ويُستثنى ما أوّله ميمٌ مضمومة: اسمُ فاعلٍ مجموعٌ مضاف كُتبت بعده ألف (مُّلَٰقُوا)، لا فعل
         info.update(pos='verb', suffix='وا'); ev.append('واو الجماعة والألف الفارقة')
         toks = toks[:-2]
     elif (info['object'] or toks[0][0] == 'ا' and not toks[0][1]) and \
@@ -215,8 +251,13 @@ def stem_info(text):
         if kind:
             info.update(pos='verb', kind=kind, prefix='ا' if kind == 'amr' else None)
             ev.append('همزة وصل في أول فعل الأمر' if kind == 'amr' else 'همزة وصل في أول الماضي (انفعل، افتعل، استفعل)')
-            if kind == 'madi' and toks[-1][0] == 'ت' and toks[-1][1] == {SUKUN} and info['suffix'] is None:
-                info['suffix'] = 'تْ'
+            if kind == 'madi' and info['suffix'] is None:
+                if toks[-1][0] == 'ت' and toks[-1][1] == {SUKUN}:
+                    info['suffix'] = 'تْ'
+                elif len(toks) >= 4 and toks[-2][0] == 'ت' and toks[-1][0] == 'م' and SUKUN in toks[-3][1]:
+                    info['suffix'] = 'تُمْ'                 # ٱسۡتَكۡبَرۡتُمۡ
+                elif toks[-1][0] == 'ت' and toks[-1][1] & {FATHA, DAMMA, KASRA} and SUKUN in toks[-2][1]:
+                    info['suffix'] = 'تُ'
             if info['suffix'] == 'ي':
                 ev.append('ياء المخاطبة')
         return info
@@ -238,7 +279,8 @@ def stem_info(text):
             return info
     # المضارع: حرف المضارعة متحركاً بفتح أو ضم
     if first_L in MUDARI and (first_m & {FATHA, DAMMA}) and len(toks) >= 3 and _peelable(first_L) and \
-            not _closed(toks):                         # أَلَمۡ: همزة الاستفهام مع «لَمۡ»، لا مضارع
+            not _closed(toks) and (info['suffix'] not in ('وا', 'و') or first_L in ('ي', 'ت') and _mudari_shape(toks)):
+        # أَلَمۡ: همزة الاستفهام مع «لَمۡ»؛ ومع واو الجماعة يُشترط شكل المضارع (نَقَمُوا، أُمِرُوا ماضيان)
         info.update(kind='mudari', prefix=first_L)
         L, m = toks[-1]
         if info['suffix'] in ('وا', 'و'):
@@ -260,6 +302,8 @@ def stem_info(text):
             for mk, mood in MARK_MOOD.items():
                 if mk in m:
                     info['mood'] = mood
+            if info['mood'] == 'جزم' and (L in MADD or L == 'م' and len(toks) > 1 and toks[-2][0] in 'هكت'):
+                info['mood'] = None                  # يَدَيۡهِ: سكون الياء ليس جزماً؛ أَيُّهُمۡ: سكون الضمير
             if info['mood'] == 'جزم':
                 info['pos'] = 'verb'; ev.append('حرف المضارعة والسكون في الآخر')
         if info['pos'] == 'verb':
@@ -272,10 +316,20 @@ def stem_info(text):
         if len(toks) > 2 and toks[0][0] in ('و', 'ف') and toks[0][1] == {FATHA}:
             core = toks[1:]                    # فَقُولُوا: الفاء والواو المفتوحتان لا تقعان أول الأمر الأجوف
         c_m = core[0][1]
-        if DAMMA in c_m and not (c_m & {SHADDA}) and (
+        pen = core[-2] if len(core) > 1 else (None, set())
+        if DAMMA in c_m and not (c_m & {SHADDA}) and core[0][0] not in ('أ', 'ء') and (   # أُوتُوا ماضٍ مجهول لا أمر
                 len(core) == 3 and core[1][0] == 'و' and not core[1][1] or
                 len(core) == 2 and SHADDA not in core[1][1]):
             info['kind'] = 'amr'; ev.append('أمر بلا همزة وصل مع واو الجماعة')
+        elif core[0][0] in ('أ', 'ء') and SUKUN in c_m:
+            info['kind'] = 'amr'; ev.append('همزةٌ ساكنة أوّلَ الأمر بعد الفاء أو الواو (فَأۡتُوا)')
+        elif core[0][0] in ('أ', 'ء') and FATHA in c_m and (KASRA in pen[1] or len(core) == 3 and DAMMA in core[-1][1]):
+            info['kind'] = 'amr'; ev.append('أمر أَفۡعَلَ: كسرٌ قبل الآخر (ءَامِنُوا، أَتِمُّوا)، أو ثلاثة أحرف (أَوۡفُوا)')
+        elif FATHA in c_m and len(core) >= 3 and (SHADDA in pen[1] and KASRA in pen[1] or
+                                                  core[1][0] == 'ا' and not core[1][1] and KASRA in pen[1]):
+            info['kind'] = 'amr'; ev.append('أمر فَعَّلَ أو فَاعَلَ: الكسر قبل الآخر (قَدِّمُوا، قَاتِلُوا)')
+        elif FATHA in c_m and len(core) == 2 and SHADDA in core[1][1] and DAMMA in core[1][1]:
+            info['kind'] = 'amr'; ev.append('أمر فَعَّلَ الناقص (وَلُّوا)')
         else:
             info['kind'] = 'madi'
         return info
