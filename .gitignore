@@ -1,3 +1,4 @@
 __pycache__/
 *.pyc
 AGENT_TASKS/
+data/
