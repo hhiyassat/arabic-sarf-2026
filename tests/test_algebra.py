@@ -146,5 +146,22 @@ if hfn() and rows:
     r = R[(3, 167, 28)]
     check('آل عمران ١٦٧: وقف جائز مع تعلّق لفظي عابر، فلا ابتداء مستقلاً ولا إغلاق للجملة',
           r['W'] == 'وقف جائز' and r['L'] and r['I'].startswith('لا يُبتدأ'), r)
+# الروابط عبر حدّ الآية
+if hfn() and rows:
+    from sarf.algebra import cross_ayah_links
+    def cross(p1, p2):
+        out = []
+        for r_ in (p1, p2):
+            a = analyze(cat, rows[r_])
+            S_, u_ = sentence_geo(a, f'Q{r_[0]}:{r_[1]}', Trace())
+            out.append(dict(s=r_[0], v=r_[1], text=rows[r_], a=a, units=u_, S=S_))
+        return cross_ayah_links(lambda t: analyze(cat, t), out[0], out[1])
+    c = cross((37, 137), (37, 138))
+    check('الصافات ١٣٧–١٣٨: «وَبِٱلَّيۡلِ» وحدها إلى «ج»: تعلّقٌ ثابت بما قبل حدّ الآية',
+          any(x['proven'] and x['rel'].startswith('تعلّق شبه الجملة') for x in c), c)
+    c = cross((103, 2), (103, 3))
+    check('العصر ٢–٣: «إِلَّا» في أول الآية استثناءٌ ثابت مما قبلها', any(x['proven'] and x['rel'] == 'استثناء' for x in c), c)
+    c = cross((2, 9), (2, 10))
+    check('البقرة ٩–١٠: «فِي قُلُوبِهِم مَّرَضٌ» جملة مستقلة، فلا تعلّق ثابت', not any(x['proven'] for x in c), c)
 print('ALL OK' if not bad else f'FAILED {bad}')
 sys.exit(1 if bad else 0)

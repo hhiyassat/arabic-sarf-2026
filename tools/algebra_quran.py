@@ -14,11 +14,12 @@ H = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/'
 sys.path.insert(0, H)
 from sarf.analyze import analyze
 from sarf.catalog import Catalog
-from sarf.algebra import (Trace, sentence_geo, mushaf_layer, linguistic_layer, SENTENCE, DISCOURSE, render_sentence, render_cells, spans, flatten, build, cv,
+from sarf.algebra import (Trace, sentence_geo, mushaf_layer, linguistic_layer, cross_ayah_links, SENTENCE, DISCOURSE, render_sentence, render_cells, spans, flatten, build, cv,
                           Geo, Cell, LEVELS, PARAGRAPH, TOPIC)
 
 ap = argparse.ArgumentParser()
 ap.add_argument('--limit', type=int, default=0)
+ap.add_argument('--no-cross', action='store_true', help='بلا فحص الروابط عبر حدّ الآية (أسرع)')
 ap.add_argument('--reanalyze-every', type=int, default=20, help='كل كم آية يُفحص Analyze(Render(a)) ∋ a')
 args = ap.parse_args()
 
@@ -114,11 +115,18 @@ def check_verse(s, v, a, S, units, T):
 
 
 verses = []
+cross, checked_ends, prev = [], set(), None
 for n, (s, v, text) in enumerate(rows):
     s, v = int(s), int(v)
     a = analyze(cat, text)
     T = Trace()
     S, units = sentence_geo(a, f'Q{s}:{v}', T)
+    # الروابط عبر حدّ الآية: الآية السابقة من السورة نفسها مع هذه
+    cur = dict(s=s, v=v, text=text, a=a, units=units, S=S)
+    if not args.no_cross and prev is not None and prev['s'] == s:
+        cross += cross_ayah_links(lambda t: analyze(cat, t), prev, cur)
+        checked_ends.add((prev['s'], prev['v']))
+    prev = cur
     ok, rendered = check_verse(s, v, a, S, units, T)
     for k, x in ok.items():
         C[f'{k}_pass'] += x
@@ -160,14 +168,21 @@ items = [x for s in sorted(by_surah) for x in by_surah[s]]
 MU = mushaf_layer([(s, v, a, units) for s, v, a, units, S in items], T)
 import subprocess
 a_id = subprocess.run(['git', '-C', H, 'rev-parse', '--short', 'HEAD'], capture_output=True, text=True).stdout.strip()
-LT, st, brecs = linguistic_layer(items, T, a_id=f'experiment@{a_id}')
+LT, st, brecs = linguistic_layer(items, T, a_id=f'experiment@{a_id}', cross=cross, checked_ends=frozenset(checked_ends))
+C['ayah_ends_checked'] = len(checked_ends)
 for k, x in st.items():
     C[k] = x
+# أمثلة الروابط عبر حدّ الآية
+cross_samples = collections.defaultdict(list)
+for c in cross:
+    k = ('ثابت: ' if c['proven'] else 'محتمل: ') + c['rule'].split(':')[0]
+    if len(cross_samples[k]) < 6:
+        cross_samples[k].append(f"{c['src'].split('.w')[0]} → {c['dst'].split('.w')[0]} [{c['rel']}]")
 # سجلات الحدود: علامة المصحف × الصنف المشتق، وموافقة أقوال العلماء
 xtab = collections.defaultdict(collections.Counter)
 scholar_cmp = []
 brec_samples = []
-SAMPLE_B = {(37, 137), (37, 138), (3, 167), (2, 282), (112, 1), (112, 2), (112, 3), (112, 4)}
+SAMPLE_B = {(37, 137), (37, 138), (3, 167), (2, 282), (103, 2), (103, 3), (2, 9), (112, 1), (112, 2), (112, 3), (112, 4)}
 for r in brecs:
     w = r['mark'] or ('رأس آية' if r['ayah_end'] else '—')
     xtab[w][r['category'].split(':')[0].split(' (')[0]] += 1
@@ -176,7 +191,7 @@ for r in brecs:
             scholar_cmp.append(dict(location='%d:%d:%d' % r['location'], scholar=e['scholar'], book=e['book'],
                                     said=e['judgement'], derived=r['category'], F=r['F'], L=r['L']))
     if r['location'][:2] in SAMPLE_B:
-        brec_samples.append(dict(location='%d:%d:%d' % r['location'], W=r['W'], F=r['F'], L=r['L'], L_checked=r['L_checked'],
+        brec_samples.append(dict(location='%d:%d:%d' % r['location'], W=r['W'], F=r['F'], L=r['L'], Lp=r.get('Lp', []), L_checked=r['L_checked'],
                                  M=r['M'], I=r['I'], category=r['category'], E=r['E'], a=r['a'], q=r['q']))
 C['mushaf_closed'] = int(MU.closed)
 C['mushaf_ayahs_closed'] = sum(1 for su in MU.A for ay in su.A if ay.closed)
@@ -210,6 +225,7 @@ for x in LT:
 M = dict(counts=dict(C), unit_deferred=dict(unit_reason.most_common()), sentence_open=dict(open_kind.most_common()),
          unit_closed_by=dict(close_route.most_common()), failures={k: v[:40] for k, v in fail.items()},
          samples=samples.get('du', []),
+         cross=dict(cross_samples),
          boundaries=dict(xtab={k: dict(v) for k, v in xtab.items()}, scholars=scholar_cmp, samples=brec_samples))
 json.dump(M, open(os.environ.get('SARF_ALG_METRICS', H + 'reports/algebra_metrics.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 print(json.dumps(M['counts'], ensure_ascii=False, indent=1))

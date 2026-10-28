@@ -1003,6 +1003,112 @@ def mushaf_layer(items, T):
     return M
 
 
+# ---------- الروابط عبر حدّ الآية ----------
+RELATIVES = ('الذين', 'الذي', 'التي', 'اللذين', 'اللتين', 'اللاتي', 'اللائي', 'الذين')
+# أدوات الشرط التي لا تلتبس بالموصول أو الاستفهام في الكتابة (ما ومن تلتبسان فتُترك)
+COND_STRICT = ('إذا', 'إن', 'لو', 'أينما', 'حيثما', 'مهما', 'كلما', 'إذما', 'متى', 'أيان')
+CLAUSE_OPS = ('2', '5', '6', '7', '10')            # النواسخ، والنواصب، والجوازم، والشرط: تفتح تركيباً جديداً
+
+
+def _bare_w(t):
+    import re
+    return re.sub('[^ء-ي]', '', t.replace('ٱ', 'ا'))
+
+
+def _unit_of_slot(a, wi, slot):
+    return (wi, a['segments'][wi]['slots'][slot].get('unit', 0))
+
+
+def cross_ayah_links(analyze_fn, prev, nxt):
+    """الروابط بين آيتين متتاليتين من سورة واحدة. prev/nxt: dict(s, v, text، a، units).
+    أ. التحليل المشترك: تُحلَّل الآيتان تياراً واحداً، فكل علاقةٍ مقبولة عاملُها في الأولى ومعمولها في الثانية رابطٌ ثابت.
+    ب. قواعد بداية الآية التالية:
+       - ثابت: شبه جملة (جارٌّ مقبول) في أولها، ولا نواة ولا عامل تركيبٍ بينه وبين أول حدٍّ فيها، فمتعلَّقه قبله (وَبِٱلَّيۡلِ ← تَمُرُّونَ)
+       - ثابت: «إِلَّا» في أولها: استثناءٌ من شيءٍ قبله
+       - محتمل: اسم موصول في أولها (نعت أو بدل لما قبله، أو مبتدأ)
+       - محتمل: شرطٌ في الأولى لا جواب له فيها؛ وناسخٌ في الأولى لم يُستوفَ خبره فيها
+    → [dict(src, dst, rel, proven, rule)] بمعرِّفات الوحدات"""
+    from .status import ACCEPTED
+    out = []
+    pa, na = prev['a'], nxt['a']
+    n1 = len(pa['segments'])
+    pid = lambda wi, slot: prev['units'][_unit_of_slot(pa, wi, slot)].id
+    nid = lambda wi, slot: nxt['units'][_unit_of_slot(na, wi, slot)].id
+    # أ. التحليل المشترك
+    try:
+        aj = analyze_fn(prev['text'] + ' ' + nxt['text'])
+    except Exception:
+        aj = None
+    if aj and len(aj['segments']) == n1 + len(na['segments']):
+        st = {(f['word_index'], f['operator'], f['group']): f.get('status') for f in aj['operators']}
+        for r in aj.get('relations', []):
+            t = r.get('target')
+            # العامل آخرُ كلمة في آيته، فلا معمول له فيها: معموله بعد الحدّ ضرورةً. وما سوى ذلك (كان وخبرها شبه جملة
+            # في آيتها، ثم يلتقط المحلل منصوباً بعد الحدّ) لا يُقبل عبوراً
+            if t and r['word_index'] == n1 - 1 and t['word_index'] >= n1 and \
+                    st.get((r['word_index'], r['operator'], r['group'])) == ACCEPTED:
+                try:
+                    out.append(dict(src=pid(r['word_index'], r['slot']), dst=nid(t['word_index'] - n1, t['slot']),
+                                    rel=r.get('role') or r.get('expected') or 'عمل', proven=True,
+                                    rule='التحليل المشترك للآيتين: عاملٌ مقبول ومعموله بعد حدّ الآية'))
+                except (KeyError, IndexError):
+                    pass
+    nuc_prev = [g for g in pa.get('agreement', [])]
+    last_nuc = nuc_prev[-1] if nuc_prev else None
+    # أول حدٍّ في الآية التالية: علامة وقف مثبتة أو آخرها
+    marks = waqf_of(na['verse'])
+    first_b = next((i for i, m in enumerate(marks) if m in BOUNDARY_WAQF), len(na['segments']) - 1)
+    span = range(0, first_b + 1)
+    nst = {(f['word_index'], f['operator'], f['group']): f.get('status') for f in na['operators']}
+    jar0 = next((r for r in na.get('relations', []) if r['word_index'] == 0 and r.get('expected') == 'جر' and
+                 nst.get((r['word_index'], r['operator'], r['group'])) == ACCEPTED), None)
+    nuc_span = [g for g in na.get('agreement', []) if g['word_index'] in span]
+    clause_ops = [f for f in na['operators'] if f['word_index'] in span and f['group'] in CLAUSE_OPS and
+                  f.get('status') != 'blocked']
+    # المدى إلى أول حدٍّ لا يحوي إلا شبه الجملة نفسها (الجارّ ومجروره): لا إسناد فيه يُتمّ كلاماً
+    pp_alone = jar0 is not None and jar0.get('target') is not None and first_b <= jar0['target']['word_index']
+    # «كَذَٰلِكَ» وحدها: قد تتعلق بما قبلها، وقد تكون خبر مبتدأ محذوف (الأمرُ كذلك)؛ فعبورها محتمل لا ثابت
+    kaf = jar0 is not None and _bare_w(jar0['operator']) == 'ك'
+    if jar0 and pp_alone and not nuc_span and not clause_ops and kaf:
+        out.append(dict(src=prev['units'][max(prev['units'])].id, dst=nid(0, jar0['slot']), rel='تعلّق «كذلك» بما قبلها',
+                        proven=False, rule='«كَذَٰلِكَ» في أول الآية: متعلقة بما قبلها أو خبرٌ لمحذوف'))
+    elif jar0 and pp_alone and not nuc_span and not clause_ops:
+        if last_nuc:
+            out.append(dict(src=pid(last_nuc['word_index'], last_nuc['slot']), dst=nid(0, jar0['slot']),
+                            rel='تعلّق شبه الجملة', proven=True,
+                            rule='شبه جملة في أول الآية وحدها إلى أول حدٍّ فيها: متعلَّقها قبل حدّ الآية'))
+        else:
+            # العبور ثابت (شبه الجملة وحدها لا تستقل)، والمتعلَّق بعينه غير معيَّن في التحليل
+            out.append(dict(src=prev['units'][max(prev['units'])].id, dst=nid(0, jar0['slot']),
+                            rel='تعلّق شبه الجملة بما قبل الحدّ (المتعلَّق غير معيَّن)', proven=True,
+                            rule='شبه جملة في أول الآية وحدها إلى أول حدٍّ فيها: متعلَّقها قبل حدّ الآية'))
+    w0 = _bare_w(na['segments'][0]['word'])
+    tgt = (pid(last_nuc['word_index'], last_nuc['slot']) if last_nuc else prev['units'][max(prev['units'])].id)
+    if w0 in ('إلا', 'الا'):
+        out.append(dict(src=tgt, dst=nid(0, 0), rel='استثناء', proven=True,
+                        rule='«إِلَّا» في أول الآية: المستثنى منه قبل حدّ الآية'))
+    if w0.lstrip('وف') in RELATIVES and w0[:1] not in 'وف':
+        out.append(dict(src=prev['units'][max(prev['units'])].id, dst=nid(0, 0), rel='نعت أو بدل أو ابتداء',
+                        proven=False, rule='اسم موصول في أول الآية: قد يكون تابعاً لما قبله، وقد يكون مبتدأ'))
+    # شرطٌ لا جواب له في آيته
+    pmarks = waqf_of(pa['verse'])
+    for f in pa['operators']:
+        if f['group'] == '7' and f.get('status') != 'blocked' and _bare_w(f['operator']) in COND_STRICT:
+            after = [g for g in pa.get('agreement', []) if g['word_index'] > f['word_index']]
+            later_b = any(m in BOUNDARY_WAQF for m in pmarks[f['word_index']:-1]) if len(pmarks) == n1 else True
+            if len(after) <= 1 and not later_b:
+                out.append(dict(src=pid(f['word_index'], 0) if False else prev['units'][(f['word_index'], 0)].id,
+                                dst=nid(0, 0), rel='جواب الشرط بعدُ', proven=False,
+                                rule=f'«{f["operator"]}» في الآية السابقة بلا جوابٍ محلَّل فيها'))
+                break
+    for o in prev['S'].Omega:
+        if o.name.startswith('خبر') and not o.met and o.units:
+            out.append(dict(src=o.units[0], dst=nid(0, 0), rel=o.name, proven=False,
+                            rule='ناسخٌ لم يُستوفَ خبره في آيته'))
+            break
+    return out
+
+
 def waqf_sources():
     """سجل أقوال العلماء في الوقف (sources/waqf.csv): (السورة، الآية، الكلمة) ← [القول]"""
     import csv, os
@@ -1019,7 +1125,8 @@ WAQF_W = {'م': 'وقف لازم', 'قلى': 'الوقف أولى', 'ج': 'وق�
 SYNTACTIC_OBL = ('معمول', 'خبر', 'فاعل')
 
 
-def boundary_record(p, words, pos_of, bonds, obls, nuclei, du_start, mark, ayah_end, surah_end, sources, a_id, q):
+def boundary_record(p, words, pos_of, bonds, obls, nuclei, du_start, mark, ayah_end, surah_end, sources, a_id, q,
+                    cand=(), checked_ends=frozenset()):
     """B(b | a, q, c) = ⟨F, L, M, W, I, E⟩ للحدّ المحتمل b بعد الكلمة p (اقتراح صاحب النظرية في النمذجة):
     F تمام الكلام في التحليل، L التعلّقات اللفظية العابرة، M المعنوية، W حكم الوقف، I حكم الابتداء، E القول ودليله.
     والتصنيف المشتق بتعريفات ابن الجزري (النشر، باب الوقوف): تامّ، كافٍ، حسن، أو لم يتمّ"""
@@ -1033,8 +1140,12 @@ def boundary_record(p, words, pos_of, bonds, obls, nuclei, du_start, mark, ayah_
     # L: الروابط اللفظية العابرة للحدّ؛ والمحلل يبحث داخل الآية، فحدّ الآية غير مفحوص
     cross = [b for b in bonds if b[1] in pos_of and b[2] in pos_of and
              min(pos_of[b[1]], pos_of[b[2]]) <= p < max(pos_of[b[1]], pos_of[b[2]])]
-    L_checked = not ayah_end
+    # حدّ الآية مفحوصٌ إن فُحصت الآيتان بقواعد العبور (التحليل المشترك وقواعد البداية)؛ وحدّ السورة غير مفحوص
+    L_checked = not ayah_end or (words[p][:2] in checked_ends and not surah_end)
     L = [f'{b[0]}: {words_text(words, pos_of[b[1]])} ↔ {words_text(words, pos_of[b[2]])}' for b in cross]
+    Lp = [f'{c["rel"]}: {words_text(words, pos_of[c["src"]])} ↔ {words_text(words, pos_of[c["dst"]])} ({c["rule"]})'
+          for c in cand if c['src'] in pos_of and c['dst'] in pos_of and
+          min(pos_of[c['src']], pos_of[c['dst']]) <= p < max(pos_of[c['src']], pos_of[c['dst']])]
     # E وM: أقوال العلماء المسجَّلة في هذا الموضع
     E = [dict(scholar='لجنة مصحف المجمّع', book='المصحف (رواية حفص)', judgement=WAQF_W[mark])] if mark else []
     M = None
@@ -1057,6 +1168,8 @@ def boundary_record(p, words, pos_of, bonds, obls, nuclei, du_start, mark, ayah_
         cat = 'لم يتمّ في التحليل'
     elif L:
         cat = 'حسن' if F.startswith('تام') else 'تعلّق لفظي عابر'
+    elif Lp:
+        cat = 'غير محسوم: تعلّق محتمل'
     elif not L_checked:
         cat = ('تام' if M == [] else 'كافٍ' if M else 'غير محسوم: حدّ الآية غير مفحوص لفظاً')
     elif F.startswith('تام'):
@@ -1065,7 +1178,7 @@ def boundary_record(p, words, pos_of, bonds, obls, nuclei, du_start, mark, ayah_
         cat = 'غير محسوم'
     I = ('لا يُبتدأ بما بعده استقلالاً' if L else 'يُبتدأ بما بعده' if cat in ('تام', 'كافٍ') or cat.startswith('تام أو')
          else 'غير محسوم')
-    return dict(location=loc, F=F, L=L, L_checked=L_checked, M=M, W=W, I=I, E=E, category=cat, a=a_id, q=q,
+    return dict(location=loc, F=F, L=L, Lp=Lp, L_checked=L_checked, M=M, W=W, I=I, E=E, category=cat, a=a_id, q=q,
                 mark=mark, ayah_end=ayah_end)
 
 
@@ -1073,7 +1186,7 @@ def words_text(words, p):
     return f'{words[p][0]}:{words[p][1]}:{words[p][2]}'
 
 
-def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف المجمّع)'):
+def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف المجمّع)', cross=(), checked_ends=frozenset()):
     """الطبقة اللغوية على تيار الوحدات المتصل عبر حدود الآيات.
     - عند كل حدٍّ محتمل (علامة وقف، أو رأس آية، أو آخر سورة) يُسجَّل B(b | a, q, c) = ⟨F, L, M, W, I, E⟩
     - الوحدة الخطابية: ما بين حدّين أجاز الوقفَ عندهما دليلٌ (م، قلى، ج، صلى) أو آخرُ السورة؛ ورأس الآية وحده ليس حدّاً
@@ -1106,13 +1219,24 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
             bonds += [b for b in S.B if isinstance(b[1], str) and b[0] != 'تجاور']
             obls += list(S.Omega)
             nuclei += [n for n in S.O.get('nuclei', []) if n[0]]
+        # الروابط عبر حدّ الآية: الثابت منها رابطٌ كسائر الروابط، والمحتمل يُسجَّل في سجل الحدّ
+        cand = []
+        for c in cross:
+            if c['src'] in pos_of and c['dst'] in pos_of:
+                if c['proven']:
+                    bonds.append((c['rel'], c['src'], c['dst'], Evidence(c['rule'], ['عبر حدّ الآية'])))
+                    st['cross_proven'] += 1
+                    st['cross_rule:' + c['rule'].split(':')[0][:40]] += 1
+                else:
+                    cand.append(c)
+                    st['cross_candidate'] += 1
         n = len(words)
         segs, du_start = [], 0
         for p in range(n):
             last = p == n - 1
             if marks[p] or ay_end[p] or last:
                 rec = boundary_record(p, words, pos_of, bonds, obls, nuclei, du_start, marks[p], ay_end[p], last,
-                                      sources, a_id, q)
+                                      sources, a_id, q, cand, checked_ends)
                 records.append(rec)
                 st['b_candidates'] += 1
                 st['b_cat:' + rec['category'].split(':')[0].split(' (')[0]] += 1
