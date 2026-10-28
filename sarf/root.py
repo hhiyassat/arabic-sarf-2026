@@ -17,7 +17,7 @@ sarf.root — T19a–T19c: الخلية، وبناء اللفظ، والتحلي
 import csv, os, re
 from collections import defaultdict
 
-from .chars import FATHA, DAMMA, KASRA, SUKUN, SHADDA, letters, strip_marks
+from .chars import FATHA, DAMMA, KASRA, SUKUN, SHADDA, FATHATAN, DAMMATAN, KASRATAN, letters, strip_marks
 from .affix import stem_info
 from .agreement import signature
 
@@ -179,14 +179,18 @@ def _base(text, info):
     return out, wasl, sig
 
 
+class _Written(str):
+    """عينُ الفعل حرفَ علةٍ متحركاً أو مشدَّداً: صامتٌ كما كُتب، لا يُبدَّل (تَدَايَنۡتُمۡ ← دين لا دون، تَعَاوَنُوا ← عون)"""
+
+
 def _match(tmpl, toks):
     """→ الجذور (قوائم حروف) التي يطابق بها القالبُ الحروف، أو []"""
     if len(tmpl) != len(toks):
         return []
     rad = []
-    for t, (L, _) in zip(tmpl, toks):
+    for t, (L, m) in zip(tmpl, toks):
         if t == 'R':
-            rad.append(L)
+            rad.append(_Written(L) if len(rad) == 1 and L in WEAK and set(m) & {FATHA, KASRA, DAMMA, SHADDA} else L)
         elif t == 'X':
             if not rad or rad[-1] != L:
                 return []
@@ -207,7 +211,7 @@ def _weak_variants(rad, pos_vowels=None, cls=None, fixed=None, keep_madd=False):
             opts = list(WEAK)
             if i == 0 and cls in ('IV', 'III', 'VI'):
                 opts = ['ء'] + opts                    # آمَنَ: أَ + أْمَنَ
-        elif L in WEAK and not (i == 1 and cls == 'I' and keep_madd):
+        elif L in WEAK and not isinstance(L, _Written) and not (i == 1 and cls == 'I' and keep_madd):
             opts = list(dict.fromkeys([L] + list(WEAK)))   # ومضارع الثلاثي الأجوف: المدّ هو الأصل (يَتِيهُ، يَقُولُ)
         out = [o + [x] for o in out for x in opts]
     return [''.join(r) for r in out]
@@ -236,6 +240,8 @@ def candidates(text, info=None, any_pos=False, _nested=False):
       - الفاء والواو وهمزة الاستفهام في أوله تُجرَّب سابقةً (فَقُلۡ، أَرَءَيۡتَ)
     any_pos: يُجرَّب قالب الماضي على ما لم يثبت أنه فعل"""
     info = info or stem_info(text)
+    if not _nested:
+        INSERTED.clear(); READING.clear()          # حالة الكلمة وحدها: لا يتسرّب إليها ما قبلها
     if info['pos'] != 'verb' and not any_pos:
         return []
     readings, rest_c = [], []
@@ -279,7 +285,7 @@ def candidates(text, info=None, any_pos=False, _nested=False):
 
 
 PAST_SUFFIX = re.compile('\u0652(تُمْ|تُمَا|تُنَّ|نَا|تُ|تَ|تِ)$')
-INSERTED = set()   # (الجذر، الوزن) الذي افتُرض فيه حرف محذوف
+INSERTED = set()   # (الجذر، الوزن) الذي افتُرض فيه حرف محذوف، للكلمة الجارية (يُفرَّغ مع كل كلمة)
 READING = {}   # (الجذر، الوزن) ← نص القراءة التي أنتجته (بلا السابقة إن نُزعت)
 
 
@@ -299,6 +305,10 @@ def _candidates_kind(text, info):
         pen_alif = len(toks) >= -k and toks[k][0] == 'ا' and not toks[k][1]
         if DAMMA in first and FATHA not in pen and not pen_alif:   # والألف قبل الآخر: مجهول الأجوف أيضاً (يُسَاقُ)
             allowed &= {'II', 'III', 'IV', 'QI'}       # يُفۡعِلُ: المعلوم من المزيد (يُؤۡمِنُ ← آمَنَ)
+            c1 = toks[0][1] if toks else set()
+            # فَعَّلَ وفَاعَلَ والرباعي: أولها بعد حرف المضارعة مفتوح (يُعَلِّمُ، يُقَاتِلُ، يُدَحۡرِجُ)؛
+            # وأَفۡعَلَ: ساكن أو مكسور في المضعَّف والأجوف (يُخۡرِجُ، يُحِبُّ، يُقِيمُ)
+            allowed -= {'IV'} if FATHA in c1 else {'II', 'III', 'QI'}
         elif FATHA in first:
             allowed -= {'II', 'III', 'IV', 'QI'}       # يَفۡعَلُ: لا فعّل ولا فاعل ولا أفعل
     out = []
@@ -370,6 +380,9 @@ def morph(text, info=None):
     """→ dict(cells, candidates, licensed=[…], status, root, form, wazn, evidence) أو None إن لم يكن فعلاً"""
     info = info or stem_info(text)
     exact_only = info['pos'] != 'verb'
+    shown = text
+    if info.get('moved'):                     # قُلِ ٱللَّهُمَّ: الكسر لالتقاء الساكنين، والأصل السكون
+        text = text[:-1] + SUKUN
     cands = candidates(text, info, any_pos=exact_only)
     if not cands:
         return None
@@ -390,7 +403,7 @@ def morph(text, info=None):
         if same:
             licensed = same + [x for x in licensed if x not in same]
     pairs = list(dict.fromkeys((x['root'], x['form_class']) for x in licensed))
-    out = dict(cells=cell_code(cells(text)), candidates=cands, licensed=licensed, kind=info['kind'],
+    out = dict(cells=cell_code(cells(shown)), candidates=cands, licensed=licensed, kind=info['kind'],
                level=None)
     if not H:
         out.update(status='deferred', reason='لا معجم مرخِّص (HFN غير موجود)')
@@ -423,7 +436,8 @@ def morph(text, info=None):
         out.update(status='deferred', reason='أكثر من جذر مسجَّل في HFN، ولا حدث بالوزن: ' +
                    '، '.join(f'{r} ({c})' for r, c in rooted))
     else:
-        out.update(status='deferred', reason='لا رخصة: لم يرد أيٌّ من المرشَّحات في HFN')
+        out.update(status='deferred', reason='لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة'
+                   if exact_only else 'لا رخصة: لم يرد أيٌّ من المرشَّحات في HFN')
     return out
 
 
@@ -456,14 +470,23 @@ def soundness(root):
     return 'salim'
 
 
-def verse_morph(segs):
-    """لكل جذع في الآية: (رقم الكلمة، رقم الخانة) ← Morph مختصراً"""
+def verse_morph(segs, governed=None, nouns=()):
+    """لكل جذع في الآية: (رقم الكلمة، رقم الخانة) ← Morph مختصراً.
+    governed: الجذوع التي ثبتت فعليتها بعاملٍ مقبول فيها، فتُعامَل معاملة الفعل الثابت.
+    والطبقة للفعل: فما ثبتت اسميته لا يُحلَّل (بعد «أل»، أو منوَّناً، أو مجروراً بحرف جرٍّ مقبول: nouns)"""
+    governed = governed or {}
     out = []
     for seg in segs:
         for s in seg['slots']:
             if s['type'] != 'جذع':
                 continue
-            m = morph(s['text'])
+            prev_al = s['index'] > 0 and seg['slots'][s['index'] - 1]['type'] == 'أل'
+            if prev_al or (seg['word_index'], s['index']) in nouns or set(s['text']) & {FATHATAN, DAMMATAN, KASRATAN}:
+                continue
+            info = stem_info(s['text'])
+            if (seg['word_index'], s['index']) in governed:
+                info = dict(info, pos='verb')
+            m = morph(s['text'], info)
             if not m:
                 continue
             top = m['licensed'][0] if m['licensed'] else None

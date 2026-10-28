@@ -33,6 +33,8 @@ def word_irab(a, wi):
             continue
         if m['kind'] == 'amr':
             role = 'فعل أمر مبني على ' + ('حذف النون' if m['suffix'] in ('وا', 'و', 'ي') else 'السكون')
+            if m.get('moved'):
+                role += '، وحُرِّك بالكسر لالتقاء الساكنين'
             if not m['suffix']:
                 role += '، والفاعل ضمير مستتر تقديره «أَنْتَ»'
         else:

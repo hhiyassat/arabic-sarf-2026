@@ -9,7 +9,8 @@
 """
 import os, sys
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+H = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/'
+sys.path.insert(0, H)
 from sarf.root import cells, cell_code, morph, hfn, soundness
 
 bad = 0
@@ -46,11 +47,29 @@ else:
         ('اتَّقُوا', 'accepted', 'root', 'وقي', 'VIII'),
         ('خِفْتُمْ', 'deferred', None, None, None),               # خوف أم خيف: لا تفصل الكتابة
         ('كَتَبَ', 'deferred', 'lemma', None, None),              # يطابق فعلاً، ولم يثبت أنه فعل
+        ('تَدَايَنْتُمْ', 'accepted', 'root', 'دين', 'VI'),         # العين المتحركة كما كُتبت: لا «دون»
+        ('تُحِبُّونَ', 'accepted', 'root', 'حبب', 'IV'),           # الحاء مكسورة: أَفۡعَلَ المضعَّف لا فَعَّلَ
+        ('قُلِ', 'accepted', 'event', 'قول', 'I'),               # الكسر لالتقاء الساكنين
     ]
     for w, st, lv, root, cls in CASES:
         m = morph(w)
         got = (m['status'], m.get('level'), m.get('root'), m.get('form_class')) if m else None
         check(f'Morph({w})', got == (st, lv, root, cls), got)
+    # لا يتسرّب حكم كلمة إلى ما بعدها: «قَالُوا» بعد «قُلْ» كما هي وحدها
+    morph('قُلْ')
+    m = morph('قَالُوا')
+    check('قَالُوا بعد قُلْ: مقبول (لا حالة مشتركة بين الكلمات)', m['status'] == 'accepted' and m['root'] == 'قول', m.get('reason'))
+    # الفعلية بالعامل المقبول: لَنۡ نَّبۡرَحَ
+    from sarf.analyze import analyze
+    from sarf.catalog import Catalog
+    a = analyze(Catalog([H + 'operators_catalog.jsonl', H + 'operators_catalog_split_vocalized.csv']),
+                'لَن نَّبْرَحَ عَلَيْهِ عَٰكِفِينَ حَتَّىٰ يَرْجِعَ إِلَيْنَا مُوسَىٰ')
+    got = {m['word_index']: (m['status'], m['root']) for m in a['morph']}
+    check('لَنۡ نَّبۡرَحَ، حَتَّىٰ يَرۡجِعَ: فعلان بالعامل، والجذر مقبول', got.get(1) == ('accepted', 'برح') and
+          got.get(5) == ('accepted', 'رجع'), got)
+    check('مُوسَىٰ: لا جذر مقبول (لم يثبت أنه فعل)', got.get(7, ('deferred',))[0] != 'accepted', got)
+    agr = {g['word_index']: g['pronouns'] for g in a['agreement']}
+    check('الفاعل بالعامل: نَحۡنُ، هُوَ', agr.get(1) == ['نَحْنُ'] and agr.get(5) == ['هُوَ'], agr)
     m = morph('قُلْ')
     check('الشاهد: الحدث ومصدره', m['licensed'] and m['licensed'][0]['verb'] == 'قَالَ' and
           m['licensed'][0]['event_id'].startswith('HFN-E-'), m['licensed'][:1])

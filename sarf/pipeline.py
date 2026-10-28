@@ -86,13 +86,34 @@ def _judge(ctx, res):
     n = sum(f['status'] == ACCEPTED for f in ctx.candidates)
     return f"مقبولة: {n}"
 
+def _governed_verbs(ctx):
+    """الجذع الذي يعمل فيه عاملٌ مقبول عملَ الفعل (لَنۡ نَّبۡرَحَ، حَتَّىٰ يَرۡجِعَ، لِيُعَذِّبَ): ثبتت فعليته بالعامل
+    وإن لم تثبت بصيغته. → {(رقم الكلمة، رقم الخانة): العامل}"""
+    status = {(f['word_index'], f['operator'], f['group']): f.get('status') for f in ctx.candidates}
+    out = {}
+    for r in ctx.relations:
+        t = r.get('target')
+        if t and t.get('pos') == 'verb' and t['type'] == 'جذع' and \
+                status.get((r['word_index'], r['operator'], r['group'])) == ACCEPTED:
+            out[(t['word_index'], t['slot'])] = r['operator']
+    return out
+
+def _governed_nouns(ctx):
+    """الجذع الذي يعمل فيه حرف جرٍّ مقبول: ثبتت اسميته بالعامل (بِدَيۡنٍ، إِلَىٰ أَجَلٍ)"""
+    status = {(f['word_index'], f['operator'], f['group']): f.get('status') for f in ctx.candidates}
+    return {(r['target']['word_index'], r['target']['slot']) for r in ctx.relations
+            if r.get('target') and r.get('expected') == 'جر' and r['target']['type'] == 'جذع' and
+            status.get((r['word_index'], r['operator'], r['group'])) == ACCEPTED}
+
 def _agree(ctx, res):
+    ctx.governed = _governed_verbs(ctx)
     ctx.agreement = [dict(word_index=wi, slot=si, **{k: v for k, v in agr.items()})
-                     for (wi, si), agr in sorted(verse_agreement(ctx.segments).items())]
+                     for (wi, si), agr in sorted(verse_agreement(ctx.segments, ctx.governed).items())]
     return f"{len(ctx.agreement)} فعلاً بسمات التوافق"
 
 def _root(ctx, res):
-    ctx.morph = verse_morph(ctx.segments)
+    ctx.morph = verse_morph(ctx.segments, getattr(ctx, 'governed', None) or _governed_verbs(ctx),
+                            nouns=_governed_nouns(ctx))
     n = sum(m['status'] == 'accepted' for m in ctx.morph)
     return f"{n} جذراً مقبولاً من {len(ctx.morph)}" + ('' if hfn() else ' (HFN غير موجود)')
 
@@ -112,8 +133,8 @@ STAGES = [
           'الخانات (عامل، مبني، أل، جذع) والعامل ← المعمول'),
     Stage('judge', _judge, ('candidates', 'segments', 'relations'), (),
           'الحكم بالقبول بدليل إيجابي (T07، T09)؛ وما سواه مؤجَّل أو ممنوع'),
-    Stage('agree', _agree, ('segments',), ('agreement',), 'سمات الفعل بالتوافق مع الضمير (T18)'),
-    Stage('root', _root, ('segments',), ('morph',), 'الجذر والصيغة المرخَّصان (T19c) بشهادة HFN'),
+    Stage('agree', _agree, ('segments', 'relations', 'candidates'), ('agreement',), 'سمات الفعل بالتوافق مع الضمير (T18)'),
+    Stage('root', _root, ('segments', 'relations', 'candidates'), ('morph',), 'الجذر والصيغة المرخَّصان (T19c) بشهادة HFN'),
     Stage('syllabify', _syllabify, ('segments',), ('syll',), 'تقطيع ما ليس عاملاً ولا مبنياً'),
     Stage('align', _align, ('candidates', 'segments', 'relations'), ('operators',), 'ربط العامل بخانته وعلاقته'),
 ]

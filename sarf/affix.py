@@ -134,7 +134,9 @@ def _mudari_shape(toks):
     hollow = len(toks) > 2 and toks[2][0] in ('و', 'ي', 'ا') and not toks[2][1]    # يَقُولُوا، يُقِيمُوا
     if FATHA in m0:
         return SUKUN in m1 or hollow or L1 == 'ت' and FATHA in m1 and len(toks) >= 5
-    return bool(m1 & {FATHA, SUKUN}) or hollow
+    # والمضموم يليه كسرٌ ثم مشدَّد: أَفۡعَلَ المضعَّف (يُحِبُّونَ، تُمِدُّونَ)
+    doubled = KASRA in m1 and len(toks) > 2 and SHADDA in toks[2][1]
+    return bool(m1 & {FATHA, SUKUN}) or hollow or doubled
 
 
 def _wasl_kind(toks, suffix):
@@ -296,7 +298,8 @@ def stem_info(text):
               L == 'ن' and KASRA in m and toks[-2][0] == 'ا') and len(toks) > 3:
             # نون الرفع؛ ومع غير الياء تلتبس بجمع الاسم (نَبِيُّونَ، تَابِعُونَ) فلا يُحكم بالفعل
             info.update(suffix='نون الرفع', mood='رفع'); ev.append('نون الرفع')
-            if first_L == 'ي':
+            # ومع التاء يُشترط شكل المضارع (تُحِبُّونَ، تَعۡلَمُونَ) فلا يلتبس بالاسم (تَابِعُونَ)
+            if first_L == 'ي' or first_L == 'ت' and _mudari_shape(toks):
                 info['pos'] = 'verb'
         else:
             for mk, mood in MARK_MOOD.items():
@@ -339,4 +342,8 @@ def stem_info(text):
             toks[-1][0] != 'ه' and not (toks[-1][0] == 'م' and toks[-2][0] in 'هكت'):
         # ويُستثنى: هاء السكت (هِيَهۡ، مَالِيَهۡ)، والضمير الساكن الآخر (لَهُمۡ، كَيۡدَهُمۡ، عَلَيۡكُمۡ)
         info.update(pos='verb', kind='amr'); ev.append('سكون الآخر بلا حرف مضارعة (أمر مبني على السكون)')
+    # أمر الأجوف حرفان: ضمٌّ ثم كسرٌ للتخلص من التقاء الساكنين قبل همزة الوصل (قُلِ ٱللَّهُمَّ، قُمِ ٱلَّيۡلَ)
+    elif info['suffix'] is None and len(toks) == 2 and toks[0][1] == {DAMMA} and toks[1][1] == {KASRA} and \
+            toks[1][0] not in MADD:
+        info.update(pos='verb', kind='amr', moved=True); ev.append('أمر الأجوف حُرِّك آخره بالكسر لالتقاء الساكنين')
     return info

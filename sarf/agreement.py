@@ -196,8 +196,10 @@ def narrow(agr, prev_word):
     return dict(agr, conflict=form)
 
 
-def verse_agreement(segs):
-    """لكل جذعٍ فعلٍ بدليل في الآية: (رقم الكلمة، رقم الخانة) ← A(m) مخصَّصاً بالقرينة إن وُجدت"""
+def verse_agreement(segs, governed=None):
+    """لكل جذعٍ فعلٍ بدليل في الآية: (رقم الكلمة، رقم الخانة) ← A(m) مخصَّصاً بالقرينة إن وُجدت.
+    governed: الجذوع التي ثبتت فعليتها بعاملٍ مقبول فيها (لَنۡ نَّبۡرَحَ) → اسم العامل"""
+    governed = governed or {}
     out = {}
     for seg in segs:
         wi = seg['word_index']
@@ -210,6 +212,10 @@ def verse_agreement(segs):
                 if len(pslots) == 1 and pslots[0]['type'] == 'مبني':
                     prev = pslots[0]['text']
             agr = agreement(s['text'])
+            if agr is None and (wi, s['index']) in governed:
+                agr = agreement(s['text'], dict(stem_info(s['text']), pos='verb'))
+                if agr is not None:
+                    agr['verb_by_operator'] = governed[(wi, s['index'])]
             if agr is not None:
                 out[(wi, s['index'])] = narrow(agr, prev)
                 continue
