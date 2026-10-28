@@ -32,6 +32,7 @@ from .chars import (FATHA, DAMMA, KASRA, SUKUN, FATHATAN, DAMMATAN, KASRATAN,
 from .divine import divine_name
 from .match import PRON_SUFFIXES, match_letters, vocal_compatible
 from . import syllabify as cv
+from .affix import stem_info
 
 AMIL, MABNI, ARTICLE, STEM, DIVINE = 'عامل', 'مبني', 'أل', 'جذع', 'لفظ الجلالة'
 CUT_TYPES = {ARTICLE, STEM}                                  # ما يُقطَّع
@@ -44,6 +45,7 @@ MIN_STEM = 3                                                # أقلّ حروف 
 # حكم المعمول بمجموعة العامل (الاسم بعد الجار، واسم إنّ، واسم كان؛ والفعل بعد الناصب والجازم)
 EXPECTED = {'1': 'جر', '2': 'نصب', '5': 'نصب', '6': 'جزم', '7': 'جزم', '10': 'رفع', '11': 'رفع', '13': 'نصب'}
 CHECKED = {'1', '2', '10', '11'}                            # يُقارَن بالعلامة المكتوبة على الاسم
+VERB_CHECKED = {'1', '5', '6', '7'}                         # ويُقارَن بعلامة المضارع (sarf.affix)
 MARK_CASE = {KASRA: 'جر', KASRATAN: 'جر', FATHA: 'نصب', FATHATAN: 'نصب',
              DAMMA: 'رفع', DAMMATAN: 'رفع', SUKUN: 'جزم'}
 
@@ -143,6 +145,21 @@ def segment_word(word, wi, cands, lex):
         op_slots.append(_slot(word, offs, span[0], span[1], AMIL, 'operator',
                               operators=[(c['operator'], c['group']) for c in cs], cands=cs))
         last = span[1]
+    # 1b. السابقة المرفوضة عاملاً حرفٌ مبني إن كانت في الملف (وَ العاطفة، لَ التوكيد): تبقى خانة لا تُقطَّع
+    taken = [o['span'] for o in op_slots]
+    for c in cands:
+        if c.get('status') != 'rejected' or not c['method'].startswith('proclitic'):
+            continue
+        a, b = c['char_span']
+        if c.get('expanded', True):
+            a, b = emap[a], emap[b - 1] + 1
+        if any(x < b and a < y for x, y in taken):
+            continue
+        sl = _slot(word, offs, a, b, MABNI, 'proclitic', note='حرف ليس عاملاً هنا', cands=[])
+        if lex and lex.attested(sl['text']):
+            op_slots.append(sl)
+            taken.append((a, b))
+    op_slots.sort(key=lambda o: o['span'])
     # 2. ما بين العوامل وبعدها
     slots, pos = [], 0
     divine = divine_name(word) is not None
@@ -154,10 +171,10 @@ def segment_word(word, wi, cands, lex):
                 slots.append(_slot(word, offs, 0, 1, MABNI, 'conj', note='حرف عطف'))
             elif divine and op is None:
                 slots.append(_slot(word, offs, pos, end, DIVINE, 'divine'))
-            elif prev and prev['type'] == AMIL and any(c.get('kaffa') for c in prev['cands']):
+            elif prev and prev['type'] == AMIL and any(c.get('kaffa') for c in prev.get('cands', [])):
                 slots.append(_slot(word, offs, pos, end, MABNI, 'kaffa', note='ما الكافة'))
             elif prev and prev['type'] == AMIL and any(c['method'].startswith('operator+suffix')
-                                                       for c in prev['cands']):
+                                                       for c in prev.get('cands', [])):
                 slots.append(_slot(word, offs, pos, end, MABNI, 'enclitic', note='ضمير متصل'))
             else:
                 slots += _host(word, toks, offs, pos, end, lex, pos == 0)
@@ -221,6 +238,9 @@ def _observed(seg, slot):
             return case
     return None
 
+def _after_article(seg, si):
+    return si > 0 and seg['slots'][si - 1]['role'] == 'article'
+
 def _target(segs, wi, si):
     """المعمول: الخانة التالية في الكلمة، أو أول خانة في الكلمة التالية؛ وأل لا تكون معمولاً
     بل الجذع بعدها (بِٱلْعَدْلِ: بِ ← عَدْلِ)، ولا حرف العطف في أول الكلمة التالية"""
@@ -229,7 +249,7 @@ def _target(segs, wi, si):
             return wi, t['index']
     if wi + 1 < len(segs):
         for t in segs[wi + 1]['slots']:
-            if t['role'] not in ('conj', 'article'):
+            if t['role'] not in ('conj', 'article', 'proclitic'):
                 return wi + 1, t['index']
     return None
 
@@ -257,6 +277,21 @@ def relate(segs, cands):
                 r['observed'] = 'محلاً'
             elif ts['type'] == AMIL:
                 r['note'] = 'المعمول يبدأ بعامل: جملة أو مصدر مؤوَّل'
+            elif ts['type'] == STEM and not _after_article(segs[tg[0]], tg[1]) and \
+                    ((m := stem_info(ts['text']))['pos'] == 'verb' or
+                     (m['kind'] == 'mudari' and (c['group'] in ('5', '6', '7') or
+                                                 c['operator'] in ('حَتَّى', 'لِ')))):   # حتى ولام التعليل قبل المضارع
+                r['target']['pos'] = 'verb'
+                if c['group'] == '1':
+                    r.update(expected='نصب', note='الجار قبل المضارع: النصب بأن مضمرة')
+                if m['kind'] == 'mudari' and c['group'] in VERB_CHECKED and r['expected']:
+                    r['observed'] = m['mood']
+                    if m['mood'] == 'حذف النون':
+                        r['consistent'] = r['expected'] in ('نصب', 'جزم')
+                    elif m['mood'] in ('رفع', 'نصب', 'جزم'):
+                        r['consistent'] = m['mood'] == r['expected']
+                elif m['kind'] in ('madi', 'amr'):
+                    r['note'] = 'المعمول فعل ماضٍ' if m['kind'] == 'madi' else 'المعمول فعل أمر'
             elif r['expected'] and c['group'] in CHECKED:
                 obs = _observed(segs[tg[0]], ts)
                 r['observed'] = obs

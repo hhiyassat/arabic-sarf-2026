@@ -2,47 +2,32 @@
 """
 sarf.evidence — نفي المرشَّح بالكتابة (القرار 7 في المخطط: العامل يُتحقَّق منه بالكتابة).
 يضيف لكل مرشَّح status/reject_reason، والمرفوض يبقى في القائمة ومعه سببه.
+نوع ما بعد العامل (فعل أو اسم) وعلامته من مقشِّر الزوائد (sarf.affix).
+
+R1/R2  لام الأمر ولا الناهية: ما بعدها مضارع مجزوم، فتُرفضان إن كان اسماً، أو غير مضارع،
+       أو مضارعاً مرفوعاً (أو بثبوت النون) أو منصوباً
+R3     اسم الفعل الناصب: يُرفض إن كان ما بعده مرفوعاً
+R4     وَ الجارّة (القسم) وواو المعية: تُرفضان إن كان بعدها فعل، أو عامل، أو ضمير رفع منفصل
+R5     اللام المفتوحة الجارّة: تُرفض إن كان بعدها فعل (هي لام التوكيد أو جواب القسم)
 """
-from .chars import FATHA, DAMMA, KASRA, SUKUN, FATHATAN, DAMMATAN, KASRATAN, plain, strip_marks as _strip_marks
-from .match import PRON_SUFFIXES, match_letters
+from .chars import FATHA, DAMMA, DAMMATAN, plain, strip_marks as _strip_marks
+from .match import match_letters
+from .affix import stem_info, RAF_PRONOUNS
 
-RAF_PREFIX = set('يتأن')   # حروف المضارعة لثبوت نون الرفع
+CASE = {'رفع': 'مرفوع', 'نصب': 'منصوب'}
 
-def _last_haraka(toks):
-    """الحركة الأخيرة لمعمولٍ فعليّ، بعد نزع ضميرٍ متصل (الأطول أولاً، وبقاء حرفين)، أو None."""
-    toks = list(toks)
-    for suf in sorted(PRON_SUFFIXES, key=lambda s: len(_strip_marks(s)), reverse=True):
-        sl = len(_strip_marks(suf))
-        if len(toks) - sl >= 2 and plain(toks[-sl:]) == _strip_marks(suf):
-            toks = toks[:-sl]
-            break
-    if not toks:
-        return None
-    mk = toks[-1][1]
-    for h in (FATHATAN, DAMMATAN, KASRATAN, FATHA, DAMMA, KASRA, SUKUN):
-        if h in mk:
-            return h
-    return None
 
-def _noon_raf(toks):
-    """ثبوت نون الرفع: تبدأ بحرف مضارعة، وتنتهي بـ ونَ/ينَ (نون مفتوحة) أو انِ (نون مكسورة)."""
-    if len(toks) < 3 or toks[0][0] not in RAF_PREFIX:
-        return False
-    (l2, _), (l1, m1) = toks[-2], toks[-1]
-    if l1 != 'ن':
-        return False
-    return (l2 in ('و', 'ي') and FATHA in m1) or (l2 == 'ا' and KASRA in m1)
+def _text(toks):
+    return ''.join(L + ''.join(sorted(m)) for L, m in toks)
 
 def _target_after(f, words):
-    """رموز المعمول: بقيّة الكلمة بعد السابقة (proclitic)، أو الكلمة التالية."""
+    """نص المعمول: بقيّة الكلمة بعد السابقة (proclitic)، أو الكلمة التالية."""
     if f['method'].startswith('proclitic'):
-        return match_letters(f['word'], True)[f['char_span'][1]:]
+        return _text(match_letters(f['word'], f.get('expanded', True))[f['char_span'][1]:])
     nxt = f['word_index'] + 1
-    return match_letters(words[nxt], True) if nxt < len(words) else None
+    return words[nxt] if nxt < len(words) else None
 
 def reject_candidates(found, words):
-    """يضيف status/reject_reason لكل مرشَّح؛ والمرفوض يبقى في القائمة ومعه سببه (مبدأ المخطط)."""
-    CASE = {FATHA: 'منصوب', DAMMA: 'مرفوع'}
     for f in found:
         f['status'], f['reject_reason'] = 'candidate', None
     for f in found:
@@ -50,16 +35,36 @@ def reject_candidates(found, words):
         tgt = _target_after(f, words)
         if not tgt:
             continue
-        h = _last_haraka(tgt)
-        # R1/R2: لام الأمر ولا الناهية (المجموعة 6) — تُرفض إن كان الفعل بعدها غير مجزوم كتابةً
+        info = stem_info(tgt)
+        reason = None
+        # R1/R2: لام الأمر ولا الناهية — ما بعدها مضارع مجزوم
         if f['group'] == '6' and op in ('ل', 'لا'):
-            reason = CASE.get(h) or ('ثبوت النون' if _noon_raf(tgt) else None)
-            if reason:
-                f['status'] = 'rejected'
-                f['reject_reason'] = f'الفعل بعدها غير مجزوم كتابةً ({reason})'
-        # R3: اسم الفعل الناصب للمفعول (المجموعة 9) — تُرفض إن كان ما بعده مرفوعاً كتابةً
+            if info['pos'] == 'noun':
+                reason = f"ما بعدها اسم ({'، '.join(info['evidence'])})"
+            elif info['kind'] != 'mudari':
+                reason = 'ما بعدها ليس فعلاً مضارعاً'
+            elif info['mood'] in CASE:
+                why = 'ثبوت النون' if info['suffix'] == 'نون الرفع' else CASE[info['mood']]
+                reason = f'الفعل بعدها غير مجزوم كتابةً ({why})'
+        # R3: اسم الفعل الناصب للمفعول — ما بعده مرفوع
         elif f['group'] == '9' and op in ('رويد', 'بله', 'دونك', 'عليك'):
-            if h in (DAMMA, DAMMATAN):
-                f['status'] = 'rejected'
-                f['reject_reason'] = 'ما بعده مرفوع كتابةً، واسم الفعل ينصب مفعوله'
+            last = match_letters(tgt)[-1][1]
+            if last & {DAMMA, DAMMATAN}:
+                reason = 'ما بعده مرفوع كتابةً، واسم الفعل ينصب مفعوله'
+        # R4: واو القسم الجارّة وواو المعية — لا تدخلان على فعل ولا حرف ولا ضمير رفع
+        elif op == 'و' and f['group'] in ('1', '4') and f['method'].startswith('proclitic'):
+            after = [g for g in found if g is not f and g['word_index'] == f['word_index'] and
+                     g['char_span'] and g['char_span'][0] == f['char_span'][1]]
+            if plain(match_letters(tgt), True).replace('أ', 'ا') in {p.replace('أ', 'ا') for p in RAF_PRONOUNS}:
+                reason = 'بعدها ضمير رفع منفصل: الواو عاطفة أو حالية'
+            elif info['pos'] == 'verb':
+                reason = f"بعدها فعل ({'، '.join(info['evidence'])}): الواو عاطفة"
+            elif after:
+                reason = f"بعدها عامل ({after[0]['operator']}): الواو عاطفة"
+        # R5: اللام المفتوحة قبل الفعل لام توكيد أو جواب قسم، لا جارّة
+        elif op == 'ل' and f['group'] == '1' and f['method'].startswith('proclitic') and \
+                FATHA in match_letters(f['word'])[f['char_span'][0]][1] and info['pos'] == 'verb':
+            reason = f"اللام المفتوحة قبل الفعل ({'، '.join(info['evidence'])}) لام توكيد أو جواب قسم، لا جارّة"
+        if reason:
+            f['status'], f['reject_reason'] = 'rejected', reason
     return found

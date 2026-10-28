@@ -144,6 +144,9 @@ def _match_word(cat, word, wi, toks):
                    (VERB_SUFFIXES if mode in ('verb', 'both') else [])
             if not any(_strip_marks(s) == rest for s in sufs):
                 continue
+            vsuf = any(_strip_marks(s) == rest for s in VERB_SUFFIXES) and mode in ('verb', 'both')
+            if vsuf:
+                otoks = otoks[:-1] + [(otoks[-1][0], frozenset())]   # كَانَ + ـُوا = كَانُوا: حركة الآخر للاحقة
             ok, n = vocal_compatible(t[:k], otoks)
             if ok:
                 emit(op, (off, off + k), 'operator+suffix' + tag, n, conf_of(n, k), host_rest=rest)
@@ -250,6 +253,10 @@ def _match_word(cat, word, wi, toks):
     divine = divine_name(word) is not None     # ما بعد السابقة لفظ الجلالة: السابقة حرف يقيناً (لا أمر ولا أصل)
     if not proclitic(0, toks, lexical_rest=inner or divine) and conj:
         proclitic(1, toks[1:], lexical_rest=divine)   # فَلْيَكْتُبْ، فَبِمَا، فَلِلَّهِ
+    elif conj and toks[0][0] == 'و' and len(toks) > 3 and \
+            ((toks[1][0] == 'ل' and SUKUN in toks[1][1]) or (toks[1][0] == 'ب' and KASRA in toks[1][1]) or
+             (toks[1][0] == 'ت' and divine)):
+        proclitic(1, toks[1:], lexical_rest=divine)   # وَلْيَكْتُبْ، وَبِٱلْآخِرَةِ، وَتَٱللَّهِ: الواو عاطفة محتملة
     return results
 
 def match_multi(cat, words):
