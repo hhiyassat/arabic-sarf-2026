@@ -19,11 +19,12 @@
 | `sarf/lexicon.py` | معجم المبنيات للبحث بالصورة المشكولة |
 | `sarf/segment.py` | المقشِّر: خانات الكلمة (عامل، مبني، أل، جذع، لفظ الجلالة)، وشرط الفصل، والعامل ← المعمول، وتقطيع ما ليس عاملاً ولا مبنياً |
 | `sarf/align.py` | ربط العامل بخانته وعلاقته |
-| `sarf/pipeline.py` | تشغيل المراحل بالترتيب على كائن واحد للآية: normalize ← match ← evidence ← segment ← judge ← agree ← syllabify ← align |
+| `sarf/pipeline.py` | تشغيل المراحل بالترتيب على كائن واحد للآية: normalize ← match ← evidence ← segment ← judge ← agree ← root ← syllabify ← align |
 | `sarf/status.py` | حالات المرشَّح (T09): مؤجَّل، ممنوع، مقبول |
 | `sarf/judge.py` | الحكم (T09): مقبول بدليل إيجابي فقط (سبب + شرط + قواعد مفحوصة + لا منافس على الخانة)، وإلا مؤجَّل مع ذكر السبب؛ والممنوع ما نفته الكتابة |
 | `sarf/analyze.py` | تحليل آية بكل المراحل (يمرّ بالـ pipeline) |
 | `sarf/agreement.py` | T18: سمات الفعل بالتوافق A(m) = {Φ(p) \| R(m,p)}؛ Φ من ملف المبنيات، وR بقواعد التصريف، والتخصيص بضمير منفصل قبله؛ والمبني للمجهول من الكتابة |
+| `sarf/root.py` | T19a–T19c: الخلايا (Cva…، والشدة صامتان)، والجذر والصيغة المرخَّصان Morph(W, R, P, F; e_m): المرشَّح من قوالب الأوزان I–X بقيود الحركات والمعتل، والرخصة من HFN (شبكة حسين للإطار، CC0): حدثٌ مسجَّل بالجذر والوزن، أو الجذر وحده والوزن بالقالب. يُقرأ HFN من `SARF_HFN` أو `../husseinframenet/release/release_v18` أو `~/arabic-net/HusseinFrameNet/release/release_v18` |
 | `sarf/output_schema.py` | السجل الجامع: الناتج بصيغة `schema/morph_analysis.schema.json` (1.1)؛ `extract_operators.py --schema` |
 | `sarf/mood.py` | خبري/إنشائي/مؤجَّل بالعامل في بابه، بمعيار القسمة المعتمد (Q01): 18 إنشائية، و80 خبرية، ولَوْ وكَمْ مؤجَّلتان (T14a) |
 | `sarf/output_text.py`، `sarf/output_html.py` | الناتج النصي وJSON، وتقرير HTML |
@@ -42,6 +43,7 @@
 | `tests/test_segment.py` | اختبارات المقشِّر: كل حالة قاعدة حسمها صاحب النظرية |
 | `tests/test_normalize.py` | التطبيع العثماني بترميزي تنزيل ومصحف المجمّع (التنوين المفتوح، والهمزة المنفصلة، والصفر المستدير) |
 | `tests/test_agreement.py` | T18: A(m) لكل صيغة، والتخصيص والمخالفة، والجهة |
+| `tests/test_root.py` | T19: الخلايا، والسلامة والاعتلال، وMorph لكل صنف (يحتاج HFN للرخصة) |
 | `tests/test_schema.py` | صلاحية السجل الجامع بالمخطَّط لكل آية، وأحكام بعينها |
 | `tests/test_mood.py` | القسمة على الوحدات المائة بالمعيار |
 | `tests/regress.py` | اختبار الانحدار: سطر لكل كلمة يُقارَن بـ`tests/golden/`؛ كل فرق يُفحص قبل `--update` |

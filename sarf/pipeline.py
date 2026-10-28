@@ -26,6 +26,7 @@ from .evidence import reject_candidates
 from .status import BLOCKED, ACCEPTED
 from .judge import judge
 from .agreement import verse_agreement
+from .root import verse_morph, hfn
 from .align import align
 from .segment import segment, syllabify_units
 from .lexicon import MabniLexicon
@@ -49,7 +50,8 @@ class VerseContext:
         """الناتج بصيغة analyze: النص كما هو، والتقطيع على النص المطبَّع نفسه"""
         return dict(verse=self.verse, normalized=self.normalized, syllabified_text=self.normalized,
                     words=self.words, operators=self.operators, segments=self.segments,
-                    relations=self.relations, syll=self.syll, agreement=getattr(self, 'agreement', []))
+                    relations=self.relations, syll=self.syll, agreement=getattr(self, 'agreement', []),
+                    morph=getattr(self, 'morph', []))
 
 
 class Stage:
@@ -89,6 +91,11 @@ def _agree(ctx, res):
                      for (wi, si), agr in sorted(verse_agreement(ctx.segments).items())]
     return f"{len(ctx.agreement)} فعلاً بسمات التوافق"
 
+def _root(ctx, res):
+    ctx.morph = verse_morph(ctx.segments)
+    n = sum(m['status'] == 'accepted' for m in ctx.morph)
+    return f"{n} جذراً مقبولاً من {len(ctx.morph)}" + ('' if hfn() else ' (HFN غير موجود)')
+
 def _syllabify(ctx, res):
     ctx.syll = syllabify_units(ctx.segments)
     return f"{ctx.syll['n_syll']} مقطعاً"
@@ -106,6 +113,7 @@ STAGES = [
     Stage('judge', _judge, ('candidates', 'segments', 'relations'), (),
           'الحكم بالقبول بدليل إيجابي (T07، T09)؛ وما سواه مؤجَّل أو ممنوع'),
     Stage('agree', _agree, ('segments',), ('agreement',), 'سمات الفعل بالتوافق مع الضمير (T18)'),
+    Stage('root', _root, ('segments',), ('morph',), 'الجذر والصيغة المرخَّصان (T19c) بشهادة HFN'),
     Stage('syllabify', _syllabify, ('segments',), ('syll',), 'تقطيع ما ليس عاملاً ولا مبنياً'),
     Stage('align', _align, ('candidates', 'segments', 'relations'), ('operators',), 'ربط العامل بخانته وعلاقته'),
 ]

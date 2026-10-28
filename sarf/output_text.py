@@ -5,6 +5,7 @@ sarf.output_text — الناتج النصي وJSON لتحليل الآية.
 from . import syllabify as cv
 from .segment import unit_view, STEM
 from .affix import stem_info
+from .root import WAZN
 from .status import STATUS_AR, BLOCKED
 
 
@@ -67,6 +68,20 @@ def word_irab(a, wi):
         if agr.get('conflict'):
             role += f"؛ ولا يوافق «{agr['conflict']}» قبله"
         out.append((slot['text'], role, 'T18'))
+    # الجذر والصيغة (T19c)
+    for m in a.get('morph', []):
+        if m['word_index'] != wi or m['status'] != 'accepted':
+            continue
+        slot = a['segments'][wi]['slots'][m['slot']]
+        root = ' '.join(m['root'])
+        if m['level'] == 'event':
+            ev = m['event']
+            role = (f"الجذر «{root}»، والوزن {ev['hfn_form']}؛ شاهده في HFN: {ev['verb']}" +
+                    (f" ← {ev['masdar']}" if ev.get('masdar') else '') +
+                    (f"، ومعنى الصيغة: {ev['meaning']}" if ev.get('meaning') else ''))
+        else:
+            role = f"الجذر «{root}» مسجَّل في HFN، والوزن {WAZN.get(m['form_class'], m['form_class'])} بالقالب، ولا حدث مسجَّل به"
+        out.append((slot['text'], role, 'T19c'))
     return out
 
 

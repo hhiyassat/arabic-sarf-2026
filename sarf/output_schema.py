@@ -14,6 +14,7 @@ from .affix import stem_info
 from .chars import (FATHA, DAMMA, KASRA, SUKUN, FATHATAN, DAMMATAN, KASRATAN, letters, strip_marks)
 from .lexicon import MabniLexicon
 from .normalize import UTHMANI_SIGNS
+from .root import soundness, WAZN
 from .segment import AMIL, MABNI, ARTICLE, DIVINE
 from .status import ACCEPTED, DEFERRED, BLOCKED
 
@@ -387,6 +388,23 @@ def _word(a, seg, cat, governed):
             gov = governed.get((wi, s['index']))
             agr = next((x for x in a.get('agreement', []) if x['word_index'] == wi and x['slot'] == s['index']), None)
             variants, sev = _stem_segment(s, after_article, gov[0] if gov else None, gov[1] if gov else None, agr)
+            mo = next((x for x in a.get('morph', []) if x['word_index'] == wi and x['slot'] == s['index']
+                       and x['status'] == 'accepted'), None)
+            if mo and variants[0].get('pos') == 'verb':
+                # T19c: الجذر والصيغة المرخَّصان، وشاهدهما من HFN
+                rt = dict(radicals=list(mo['root']))
+                snd = soundness(mo['root'])
+                if snd:
+                    rt['soundness'] = snd
+                pat = dict(wazn=(mo['event'] or {}).get('hfn_form') or WAZN.get(mo['form_class'], mo['form_class']),
+                           augmented=mo['form_class'] not in ('I', 'QI'))
+                variants = [dict(v, root=rt, pattern=pat) for v in variants]
+                if mo['event']:
+                    sev.append(dict(source='lexicon', id=mo['event']['event_id'],
+                                    note=f"HFN: {mo['event']['verb']} ({mo['event']['source']})"))
+                else:
+                    sev.append(dict(source='lexicon', id='HFN-root:' + mo['root'],
+                                    note='الجذر مسجَّل في HFN، والوزن بالقالب؛ لا حدث مسجَّل'))
             ev += sev
             sg = variants[0]
             if len(variants) > 1:
