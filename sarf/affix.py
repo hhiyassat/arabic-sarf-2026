@@ -9,13 +9,18 @@ sarf.affix — مقشِّر الزوائد: هل الجذع فعل أم اسم،
     نون الرفع          ـونَ ـينَ ـانِ
     واو الجماعة        ـوا (والألف الفارقة)
     نون التوكيد        ـنَّ ـنْ
+    ياء المخاطبة       ـِي (مع حذف النون في المضارع، وفي الأمر)
+    تاء التأنيث        ـَتْ (الساكنة: الماضي)
     ضمير الرفع         ـْتُمْ ـْتُ ـْتَ ـْتِ ـْنَا  (بعد ساكن: الماضي)
     الضمير المتصل      ـهُ ـهِ ـكَ ـكُمْ ـهُمْ …  (لاحقة: يُنزع قبل الحكم)
 
 الدليل القوي وحده يُثبت النوع:
     فعل: همزة وصل في أوله (غير أل والأسماء العشرة)، أو ألف فارقة بعد واو الجماعة،
          أو حرف مضارعة مع نون التوكيد أو نون الرفع أو السكون في آخره،
-         أو ضمير رفع متحرك بعد ساكن (الماضي)
+         أو ضمير رفع متحرك بعد ساكن (الماضي)، أو تاء التأنيث الساكنة (الماضي)،
+         أو سكون الآخر بلا حرف مضارعة: فعل أمر بلا همزة وصل (قُلْ، قِفْ، عَلِّمْ)؛
+         لأن النص يُقرأ كما كُتب (بلا وقف) فالاسم المعرب لا يُختم بالسكون،
+         والمبنيات والعوامل لا تصل إلى المقشِّر لأنها خانات مستقلة
     اسم: تنوين، أو أل، أو تاء مربوطة
 وما سوى ذلك لا يُحكم فيه (pos = None)، ويبقى حرف المضارعة وعلامة الآخر معلومة.
 """
@@ -32,6 +37,7 @@ WASL_NOUNS = {'اسم', 'ابن', 'ابنة', 'ابنم', 'امرؤ', 'امرئ'
 OBJ_SUFFIXES = sorted((s for s in PRON_SUFFIXES if s != 'ي'), key=lambda s: -len(letters(s)))
 MIN_STEM = 3
 MARK_MOOD = {FATHA: 'نصب', DAMMA: 'رفع', SUKUN: 'جزم'}
+MADD = set('اويىآ')
 # ضمائر الرفع المنفصلة: صورتها تشبه الماضي مع ضمير (أَنْتَ = أَنْ + تَ) فتُستثنى
 RAF_PRONOUNS = {'أنا', 'أنت', 'أنتما', 'أنتم', 'أنتن', 'هو', 'هي', 'هما', 'هم', 'هن', 'نحن'}
 
@@ -39,6 +45,25 @@ RAF_PRONOUNS = {'أنا', 'أنت', 'أنتما', 'أنتم', 'أنتن', 'هو'
 def _peelable(*letters_):
     """لا يُقشَّر حرف من خارج الزوائد واللواحق"""
     return all(L in ZAWAID or L in LAWAHIQ for L in letters_)
+
+_LEX = None
+
+def _mabni(text):
+    """في ملف المبنيات (مَنْ، عَنْ، قَدْ، كُمْ): سكون آخره سكون بناء لا أمر"""
+    global _LEX
+    if _LEX is None:
+        from .lexicon import MabniLexicon
+        _LEX = MabniLexicon()
+    return bool(_LEX.lookup(text))
+
+
+def radical_nun(toks, suf):
+    """نون «نِي» جذرية لا نون وقاية (تَحْزَنِى): بعد حرف المضارعة يلزم ثلاثة أحرف قبل «نِي»،
+    إلا أن يُختم ما قبلها بحرف علّة (تَرَىٰنِى)"""
+    k = len(match_letters(suf))
+    return suf == 'نِي' and len(toks) > k and toks[0][0] in MUDARI and set(toks[0][1]) & {FATHA, DAMMA} and \
+        len(toks) - k - 1 < 3 and toks[-k - 1][0] not in MADD
+
 
 def stem_info(text):
     """→ dict(pos, kind, mood, prefix, suffix, object, evidence)
@@ -68,6 +93,8 @@ def stem_info(text):
         k = len(stoks)
         if len(toks) - k < MIN_STEM:
             continue
+        if radical_nun(toks, suf):
+            continue
         cand = [(L, frozenset(m)) for L, m in toks[-k:]]
         if plain(cand, True) == plain(stoks, True) and vocal_compatible(cand, stoks)[0]:
             info['object'] = suf
@@ -79,8 +106,17 @@ def stem_info(text):
     if n >= 3 and last_L == 'ا' and not last_m and toks[-2][0] == 'و' and not toks[-2][1] and DAMMA in toks[-3][1]:
         info.update(pos='verb', suffix='وا'); ev.append('واو الجماعة والألف الفارقة')
         toks = toks[:-2]
-    elif info['object'] and last_L == 'و' and not last_m and n >= 2 and DAMMA in toks[-2][1]:
+    elif (info['object'] or toks[0][0] == 'ا' and not toks[0][1]) and \
+            last_L == 'و' and not last_m and n >= 2 and DAMMA in toks[-2][1]:
+        # وبلا ضمير مع همزة الوصل: الخانة بعد فصل الضمير المتصل (اكْتُبُو | هُ)
         info['suffix'] = 'و'                   # واو الجماعة قبل الضمير، أو واو الأسماء الخمسة (أَبُوهُ): لا يُحكم بها وحدها
+        toks = toks[:-1]
+    elif n >= 4 and last_L in ('ي', 'ى') and (not last_m or last_m == {SUKUN}) and KASRA in toks[-2][1] and \
+            toks[-2][0] not in MADD and not info['object'] and \
+            (toks[0][0] == 'ت' and toks[0][1] & {FATHA, DAMMA} or toks[0][0] == 'ا' and not toks[0][1]):
+        # ياء المخاطبة: لا تُقشَّر إلا بعد تاء المضارعة أو همزة الوصل؛
+        # وفي غيرهما تلتبس بياء المتكلم على الاسم (نَفْسِى) فلا يُحكم (كُلِى، قَرِّى)
+        info['suffix'] = 'ي'
         toks = toks[:-1]
     # فعل الأمر بهمزة الوصل
     first_L, first_m = toks[0]
@@ -88,6 +124,13 @@ def stem_info(text):
             plain(toks).translate(str.maketrans('', '', 'ـ')) not in WASL_NOUNS and \
             not any(plain(toks).startswith(w) for w in WASL_NOUNS):
         info.update(pos='verb', kind='amr', prefix='ا'); ev.append('همزة وصل في أول فعل الأمر')
+        if info['suffix'] == 'ي':
+            ev.append('ياء المخاطبة')
+        return info
+    # الماضي: تاء التأنيث الساكنة بعد فتح (قَالَتْ، تَبَّتْ)
+    if info['suffix'] is None and len(toks) >= 3 and toks[-1][0] == 'ت' and toks[-1][1] == {SUKUN} and \
+            FATHA in toks[-2][1]:
+        info.update(pos='verb', kind='madi', suffix='تْ'); ev.append('تاء التأنيث الساكنة')
         return info
     # الماضي: ضمير رفع متحرك بعد ساكن
     for suf in ('تُمْ', 'تُمَا', 'تُنَّ', 'تُ', 'تَ', 'تِ', 'نَا'):
@@ -104,6 +147,10 @@ def stem_info(text):
         info.update(kind='mudari', prefix=first_L)
         L, m = toks[-1]
         if info['suffix'] in ('وا', 'و'):
+            info['mood'] = 'حذف النون'
+        elif info['suffix'] == 'ي':
+            # ياء المخاطبة بلا نون: حذف النون؛ ولا يُحكم بالفعل إلا مع تاء المضارعة (تَكْتُبِي)
+            # تلتبس بياء المتكلم على اسم أوله تاء (تَوْفِيقِى): لا يُحكم بالفعل، ويشهد له العامل
             info['mood'] = 'حذف النون'
         elif L == 'ن' and SHADDA in m or (L == 'ن' and SUKUN in m and FATHA in toks[-2][1]):
             info.update(pos='verb', suffix='نون التوكيد', mood='مبني'); ev.append('نون التوكيد')
@@ -123,5 +170,21 @@ def stem_info(text):
             ev.insert(0, f'حرف المضارعة «{first_L}»')
         return info
     if info['suffix'] == 'وا':
-        info['kind'] = 'madi'                  # واو الجماعة بلا حرف مضارعة ولا همزة وصل: قَالُوا
+        # الأمر بلا همزة وصل: الأجوف (قُولُوا، كُونُوا) وما بقي منه حرفان (كُلُوا، خُذُوا)؛
+        # وغيرهما ماضٍ (قَالُوا، قُتِلُوا)
+        core = toks
+        if len(toks) > 2 and toks[0][0] in ('و', 'ف') and toks[0][1] == {FATHA}:
+            core = toks[1:]                    # فَقُولُوا: الفاء والواو المفتوحتان لا تقعان أول الأمر الأجوف
+        c_m = core[0][1]
+        if DAMMA in c_m and not (c_m & {SHADDA}) and (
+                len(core) == 3 and core[1][0] == 'و' and not core[1][1] or
+                len(core) == 2 and SHADDA not in core[1][1]):
+            info['kind'] = 'amr'; ev.append('أمر بلا همزة وصل مع واو الجماعة')
+        else:
+            info['kind'] = 'madi'
+        return info
+    # فعل الأمر بلا همزة وصل: سكون الآخر على حرف غير مدّ، بلا لاحقة ولا حرف مضارعة
+    if info['suffix'] is None and info['object'] is None and len(toks) >= 2 and \
+            toks[-1][1] == {SUKUN} and toks[-1][0] not in MADD and not _mabni(text):
+        info.update(pos='verb', kind='amr'); ev.append('سكون الآخر بلا حرف مضارعة (أمر مبني على السكون)')
     return info

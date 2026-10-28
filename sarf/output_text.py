@@ -3,7 +3,8 @@
 sarf.output_text — الناتج النصي وJSON لتحليل الآية.
 """
 from . import syllabify as cv
-from .segment import unit_view
+from .segment import unit_view, STEM
+from .affix import stem_info
 from .status import STATUS_AR, BLOCKED
 
 
@@ -22,6 +23,26 @@ def word_irab(a, wi):
         t = r['target']
         if t and t['word_index'] == wi and r.get('role'):
             out.append((t['text'], r['role'], st))
+    # بنية الجذع وحدها: الماضي والأمر مبنيان، وعلامة البناء من الكتابة
+    for slot in a['segments'][wi]['slots']:
+        if slot['type'] != STEM:
+            continue
+        m = stem_info(slot['text'])
+        if m['pos'] != 'verb' or m['kind'] not in ('amr', 'madi'):
+            continue
+        if m['kind'] == 'amr':
+            role = 'فعل أمر مبني على ' + ('حذف النون' if m['suffix'] in ('وا', 'و', 'ي') else 'السكون')
+        else:
+            role = 'فعل ماضٍ مبني'
+        if m['suffix'] in ('وا', 'و'):
+            role += '، وواو الجماعة فاعل'
+        elif m['suffix'] == 'ي':
+            role += '، وياء المخاطبة فاعل'
+        elif m['suffix'] == 'تْ':
+            role += '، والتاء للتأنيث'
+        elif m['suffix']:
+            role += f"، والضمير «{m['suffix']}» فاعل"
+        out.append((slot['text'], role, 'بنية'))
     return out
 
 

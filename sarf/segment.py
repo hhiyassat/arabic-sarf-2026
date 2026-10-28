@@ -32,7 +32,7 @@ from .chars import (FATHA, DAMMA, KASRA, SUKUN, FATHATAN, DAMMATAN, KASRATAN,
 from .divine import divine_name
 from .match import PRON_SUFFIXES, match_letters, vocal_compatible
 from . import syllabify as cv
-from .affix import stem_info
+from .affix import stem_info, radical_nun
 from .status import BLOCKED
 
 AMIL, MABNI, ARTICLE, STEM, DIVINE = 'عامل', 'مبني', 'أل', 'جذع', 'لفظ الجلالة'
@@ -107,7 +107,7 @@ def _host(word, toks, offs, a, b, lex, at_word_start):
     for suf in sorted(STEM_SUFFIXES, key=lambda s: -len(letters(s))):
         stoks = match_letters(suf)
         k = len(stoks)
-        if b - k - a < MIN_STEM:
+        if b - k - a < MIN_STEM or radical_nun(toks[a:b], suf):
             continue
         cand = [(L, frozenset(m)) for L, m in toks[b - k:b]]
         if plain(cand, True) == plain(stoks, True) and vocal_compatible(cand, stoks)[0]:
@@ -412,6 +412,8 @@ def _role(r):
             text += ' مؤخَّر'
     else:
         return None
+    if r['observed'] == 'حذف النون':
+        text += f" وعلامة {'جزمه' if exp == 'جزم' else 'نصبه'} حذف النون"
     if r['consistent'] is False:
         text += ' (العلامة المكتوبة تخالف)'
     return text
