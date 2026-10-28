@@ -25,6 +25,7 @@ from .match import extract
 from .evidence import reject_candidates
 from .status import BLOCKED, ACCEPTED
 from .judge import judge
+from .agreement import verse_agreement
 from .align import align
 from .segment import segment, syllabify_units
 from .lexicon import MabniLexicon
@@ -48,7 +49,7 @@ class VerseContext:
         """الناتج بصيغة analyze: النص كما هو، والتقطيع على النص المطبَّع نفسه"""
         return dict(verse=self.verse, normalized=self.normalized, syllabified_text=self.normalized,
                     words=self.words, operators=self.operators, segments=self.segments,
-                    relations=self.relations, syll=self.syll)
+                    relations=self.relations, syll=self.syll, agreement=getattr(self, 'agreement', []))
 
 
 class Stage:
@@ -83,6 +84,11 @@ def _judge(ctx, res):
     n = sum(f['status'] == ACCEPTED for f in ctx.candidates)
     return f"مقبولة: {n}"
 
+def _agree(ctx, res):
+    ctx.agreement = [dict(word_index=wi, slot=si, **{k: v for k, v in agr.items()})
+                     for (wi, si), agr in sorted(verse_agreement(ctx.segments).items())]
+    return f"{len(ctx.agreement)} فعلاً بسمات التوافق"
+
 def _syllabify(ctx, res):
     ctx.syll = syllabify_units(ctx.segments)
     return f"{ctx.syll['n_syll']} مقطعاً"
@@ -99,6 +105,7 @@ STAGES = [
           'الخانات (عامل، مبني، أل، جذع) والعامل ← المعمول'),
     Stage('judge', _judge, ('candidates', 'segments', 'relations'), (),
           'الحكم بالقبول بدليل إيجابي (T07، T09)؛ وما سواه مؤجَّل أو ممنوع'),
+    Stage('agree', _agree, ('segments',), ('agreement',), 'سمات الفعل بالتوافق مع الضمير (T18)'),
     Stage('syllabify', _syllabify, ('segments',), ('syll',), 'تقطيع ما ليس عاملاً ولا مبنياً'),
     Stage('align', _align, ('candidates', 'segments', 'relations'), ('operators',), 'ربط العامل بخانته وعلاقته'),
 ]

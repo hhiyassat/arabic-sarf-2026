@@ -237,7 +237,8 @@ def stem_info(text):
             info.update(pos='verb', kind='madi', suffix=suf); ev.append(f'ضمير الرفع «{suf}» بعد ساكن')
             return info
     # المضارع: حرف المضارعة متحركاً بفتح أو ضم
-    if first_L in MUDARI and (first_m & {FATHA, DAMMA}) and len(toks) >= 3 and _peelable(first_L):
+    if first_L in MUDARI and (first_m & {FATHA, DAMMA}) and len(toks) >= 3 and _peelable(first_L) and \
+            not _closed(toks):                         # أَلَمۡ: همزة الاستفهام مع «لَمۡ»، لا مضارع
         info.update(kind='mudari', prefix=first_L)
         L, m = toks[-1]
         if info['suffix'] in ('وا', 'و'):

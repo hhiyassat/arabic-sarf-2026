@@ -75,8 +75,9 @@ def _past_suffix(text, suffix):
     return suffix
 
 
-def _verbs(text, info):
-    """→ [كائن verb] لكل إسنادٍ تحتمله الكتابة (المضارع بالتاء: المخاطب والغائبة)"""
+def _verbs(text, info, agr=None):
+    """→ [كائن verb] لكل إسنادٍ تحتمله الكتابة. السمات من طبقة التوافق (T18) إن حُسبت:
+    A(m) = {Φ(p) | R(m,p)}؛ وإلا من اللاحقة كما هي"""
     toks = letters(text)
     voice = 'passive' if toks and DAMMA in toks[0][1] and info['kind'] == 'madi' else 'active'
     if info['kind'] == 'madi':
@@ -127,7 +128,12 @@ def _verbs(text, info):
             if obs:
                 infl['observed_mark'] = obs
         tense = 'imperfect'
-    return [dict(tense=tense, voice=voice, subject=s, inflection=dict(infl)) for s in subj]
+    if agr and agr.get('features'):
+        subj = [_pron(p, n, g, 'subject') for p, n, g in agr['features']]
+    voices = [voice]
+    if agr and 'voice' in agr:
+        voices = [agr['voice']] if agr['voice'] else ['active', 'passive']   # لا تفصل الكتابة: الاحتمالان
+    return [dict(tense=tense, voice=vc, subject=s, inflection=dict(infl)) for vc in voices for s in subj]
 
 
 # ---------- الاسم ----------
@@ -175,7 +181,7 @@ def _noun(text, info, definite_by=None, case=None):
     return n
 
 
-def _stem_segment(slot, after_article, governor=None, gcase=None):
+def _stem_segment(slot, after_article, governor=None, gcase=None, agr=None):
     """الجذع: النوع من الدليل القوي وحده (sarf.affix)، أو من عامله: معمول الجار وإنّ المقبولين
     وافقت علامتُه أثرَهما اسمٌ (الحرف الجار والناسخ لا يعملان إلا في اسم)؛ وإلا undetermined"""
     text = slot['text']
@@ -189,9 +195,15 @@ def _stem_segment(slot, after_article, governor=None, gcase=None):
         if after_article:
             ev.append(dict(source='rule', id='affix', note='أل قبله'))
         return [seg], ev
+    if agr and agr.get('verb_by_agreement'):
+        info = dict(info, pos='verb')
+        ev.append(dict(source='rule', id='T18', note=f"توافقه مع «{agr['narrowed_by']}» قبله: {agr['rule']}"))
+    elif agr:
+        ev.append(dict(source='rule', id='T18', note=agr['rule'] +
+                       (f"؛ وخصّصه «{agr['narrowed_by']}» قبله" if agr.get('narrowed_by') else '')))
     if info['pos'] == 'verb':
         out = []
-        for v in _verbs(text, info):
+        for v in _verbs(text, info, agr):
             out.append(dict(seg, pos='verb', verb=v))
         return out, ev
     seg['pos'] = 'undetermined'
@@ -373,7 +385,8 @@ def _word(a, seg, cat, governed):
         else:
             after_article = s['index'] > 0 and seg['slots'][s['index'] - 1]['type'] == ARTICLE
             gov = governed.get((wi, s['index']))
-            variants, sev = _stem_segment(s, after_article, gov[0] if gov else None, gov[1] if gov else None)
+            agr = next((x for x in a.get('agreement', []) if x['word_index'] == wi and x['slot'] == s['index']), None)
+            variants, sev = _stem_segment(s, after_article, gov[0] if gov else None, gov[1] if gov else None, agr)
             ev += sev
             sg = variants[0]
             if len(variants) > 1:

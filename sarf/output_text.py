@@ -32,6 +32,8 @@ def word_irab(a, wi):
             continue
         if m['kind'] == 'amr':
             role = 'فعل أمر مبني على ' + ('حذف النون' if m['suffix'] in ('وا', 'و', 'ي') else 'السكون')
+            if not m['suffix']:
+                role += '، والفاعل ضمير مستتر تقديره «أَنْتَ»'
         else:
             role = 'فعل ماضٍ مبني'
         if m['suffix'] in ('وا', 'و'):
@@ -43,7 +45,45 @@ def word_irab(a, wi):
         elif m['suffix']:
             role += f"، والضمير «{m['suffix']}» فاعل"
         out.append((slot['text'], role, 'بنية'))
+    # فاعل المضارع بالتوافق (T18)
+    for agr in a.get('agreement', []):
+        if agr['word_index'] != wi or agr.get('kind') != 'mudari':
+            continue
+        slot = a['segments'][wi]['slots'][agr['slot']]
+        passive = agr.get('voice') == 'passive'
+        unknown = 'voice' in agr and agr['voice'] is None      # يُسَاقُونَ: لا تفصل الكتابة بين المعلوم والمجهول
+        if agr.get('signature') in SUBJECT_SUFFIX:
+            role = SUBJECT_SUFFIX[agr['signature']] + (' نائب فاعل' if passive else
+                                                       ' فاعل أو نائب فاعل' if unknown else ' فاعل')
+        else:
+            role = _hidden_subject(agr['pronouns'], 'نائب الفاعل' if passive else
+                                   'الفاعل أو نائبه' if unknown else 'الفاعل')
+        if passive:
+            role = 'مبني للمجهول، و' + role
+        if agr.get('verb_by_agreement'):
+            role = f"فعل مضارع بالتوافق مع «{agr['narrowed_by']}» قبله، و" + role
+        elif agr.get('narrowed_by'):
+            role += f"، بقرينة «{agr['narrowed_by']}» قبله"
+        if agr.get('conflict'):
+            role += f"؛ ولا يوافق «{agr['conflict']}» قبله"
+        out.append((slot['text'], role, 'T18'))
     return out
+
+
+def _hidden_subject(prons, label='الفاعل'):
+    """الاستتار واجبٌ مع المتكلم والمخاطب، وجائزٌ مع الغائب: فقد يكون الفاعل اسماً ظاهراً بعده"""
+    near = [p for p in prons if not p.startswith('ه')]
+    far = [p for p in prons if p.startswith('ه')]
+    parts = []
+    if near:
+        parts.append(f'{label} ضمير مستتر وجوباً تقديره ' + ' أو '.join(f'«{p}»' for p in near))
+    if far:
+        parts.append(('أو ' if near else '') + f'{label} للغائب' + ('ة' if far == ['هِيَ'] else '') +
+                     ': ضمير مستتر تقديره ' + ' أو '.join(f'«{p}»' for p in far) + '، أو اسم ظاهر بعده')
+    return '، '.join(parts)
+
+
+SUBJECT_SUFFIX = {'ون': 'واو الجماعة', 'ين': 'ياء المخاطبة', 'ان': 'ألف الاثنين', 'ن': 'نون النسوة'}
 
 
 def relation_text(r):
