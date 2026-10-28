@@ -23,11 +23,12 @@ LEXICAL_MADD = OrderedDict([
 UTHMANI_MAP = {
     'ٱ': 'ا',          # ألف الوصل
     'ۡ': SUKUN,        # السكون العثماني (رأس الخاء)
-    'ۥ': 'و',          # واو الصلة الصغيرة
-    'ۦ': 'ي',          # ياء الصلة الصغيرة
     'ۧ': 'ي',          # الياء الصغيرة (إِبْرَٰهِـۧمَ)
 }
-UTHMANI_DROP = set(chr(c) for c in range(0x06D6, 0x06EE)) - set(UTHMANI_MAP) | {'۟', 'ـ'}
+# رموز الأداء تُحذف: واو الصلة وياؤها الصغيرتان (ۥ ۦ: الصلة الصغرى والكبرى)، وعلامة المدّ (ٓ)،
+# والألف الخنجرية على الألف المقصورة (مُوسَىٰ ← مُوسَى). وهي داخلة في UTHMANI_DROP إلا الخنجرية.
+DAGGER_ON_MAQSURA = re.compile('(ى[\u064B-\u0652]*)\u0670')
+UTHMANI_DROP = set(chr(c) for c in range(0x06D6, 0x06EE)) - set(UTHMANI_MAP) | {'۟', 'ـ', '\u0653'}
 MADD_AFTER_FATHA = re.compile('(\u064E\u0651?|\u0651\u064E)\u0622')
 
 MADD_LETTERS = set('اويىآ')
@@ -41,6 +42,7 @@ def uthmani_normalize(text, implicit_sukun=None):
     text = unicodedata.normalize('NFC', text)
     # «آ» بعد فتحة = ألف مدّ عليها علامة المدّ العثمانية لا همزة: إِنَّمَآ، جَآءَ (وتبقى همزةً بعد ساكن: ٱلْقُرْآنُ)
     text = MADD_AFTER_FATHA.sub(r'\1ا', text)
+    text = DAGGER_ON_MAQSURA.sub(r'\1', text)
     if implicit_sukun is None:
         implicit_sukun = any(ch in UTHMANI_SIGNS for ch in text)
     out = []
