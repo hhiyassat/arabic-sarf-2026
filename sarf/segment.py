@@ -396,7 +396,9 @@ def relate(segs, cands):
         if tg:
             ts = segs[tg[0]]['slots'][tg[1]]
             r['target'] = dict(word_index=tg[0], slot=tg[1], text=ts['text'], type=ts['type'])
-            if ts['type'] == MABNI:
+            if ts['type'] == MABNI and r['expected'] == 'جزم':
+                r['note'] = 'المعمول مبنيٌّ ليس فعلاً: لا يُجزم'   # إِنۡ هُوَ: الضمير لا يكون في محلّ جزم
+            elif ts['type'] == MABNI:
                 r['observed'] = 'محلاً'
             elif ts['type'] == AMIL:
                 r['note'] = 'المعمول يبدأ بعامل: جملة أو مصدر مؤوَّل'

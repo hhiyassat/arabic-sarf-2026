@@ -14,7 +14,7 @@ R6     حرف الجر وواو المعية: يُمنعان إن كان ما ب
        أو ساكن الآخر وليس مبنياً من الملف (وَلَقَدۡ، وَلَهُمۡ)
 R8     السابقة: تُمنع إن بدأت بقية الكلمة بساكن أو مشدَّد (غير اللام وهمزة الوصل وبِسۡمِ)
 R9     بِ وكَ وتَ الجارّة المتصلة: تُمنع إن كان بعدها فعل
-R7     أداة الشرط الجازمة (مج 7، وإِنْ في مج 6): تُمنع إن كان ما بعدها مرفوعاً كتابةً
+R7     اسم الشرط الجازم (مج 7): يُمنع إن كان ما بعده مرفوعاً كتابةً أو ضمير رفع منفصلاً
        (مَا تَفْعَلُونَ، مَا يَوْمُ ٱلدِّينِ)؛ ولا يشمل لَوْ وإِذَا لأنهما لا تجزمان
 """
 from .chars import FATHA, DAMMA, DAMMATAN, SUKUN, SHADDA, plain, strip_marks as _strip_marks
@@ -104,8 +104,9 @@ def reject_candidates(found, words):
                 what = 'تجرّ' if f['group'] == '1' else 'تنصب المفعول معه'
                 state = 'ساكن الآخر' if mark == 'السكون' else f'مرفوع كتابةً ({mark})'
                 reason = f'ما بعدها {state}، و«{f["operator"]}» {what}'
-        if not reason and not on_pronoun and \
-                (f['group'] == '7' and op not in ('لو', 'إذا') or f['group'] == '6' and op == 'إن'):
+        # وإِنۡ لا تُمنع بما بعدها: يليها الاسم المرفوع أو الضمير، والفعل مقدَّر يفسّره المذكور
+        # (وَإِنۡ أَحَدࣱ مِّنَ ٱلۡمُشۡرِكِينَ ٱسۡتَجَارَكَ، إِنۡ أَنتُمۡ ضَرَبۡتُمۡ)، كما في كتب النحو
+        if not reason and not on_pronoun and f['group'] == '7' and op not in ('لو', 'إذا'):
             f['checked'].append('R7 المرفوع بعد أداة الشرط')
             mark = raf_mark(tgt)
             if plain(match_letters(tgt), True).replace('أ', 'ا') in {p.replace('أ', 'ا') for p in RAF_PRONOUNS}:

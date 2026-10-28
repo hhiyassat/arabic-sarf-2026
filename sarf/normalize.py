@@ -41,6 +41,7 @@ HAMZA_SEAT = {'\u0640': 'ء', '\u0649': 'ئ', '\u064A': 'ئ', '\u0648': 'ؤ', '\
 HAMZA_ON_TATWEEL = re.compile('([\u0640\u0649\u064A\u0648])([\u064B-\u0652\u0670]*)[\u0654\u0655]|(\u0670)()\u0654')
 
 MADD_LETTERS = set('اويىآ')
+SOLAR = set('تثدذرزسشصضطظلن')                      # الحروف الشمسية
 UTHMANI_SIGNS = {'ٱ', '\u0653', '\u0670'} | set(chr(c) for c in range(0x06D6, 0x06EE))   # والمدّة والخنجرية
 
 def drop_zero_letters(text):
@@ -112,9 +113,9 @@ def uthmani_normalize(text, implicit_sukun=None):
             mk = set(mk)
             if not mk and L not in MADD_LETTERS and L != 'ة' and 'ء' <= L <= 'ي':
                 prev_al = i > 0 and toks[i - 1][0] == 'ا'
-                # الحرف العاري قبل حرفٍ مشدَّد مدغمٌ فيه إدغاماً كاملاً (اصطلاح ضبط المصحف):
-                # يبقى عارياً ليحذفه المقطِّع (لِّلنَّاسِ، عَٰهَدتَّ، يُدۡرِككُّمُ)؛ ولام التعريف بعد الألف كذلك
-                mudgham = i + 1 < len(toks) and SHADDA in toks[i + 1][1]
+                # اللام الشمسية العارية قبل الحرف المشدَّد تبقى عارية ليحذفها المقطِّع (لِّلنَّاسِ)،
+                # كلام التعريف بعد الألف (D22: الحذف للام الشمسية وحدها، وما سواها يُسكَّن كما كُتب: عَٰهَدتَّ)
+                mudgham = L == 'ل' and i + 1 < len(toks) and SHADDA in toks[i + 1][1] and toks[i + 1][0] in SOLAR
                 if not (L == 'ل' and prev_al) and not mudgham:
                     mk.add(SUKUN)
             rebuilt.append(L + ''.join(sorted(mk)))
