@@ -11,6 +11,7 @@ from .syllabify import SIX
 from .align import syllables_by_word
 from .mood import op_mood, has_inshai_operator
 from .output_text import relation_text, word_irab
+from .root import WAZN
 from .status import STATUS_AR, BLOCKED
 
 # أنواع المقاطع التي نعدّها/نلوّنها: الستة + OTHER + POISON
@@ -161,6 +162,55 @@ def irab_html(items):
                    f'<span class="meta">[{esc(st)}]</span></span>' for slot, role, st in items)
 
 
+KIND_AR = {'madi': 'ماضٍ', 'mudari': 'مضارع', 'amr': 'أمر'}
+VOICE_AR = {'active': 'معلوم', 'passive': 'مجهول'}
+PERSON_AR = {1: 'متكلم', 2: 'مخاطب', 3: 'غائب'}
+NUMBER_AR = {'singular': 'مفرد', 'dual': 'مثنى', 'plural': 'جمع'}
+GENDER_AR = {'masc': 'مذكر', 'fem': 'مؤنث'}
+
+
+def _feat(f):
+    p, n, g = f
+    return ' '.join(x for x in (PERSON_AR.get(p, ''), NUMBER_AR.get(n, ''), GENDER_AR.get(g, '')) if x)
+
+
+def morph_html(a, wi):
+    """الفعل وفاعله (T18) والجذر والوزن (T19c) للكلمة wi، بحالاتها ومنها المؤجَّل وسببه"""
+    out = []
+    for agr in a.get('agreement', []):
+        if agr['word_index'] != wi:
+            continue
+        slot = a['segments'][wi]['slots'][agr['slot']]['text']
+        bits = [f'<b>{esc(slot)}</b>: فعل {esc(KIND_AR.get(agr.get("kind"), ""))}']
+        if 'voice' in agr:
+            bits.append(esc(VOICE_AR.get(agr['voice'], 'المعلوم أو المجهول')))
+        if agr.get('pronouns'):
+            bits.append('الفاعل: ' + ' أو '.join(f'«{esc(p)}»' for p in agr['pronouns']) +
+                        f' ({esc(" / ".join(_feat(f) for f in agr.get("features", [])))})')
+        if agr.get('rule'):
+            bits.append(f'<span class="meta">بـ{esc(agr["rule"])}</span>')
+        out.append('<span class="op">' + '، '.join(bits) + ' <span class="meta">[T18]</span></span>')
+    for m in a.get('morph', []):
+        if m['word_index'] != wi:
+            continue
+        slot = a['segments'][wi]['slots'][m['slot']]['text']
+        st = m['status']
+        badge = f'<span class="st st-{esc(st)}">{esc(STATUS_AR.get(st, st))}</span>'
+        if st == 'accepted':
+            wazn = WAZN.get(m['form_class'], m['form_class'])
+            txt = f'الجذر «{esc(" ".join(m["root"]))}»، الوزن {esc(wazn)} ({esc(m["form_class"])})'
+            if m['level'] == 'event':
+                ev = m['event']
+                txt += (f' <span class="meta">— حدث HFN: {esc(ev["verb"])}' +
+                        (f' ← {esc(ev["masdar"])}' if ev.get('masdar') else '') + '</span>')
+            else:
+                txt += ' <span class="meta">— الجذر في HFN، والوزن بالقالب</span>'
+        else:
+            txt = f'<span class="meta">{esc(m.get("reason") or "")} ({m.get("n_candidates", 0)} مرشَّحاً)</span>'
+        out.append(f'<span class="op"><b>{esc(slot)}</b>: {badge} {txt} <span class="meta">[T19c]</span></span>')
+    return ''.join(out) if out else '<span class="muted">—</span>'
+
+
 def summary_pills(counter, extra_class=''):
     out = []
     for t in TYPES:
@@ -209,7 +259,8 @@ def verse_html(a, idx):
             f'<td class="word">{esc(word)}</td>'
             f'<td>{"".join(cells)}</td>'
             f'<td class="cv">{esc(" | ".join(pats))}</td>'
-            f'<td>{irab_html(word_irab(a, wi))}</td>'
+            f'<td>{irab_html([x for x in word_irab(a, wi) if x[2] != "T19c"])}</td>'
+            f'<td>{morph_html(a, wi)}</td>'
             f'<td>{ops_html(ops_by_word.get(wi, []))}</td>'
             '</tr>'
         )
@@ -226,7 +277,7 @@ def verse_html(a, idx):
 
     table = (
         '<table><thead><tr>'
-        '<th>#</th><th>الكلمة</th><th>المقاطع</th><th>نمط CV</th><th>الإعراب</th><th>العوامل</th>'
+        '<th>#</th><th>الكلمة</th><th>المقاطع</th><th>نمط CV</th><th>الإعراب</th><th>الفعل والجذر والوزن</th><th>العوامل</th>'
         '</tr></thead><tbody>' + ''.join(rows) + '</tbody></table>'
     )
 
@@ -281,6 +332,20 @@ def build_html(analyses):
         + ' · '.join(f'<span class="st st-{k}">{STATUS_AR[k]}</span> {v}' for k, v in states.items()) +
         '</span></div>'
     )
+    agr = [g for a in analyses for g in a.get('agreement', [])]
+    mor = [m for a in analyses for m in a.get('morph', [])]
+    acc = [m for m in mor if m['status'] == 'accepted']
+    morph_pills = (
+        '<div class="summary">'
+        f'<span class="pill">الأفعال (T18): {len(agr)} · '
+        + ' · '.join(f'{KIND_AR[k]} {sum(1 for g in agr if g.get("kind") == k)}' for k in KIND_AR) +
+        f' · بفاعل محدَّد {sum(1 for g in agr if len(g.get("pronouns", [])) == 1)}</span>'
+        f'<span class="pill">الجذر والوزن (T19c): {len(mor)} · '
+        f'<span class="st st-accepted">مقبول</span> {len(acc)} '
+        f'(بحدث {sum(1 for m in acc if m["level"] == "event")} · بالجذر {sum(1 for m in acc if m["level"] != "event")})'
+        f' · <span class="st st-deferred">مؤجَّل</span> {len(mor) - len(acc)}</span>'
+        '</div>'
+    )
 
     header = [
         '<h1>تقرير الكلمات ومقاطعها</h1>',
@@ -307,6 +372,12 @@ def build_html(analyses):
         '<div class="muted">حالات الحكم (T09): مقبول إذا ثبت السبب والشرط بالكتابة ولا منافس له على خانته؛ '
         'وممنوع إذا ثبت مانع بالكتابة، ولا يُعَدّ إنشائياً ولا خبرياً ولا يدخل في وسم الآية؛ ومؤجَّل فيما سوى ذلك.</div>',
         mood_pills,
+        '</div>',
+        '<div class="card">',
+        '<div class="muted">الفعل وفاعله (T18): الفاعل ما يوافق لاحقة الفعل أو سابقته في جدول الإسناد، ويُضيَّق بضمير منفصل قبله. '
+        'والجذر والوزن (T19c): المرشَّحات من قوالب الأوزان بقيود الحركات والمعتل، ولا يُقبل منها إلا المرخَّص في HFN: '
+        'بحدثٍ مسجَّل بالجذر والوزن، أو بالجذر وحده والوزن بالقالب؛ وما سوى ذلك مؤجَّل مع سببه.</div>',
+        morph_pills,
         '</div>',
     ]
 
