@@ -1,16 +1,16 @@
 {
  "qac": {
-  "agr": 9613,
-  "agr_hit": 9251,
-  "agr_single": 9141,
-  "agr_single_hit": 8782,
-  "ours_verb": 9667,
-  "ours_verb_ok": 9632,
-  "qac_verb_missed": 9721,
+  "agr": 9645,
+  "agr_hit": 9297,
+  "agr_single": 9158,
+  "agr_single_hit": 8813,
+  "ours_verb": 9699,
+  "ours_verb_ok": 9664,
+  "qac_verb_missed": 9689,
   "qac_verbs": 19353,
   "unaligned": 180,
-  "voice": 9598,
-  "voice_hit": 9507
+  "voice": 9630,
+  "voice_hit": 9539
  },
  "root": {
   "acc": 7350,
