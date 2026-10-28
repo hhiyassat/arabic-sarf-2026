@@ -48,6 +48,7 @@ EXPECTED = {'1': 'جر', '2': 'نصب', '5': 'نصب', '6': 'جزم', '7': 'جز
 NO_JAZM = {'لو', 'إذا'}                                    # في باب الشرط ولا تجزم (الفهرس: «لا يجزم»)
 CHECKED = {'1', '2', '10', '11'}                            # يُقارَن بالعلامة المكتوبة على الاسم
 VERB_CHECKED = {'1', '5', '6', '7'}                         # ويُقارَن بعلامة المضارع (sarf.affix)
+YA_CASE = 'جر أو نصب'                                        # ياء الجمع والمثنى
 MARK_CASE = {KASRA: 'جر', KASRATAN: 'جر', FATHA: 'نصب', FATHATAN: 'نصب',
              DAMMA: 'رفع', DAMMATAN: 'رفع', SUKUN: 'جزم'}
 
@@ -91,6 +92,8 @@ def _host(word, toks, offs, a, b, lex, at_word_start):
     """خانات ما ليس عاملاً: مبني من المعجم كاملاً، أو [أل][جذع][ضمير متصل]"""
     text = word[offs[a][0]:offs[b - 1][1]]
     hits = lex.lookup(text) if lex else []
+    if not hits and lex and a > 0 and toks[a - 1][0] == 'ل' and toks[a][0] == 'ل':
+        hits = lex.lookup('ا' + text)          # لِلَّذِينَ: ألف «ٱلَّذِينَ» محذوفة خطاً بعد لام الجر
     if not hits and lex and not at_word_start:
         # بقية الكلمة بعد السابقة ضمير متصل بصورته (بِهِمْ، لَهُ): مبني
         e = lex.attested(text)
@@ -109,6 +112,11 @@ def _host(word, toks, offs, a, b, lex, at_word_start):
             (not toks[a + 1][1] or toks[a + 1][1] == {SUKUN}):
         slots.append(_slot(word, offs, a, a + 2, ARTICLE, 'article', note='أل التعريف: ليست في ملف المبنيات'))
         a += 2
+    elif b - a > 2 and a > 0 and toks[a - 1][0] == 'ل' and toks[a][0] == 'ل' and \
+            (not toks[a][1] or toks[a][1] == {SUKUN}):
+        # بعد لام الجر تُحذف ألف «أل» خطاً وتبقى لامها: لِّلۡمُطَفِّفِينَ، لِلنَّاسِ
+        slots.append(_slot(word, offs, a, a + 1, ARTICLE, 'article', note='لام «أل» بعد لام الجر'))
+        a += 1
     tail = None
     for suf in sorted(STEM_SUFFIXES, key=lambda s: -len(letters(s))):
         stoks = match_letters(suf)
@@ -268,8 +276,18 @@ def _observed(seg, slot):
     L, mk = toks[b - 1]
     if L == 'ا' and not mk and b - a > 1 and FATHATAN in toks[b - 2][1]:
         return 'نصب'                                   # يُسْرًا: ألف تنوين النصب
-    if L == 'ن' and FATHA in mk and b - a > 2 and toks[b - 2][0] in ('و', 'ي'):
-        return None                                    # ـونَ/ـينَ: علامة بالحرف
+    if L == 'ن' and b - a > 2:
+        # العلامة بالحرف (جمع المذكر السالم والمثنى): الواو والألف رفع، والياء جر أو نصب
+        W, wm = toks[b - 2]
+        pm = toks[b - 3][1]
+        if W == 'و' and not wm and DAMMA in pm and FATHA in mk:
+            return 'رفع'
+        if W == 'ا' and not wm and KASRA in mk:
+            return 'رفع'
+        if W == 'ي' and (not wm or wm == {SUKUN}) and (KASRA in pm and FATHA in mk or FATHA in pm and KASRA in mk):
+            return YA_CASE
+        if W in ('و', 'ي') and FATHA in mk:
+            return None
     for m, case in MARK_CASE.items():
         if m in mk:
             return case
@@ -404,7 +422,7 @@ def relate(segs, cands):
                     # كَانَ مِيقَٰتًا: المنصوب بعدها خبرها، واسمها مستتر أو مؤخَّر
                     r.update(expected='نصب', consistent=True, khabar_only=True,
                              note='المنصوب بعدها خبرها، واسمها ضمير مستتر أو مؤخَّر')
-                elif obs == r['expected']:
+                elif obs == r['expected'] or obs == YA_CASE and r['expected'] in ('جر', 'نصب'):
                     r['consistent'] = True
                 elif obs and not ((r['expected'], obs) in (('جر', 'نصب'), ('نصب', 'جر'))):
                     r['consistent'] = False      # الجر بالفتحة (الممنوع من الصرف) والنصب بالكسرة (جمع المؤنث) لا يُحكم فيهما

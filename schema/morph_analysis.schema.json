@@ -7,7 +7,7 @@
   "required": ["schema_version", "text", "tokens"],
   "additionalProperties": false,
   "properties": {
-    "schema_version": { "const": "1.0" },
+    "schema_version": { "enum": ["1.0", "1.1"], "description": "1.1: أُضيفت undetermined إلى segment.pos" },
     "text": {
       "type": "object",
       "required": ["original"],
@@ -123,7 +123,7 @@
         "clitic_type": { "$ref": "#/$defs/clitic_type" },
         "suffix_type": { "$ref": "#/$defs/suffix_type" },
         "pronoun": { "$ref": "#/$defs/pronoun" },
-        "pos": { "enum": ["noun", "verb", "particle"], "description": "للجذع وللسوابق والضمائر" },
+        "pos": { "enum": ["noun", "verb", "particle", "undetermined"], "description": "للجذع وللسوابق والضمائر؛ undetermined (1.1): لم يُحسم نوعه بالكتابة، ولا يصحبه كائن" },
         "noun": { "$ref": "#/$defs/noun" },
         "verb": { "$ref": "#/$defs/verb" },
         "particle": { "$ref": "#/$defs/particle" },
@@ -138,6 +138,8 @@
           "then": { "required": ["noun"], "not": { "anyOf": [ { "required": ["verb"] }, { "required": ["particle"] } ] } } },
         { "if": { "properties": { "pos": { "const": "verb" } }, "required": ["pos"] },
           "then": { "required": ["verb"], "not": { "anyOf": [ { "required": ["noun"] }, { "required": ["particle"] } ] } } },
+        { "if": { "properties": { "pos": { "const": "undetermined" } }, "required": ["pos"] },
+          "then": { "not": { "anyOf": [ { "required": ["noun"] }, { "required": ["verb"] }, { "required": ["particle"] } ] } } },
         { "if": { "properties": { "pos": { "const": "particle" } }, "required": ["pos"] },
           "then": { "required": ["particle"], "not": { "anyOf": [ { "required": ["noun"] }, { "required": ["verb"] } ] } } },
         { "if": { "properties": { "role": { "const": "proclitic" } } },

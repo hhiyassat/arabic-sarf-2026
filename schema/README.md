@@ -1,4 +1,4 @@
-# مخطط بيانات المحلل الصرفي (الإصدار 1.0)
+# مخطط بيانات المحلل الصرفي (الإصدار 1.1)
 
 `morph_analysis.schema.json` (JSON Schema 2020-12) يحدّد شكل ناتج المحلل الصرفي. أمثلة صحيحة في `examples/`.
 
@@ -55,6 +55,22 @@ dependencies[]            العامل ← المعمول: الحالة المت
 | `root.soundness` | salim، mahmuz، mudaaf، mithal، ajwaf، naqis، lafif_mafruq، lafif_maqrun |
 | `particle.effect` | jarr، nasb_verb، jazm_one، jazm_two، nasb_ism_raf_khabar، raf_ism_nasb_khabar، nasb، none |
 | `clitic_type` | conjunction، preposition، oath، future، interrogative، emphasis_lam، imperative_lam، definite_article، vocative، resumption_fa |
+
+## الإصدار 1.1
+
+تغييرٌ واحد: `segment.pos` تقبل `undetermined` (لم يُحسم نوعه بالكتابة)، ولا يصحبها كائن `noun` أو `verb` أو `particle`. وأمثلة 1.0 ما زالت صالحة.
+
+سببه أن المحلل لا يكتب سمةً لا دليل عليها: الجذع الذي لا تحسم الكتابة نوعه (مِثۡقَالَ) لا يُجعل اسماً عاماً ولا فعلاً بالافتراض.
+
+## المُصدِّر: السجل الجامع
+
+`sarf/output_schema.py` يحوّل ناتج المحلل إلى هذا المخطط (1.1)، و`python3 extract_operators.py --schema -f verses.txt` يخرجه JSON Lines.
+- **الحالة:** مقبول (T09) ← `selected`، ومؤجَّل ← `candidate`، وممنوع ← `rejected` ومعه سببه في `evidence`.
+- **`score`:** درجة الحكم لا احتمال: 0.9 للمرجَّح، و0.5 للمؤجَّل، و0 للممنوع.
+- **التحليل الأول:** الخانات كما فصلها المقشِّر، وفي كل خانة عامل مرشَّحُها المقبول، وإلا أول المؤجَّلين. وبعده تحليل لكل مرشَّح آخر على الخانة، ولكل إسناد آخر تحتمله الكتابة (تَحۡزَنۡ: أنتَ أو هي)، ثم الممنوع.
+- **النوع:** للعامل من مجموعته في الفهرس؛ وللمبني من الملف ينسخ كائنه كما هو؛ وللجذع من الدليل القوي في المقشِّر، أو من عامله إذا كان جارّاً أو ناسخاً مقبولاً وافقت العلامةُ أثره، وإلا `undetermined`.
+- **لا يُكتب:** الجذر والوزن والباب والتعدي (طبقة T19c لم تُبنَ)، ولا نوع الاشتقاق.
+- `tests/test_schema.py` يتحقق من صلاحية كل آية في ملفات الآيات، ومن أحكام بعينها.
 
 ## التحقّق
 

@@ -21,6 +21,7 @@ from sarf.evidence import reject_candidates                # noqa: F401
 from sarf.align import syllables_by_word, isolated_cv, align   # noqa: F401
 from sarf.analyze import analyze
 from sarf.output_text import text_report, to_json
+from sarf.output_schema import to_schema
 
 if __name__ == '__main__':
     here = os.path.dirname(os.path.abspath(__file__))
@@ -35,6 +36,8 @@ if __name__ == '__main__':
     ap.add_argument('--uthmani', default='auto', choices=['auto', 'on', 'off'],
                     help='المعاملة العثمانية (السكون الضمني): auto=تلقائي بوجود علامة عثمانية، on=دائماً، off=أبداً')
     ap.add_argument('--json', action='store_true', help='إخراج JSON Lines')
+    ap.add_argument('--schema', action='store_true',
+                    help='السجل الجامع: JSON Lines بصيغة schema/morph_analysis.schema.json (1.1)')
     args = ap.parse_args()
 
     cat = Catalog(args.catalog)
@@ -47,7 +50,9 @@ if __name__ == '__main__':
 
     for v in verses:
         a = analyze(cat, v, uthmani=args.uthmani)
-        if args.json:
+        if args.schema:
+            print(json.dumps(to_schema(a, cat), ensure_ascii=False))
+        elif args.json:
             print(json.dumps(to_json(a), ensure_ascii=False))
         else:
             print(text_report(a))
