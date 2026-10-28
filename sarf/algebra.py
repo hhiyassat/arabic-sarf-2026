@@ -1003,65 +1003,143 @@ def mushaf_layer(items, T):
     return M
 
 
-def linguistic_layer(items, T):
-    """الطبقة اللغوية على تيار الوحدات المتصل عبر حدود الآيات:
-    - الوحدة الخطابية: ما بين حدّين مثبتين، والحدّ علامةُ وقفٍ (م، قلى، ج، صلى) أو آخرُ السورة؛ ونهاية الآية وحدها ليست حدّاً
-    - الجملة: لا يثبت حدّها داخل الوحدة الخطابية إلا إذا كانت فيها نواة إسنادٍ واحدة (فعلٌ وفاعله، أو ناسخ)؛
-      فإن تعددت النوى فحدّ ما بينها غير مثبت فتُؤجَّل، وإن لم تكن نواةٌ محلَّلة (الاسمية) أُجِّلت
-    items: [(السورة، الآية، التحليل، الوحدات، مادة الآية S)] → ([خطاب كل سورة]، الإحصاءات)"""
+def waqf_sources():
+    """سجل أقوال العلماء في الوقف (sources/waqf.csv): (السورة، الآية، الكلمة) ← [القول]"""
+    import csv, os
+    path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'sources', 'waqf.csv')
+    out = {}
+    if os.path.exists(path):
+        for x in csv.DictReader(open(path, encoding='utf-8')):
+            out.setdefault((int(x['surah']), int(x['ayah']), int(x['word_index'])), []).append(x)
+    return out
+
+
+WAQF_W = {'م': 'وقف لازم', 'قلى': 'الوقف أولى', 'ج': 'وقف جائز', 'صلى': 'الوصل أولى مع جواز الوقف',
+          '∴': 'معانقة (الوقف في أحد الموضعين)', 'س': 'سكت (انقطاع بلا تنفس، ليس وقفاً)'}
+SYNTACTIC_OBL = ('معمول', 'خبر', 'فاعل')
+
+
+def boundary_record(p, words, pos_of, bonds, obls, nuclei, du_start, mark, ayah_end, surah_end, sources, a_id, q):
+    """B(b | a, q, c) = ⟨F, L, M, W, I, E⟩ للحدّ المحتمل b بعد الكلمة p (اقتراح صاحب النظرية في النمذجة):
+    F تمام الكلام في التحليل، L التعلّقات اللفظية العابرة، M المعنوية، W حكم الوقف، I حكم الابتداء، E القول ودليله.
+    والتصنيف المشتق بتعريفات ابن الجزري (النشر، باب الوقوف): تامّ، كافٍ، حسن، أو لم يتمّ"""
+    loc = words[p]
+    span = range(du_start, p + 1)
+    # F: نواة في المدى، ولا التزامٌ نحوي مفتوح فيه
+    nuc = [n for n in nuclei if pos_of.get(n[0]) in span]
+    open_ = [o for o in obls if o.required and not o.met and o.name.startswith(SYNTACTIC_OBL) and
+             any(pos_of.get(u) in span for u in o.units)]
+    F = 'غير محسوم: لا نواة محلَّلة' if not nuc else ('ناقص: ' + '، '.join(o.name for o in open_[:2])) if open_ else 'تام في التحليل'
+    # L: الروابط اللفظية العابرة للحدّ؛ والمحلل يبحث داخل الآية، فحدّ الآية غير مفحوص
+    cross = [b for b in bonds if b[1] in pos_of and b[2] in pos_of and
+             min(pos_of[b[1]], pos_of[b[2]]) <= p < max(pos_of[b[1]], pos_of[b[2]])]
+    L_checked = not ayah_end
+    L = [f'{b[0]}: {words_text(words, pos_of[b[1]])} ↔ {words_text(words, pos_of[b[2]])}' for b in cross]
+    # E وM: أقوال العلماء المسجَّلة في هذا الموضع
+    E = [dict(scholar='لجنة مصحف المجمّع', book='المصحف (رواية حفص)', judgement=WAQF_W[mark])] if mark else []
+    M = None
+    src_L = None
+    for x in sources.get(loc, []):
+        E.append(dict(scholar=x['scholar'], book=x['book'], section=x['section'], judgement=x['category'],
+                      url=x['url'], note=x['note']))
+        if x['category'] == 'تام':
+            M = []
+        elif x['category'] in ('كاف', 'كافٍ'):
+            M = [f'تعلّق معنوي بنصّ {x["scholar"]}']
+        elif x['category'] in ('متصل', 'حسن'):
+            src_L = f'تعلّق بما بعده بنصّ {x["scholar"]} ({x["book"]})'
+    if src_L:
+        L = L + [src_L]
+    W = WAQF_W.get(mark) if mark else ('آخر السورة: قطع ممكن' if surah_end else
+                                        'رأس آية: الوقف عليه مختار عند أكثر أهل الأداء' if ayah_end else None)
+    # التصنيف المشتق
+    if F.startswith('ناقص'):
+        cat = 'لم يتمّ في التحليل'
+    elif L:
+        cat = 'حسن' if F.startswith('تام') else 'تعلّق لفظي عابر'
+    elif not L_checked:
+        cat = ('تام' if M == [] else 'كافٍ' if M else 'غير محسوم: حدّ الآية غير مفحوص لفظاً')
+    elif F.startswith('تام'):
+        cat = 'تام' if M == [] else 'كافٍ' if M else 'تام أو كافٍ (التعلّق المعنوي غير مسجَّل)'
+    else:
+        cat = 'غير محسوم'
+    I = ('لا يُبتدأ بما بعده استقلالاً' if L else 'يُبتدأ بما بعده' if cat in ('تام', 'كافٍ') or cat.startswith('تام أو')
+         else 'غير محسوم')
+    return dict(location=loc, F=F, L=L, L_checked=L_checked, M=M, W=W, I=I, E=E, category=cat, a=a_id, q=q,
+                mark=mark, ayah_end=ayah_end)
+
+
+def words_text(words, p):
+    return f'{words[p][0]}:{words[p][1]}:{words[p][2]}'
+
+
+def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف المجمّع)'):
+    """الطبقة اللغوية على تيار الوحدات المتصل عبر حدود الآيات.
+    - عند كل حدٍّ محتمل (علامة وقف، أو رأس آية، أو آخر سورة) يُسجَّل B(b | a, q, c) = ⟨F, L, M, W, I, E⟩
+    - الوحدة الخطابية: ما بين حدّين أجاز الوقفَ عندهما دليلٌ (م، قلى، ج، صلى) أو آخرُ السورة؛ ورأس الآية وحده ليس حدّاً
+    - الجملة: نواة إسنادٍ واحدة في وحدتها، والتزاماتها مستوفاة، وعند حدّها F تامّ وL خالٍ مفحوص: جوازُ الوقف وحده
+      لا يُغلقها (قد يجوز الوقف والعلاقة النحوية ممتدة)
+    - ما عبر الحدّ من تعلّق لفظي يُحفظ رابطاً في الهندسة الأعلى (خطاب السورة)، ولا تُغلق الوحدة الأعلى لاكتمال جملة
+    items: [(السورة، الآية، التحليل، الوحدات، مادة الآية S)] → ([خطاب كل سورة]، الإحصاءات، سجلات الحدود)"""
     import collections
     st = collections.Counter()
-    out = []
+    out, records = [], []
+    sources = waqf_sources()
     by_surah = collections.OrderedDict()
     for it in items:
         by_surah.setdefault(it[0], []).append(it)
     for s, its in by_surah.items():
-        stream = []                          # [(موضع الكلمة، وحداتها، علامة الوقف بعدها)]
-        uid_loc = {}
+        words, wunits, marks, ay_end = [], [], [], []
+        pos_of = {}
         bonds, obls, nuclei = [], [], []
         for s_, v, a, units, S in its:
-            marks = waqf_of(a['verse'])
-            if len(marks) != len(a['segments']):
-                marks = [None] * len(a['segments'])
+            mk = waqf_of(a['verse'])
+            if len(mk) != len(a['segments']):
+                mk = [None] * len(a['segments'])
                 st['waqf_misaligned'] += 1
             for wi, seg in enumerate(a['segments']):
                 us = [units[(wi, ui)] for ui in range(len(seg['units']))]
                 for G in us:
-                    uid_loc[G.id] = (s, v, wi)
-                stream.append(((s, v, wi), us, marks[wi]))
+                    pos_of[G.id] = len(words)
+                words.append((s, v, wi)); wunits.append(us); marks.append(mk[wi])
+                ay_end.append(wi == len(a['segments']) - 1)
             bonds += [b for b in S.B if isinstance(b[1], str) and b[0] != 'تجاور']
             obls += list(S.Omega)
             nuclei += [n for n in S.O.get('nuclei', []) if n[0]]
-        # التقطيع إلى وحدات خطابية بالحدود المثبتة
-        segs, cur = [], []
-        for loc, us, mark in stream:
-            cur.append((loc, us))
-            if mark in BOUNDARY_WAQF:
-                segs.append((cur, Evidence(f'علامة الوقف «{mark}»: {WAQF_NAME[mark]}', [f'بعد الكلمة {loc[1]}:{loc[2]}'])))
-                cur = []
-        if cur:
-            segs.append((cur, Evidence('آخر السورة', [f'سورة {s}'])))
+        n = len(words)
+        segs, du_start = [], 0
+        for p in range(n):
+            last = p == n - 1
+            if marks[p] or ay_end[p] or last:
+                rec = boundary_record(p, words, pos_of, bonds, obls, nuclei, du_start, marks[p], ay_end[p], last,
+                                      sources, a_id, q)
+                records.append(rec)
+                st['b_candidates'] += 1
+                st['b_cat:' + rec['category'].split(':')[0].split(' (')[0]] += 1
+                if rec['mark'] in BOUNDARY_WAQF and rec['L']:
+                    st['b_mark_with_L'] += 1          # جواز الوقف مع تعلّق لفظي عابر (حسن، أو خطأ في التحليل)
+                if rec['mark'] in BOUNDARY_WAQF or last:
+                    segs.append((du_start, p, rec))
+                    du_start = p + 1
         disc = []
-        for k, (seg, eb) in enumerate(segs):
-            ids = {G.id for _, us in seg for G in us}
-            locs = [loc for loc, _ in seg]
+        for k, (p0, p1, rec) in enumerate(segs):
+            ids = {G.id for p in range(p0, p1 + 1) for G in wunits[p]}
+            locs = words[p0:p1 + 1]
             ayahs = sorted({(x[0], x[1]) for x in locs})
             st['du'] += 1
             st['du_cross_ayah'] += len(ayahs) > 1
+            eb = Evidence(f'B(b): W = {rec["W"]}', [f'F = {rec["F"]}', f'الصنف المشتق: {rec["category"]}'])
             D = Geo(f'L{s}.d{k}', (DISCOURSE, 'وحدة خطابية'),
-                    O=dict(layer='لغة', pending=[], location=locs, ayahs=ayahs))
-            # الروابط والالتزامات والنوى التي تقع في هذه الوحدة
+                    O=dict(layer='لغة', pending=[], location=locs, ayahs=ayahs, boundary=rec))
             my_bonds = [b for b in bonds if b[1] in ids]
-            cross = [b for b in my_bonds if isinstance(b[2], str) and b[2].startswith('Q') and b[2] not in ids
-                     and b[2] in uid_loc]
-            st['bond_cross_du'] += len(cross)
+            st['bond_cross_du'] += sum(1 for b in my_bonds if b[2] in pos_of and b[2] not in ids)
             my_obls = [o for o in obls if o.units and all(u in ids for u in o.units)]
-            my_nuc = [n for n in nuclei if n[0] in ids]
-            J = Geo(f'L{s}.d{k}.J', (SENTENCE, 'جملة'), B=my_bonds, Omega=[Obligation(o.name, o.required, o.met, o.ev,
-                                                                                       o.reason, o.units) for o in my_obls],
-                    O=dict(layer='لغة', pending=[], location=locs, nuclei=[n[1] for n in my_nuc]))
-            for _, us in seg:
-                for G in us:
+            my_nuc = [x for x in nuclei if x[0] in ids]
+            J = Geo(f'L{s}.d{k}.J', (SENTENCE, 'جملة'), B=my_bonds,
+                    Omega=[Obligation(o.name, o.required, o.met, o.ev, o.reason, o.units) for o in my_obls],
+                    O=dict(layer='لغة', pending=[], location=locs, nuclei=[x[1] for x in my_nuc], boundary=rec))
+            for p in range(p0, p1 + 1):
+                for G in wunits[p]:
                     if G.closed:
                         extend(J, G, 'تتابع', Evidence('وحدة مغلقة', [G.id]), T)
                     else:
@@ -1074,12 +1152,18 @@ def linguistic_layer(items, T):
                 st['J_multi_nucleus'] += 1
             else:
                 st['J_one_nucleus'] += 1
+            # جواز الوقف لا يُغلق الجملة: يلزم عند حدّها تمامٌ وخلوٌّ مفحوص من التعلّق اللفظي العابر
+            if rec['L'] or not rec['L_checked']:
+                J.Omega.append(Obligation('استقلال الحدّ لفظاً',
+                                          reason='تعلّق لفظي عابر: ' + '؛ '.join(rec['L'][:2]) if rec['L'] else
+                                          'حدّ الآية أو السورة غير مفحوص لفظاً'))
+                st['J_boundary_not_independent'] += 1
             st['J'] += 1
             if J.open_required():
                 defer(J, T, '، '.join(o.name for o in J.open_required()[:3]))
             else:
                 close(J, Evidence('استُوفيت التزامات الجملة', [f'النواة: {my_nuc[0][1]}', f'{len(J.Omega)} التزاماً']),
-                      Evidence('حدّ الجملة حدُّ الوحدة الخطابية', [eb.cause] + eb.conditions), T)
+                      Evidence('حدّ الجملة مستقلّ لفظاً وجاز الوقف عنده', [f'W = {rec["W"]}', f'F = {rec["F"]}', 'L = ∅ مفحوص']), T)
                 st['J_closed'] += 1
             if J.closed:
                 extend(D, J, 'تتابع', Evidence('جملة مغلقة', [J.id]), T)
@@ -1090,8 +1174,21 @@ def linguistic_layer(items, T):
                 D.Omega.append(Obligation(f'إغلاق {J.id}', reason=J.O.get('deferred', '')))
                 defer(D, T, 'جملة غير مغلقة')
             disc.append(D)
-        out.append(build(SPEECH, 'خطاب السورة', disc, f'L{s}', T, 'حدّ السورة'))
-    return out, st
+        sp = build(SPEECH, 'خطاب السورة', disc, f'L{s}', T, 'حدّ السورة')
+        # ما عبر حدّ الوحدة الخطابية من تعلّق لفظي أو معنوي يُحفظ رابطاً في الهندسة الأعلى
+        du_at = {}
+        for k, (p0, p1, _) in enumerate(segs):
+            for p in range(p0, p1 + 1):
+                du_at[p] = disc[k].id
+        du_of = {uid: du_at[p] for uid, p in pos_of.items()}
+        for b in bonds:
+            if b[2] in du_of and du_of.get(b[1]) != du_of.get(b[2]):
+                sp.B.append(('تعلّق لفظي عابر: ' + b[0], du_of.get(b[1]), du_of.get(b[2]), b[3]))
+        for D in disc:
+            if D.O['boundary'].get('M'):
+                sp.B.append(('تعلّق معنوي عابر', D.id, None, Evidence(D.O['boundary']['M'][0], ['من سجل الوقف'])))
+        out.append(sp)
+    return out, st, records
 
 
 def render_layer(G):

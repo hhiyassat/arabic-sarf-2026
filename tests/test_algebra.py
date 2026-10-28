@@ -111,7 +111,7 @@ if hfn():
             a = analyze(cat, rows[(s_, v_)])
             S_, u_ = sentence_geo(a, f'Q{s_}:{v_}', T_)
             items.append((s_, v_, a, u_, S_))
-        return mushaf_layer([x[:4] for x in items], T_), linguistic_layer(items, T_)
+        return mushaf_layer([x[:4] for x in items], T_), linguistic_layer(items, T_)[:2]
     if rows:
         MU, (LT, st) = layers([(37, 137), (37, 138)])
         D0 = (LT[0].A + LT[0].O['pending'])[0]
@@ -126,5 +126,25 @@ if hfn():
         closed = [D for D in Ds if D.closed]
         check('«وَٱتَّقُواْ ٱللَّهَۖ» جملة مغلقة داخل الآية، والآية لا تُغلقها',
               any((D.A[0].A[-1].O['text'] if D.A else '') == 'اللَّهَ' for D in closed), [D.id for D in closed])
+# سجل الحدّ B(b | a, q, c) = ⟨F, L, M, W, I, E⟩: جواز الوقف لا يساوي انغلاق العلاقة
+if hfn() and rows:
+    def recs(refs):
+        T_ = Trace(); items = []
+        for s_, v_ in refs:
+            a = analyze(cat, rows[(s_, v_)])
+            S_, u_ = sentence_geo(a, f'Q{s_}:{v_}', T_)
+            items.append((s_, v_, a, u_, S_))
+        return linguistic_layer(items, T_, 'test')[2]
+    R = {r['location']: r for r in recs([(37, 137), (37, 138)])}
+    r = R[(37, 137, 3)]
+    check('رأس الآية ١٣٧: W رأس آية، وL من نص الداني، فلا يُبتدأ بما بعده',
+          r['W'].startswith('رأس آية') and any('الداني' in x for x in r['L']) and r['I'].startswith('لا يُبتدأ'), r)
+    r = R[(37, 138, 0)]
+    check('بعد «وَبِٱلَّيۡلِ»: الداني «تام»، ومعه حكم المصحف «ج»، محفوظان في E',
+          {e['scholar'] for e in r['E']} == {'لجنة مصحف المجمّع', 'أبو عمرو الداني'} and r['M'] == [], r['E'])
+    R = {r['location']: r for r in recs([(3, 167)])}
+    r = R[(3, 167, 28)]
+    check('آل عمران ١٦٧: وقف جائز مع تعلّق لفظي عابر، فلا ابتداء مستقلاً ولا إغلاق للجملة',
+          r['W'] == 'وقف جائز' and r['L'] and r['I'].startswith('لا يُبتدأ'), r)
 print('ALL OK' if not bad else f'FAILED {bad}')
 sys.exit(1 if bad else 0)

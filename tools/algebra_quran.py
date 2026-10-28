@@ -158,9 +158,26 @@ for n, (s, v, text) in enumerate(rows):
 T = Trace()
 items = [x for s in sorted(by_surah) for x in by_surah[s]]
 MU = mushaf_layer([(s, v, a, units) for s, v, a, units, S in items], T)
-LT, st = linguistic_layer(items, T)
+import subprocess
+a_id = subprocess.run(['git', '-C', H, 'rev-parse', '--short', 'HEAD'], capture_output=True, text=True).stdout.strip()
+LT, st, brecs = linguistic_layer(items, T, a_id=f'experiment@{a_id}')
 for k, x in st.items():
     C[k] = x
+# سجلات الحدود: علامة المصحف × الصنف المشتق، وموافقة أقوال العلماء
+xtab = collections.defaultdict(collections.Counter)
+scholar_cmp = []
+brec_samples = []
+SAMPLE_B = {(37, 137), (37, 138), (3, 167), (2, 282), (112, 1), (112, 2), (112, 3), (112, 4)}
+for r in brecs:
+    w = r['mark'] or ('رأس آية' if r['ayah_end'] else '—')
+    xtab[w][r['category'].split(':')[0].split(' (')[0]] += 1
+    for e in r['E']:
+        if e['scholar'] != 'لجنة مصحف المجمّع':
+            scholar_cmp.append(dict(location='%d:%d:%d' % r['location'], scholar=e['scholar'], book=e['book'],
+                                    said=e['judgement'], derived=r['category'], F=r['F'], L=r['L']))
+    if r['location'][:2] in SAMPLE_B:
+        brec_samples.append(dict(location='%d:%d:%d' % r['location'], W=r['W'], F=r['F'], L=r['L'], L_checked=r['L_checked'],
+                                 M=r['M'], I=r['I'], category=r['category'], E=r['E'], a=r['a'], q=r['q']))
 C['mushaf_closed'] = int(MU.closed)
 C['mushaf_ayahs_closed'] = sum(1 for su in MU.A for ay in su.A if ay.closed)
 C['speech'] = len(LT)
@@ -192,7 +209,8 @@ for x in LT:
                 open=[o.name + (f' ({o.reason})' if o.reason else '') for o in J.open_required()]))
 M = dict(counts=dict(C), unit_deferred=dict(unit_reason.most_common()), sentence_open=dict(open_kind.most_common()),
          unit_closed_by=dict(close_route.most_common()), failures={k: v[:40] for k, v in fail.items()},
-         samples=samples.get('du', []))
+         samples=samples.get('du', []),
+         boundaries=dict(xtab={k: dict(v) for k, v in xtab.items()}, scholars=scholar_cmp, samples=brec_samples))
 json.dump(M, open(os.environ.get('SARF_ALG_METRICS', H + 'reports/algebra_metrics.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 print(json.dumps(M['counts'], ensure_ascii=False, indent=1))
 print('unit_deferred', M['unit_deferred'])
