@@ -1,6 +1,6 @@
 # تقرير تحويل `02_mabniyat` إلى المعجم
 
-- **مداخل مقبولة:** 281 (في `mabniyat_lexicon.jsonl`، كلها تطابق `schema/lexicon_entry.schema.json`)
+- **مداخل مقبولة:** 282 (في `mabniyat_lexicon.jsonl`، كلها تطابق `schema/lexicon_entry.schema.json`)
 - **سجلات مرفوضة:** 0 (في `mabniyat_rejected.jsonl` مع أسبابها)
 - **تصحيحات إملائية آلية:** 32 في المداخل المقبولة
 
@@ -9,7 +9,7 @@
 | الملف | السجلات | مقبولة | مدموجة (تكرار) | مرفوضة | أسباب الرفض |
 |---|---|---|---|---|---|
 | `building_regulations` | 4 | 0 |  |  |  |
-| `built_in_adverbs` | 21 | 20 |  |  |  |
+| `built_in_adverbs` | 21 | 21 |  |  |  |
 | `compound_number_details` | 4 | 0 |  |  |  |
 | `compound_numbers` | 8 | 0 |  |  |  |
 | `conditional_letters_tools` | 21 | 20 |  |  |  |
@@ -40,7 +40,7 @@
 
 ## التصحيحات المطبّقة من `data_fixes/mabniyat_corrections.json`
 
-- حذف: 62، تعديل: 56، إضافة: 21
+- حذف: 62، تعديل: 56، إضافة: 22
 - معلّقة حتى التوثيق: 0 (في `mabniyat_held.jsonl`)
 - إصلاح البنية: 5 عنوان قسم، 10 مثال أُلحق بسجله
 
@@ -81,7 +81,7 @@
 - `demonstrative`: 32
 - `separate_pronoun`: 24
 - `attached_pronoun`: 23
-- `adverb`: 20
+- `adverb`: 21
 - `relative`: 16
 - `conditional_noun`: 16
 - `interrogative_noun`: 11

@@ -36,6 +36,7 @@ STEMS = [
     ('عَلِّمْ', 'verb', 'amr', None, None),
     ('قَدْ', None, None, None, None),                        # في ملف المبنيات: سكون بناء
     ('كُمْ', None, None, None, None),
+    ('لَدُنْ', None, None, None, None),                      # أُضيف إلى ملف المبنيات بتصحيح
     ('قُولُوا', 'verb', 'amr', None, 'وا'),
     ('فَقُولُوا', 'verb', 'amr', None, 'وا'),
     ('قُتِلُوا', 'verb', 'madi', None, 'وا'),
