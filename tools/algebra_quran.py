@@ -14,7 +14,7 @@ H = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/'
 sys.path.insert(0, H)
 from sarf.analyze import analyze
 from sarf.catalog import Catalog
-from sarf.algebra import (Trace, sentence_geo, render_sentence, render_cells, spans, flatten, build, cv,
+from sarf.algebra import (Trace, sentence_geo, mushaf_layer, linguistic_layer, SENTENCE, DISCOURSE, render_sentence, render_cells, spans, flatten, build, cv,
                           Geo, Cell, LEVELS, PARAGRAPH, TOPIC)
 
 ap = argparse.ArgumentParser()
@@ -34,7 +34,7 @@ close_route = collections.Counter()
 fail = collections.defaultdict(list)
 by_surah = collections.defaultdict(list)
 samples = {}
-SAMPLE_REFS = {(112, 3), (112, 4), (2, 282), (5, 6), (18, 60), (8, 33), (2, 283), (42, 11), (2, 173), (2, 194),
+SAMPLE_REFS = {(37, 137), (37, 138), (112, 1), (112, 2), (112, 4), (2, 282), (5, 6), (18, 60), (8, 33), (2, 283), (42, 11), (2, 173), (2, 194),
                (1, 2), (21, 57), (3, 26), (10, 59), (6, 32), (49, 10), (35, 28), (18, 110), (47, 20)}
 
 
@@ -123,7 +123,6 @@ for n, (s, v, text) in enumerate(rows):
     for k, x in ok.items():
         C[f'{k}_pass'] += x
     C['verses'] += 1
-    C['sentence_closed'] += S.closed
     for G in units.values():
         C['units'] += 1
         C['cells'] += len(G.O['cells'])
@@ -138,8 +137,6 @@ for n, (s, v, text) in enumerate(rows):
             close_route[route] += 1
         else:
             unit_reason[G.O.get('deferred', '').split(':')[0]] += 1
-    for o in S.open_required():
-        open_kind[o.name.split(' ')[0]] += 1
     # Analyze(Render(a)) ∋ a على عيّنة: إعادة التحليل من النص المستخرَج تعطي الخلايا والإغلاق أنفسهما
     if args.reanalyze_every and n % args.reanalyze_every == 0:
         a2 = analyze(cat, rendered)
@@ -150,26 +147,52 @@ for n, (s, v, text) in enumerate(rows):
         C['reanalyze_same'] += same
         if not same:
             fail['T5b'].append(f'{s}:{v}')
-    by_surah[s].append(S)
+    lite = dict(verse=a['verse'], normalized=a['normalized'], segments=[dict(word=g['word'], units=g['units']) for g in a['segments']])
+    by_surah[s].append((s, v, lite, units, S))
     if (s, v) in SAMPLE_REFS:
-        samples[(s, v)] = dict(text=a['normalized'], closed=S.closed, units=[unit_expr(G) for G in units.values()],
-                               bonds=[f'{x[1]} →[{x[0]}] {x[2]}' for x in S.B],
-                               open=[f'{o.name}' + (f' ({o.reason})' if o.reason else '') for o in S.open_required()])
+        samples[(s, v)] = dict(text=a['normalized'], units={G.id: unit_expr(G) for G in units.values()})
     if n % 500 == 0:
         print(n, dict(C), file=sys.stderr)
 
-# المستويان الأعليان: السورة فقرةً، والمصحف موضوعاً
+# الطبقتان على النص كله: المصحفية (كلمة ← آية ← سورة ← مصحف) واللغوية (جملة ← وحدة خطابية ← خطاب السورة)
 T = Trace()
-paras = [build(PARAGRAPH, 'سورة', by_surah[s], f'Q{s}', T, 'حدّ السورة') for s in sorted(by_surah)]
-topic = build(TOPIC, 'مصحف', paras, 'Q', T, 'حدّ المصحف')
-C['paragraphs'] = len(paras)
-C['paragraphs_closed'] = sum(p.closed for p in paras)
-C['topic_closed'] = int(topic.closed)
-C['topic_cells'] = len(flatten(topic))
-
+items = [x for s in sorted(by_surah) for x in by_surah[s]]
+MU = mushaf_layer([(s, v, a, units) for s, v, a, units, S in items], T)
+LT, st = linguistic_layer(items, T)
+for k, x in st.items():
+    C[k] = x
+C['mushaf_closed'] = int(MU.closed)
+C['mushaf_ayahs_closed'] = sum(1 for su in MU.A for ay in su.A if ay.closed)
+C['speech'] = len(LT)
+C['speech_closed'] = sum(1 for x in LT if x.closed)
+# المبرهنة الأولى على الطبقتين: الخلايا نفسها تبلغها الطبقتان كلتاهما، ولا تزيد ولا تنقص
+all_cells = {c.id for s, v, a, units, S in items for G in units.values() for c in G.O['cells']}
+cm = {c.id for c in flatten(MU)}
+cl = {c.id for x in LT for c in flatten(x)}
+C['T1_layers'] = int(cm == all_cells == cl)
+# Location: كل كلمة في المصحف تقع في وحدة خطابية واحدة بالضبط
+locs = collections.Counter(loc for x in LT for D in x.A + x.O['pending'] for loc in D.O['location'])
+C['T_location'] = int(all(n == 1 for n in locs.values()) and len(locs) == sum(len(a['segments']) for s, v, a, u, S in items))
+for x in LT:
+    for D in x.A + x.O['pending']:
+        J = (D.A + D.O['pending'])[0]
+        for o in J.open_required():
+            open_kind[o.name.split(' ')[0]] += 1
+        ay = set(D.O['ayahs'])
+        if ay & set(SAMPLE_REFS):
+            units = [u for u in J.A + J.O['pending']]
+            ex = {}
+            for (s_, v_) in ay:
+                ex.update(samples.get((s_, v_), {}).get('units', {}))
+            samples.setdefault('du', []).append(dict(
+                id=D.id, location=[f'{l[0]}:{l[1]}:{l[2]}' for l in D.O['location']], ayahs=[f'{a}:{b}' for a, b in D.O['ayahs']],
+                closed=D.closed, sentence_closed=J.closed, nuclei=J.O.get('nuclei', []),
+                boundary=(D.eb.text() if D.eb else ''), units=[ex.get(u.id, u.O['text']) for u in units],
+                bonds=[f'{b[1]} →[{b[0]}] {b[2]}' for b in J.B],
+                open=[o.name + (f' ({o.reason})' if o.reason else '') for o in J.open_required()]))
 M = dict(counts=dict(C), unit_deferred=dict(unit_reason.most_common()), sentence_open=dict(open_kind.most_common()),
          unit_closed_by=dict(close_route.most_common()), failures={k: v[:40] for k, v in fail.items()},
-         samples={f'{s}:{v}': x for (s, v), x in sorted(samples.items())})
+         samples=samples.get('du', []))
 json.dump(M, open(os.environ.get('SARF_ALG_METRICS', H + 'reports/algebra_metrics.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 print(json.dumps(M['counts'], ensure_ascii=False, indent=1))
 print('unit_deferred', M['unit_deferred'])

@@ -21,8 +21,14 @@ from dataclasses import dataclass, field
 from .chars import (FATHA, DAMMA, KASRA, SUKUN, SHADDA, FATHATAN, DAMMATAN, KASRATAN,
                     MADDA_MARK, DAGGER_ALIF, letters)
 
-LEVELS = ['خلية', 'مقطع', 'وحدة لفظية', 'جملة', 'فقرة', 'موضوع']
-CELL, SYLLABLE, UNIT, SENTENCE, PARAGRAPH, TOPIC = range(6)
+# طبقتان على النص نفسه تشتركان في الخلايا:
+#   اللغوية: خلية ≺ مقطع ≺ وحدة لفظية ≺ جملة ≺ وحدة خطابية ≺ خطاب السورة — حدودها بالعلاقات وشروط الاكتمال
+#   المصحفية: خلية ≺ كلمة ≺ آية ≺ سورة ≺ مصحف — حدودها مثبتة في الرسم
+# والآية لا تُغلق الجملة، والجملة لا تُغلق الآية؛ وتربطهما Location(J) = مواضع كلمات J في الآيات
+LEVELS = ['خلية', 'مقطع', 'وحدة لفظية', 'جملة', 'وحدة خطابية', 'خطاب']
+CELL, SYLLABLE, UNIT, SENTENCE, DISCOURSE, SPEECH = range(6)
+PARAGRAPH, TOPIC = DISCOURSE, SPEECH
+M_WORD, M_AYAH, M_SURAH, M_MUSHAF = 'كلمة', 'آية', 'سورة', 'مصحف'
 
 H_OF = {FATHA: 'a', DAMMA: 'u', KASRA: 'i', FATHATAN: 'a', DAMMATAN: 'u', KASRATAN: 'i'}
 MADD_OF = {'a': 'اى', 'u': 'و', 'i': 'ي'}
@@ -57,6 +63,7 @@ class Obligation:
     met: bool = False
     ev: Evidence = None
     reason: str = ''
+    units: list = field(default_factory=list)     # الوحدات التي يخصّها الالتزام (لتعيين جملته)
 
 
 # ---------- الخلية ----------
@@ -832,7 +839,7 @@ def sibawayh_analyses(cells):
 def sentence_geo(a, vid, T):
     """الآية: تمتدّ بالوحدات المغلقة وحدها، بعلاقاتها المقبولة (العامل ← المعمول، والإسناد)؛
     وتُغلق إن استُوفيت التزاماتها اللازمة وثبت حدّها برقم الآية"""
-    S = Geo(vid, (SENTENCE, 'آية'), O=dict(text=a['normalized'], pending=[]))
+    S = Geo(vid, (SENTENCE, 'مادة الآية'), O=dict(text=a['normalized'], pending=[]))
     units = {}
     for seg in a['segments']:
         wi = seg['word_index']
@@ -843,7 +850,7 @@ def sentence_geo(a, vid, T):
                 extend(S, G, 'تجاور', Evidence('وحدة مغلقة تلي سابقتها', [f'الكلمة {wi}']), T)
             else:
                 S.O['pending'].append(G)
-                S.Omega.append(Obligation(f'إغلاق «{G.O["text"]}»', reason=G.O.get('deferred', '')))
+                S.Omega.append(Obligation(f'إغلاق «{G.O["text"]}»', reason=G.O.get('deferred', ''), units=[G.id]))
     # عمليات المقشِّر على الرسم: فكّ الشدة على حدّ الخانتين (كُنَّ ← كُنْ + نَ) تُسجَّل ليُعكس في Render
     S.O['ops'] = []
     for seg in a['segments']:
@@ -873,7 +880,7 @@ def sentence_geo(a, vid, T):
         dst = units.get(unit_of.get((t['word_index'], t['slot'])))
         proof = (f.get('judgement') or {}).get('proof', [])
         ok = r.get('consistent') is not False and src is not None and dst is not None and src.closed and dst.closed
-        ob = Obligation(name, met=bool(ok))
+        ob = Obligation(name, met=bool(ok), units=[x.id for x in (src, dst) if x is not None])
         if ok:
             ob.ev = Evidence(f'«{r["operator"]}» عاملٌ مقبول', proof or ['مطابقة'],
                              [('مخالفة العلامة', f'المكتوب {r.get("observed")}')] if r.get('observed') else [])
@@ -882,13 +889,19 @@ def sentence_geo(a, vid, T):
             ob.reason = 'المعمول أو العامل غير مغلق'
         S.Omega.append(ob)
         if r['group'] in ('2', '10') and not r.get('khabar'):
-            S.Omega.append(Obligation(f'خبر «{r["operator"]}»', reason='الخبر لم يُحلَّل بعد (T05)'))
+            S.Omega.append(Obligation(f'خبر «{r["operator"]}»', reason='الخبر لم يُحلَّل بعد (T05)',
+                                      units=[src.id] if src is not None else []))
+            S.O.setdefault('nuclei', []).append((src.id if src is not None else None, f'ناسخ «{r["operator"]}»'))
     for g in a.get('agreement', []):
         G = units.get(unit_of.get((g['word_index'], g['slot'])))
-        if G is None or not G.closed:
+        if G is None:
+            continue
+        # الإسناد ثابت بالتوافق (T18) وإن لم يُغلق جذر الفعل: فهو نواة جملة
+        S.O.setdefault('nuclei', []).append((G.id, f'إسناد «{G.O["text"]}»'))
+        if not G.closed:
             continue
         prons = g.get('pronouns') or []
-        ob = Obligation(f'فاعل «{G.O["text"]}»', met=bool(prons))
+        ob = Obligation(f'فاعل «{G.O["text"]}»', met=bool(prons), units=[G.id])
         if prons:
             ob.ev = Evidence('جدول الإسناد R(m, p)', [g.get('rule') or '', 'Φ(p): ' + ' أو '.join(prons)])
             S.B.append(('إسناد', G.id, ' أو '.join(prons), ob.ev))
@@ -934,7 +947,7 @@ def build(geo_level, kind, children, gid, T, boundary):
     G = Geo(gid, (geo_level, kind), O=dict(pending=[]))
     for x in children:
         if x.closed:
-            extend(G, x, 'تتابع', Evidence(f'{LEVELS[x.level]} مغلقة', [x.id]), T)
+            extend(G, x, 'تتابع', Evidence(f'{x.tau[1]} مغلقة', [x.id]), T)
         else:
             G.O['pending'].append(x)
             G.Omega.append(Obligation(f'إغلاق {x.id}'))
@@ -943,3 +956,144 @@ def build(geo_level, kind, children, gid, T, boundary):
     else:
         close(G, Evidence('مكوّناته كلها مغلقة', [str(len(G.A))]), Evidence(boundary, ['من بنية المصحف']), T)
     return G
+
+
+
+# ---------- الطبقتان: المصحفية واللغوية، وLocation ----------
+# علامات الوقف في مصحف المجمّع: حكم لجنة المصحف في تمام المعنى عندها
+WAQF = {'ۘ': 'م', 'ۗ': 'قلى', 'ۚ': 'ج', 'ۖ': 'صلى', 'ۛ': '∴', 'ۜ': 'س'}
+WAQF_NAME = {'م': 'الوقف لازم', 'قلى': 'الوقف أولى', 'ج': 'الوقف جائز', 'صلى': 'الوصل أولى مع جواز الوقف',
+             '∴': 'معانقة: الوقف في أحد الموضعين', 'س': 'سكتة'}
+# الحدّ المثبت: ما جاز الوقف عنده لتمام المعنى؛ والمعانقة لا تعيّن موضعها، والسكتة ليست وقفاً
+BOUNDARY_WAQF = ('م', 'قلى', 'ج', 'صلى')
+
+
+def waqf_of(verse_text):
+    """علامة الوقف بعد كل كلمة من الآية في رسم المصحف (أو None)"""
+    from .normalize import LONE_ALIF
+    return [next((WAQF[ch] for ch in w if ch in WAQF), None) for w in LONE_ALIF.sub(r'\1\2', verse_text).split()]
+
+
+def mushaf_layer(items, T):
+    """الطبقة المصحفية: كلمة ← آية ← سورة ← مصحف، من الخلايا نفسها؛ حدودها في الرسم فتُغلق بالحفظ وحده.
+    items: [(السورة، الآية، التحليل، الوحدات)] → المصحف"""
+    surahs = {}
+    for s, v, a, units in items:
+        ay = Geo(f'M{s}:{v}', (3, M_AYAH), O=dict(layer='مصحف', text=a['normalized']))
+        for wi, seg in enumerate(a['segments']):
+            W = Geo(f'M{s}:{v}:{wi}', (2, M_WORD), O=dict(layer='مصحف', text=seg['word']))
+            for ui in range(len(seg['units'])):
+                for c in units[(wi, ui)].O['cells']:
+                    extend(W, c, None, Evidence('خلية من رسم الكلمة', [c.id]), T)
+            close(W, Evidence('خلايا الكلمة كلها', [str(len(W.A))]), Evidence('حدّ الكلمة في الرسم', ['مسافة']), T)
+            extend(ay, W, 'تتابع', Evidence('كلمة مغلقة', [W.id]), T)
+        close(ay, Evidence('كلمات الآية كلها', [str(len(ay.A))]), Evidence('رقم الآية في المصحف', [f'{s}:{v}']), T)
+        surahs.setdefault(s, []).append(ay)
+    sur = []
+    for s in sorted(surahs):
+        G = Geo(f'M{s}', (4, M_SURAH), O=dict(layer='مصحف'))
+        for ay in surahs[s]:
+            extend(G, ay, 'تتابع', Evidence('آية مغلقة', [ay.id]), T)
+        close(G, Evidence('آيات السورة كلها', [str(len(G.A))]), Evidence('حدّ السورة في المصحف', [str(s)]), T)
+        sur.append(G)
+    M = Geo('M', (5, M_MUSHAF), O=dict(layer='مصحف'))
+    for G in sur:
+        extend(M, G, 'تتابع', Evidence('سورة مغلقة', [G.id]), T)
+    close(M, Evidence('سور المصحف كلها', [str(len(M.A))]), Evidence('حدّ المصحف', ['آخر سورة الناس']), T)
+    return M
+
+
+def linguistic_layer(items, T):
+    """الطبقة اللغوية على تيار الوحدات المتصل عبر حدود الآيات:
+    - الوحدة الخطابية: ما بين حدّين مثبتين، والحدّ علامةُ وقفٍ (م، قلى، ج، صلى) أو آخرُ السورة؛ ونهاية الآية وحدها ليست حدّاً
+    - الجملة: لا يثبت حدّها داخل الوحدة الخطابية إلا إذا كانت فيها نواة إسنادٍ واحدة (فعلٌ وفاعله، أو ناسخ)؛
+      فإن تعددت النوى فحدّ ما بينها غير مثبت فتُؤجَّل، وإن لم تكن نواةٌ محلَّلة (الاسمية) أُجِّلت
+    items: [(السورة، الآية، التحليل، الوحدات، مادة الآية S)] → ([خطاب كل سورة]، الإحصاءات)"""
+    import collections
+    st = collections.Counter()
+    out = []
+    by_surah = collections.OrderedDict()
+    for it in items:
+        by_surah.setdefault(it[0], []).append(it)
+    for s, its in by_surah.items():
+        stream = []                          # [(موضع الكلمة، وحداتها، علامة الوقف بعدها)]
+        uid_loc = {}
+        bonds, obls, nuclei = [], [], []
+        for s_, v, a, units, S in its:
+            marks = waqf_of(a['verse'])
+            if len(marks) != len(a['segments']):
+                marks = [None] * len(a['segments'])
+                st['waqf_misaligned'] += 1
+            for wi, seg in enumerate(a['segments']):
+                us = [units[(wi, ui)] for ui in range(len(seg['units']))]
+                for G in us:
+                    uid_loc[G.id] = (s, v, wi)
+                stream.append(((s, v, wi), us, marks[wi]))
+            bonds += [b for b in S.B if isinstance(b[1], str) and b[0] != 'تجاور']
+            obls += list(S.Omega)
+            nuclei += [n for n in S.O.get('nuclei', []) if n[0]]
+        # التقطيع إلى وحدات خطابية بالحدود المثبتة
+        segs, cur = [], []
+        for loc, us, mark in stream:
+            cur.append((loc, us))
+            if mark in BOUNDARY_WAQF:
+                segs.append((cur, Evidence(f'علامة الوقف «{mark}»: {WAQF_NAME[mark]}', [f'بعد الكلمة {loc[1]}:{loc[2]}'])))
+                cur = []
+        if cur:
+            segs.append((cur, Evidence('آخر السورة', [f'سورة {s}'])))
+        disc = []
+        for k, (seg, eb) in enumerate(segs):
+            ids = {G.id for _, us in seg for G in us}
+            locs = [loc for loc, _ in seg]
+            ayahs = sorted({(x[0], x[1]) for x in locs})
+            st['du'] += 1
+            st['du_cross_ayah'] += len(ayahs) > 1
+            D = Geo(f'L{s}.d{k}', (DISCOURSE, 'وحدة خطابية'),
+                    O=dict(layer='لغة', pending=[], location=locs, ayahs=ayahs))
+            # الروابط والالتزامات والنوى التي تقع في هذه الوحدة
+            my_bonds = [b for b in bonds if b[1] in ids]
+            cross = [b for b in my_bonds if isinstance(b[2], str) and b[2].startswith('Q') and b[2] not in ids
+                     and b[2] in uid_loc]
+            st['bond_cross_du'] += len(cross)
+            my_obls = [o for o in obls if o.units and all(u in ids for u in o.units)]
+            my_nuc = [n for n in nuclei if n[0] in ids]
+            J = Geo(f'L{s}.d{k}.J', (SENTENCE, 'جملة'), B=my_bonds, Omega=[Obligation(o.name, o.required, o.met, o.ev,
+                                                                                       o.reason, o.units) for o in my_obls],
+                    O=dict(layer='لغة', pending=[], location=locs, nuclei=[n[1] for n in my_nuc]))
+            for _, us in seg:
+                for G in us:
+                    if G.closed:
+                        extend(J, G, 'تتابع', Evidence('وحدة مغلقة', [G.id]), T)
+                    else:
+                        J.O['pending'].append(G)
+            if len(my_nuc) == 0:
+                J.Omega.append(Obligation('نواة الجملة', reason='لا نواة إسنادٍ محلَّلة (الجملة الاسمية لم تُحلَّل بعد)'))
+                st['J_no_nucleus'] += 1
+            elif len(my_nuc) > 1:
+                J.Omega.append(Obligation('حدود الجمل', reason=f'{len(my_nuc)} نوى في وحدة خطابية واحدة، وحدّ ما بينها غير مثبت'))
+                st['J_multi_nucleus'] += 1
+            else:
+                st['J_one_nucleus'] += 1
+            st['J'] += 1
+            if J.open_required():
+                defer(J, T, '، '.join(o.name for o in J.open_required()[:3]))
+            else:
+                close(J, Evidence('استُوفيت التزامات الجملة', [f'النواة: {my_nuc[0][1]}', f'{len(J.Omega)} التزاماً']),
+                      Evidence('حدّ الجملة حدُّ الوحدة الخطابية', [eb.cause] + eb.conditions), T)
+                st['J_closed'] += 1
+            if J.closed:
+                extend(D, J, 'تتابع', Evidence('جملة مغلقة', [J.id]), T)
+                close(D, Evidence('جملها مغلقة', ['1']), eb, T)
+                st['du_closed'] += 1
+            else:
+                D.O['pending'].append(J)
+                D.Omega.append(Obligation(f'إغلاق {J.id}', reason=J.O.get('deferred', '')))
+                defer(D, T, 'جملة غير مغلقة')
+            disc.append(D)
+        out.append(build(SPEECH, 'خطاب السورة', disc, f'L{s}', T, 'حدّ السورة'))
+    return out, st
+
+
+def render_layer(G):
+    """Render على أي طبقة: نصّ الوحدات/الكلمات بالترتيب (المصحفية: الكلمة نصّها؛ اللغوية: من الخلايا)"""
+    return [c for c in flatten(G)]

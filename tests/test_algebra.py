@@ -100,5 +100,31 @@ if hfn():
         r = sibawayh_analyses(cells_of(w, 's')[0])
         check(f'{w} = Realize({root}, {pat}) من أبنية سيبويه', {x[0] for x in r} == {root} and pat in {x[3] for x in r},
               [(x[0], x[3]) for x in r])
+# الطبقتان: الآية وحدة مصحفية ثابتة، والجملة وحدة لغوية؛ ونهاية الآية لا تُغلق الجملة
+if hfn():
+    from sarf.algebra import linguistic_layer, mushaf_layer, waqf_of
+    rows = {(int(x[0]), int(x[1])): x[2] for x in (l.rstrip('\n').split('\t') for l in open(H + 'data/quran_hafs.tsv', encoding='utf-8'))} \
+        if os.path.exists(H + 'data/quran_hafs.tsv') else {}
+    def layers(refs):
+        T_ = Trace(); items = []
+        for s_, v_ in refs:
+            a = analyze(cat, rows[(s_, v_)])
+            S_, u_ = sentence_geo(a, f'Q{s_}:{v_}', T_)
+            items.append((s_, v_, a, u_, S_))
+        return mushaf_layer([x[:4] for x in items], T_), linguistic_layer(items, T_)
+    if rows:
+        MU, (LT, st) = layers([(37, 137), (37, 138)])
+        D0 = (LT[0].A + LT[0].O['pending'])[0]
+        check('الصافات ١٣٧–١٣٨: وحدة خطابية تعبر حدّ الآية إلى «وَبِٱلَّيۡلِۚ»',
+              D0.O['ayahs'] == [(37, 137), (37, 138)] and D0.O['location'][-1] == (37, 138, 0), D0.O['location'])
+        check('والآيتان مغلقتان في الطبقة المصحفية', MU.closed and all(ay.closed for su in MU.A for ay in su.A))
+        check('نهاية الآية ١٣٧ ليست حدّاً: لا علامة وقف عليها', waqf_of(rows[(37, 137)])[-1] is None)
+        MU, (LT, st) = layers([(2, 282)])
+        Ds = LT[0].A + LT[0].O['pending']
+        check('البقرة ٢٨٢: آية واحدة فيها وحدات خطابية كثيرة بعلامات الوقف', len(Ds) >= 10 and MU.closed, len(Ds))
+        check('ولا رابطة تعبر حدّ وحدة خطابية', st['bond_cross_du'] == 0, st)
+        closed = [D for D in Ds if D.closed]
+        check('«وَٱتَّقُواْ ٱللَّهَۖ» جملة مغلقة داخل الآية، والآية لا تُغلقها',
+              any((D.A[0].A[-1].O['text'] if D.A else '') == 'اللَّهَ' for D in closed), [D.id for D in closed])
 print('ALL OK' if not bad else f'FAILED {bad}')
 sys.exit(1 if bad else 0)
