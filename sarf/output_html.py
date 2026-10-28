@@ -99,12 +99,14 @@ h2 .mood{font-size:16px}
 .mood-in{color:#8e24aa;background:rgba(142,36,170,.10)}   /* إنشائي */
 .mood-kh{color:#2e7d32;background:rgba(46,125,50,.10)}    /* خبري  */
 .mood-rej{color:#b71c1c;background:rgba(183,28,28,.10)}
+.mood-def{color:#8d6e00;background:rgba(141,110,0,.10)}   /* مؤجَّل */
 .st{display:inline-block;font-size:13px;padding:0 7px;border-radius:6px;border:1px solid currentColor}
 .st-accepted{color:#1b5e20} .st-deferred{color:#8d6e00} .st-blocked{color:#b71c1c;font-weight:700}
 @media (prefers-color-scheme: dark){
   .mood-in{color:#ce93d8;background:rgba(206,147,216,.15)}
   .mood-kh{color:#a5d6a7;background:rgba(165,214,167,.15)}
   .mood-rej{color:#ef9a9a;background:rgba(239,154,154,.15)}
+  .mood-def{color:#ffe082;background:rgba(255,224,130,.15)}
 }
 """
 
@@ -132,7 +134,7 @@ def ops_html(ops):
             badge = stbadge
         else:
             mood = op_mood(f)
-            mcls = 'mood-in' if mood == 'إنشائي' else 'mood-kh'
+            mcls = {'إنشائي': 'mood-in', 'خبري': 'mood-kh'}.get(mood, 'mood-def')
             badge = stbadge + f' <span class="mood {mcls}">{esc(mood)}</span>'
         bits = [f'<b>{esc(f["operator"])}</b>', badge]
         bits.append(f'<span class="meta">مج {esc(f["group"])}: {esc(f["operator_class"])}</span>')
@@ -254,23 +256,27 @@ def build_html(analyses):
 
     # عدّ خبري/إنشائي: الآيات بوجود عاملٍ إنشائيّ غير ممنوع؛ والمرشَّحات بحالتها (T09)
     v_in = sum(1 for a in analyses if has_inshai_operator(a['operators']))
-    n_in = n_kh = 0
+    n_in = n_kh = n_def = 0
     states = {k: 0 for k in STATUS_AR}
     for a in analyses:
         for f in a['operators']:
             states[f.get('status')] = states.get(f.get('status'), 0) + 1
             if f.get('status') == BLOCKED:
                 continue
-            if op_mood(f) == 'إنشائي':
+            m = op_mood(f)
+            if m == 'إنشائي':
                 n_in += 1
-            else:
+            elif m == 'خبري':
                 n_kh += 1
+            else:
+                n_def += 1
     mood_pills = (
         '<div class="summary">'
         f'<span class="pill">الآيات: <span class="mood mood-in">فيها عامل إنشائي</span> {v_in}'
         f' · <span class="mood mood-kh">ليس فيها</span> {len(analyses) - v_in}</span>'
         f'<span class="pill">المرشَّحات غير الممنوعة: <span class="mood mood-in">إنشائي</span> {n_in}'
-        f' · <span class="mood mood-kh">خبري</span> {n_kh}</span>'
+        f' · <span class="mood mood-kh">خبري</span> {n_kh}'
+        f' · <span class="mood mood-def">مؤجَّل</span> {n_def}</span>'
         '<span class="pill">حالات الحكم (T09): '
         + ' · '.join(f'<span class="st st-{k}">{STATUS_AR[k]}</span> {v}' for k, v in states.items()) +
         '</span></div>'
@@ -290,10 +296,12 @@ def build_html(analyses):
         ''.join(key),
         '</div>',
         '<div class="card">',
-        '<div class="muted">خبري/إنشائي (بالعامل، كما في سجل T14): الإنشائي الطلبي هو النداء، '
-        'والأمر بلام الأمر وأسماء أفعال الأمر، والنهي، والتمني. والإنشائي غير الطلبي هو المدح والذم '
-        '(نِعْمَ، بِئْسَ، سَاءَ، حَبَّذَا). وما سواهما خبري، ومنه القسم والرجاء بقرار صاحب النظرية.</div>',
-        '<div class="muted">بنود مفتوحة، مصنّفة الآن خبرية: التعجب (هَيْهَاتَ، شَتَّانَ، سُرْعَانَ)، ولَوْ، وكَمْ، ورُبَّ.</div>',
+        '<div class="muted">خبري/إنشائي بمعيار القسمة المعتمد (Q01): الإنشائي ما تُوقع مساهمةُ العامل فيه فعلاً '
+        'بالتلفّظ ولا يُردّ إلى تقييد مضمون آخر، وهو الطلب (النداء، والأمر بلام الأمر وأسماء أفعال الأمر، والنهي، والتمني) '
+        'والإيقاع (المدح والذم: نِعْمَ، بِئْسَ، سَاءَ، حَبَّذَا). والخبري ما يبني مضموناً أو علاقة أو يقيّدهما، '
+        'ومنه القسم والرجاء ورُبَّ وهَيْهَاتَ وشَتَّانَ وسُرْعَانَ.</div>',
+        '<div class="muted">مؤجَّل (T14a): لَوْ وكَمْ، لاختلاف استعمالاتهما في الفهرس '
+        '(الشرط والخبرية خبر، والتمني والاستفهام طلب)؛ ولا يُحكم للوحدة إلا إذا اتّحدت استعمالاتها.</div>',
         '<div class="muted">لا يشمل وسم الآية الإنشاء بالصيغ (فعل الأمر، اللهم، همزة الاستفهام). '
         'فمصدر الطلب في «اُخْرُجْ» صيغة الأمر لا عامل (T13).</div>',
         '<div class="muted">حالات الحكم (T09): مقبول إذا ثبت السبب والشرط بالكتابة ولا منافس له على خانته؛ '

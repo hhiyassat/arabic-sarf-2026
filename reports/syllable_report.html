@@ -59,12 +59,14 @@ h2 .mood{font-size:16px}
 .mood-in{color:#8e24aa;background:rgba(142,36,170,.10)}   /* إنشائي */
 .mood-kh{color:#2e7d32;background:rgba(46,125,50,.10)}    /* خبري  */
 .mood-rej{color:#b71c1c;background:rgba(183,28,28,.10)}
+.mood-def{color:#8d6e00;background:rgba(141,110,0,.10)}   /* مؤجَّل */
 .st{display:inline-block;font-size:13px;padding:0 7px;border-radius:6px;border:1px solid currentColor}
 .st-accepted{color:#1b5e20} .st-deferred{color:#8d6e00} .st-blocked{color:#b71c1c;font-weight:700}
 @media (prefers-color-scheme: dark){
   .mood-in{color:#ce93d8;background:rgba(206,147,216,.15)}
   .mood-kh{color:#a5d6a7;background:rgba(165,214,167,.15)}
   .mood-rej{color:#ef9a9a;background:rgba(239,154,154,.15)}
+  .mood-def{color:#ffe082;background:rgba(255,224,130,.15)}
 }
 </style></head><body>
 <h1>تقرير الكلمات ومقاطعها</h1>
@@ -78,11 +80,11 @@ h2 .mood{font-size:16px}
 <div class="key"><span class="chip t-CV">CV<small>ساكن+حركة</small></span><span class="chip t-CVV">CVV<small>ساكن+مدّ</small></span><span class="chip t-CVC">CVC<small>مغلق قصير</small></span><span class="chip t-CVVC">CVVC<small>مغلق بمدّ</small></span><span class="chip t-CVCC">CVCC<small>مغلق بساكنين</small></span><span class="chip t-CVVCC">CVVCC<small>مغلق بمدّ وساكنين</small></span><span class="chip t-OTHER">OTHER<small>نمط خارج الستة</small></span><span class="chip t-POISON">POISON<small>تشكيل ناقص</small></span></div>
 </div>
 <div class="card">
-<div class="muted">خبري/إنشائي (بالعامل، كما في سجل T14): الإنشائي الطلبي هو النداء، والأمر بلام الأمر وأسماء أفعال الأمر، والنهي، والتمني. والإنشائي غير الطلبي هو المدح والذم (نِعْمَ، بِئْسَ، سَاءَ، حَبَّذَا). وما سواهما خبري، ومنه القسم والرجاء بقرار صاحب النظرية.</div>
-<div class="muted">بنود مفتوحة، مصنّفة الآن خبرية: التعجب (هَيْهَاتَ، شَتَّانَ، سُرْعَانَ)، ولَوْ، وكَمْ، ورُبَّ.</div>
+<div class="muted">خبري/إنشائي بمعيار القسمة المعتمد (Q01): الإنشائي ما تُوقع مساهمةُ العامل فيه فعلاً بالتلفّظ ولا يُردّ إلى تقييد مضمون آخر، وهو الطلب (النداء، والأمر بلام الأمر وأسماء أفعال الأمر، والنهي، والتمني) والإيقاع (المدح والذم: نِعْمَ، بِئْسَ، سَاءَ، حَبَّذَا). والخبري ما يبني مضموناً أو علاقة أو يقيّدهما، ومنه القسم والرجاء ورُبَّ وهَيْهَاتَ وشَتَّانَ وسُرْعَانَ.</div>
+<div class="muted">مؤجَّل (T14a): لَوْ وكَمْ، لاختلاف استعمالاتهما في الفهرس (الشرط والخبرية خبر، والتمني والاستفهام طلب)؛ ولا يُحكم للوحدة إلا إذا اتّحدت استعمالاتها.</div>
 <div class="muted">لا يشمل وسم الآية الإنشاء بالصيغ (فعل الأمر، اللهم، همزة الاستفهام). فمصدر الطلب في «اُخْرُجْ» صيغة الأمر لا عامل (T13).</div>
 <div class="muted">حالات الحكم (T09): مقبول إذا ثبت السبب والشرط بالكتابة ولا منافس له على خانته؛ وممنوع إذا ثبت مانع بالكتابة، ولا يُعَدّ إنشائياً ولا خبرياً ولا يدخل في وسم الآية؛ ومؤجَّل فيما سوى ذلك.</div>
-<div class="summary"><span class="pill">الآيات: <span class="mood mood-in">فيها عامل إنشائي</span> 2 · <span class="mood mood-kh">ليس فيها</span> 27</span><span class="pill">المرشَّحات غير الممنوعة: <span class="mood mood-in">إنشائي</span> 2 · <span class="mood mood-kh">خبري</span> 50</span><span class="pill">حالات الحكم (T09): <span class="st st-deferred">مؤجَّل</span> 12 · <span class="st st-blocked">ممنوع</span> 20 · <span class="st st-accepted">مقبول</span> 40</span></div>
+<div class="summary"><span class="pill">الآيات: <span class="mood mood-in">فيها عامل إنشائي</span> 2 · <span class="mood mood-kh">ليس فيها</span> 27</span><span class="pill">المرشَّحات غير الممنوعة: <span class="mood mood-in">إنشائي</span> 2 · <span class="mood mood-kh">خبري</span> 50 · <span class="mood mood-def">مؤجَّل</span> 0</span><span class="pill">حالات الحكم (T09): <span class="st st-deferred">مؤجَّل</span> 12 · <span class="st st-blocked">ممنوع</span> 20 · <span class="st st-accepted">مقبول</span> 40</span></div>
 </div>
 <h2>الآية 1 <span class="mood mood-in">فيها عامل إنشائي</span></h2>
 <div class="card"><div class="orig">يَٰٓأَيُّهَا ٱلَّذِينَ ءَامَنُوٓا۟ إِذَا تَدَايَنتُم بِدَيْنٍ إِلَىٰٓ أَجَلٍ مُّسَمًّى فَٱكْتُبُوهُ</div>
