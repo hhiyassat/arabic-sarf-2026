@@ -1,0 +1,29 @@
+{
+ "qac": {
+  "agr": 8365,
+  "agr_hit": 8010,
+  "agr_single": 8068,
+  "agr_single_hit": 7715,
+  "ours_verb": 8415,
+  "ours_verb_ok": 8384,
+  "qac_verb_missed": 10969,
+  "qac_verbs": 19353,
+  "unaligned": 180,
+  "voice": 8354,
+  "voice_hit": 8274
+ },
+ "root": {
+  "acc": 6630,
+  "acc_event": 5583,
+  "acc_event_root_ok": 5530,
+  "acc_form_ok": 6581,
+  "acc_root": 1047,
+  "acc_root_ok": 6548,
+  "acc_root_root_ok": 1018,
+  "deferred": 9974,
+  "gold_in_cands": 15687,
+  "morph": 26546,
+  "not_qac_verb": 9942,
+  "qv": 16604
+ }
+}

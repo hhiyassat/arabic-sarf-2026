@@ -47,7 +47,7 @@ def main():
 
     cat = Catalog(args.catalog)
     analyses = [analyze(cat, v, uthmani=args.uthmani) for v in verses]
-    doc, grand = build_html(analyses)
+    doc, grand = build_html(analyses, cat)
 
     with open(args.out, 'w', encoding='utf-8') as fh:
         fh.write(doc)

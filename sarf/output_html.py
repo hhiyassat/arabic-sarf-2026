@@ -4,15 +4,16 @@ sarf.output_html — تقرير HTML: الكلمات ومقاطعها.
 لكل آية: جدول صفٌّ لكل كلمة (الرقم، الكلمة، المقاطع ملوّنة حسب النوع، نمط CV، العوامل)،
 مع ملخّص أنواع المقاطع للآية، وملخّص إجمالي في رأس الصفحة.
 """
-import html
+import html, json, os
 from collections import Counter, OrderedDict
 
 from .syllabify import SIX
 from .align import syllables_by_word
 from .mood import op_mood, has_inshai_operator
 from .output_text import relation_text, word_irab
-from .root import WAZN
+from .root import WAZN, soundness
 from .status import STATUS_AR, BLOCKED
+from .output_schema import to_schema
 
 # أنواع المقاطع التي نعدّها/نلوّنها: الستة + OTHER + POISON
 TYPES = SIX + ['OTHER', 'POISON']
@@ -101,6 +102,14 @@ h2 .mood{font-size:16px}
 .mood-kh{color:#2e7d32;background:rgba(46,125,50,.10)}    /* خبري  */
 .mood-rej{color:#b71c1c;background:rgba(183,28,28,.10)}
 .mood-def{color:#8d6e00;background:rgba(141,110,0,.10)}   /* مؤجَّل */
+table.small{font-size:16px} table.small td{vertical-align:top} td.n{font-family:ui-monospace,Menlo,Consolas,monospace;direction:ltr;text-align:left;white-space:nowrap}
+details{margin:8px 0;font-size:16px} summary{cursor:pointer;color:var(--muted)}
+pre.json{direction:ltr;text-align:left;font-size:13px;line-height:1.4;max-height:420px;overflow:auto;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;white-space:pre-wrap}
+.cvline{direction:ltr;text-align:left;font-family:ui-monospace,Menlo,Consolas,monospace}
+.cell{display:inline-block;margin:0 2px;padding:0 4px;border:1px solid var(--border);border-radius:4px;font-family:inherit;font-size:15px}
+.cell sub{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px}
+.cells{display:block;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px}
+.toc a{display:inline-block;margin:0 4px;color:inherit}
 .st{display:inline-block;font-size:13px;padding:0 7px;border-radius:6px;border:1px solid currentColor}
 .st-accepted{color:#1b5e20} .st-deferred{color:#8d6e00} .st-blocked{color:#b71c1c;font-weight:700}
 @media (prefers-color-scheme: dark){
@@ -142,7 +151,12 @@ def ops_html(ops):
         meth = esc(f['method'])
         if f.get('host_rest'):
             meth += f' · بقية={esc(f["host_rest"])}'
-        bits.append(f'<span class="meta">{meth}</span>')
+        bits.append(f'<span class="meta">{meth} · ثقة={esc(f.get("confidence"))}</span>')
+        if f.get('note'):
+            bits.append(f'<span class="meta">ملاحظة: {esc(f["note"])}</span>')
+        proof = (f.get('judgement') or {}).get('proof')
+        if proof:
+            bits.append(f'<span class="meta">الأدلة: {esc(" | ".join(proof))}</span>')
         if f.get('reject_reason'):
             bits.append(f'<span class="meta">(سبب المنع: {esc(f["reject_reason"])})</span>')
         else:
@@ -151,6 +165,10 @@ def ops_html(ops):
             why = (f.get('judgement') or {}).get('deferred_because')
             if why:
                 bits.append(f'<span class="meta">(سبب التأجيل: {esc(" | ".join(why))})</span>')
+        if f.get('meanings'):
+            bits.append('<span class="meta">المعاني المرشحة: ' + esc(' | '.join(
+                f"{m['label']} ({m['prior'] if m['prior'] is not None else '—'})" for m in f['meanings'])) + '</span>')
+            bits.append(f'<span class="meta">العمل: {esc(f["meanings"][0].get("effect"))}</span>')
         out.append('<span class="op">' + ' — '.join(bits) + '</span>')
     return ''.join(out)
 
@@ -167,6 +185,10 @@ VOICE_AR = {'active': 'معلوم', 'passive': 'مجهول'}
 PERSON_AR = {1: 'متكلم', 2: 'مخاطب', 3: 'غائب'}
 NUMBER_AR = {'singular': 'مفرد', 'dual': 'مثنى', 'plural': 'جمع'}
 GENDER_AR = {'masc': 'مذكر', 'fem': 'مؤنث'}
+
+
+SOUND_AR = {'salim': 'سالم', 'mahmuz': 'مهموز', 'mudaaf': 'مضعَّف', 'mithal': 'مثال', 'ajwaf': 'أجوف',
+            'naqis': 'ناقص', 'lafif_maqrun': 'لفيف مقرون', 'lafif_mafruq': 'لفيف مفروق'}
 
 
 def _feat(f):
@@ -199,14 +221,23 @@ def morph_html(a, wi):
         if st == 'accepted':
             wazn = WAZN.get(m['form_class'], m['form_class'])
             txt = f'الجذر «{esc(" ".join(m["root"]))}»، الوزن {esc(wazn)} ({esc(m["form_class"])})'
+            snd = SOUND_AR.get(soundness(m['root']))
+            if snd:
+                txt += f'، {esc(snd)}'
             if m['level'] == 'event':
                 ev = m['event']
                 txt += (f' <span class="meta">— حدث HFN: {esc(ev["verb"])}' +
-                        (f' ← {esc(ev["masdar"])}' if ev.get('masdar') else '') + '</span>')
+                        (f' ← {esc(ev["masdar"])}' if ev.get('masdar') else '') +
+                        (f'؛ معنى الصيغة: {esc(ev["meaning"])}' if ev.get('meaning') else '') +
+                        (f'؛ مصادر سيبويه: {esc(ev["sibawayh"])}' if ev.get('sibawayh') else '') +
+                        f' ({esc(ev.get("event_id"))})</span>')
             else:
                 txt += ' <span class="meta">— الجذر في HFN، والوزن بالقالب</span>'
         else:
             txt = f'<span class="meta">{esc(m.get("reason") or "")} ({m.get("n_candidates", 0)} مرشَّحاً)</span>'
+        if m.get('cells'):
+            txt += f' <span class="meta cells">الخلايا (T19a): ' + ''.join(f'<span class="cell">{esc(c[0])}<sub dir="ltr">{esc(c[1:].lstrip("v"))}</sub></span>'
+                                                                       for c in m['cells'].split(' + ')) + '</span>'
         out.append(f'<span class="op"><b>{esc(slot)}</b>: {badge} {txt} <span class="meta">[T19c]</span></span>')
     return ''.join(out) if out else '<span class="muted">—</span>'
 
@@ -230,7 +261,7 @@ def verse_counter(by_word):
     return c
 
 
-def verse_html(a, idx):
+def verse_html(a, idx, cat=None):
     by_word = syllables_by_word(a['syll'])
     n_words = a['syll']['n_words']
     raw_words = a['syll']['raw_words']
@@ -285,15 +316,90 @@ def verse_html(a, idx):
     total = sum(c.values())
     summ = (f'<div class="muted">مجموع المقاطع: {total}'
             f' (SYLLABLES={a["syll"]["n_syll"]})</div>' + summary_pills(c))
-    return '\n'.join(head) + table + summ, c
+    ev = {k: v for k, v in a['syll']['events'].items() if v}
+    extra = ''
+    if ev:
+        extra += ('<details><summary>أحداث التقطيع (ما طبّقه المقطِّع على الكتابة)</summary><div class="summary">' +
+                  ''.join(f'<span class="pill"><b>{esc(k)}</b>: {v}</span>' for k, v in sorted(ev.items())) +
+                  f'</div><div class="muted cvline">{esc(" ".join(a["syll"]["cv_line"]) if isinstance(a["syll"]["cv_line"], list) else a["syll"]["cv_line"])}</div></details>')
+    if cat is not None:
+        rec = json.dumps(to_schema(a, cat), ensure_ascii=False, indent=1)
+        extra += ('<details><summary>السجل الجامع (schema 1.1): كل ما حُكم به للآية في صيغة واحدة</summary>'
+                  f'<pre class="json">{esc(rec)}</pre></details>')
+    return f'<section id="v{idx}">' + '\n'.join(head) + table + summ + extra + '</section>', c
 
 
-def build_html(analyses):
+LAYERS = [
+    ('normalize', 'التطبيع', 'D21–D23', 'الرسم العثماني (KFGQPC) إلى إملاء يفهمه المقطِّع: التنوين المفتوح، والهمزة على المطّة، '
+     'وحذف الحرف الموسوم بالصفر إلا ألف واو الجماعة (D21)، وحذف اللام الشمسية وحدها قبل المشدَّد (D22)، والحروف المقطَّعة خانة واحدة (D23)'),
+    ('match', 'مطابقة العوامل', 'T08', 'البحث عن العوامل المئة في الفهرس: كلمةً كاملة، أو سابقةً، أو ملتصقة'),
+    ('evidence', 'قواعد المنع', 'R1–R9', 'ما يثبت بالكتابة أنه ليس عاملاً: الرفع بعد الجار (R6)، وما بعد اسم الشرط (R7)، '
+     'والساكن بعد السابقة: الحرف أصلي (R8)، وب/ك/ت قبل الفعل (R9)'),
+    ('segment', 'التجزئة', 'T07', 'الكلمة خانات: سابقة، وجذع، ولاحقة، وضمير متصل، ومبني من ملف المبنيات'),
+    ('judge', 'الحكم', 'T09', 'مقبول بدليل إيجابي ولا منافس، وممنوع بمانع مكتوب، ومؤجَّل فيما سوى ذلك؛ والكاف السابقة تحتاج «ال» أو مبنياً أو «مثل» (D25)'),
+    ('mood', 'الخبري والإنشائي', 'T12/T14', 'الإنشائي ما يُوقع فعلاً بالتلفّظ (D18)؛ 18 إنشائي و80 خبري، ولَوْ وكَمْ مؤجَّلان'),
+    ('agree', 'الفعل وفاعله', 'T18', 'A(m)={Φ(p)|R(m,p)}: الفاعل من جدول الإسناد، والمعلوم والمجهول من الحركات'),
+    ('root', 'الجذر والوزن', 'T19a–c', 'الخلايا، ومرشَّحات الأوزان I–X والرباعي بقيود المعتل، والرخصة من HFN بحدث أو بجذر'),
+    ('syllabify', 'التقطيع', 'T03', 'المقاطع الستة CV…CVVCC لكل كلمة بحركاتها المكتوبة'),
+    ('irab', 'الإعراب', 'T05/T06', 'المجرور بحرفه، وخبر كان، والفعل المبني وفاعله، ومن T18 فاعل المضارع'),
+    ('schema', 'السجل الجامع', 'schema 1.1', 'كل ما سبق في سجل واحد لكل آية (schema/morph_analysis.schema.json)'),
+]
+
+RULINGS = [
+    ('D18', 'الخبري والإنشائي: الإنشائي ما يُوقع فعلاً بالتلفّظ (الطلب، والمدح والذم)؛ والقسم والرجاء خبري؛ ولَوْ وكَمْ مؤجَّلان'),
+    ('D21', 'يُحذف الحرف الموسوم بالصفر المستدير، ولا تبقى إلا ألف واو الجماعة'),
+    ('D22', 'يُحذف قبل المشدَّد اللام الشمسية وحدها، وما سواها يُسكَّن كما كُتب'),
+    ('D23', 'الحروف المقطَّعة خانة واحدة لا تُقطَّع'),
+    ('D24', 'المنصوب بعد كان خبرها'),
+    ('D25', 'الكاف السابقة لا تُقبل إلا بدليل: «ال» أو مبني أو «مثل»'),
+    ('D26', 'قواعد المنع R6–R9 قائمة؛ وصُحّحت R7: إِنْ الشرطية لا تُمنع بالمرفوع بعدها (الفعل مقدَّر عند البصريين)'),
+    ('D27', 'ما لا دليل على قسمه يُوسم undetermined في السجل الجامع'),
+]
+
+METRIC_ROWS = [
+    ('qac', 'ours_verb_ok', 'ours_verb', 'دقة الحكم بالفعل'),
+    ('qac', 'agr_single_hit', 'agr_single', 'الفاعل (T18) حين يتعيّن ضمير واحد'),
+    ('qac', 'agr_hit', 'agr', 'الفاعل (T18) في المرشَّحات'),
+    ('qac', 'voice_hit', 'voice', 'المعلوم والمجهول'),
+    ('root', 'acc_root_ok', 'acc', 'الجذر في المقبول (T19c)'),
+    ('root', 'acc_form_ok', 'acc', 'الوزن في المقبول (T19c)'),
+]
+
+
+def metrics_card():
+    """مقاييس القرآن كله على QAC، من reports/quran_metrics.json (تكتبه tools/eval_qac.py وtools/eval_root.py)"""
+    p = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'reports', 'quran_metrics.json')
+    if not os.path.exists(p):
+        return ''
+    M = json.load(open(p, encoding='utf-8'))
+    rows = []
+    for src, hit, tot, label in METRIC_ROWS:
+        h, t = M.get(src, {}).get(hit), M.get(src, {}).get(tot)
+        if h is None or not t:
+            continue
+        rows.append(f'<tr><td>{esc(label)}</td><td class="n">{h} / {t}</td><td class="n"><b>{100 * h / t:.1f}%</b></td></tr>')
+    q = M.get('qac', {})
+    if q.get('qac_verbs'):
+        found = q['qac_verbs'] - q.get('qac_verb_missed', 0)
+        rows.append(f'<tr><td>تغطية الأفعال: ما عُرف فعلاً من أفعال QAC (المضارع المفرد بلا لاحقة لا يُعرف بعدُ)</td>'
+                    f'<td class="n">{found} / {q["qac_verbs"]}</td><td class="n">{100 * found / q["qac_verbs"]:.1f}%</td></tr>')
+    r = M.get('root', {})
+    if r.get('acc'):
+        rows.append(f'<tr><td>جذور مقبولة: بحدث HFN / بالجذر وحده / مؤجَّلة</td>'
+                    f'<td class="n">{r.get("acc_event", 0)} / {r.get("acc_root", 0)} / {r.get("deferred", 0)}</td><td></td></tr>')
+    if not rows:
+        return ''
+    return ('<div class="card"><div class="muted">القياس على القرآن كله (6236 آية) بمدوَّنة القرآن الصرفية (QAC):</div>'
+            '<table class="small"><thead><tr><th>المقياس</th><th>الموافق / الكل</th><th>النسبة</th></tr></thead><tbody>'
+            + ''.join(rows) + '</tbody></table></div>')
+
+
+def build_html(analyses, cat=None):
     body = []
     grand = Counter()
     sections = []
     for i, a in enumerate(analyses, 1):
-        s, c = verse_html(a, i)
+        s, c = verse_html(a, i, cat)
         grand += c
         sections.append(s)
 
@@ -347,6 +453,30 @@ def build_html(analyses):
         '</div>'
     )
 
+    seg_types = Counter(sl['type'] for a in analyses for w in a['segments'] for sl in w['slots'])
+    counts = {
+        'normalize': f'{len(analyses)} آية',
+        'match': f'{sum(len(a["operators"]) for a in analyses)} مرشَّحاً',
+        'evidence': f'{states.get(BLOCKED, 0)} ممنوعاً',
+        'segment': ' · '.join(f'{k} {v}' for k, v in seg_types.most_common()),
+        'judge': ' · '.join(f'{STATUS_AR[k]} {v}' for k, v in states.items() if k in STATUS_AR),
+        'mood': f'إنشائي {n_in} · خبري {n_kh} · مؤجَّل {n_def}',
+        'agree': f'{len(agr)} فعلاً',
+        'root': f'مقبول {len(acc)} · مؤجَّل {len(mor) - len(acc)}',
+        'syllabify': f'{sum(grand.values())} مقطعاً',
+        'irab': f'{sum(len(word_irab(a, w["word_index"])) for a in analyses for w in a["segments"])} سطراً',
+        'schema': f'{len(analyses)} سجلاً' if cat is not None else '—',
+    }
+    layers = ('<div class="card"><div class="muted">مراحل التحليل المنجزة، وما أنتجته في هذا التقرير:</div>'
+              '<table class="small"><thead><tr><th>المرحلة</th><th>البند</th><th>ما تفعله</th><th>في هذا التقرير</th></tr></thead><tbody>'
+              + ''.join(f'<tr><td><b>{esc(ar)}</b><br><span class="meta">{esc(k)}</span></td><td>{esc(code)}</td>'
+                        f'<td>{esc(desc)}</td><td>{esc(counts.get(k, ""))}</td></tr>' for k, ar, code, desc in LAYERS)
+              + '</tbody></table></div>')
+    rulings = ('<div class="card"><div class="muted">أحكام صاحب النظرية المطبَّقة:</div>'
+               + ''.join(f'<span class="op"><b>{esc(d)}</b>: {esc(t)}</span>' for d, t in RULINGS) + '</div>')
+    toc = ('<div class="card toc"><div class="muted">الآيات:</div>' +
+           ' '.join(f'<a href="#v{i}">{i}</a>' for i in range(1, len(analyses) + 1)) + '</div>')
+
     header = [
         '<h1>تقرير الكلمات ومقاطعها</h1>',
         '<div class="muted">النص كما هو: كل كلمة تُقطَّع مستقلّة بحركاتها المكتوبة، بلا وصل ولا وقف؛ والتنوين حركة واحدة من جنسه.</div>',
@@ -379,6 +509,10 @@ def build_html(analyses):
         'بحدثٍ مسجَّل بالجذر والوزن، أو بالجذر وحده والوزن بالقالب؛ وما سوى ذلك مؤجَّل مع سببه.</div>',
         morph_pills,
         '</div>',
+        layers,
+        metrics_card(),
+        rulings,
+        toc,
     ]
 
     doc = [

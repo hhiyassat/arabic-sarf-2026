@@ -37,7 +37,8 @@
 | `pipeline.py` | تشغيل المراحل وفحص ناتج كل مرحلة: `--stages`، `--until`، `--skip`، `--dump` |
 | `extract_operators.py` | استخراج العوامل وتقطيع الآية (نص أو JSON Lines) |
 | `cv_syllabifier.py` | التقطيع وحده |
-| `syllable_report.py` | تقرير HTML: جدول لكل آية، صفٌّ لكل كلمة بمقاطعها ونمط CV والعوامل |
+| `syllable_report.py` | تقرير HTML بكل ما ينتجه المحلل: مراحل التحليل وأعدادها، ومقاييس القرآن كله على QAC، وأحكام صاحب النظرية، ولكل آية جدول صفٌّ لكل كلمة (المقاطع، ونمط CV، والإعراب، والفعل وفاعله والجذر والوزن والخلايا، والعوامل بأدلتها ومعانيها وعملها)، وأحداث التقطيع، والسجل الجامع |
+| `tools/eval_qac.py`، `tools/eval_root.py` | القياس على القرآن كله بمدوَّنة QAC (في `data/`، لا تُرفع): الفعل والفاعل والجهة، والجذر والوزن. يكتبان `reports/quran_metrics.json` فيعرضه التقرير |
 | `mabniyat_lexicon.py` | محوِّل `02_mabniyat` إلى معجم الكلمات المغلقة |
 | `schema_check.py` | فاحص JSON Schema بلا مكتبات خارجية |
 | `tests/test_segment.py` | اختبارات المقشِّر: كل حالة قاعدة حسمها صاحب النظرية |
@@ -55,6 +56,7 @@
 | `operators_catalog_split_vocalized.csv` | فهرس مكمّل؛ يُضاف منه ما ليس في الأساس فقط (إِنَّ، أَنَّ) |
 | `verses*.txt` / `example_output*` | آيات الاختبار ونتائجها |
 | `reports/syllable_report.html` | التقرير المولَّد من آيات الاختبار |
+| `reports/quran_metrics.json` | مقاييس القرآن كله على QAC (من `tools/`) |
 
 ## التشغيل (Python 3 فقط، بلا مكتبات خارجية)
 
