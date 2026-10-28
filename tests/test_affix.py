@@ -35,17 +35,17 @@ STEMS = [
 
 # (النص، العامل، المجموعة، الحكم)
 REJECT = [
-    ('وَٱمْسَحُوا۟', 'وَ', '1', 'rejected'),
-    ('وَلَمْ يُولَدْ', 'وَ', '4', 'rejected'),
-    ('وَأَنتَ فِيهِمْ', 'وَ', '1', 'rejected'),
-    ('وَلْيَكْتُبْ', 'لِ', '6', 'candidate'),                # لام الأمر بعد الواو
-    ('وَتَٱللَّهِ', 'تَ', '1', 'candidate'),                  # تاء القسم بعد الواو
-    ('لَأَكِيدَنَّ', 'لِ', '1', 'rejected'),                 # اللام المفتوحة قبل الفعل
-    ('لَكُمْ', 'لِ', '1', 'candidate'),
-    ('لَا يَعْلَمُونَ', 'لَا', '6', 'rejected'),
-    ('لَا رَيْبَ', 'لَا', '6', 'rejected'),
-    ('لَا تَحْزَنْ', 'لَا', '6', 'candidate'),
-    ('كَانُوا۟', 'كَانَ', '10', 'candidate'),                 # كان مع واو الجماعة
+    ('وَٱمْسَحُوا۟', 'وَ', '1', 'blocked'),
+    ('وَلَمْ يُولَدْ', 'وَ', '4', 'blocked'),
+    ('وَأَنتَ فِيهِمْ', 'وَ', '1', 'blocked'),
+    ('وَلْيَكْتُبْ', 'لِ', '6', 'deferred'),                # لام الأمر بعد الواو
+    ('وَتَٱللَّهِ', 'تَ', '1', 'deferred'),                  # تاء القسم بعد الواو
+    ('لَأَكِيدَنَّ', 'لِ', '1', 'blocked'),                 # اللام المفتوحة قبل الفعل
+    ('لَكُمْ', 'لِ', '1', 'deferred'),
+    ('لَا يَعْلَمُونَ', 'لَا', '6', 'blocked'),
+    ('لَا رَيْبَ', 'لَا', '6', 'blocked'),
+    ('لَا تَحْزَنْ', 'لَا', '6', 'deferred'),
+    ('كَانُوا۟', 'كَانَ', '10', 'deferred'),                 # كان مع واو الجماعة
 ]
 
 bad = 0
@@ -61,5 +61,33 @@ for text, op, grp, want in REJECT:
     ok = got == want
     bad += not ok
     print('OK ' if ok else 'BAD', text, op, grp, got if not ok else '')
+
+# حكم T09 بعد طبقة الحكم: (النص، العامل، المجموعة، الحالة)
+JUDGE = [
+    ('لَمْ يَلِدْ', 'لَمْ', '6', 'accepted'),
+    ('لَا تَحْزَنْ', 'لَا', '6', 'deferred'),                # منافس على الخانة (نافية/ناهية)
+    ('لَيْسَ كَمِثْلِهِۦ شَىْءٌ', 'لَيْسَ', '10', 'accepted'),
+]
+for text, op, grp, want in JUDGE:
+    ops = PIPE.run(text).candidates
+    got = next((f['status'] for f in ops if f['operator'] == op and f['group'] == grp), 'absent')
+    ok = got == want
+    bad += not ok
+    print('OK ' if ok else 'BAD', 'T09', text, op, grp, got if not ok else '')
+
+# الإعراب المعروض لكل كلمة
+from sarf.output_text import word_irab
+from sarf.analyze import analyze
+IRAB = [
+    ('لَيْسَ كَمِثْلِهِۦ شَىْءٌ', 1, 'حرف جر زائد للتوكيد'),
+    ('لَيْسَ كَمِثْلِهِۦ شَىْءٌ', 1, 'خبر «لَيْسَ» مقدَّم في محلّ نصب'),
+    ('لَيْسَ كَمِثْلِهِۦ شَىْءٌ', 2, 'اسم «لَيْسَ» مرفوع مؤخَّر'),
+]
+for text, wi, want in IRAB:
+    a = analyze(PIPE.cat, text)
+    roles = [r for _, r, _ in word_irab(a, wi)]
+    ok = any(want in r for r in roles)
+    bad += not ok
+    print('OK ' if ok else 'BAD', 'إعراب', text, wi, want, roles if not ok else '')
 print('ALL OK' if not bad else f'FAILED {bad}')
 sys.exit(1 if bad else 0)

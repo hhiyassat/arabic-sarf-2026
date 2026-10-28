@@ -33,6 +33,7 @@ from .divine import divine_name
 from .match import PRON_SUFFIXES, match_letters, vocal_compatible
 from . import syllabify as cv
 from .affix import stem_info
+from .status import BLOCKED
 
 AMIL, MABNI, ARTICLE, STEM, DIVINE = 'عامل', 'مبني', 'أل', 'جذع', 'لفظ الجلالة'
 CUT_TYPES = {ARTICLE, STEM}                                  # ما يُقطَّع
@@ -127,7 +128,7 @@ def segment_word(word, wi, cands, lex):
     # 1. خانات العوامل (غير المرفوضة) بمواضعها في الحروف الأصلية
     by_span = {}
     for c in cands:
-        if c.get('status') == 'rejected':
+        if c.get('status') == BLOCKED:
             continue
         if c['method'] == 'multi_word':
             span = (0, n)
@@ -148,7 +149,7 @@ def segment_word(word, wi, cands, lex):
     # 1b. السابقة المرفوضة عاملاً حرفٌ مبني إن كانت في الملف (وَ العاطفة، لَ التوكيد): تبقى خانة لا تُقطَّع
     taken = [o['span'] for o in op_slots]
     for c in cands:
-        if c.get('status') != 'rejected' or not c['method'].startswith('proclitic'):
+        if c.get('status') != BLOCKED or not c['method'].startswith('proclitic'):
             continue
         a, b = c['char_span']
         if c.get('expanded', True):
@@ -309,7 +310,7 @@ def _target(segs, wi, si):
 def relate(segs, cands):
     rels = []
     for c in cands:
-        if c.get('status') == 'rejected':
+        if c.get('status') == BLOCKED:
             continue
         seg = segs[c['word_index']]
         si = next((s['index'] for s in seg['slots']
@@ -329,7 +330,7 @@ def relate(segs, cands):
             r.update(expected='جر', note='الكاف زائدة للتوكيد قبل «مثل»: جرٌّ لفظي (ترجيح صاحب النظرية)',
                      target=dict(word_index=c['word_index'], slot=si + 1, text=ts['text'], type=ts['type']))
             obs = _observed(seg, ts)
-            r.update(observed=obs, consistent=(obs == 'جر') if obs else None)
+            r.update(observed=obs, consistent=(obs == 'جر') if obs else None, zaida=True)
             rels.append(r)
             continue
         if tg and _tawkid_lam(slot) and segs[tg[0]]['slots'][tg[1]]['type'] != MABNI:
@@ -341,6 +342,7 @@ def relate(segs, cands):
         if tg and _kaf_zaida(segs[tg[0]], tg[1]) and c['group'] in DEFERRED_NAME:
             # لَيْسَ كَمِثْلِهِۦ شَىْءٌ: الكاف زائدة، و«مِثْل» خبر ليس مقدَّم، والاسم مؤخَّر
             khabar = segs[tg[0]]['slots'][tg[1] + 1]['text']
+            r['khabar'] = dict(word_index=tg[0], slot=tg[1] + 1, text=khabar)
             tg = _skip_semi_clause(segs, tg)
             r['note'] = f'الكاف زائدة للتوكيد، و«{khabar}» خبر مقدَّم في محلّ نصب، والاسم مؤخَّر (ترجيح صاحب النظرية)'
         elif tg and c['group'] in DEFERRED_NAME:
@@ -358,7 +360,7 @@ def relate(segs, cands):
             elif ts['type'] == STEM and not _after_article(segs[tg[0]], tg[1]) and \
                     ((m := stem_info(ts['text']))['pos'] == 'verb' or
                      (m['kind'] == 'mudari' and (c['group'] in ('5', '6', '7') or
-                                                 c['operator'] in ('حَتَّى', 'لِ')))):   # حتى ولام التعليل قبل المضارع
+                                                 strip_marks(c['operator']) in ('حتى', 'ل')))):   # حتى ولام التعليل قبل المضارع
                 r['target']['pos'] = 'verb'
                 if c['group'] == '1':
                     r.update(expected='نصب', note='الجار قبل المضارع: النصب بأن مضمرة')
@@ -378,7 +380,41 @@ def relate(segs, cands):
                 elif obs and not ((r['expected'], obs) in (('جر', 'نصب'), ('نصب', 'جر'))):
                     r['consistent'] = False      # الجر بالفتحة (الممنوع من الصرف) والنصب بالكسرة (جمع المؤنث) لا يُحكم فيهما
         rels.append(r)
+    for r in rels:
+        r['role'] = _role(r)
     return rels
+
+
+# ---------- الإعراب: دور المعمول بعبارة النحاة ----------
+NAME_OF = {'2': 'اسم', '10': 'اسم', '11': 'اسم'}
+
+def _role(r):
+    """→ عبارة إعراب المعمول، أو None إن لم يكن للعامل أثر إعرابي معيَّن"""
+    t, op, exp = r['target'], r['operator'], r['expected']
+    if t is None or exp is None or t['type'] == AMIL:
+        return None
+    mahall = r['observed'] == 'محلاً'
+    if t.get('pos') == 'verb':
+        if r['group'] == '1':
+            text = f'مضارع منصوب بأن مضمرة بعد «{op}»'
+        else:
+            verb = {'نصب': 'منصوب', 'جزم': 'مجزوم'}.get(exp, exp)
+            text = f'مضارع {verb} بـ«{op}»' if r['observed'] not in (None,) else f'في محلّ {exp} بـ«{op}»'
+    elif r['group'] == '1':
+        if r.get('zaida'):
+            text = 'مجرور لفظاً بالكاف الزائدة'
+        else:
+            text = f'في محلّ جر بـ«{op}»' if mahall else f'مجرور بـ«{op}»'
+    elif r['group'] in NAME_OF:
+        case = {'نصب': 'منصوب', 'رفع': 'مرفوع'}[exp]
+        text = f'في محلّ {exp} اسم «{op}»' if mahall else f'اسم «{op}» {case}'
+        if r.get('khabar'):
+            text += ' مؤخَّر'
+    else:
+        return None
+    if r['consistent'] is False:
+        text += ' (العلامة المكتوبة تخالف)'
+    return text
 
 
 # ---------- التقطيع على الوحدات التي تُقطَّع ----------

@@ -10,6 +10,7 @@ sarf.pipeline — تشغيل المراحل بالترتيب على كائن و�
     match      → words, candidates          مطابقة العوامل (sarf.match)
     evidence   → (status في candidates)     نفي المرشَّح بالكتابة (sarf.evidence)
     segment    → segments, relations        الخانات وأنواعها، والعامل ← المعمول (sarf.segment)
+    judge      → (status في candidates)     القبول بدليل إيجابي، وإلا التأجيل (sarf.judge، T09)
     syllabify  → syll                       تقطيع ما ليس عاملاً ولا مبنياً (sarf.segment)
     align      → operators                  ربط العامل بخانته وعلاقته (sarf.align)
 
@@ -22,6 +23,8 @@ words, operators, syll)، فتبقى الاختبارات والنواتج ال�
 from .normalize import uthmani_normalize
 from .match import extract
 from .evidence import reject_candidates
+from .status import BLOCKED, ACCEPTED
+from .judge import judge
 from .align import align
 from .segment import segment, syllabify_units
 from .lexicon import MabniLexicon
@@ -67,13 +70,18 @@ def _match(ctx, res):
 
 def _evidence(ctx, res):
     ctx.candidates = reject_candidates(ctx.candidates, ctx.words)
-    n = sum(f['status'] == 'rejected' for f in ctx.candidates)
-    return f"مرفوضة بالكتابة: {n}"
+    n = sum(f['status'] == BLOCKED for f in ctx.candidates)
+    return f"ممنوعة بالكتابة: {n}"
 
 def _segment(ctx, res):
     ctx.segments, ctx.relations = segment(ctx.words, ctx.candidates, res.lex)
     n = sum(len(s['slots']) for s in ctx.segments)
     return f"{n} خانة، {len(ctx.relations)} علاقة"
+
+def _judge(ctx, res):
+    judge(ctx.candidates, ctx.segments, ctx.relations)
+    n = sum(f['status'] == ACCEPTED for f in ctx.candidates)
+    return f"مقبولة: {n}"
 
 def _syllabify(ctx, res):
     ctx.syll = syllabify_units(ctx.segments)
@@ -89,6 +97,8 @@ STAGES = [
     Stage('evidence', _evidence, ('words', 'candidates'), (), 'نفي المرشَّح بالكتابة'),
     Stage('segment', _segment, ('words', 'candidates'), ('segments', 'relations'),
           'الخانات (عامل، مبني، أل، جذع) والعامل ← المعمول'),
+    Stage('judge', _judge, ('candidates', 'segments', 'relations'), (),
+          'الحكم بالقبول بدليل إيجابي (T07، T09)؛ وما سواه مؤجَّل أو ممنوع'),
     Stage('syllabify', _syllabify, ('segments',), ('syll',), 'تقطيع ما ليس عاملاً ولا مبنياً'),
     Stage('align', _align, ('candidates', 'segments', 'relations'), ('operators',), 'ربط العامل بخانته وعلاقته'),
 ]

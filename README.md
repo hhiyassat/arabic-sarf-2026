@@ -19,7 +19,9 @@
 | `sarf/lexicon.py` | معجم المبنيات للبحث بالصورة المشكولة |
 | `sarf/segment.py` | المقشِّر: خانات الكلمة (عامل، مبني، أل، جذع، لفظ الجلالة)، وشرط الفصل، والعامل ← المعمول، وتقطيع ما ليس عاملاً ولا مبنياً |
 | `sarf/align.py` | ربط العامل بخانته وعلاقته |
-| `sarf/pipeline.py` | تشغيل المراحل بالترتيب على كائن واحد للآية: normalize ← match ← evidence ← segment ← syllabify ← align |
+| `sarf/pipeline.py` | تشغيل المراحل بالترتيب على كائن واحد للآية: normalize ← match ← evidence ← segment ← judge ← syllabify ← align |
+| `sarf/status.py` | حالات المرشَّح (T09): مؤجَّل، ممنوع، مقبول |
+| `sarf/judge.py` | الحكم (T09): مقبول بدليل إيجابي فقط (سبب + شرط + قواعد مفحوصة + لا منافس على الخانة)، وإلا مؤجَّل مع ذكر السبب؛ والممنوع ما نفته الكتابة |
 | `sarf/analyze.py` | تحليل آية بكل المراحل (يمرّ بالـ pipeline) |
 | `sarf/mood.py` | خبري/إنشائي بالعامل في بابه (سجل T14) |
 | `sarf/output_text.py`، `sarf/output_html.py` | الناتج النصي وJSON، وتقرير HTML |

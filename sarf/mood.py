@@ -4,6 +4,8 @@ sarf.mood — خبري/إنشائي بالعامل في بابه، كما في �
 """
 import unicodedata
 
+from .status import BLOCKED
+
 # ── تصنيف خبري/إنشائي ──
 # القرار: الإنشائي = الطلبي (النداء، الأمر، التمني) + غير الطلبي (المدح والذمّ)؛ والباقي خبري.
 # بنودٌ مفتوحة (T12) مصنّفة الآن خبريةً: التعجب (هَيْهَاتَ/شَتَّانَ/سُرْعَانَ)،
@@ -34,4 +36,4 @@ def op_mood(f):
 
 def has_inshai_operator(ops):
     """هل في الآية عاملٌ إنشائيٌّ غير مرفوض؟ (لا يشمل الإنشاء بالصيغ — T13)"""
-    return any(op_mood(f) == 'إنشائي' and f.get('status') != 'rejected' for f in ops)
+    return any(op_mood(f) == 'إنشائي' and f.get('status') != BLOCKED for f in ops)

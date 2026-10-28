@@ -10,7 +10,8 @@ from collections import Counter, OrderedDict
 from .syllabify import SIX
 from .align import syllables_by_word
 from .mood import op_mood, has_inshai_operator
-from .output_text import relation_text
+from .output_text import relation_text, word_irab
+from .status import STATUS_AR, BLOCKED
 
 # أنواع المقاطع التي نعدّها/نلوّنها: الستة + OTHER + POISON
 TYPES = SIX + ['OTHER', 'POISON']
@@ -97,7 +98,9 @@ td.cv{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:16px;direction
 h2 .mood{font-size:16px}
 .mood-in{color:#8e24aa;background:rgba(142,36,170,.10)}   /* إنشائي */
 .mood-kh{color:#2e7d32;background:rgba(46,125,50,.10)}    /* خبري  */
-.mood-rej{color:#b71c1c;background:rgba(183,28,28,.10)}   /* مرفوضة بالكتابة */
+.mood-rej{color:#b71c1c;background:rgba(183,28,28,.10)}
+.st{display:inline-block;font-size:13px;padding:0 7px;border-radius:6px;border:1px solid currentColor}
+.st-accepted{color:#1b5e20} .st-deferred{color:#8d6e00} .st-blocked{color:#b71c1c;font-weight:700}
 @media (prefers-color-scheme: dark){
   .mood-in{color:#ce93d8;background:rgba(206,147,216,.15)}
   .mood-kh{color:#a5d6a7;background:rgba(165,214,167,.15)}
@@ -123,12 +126,14 @@ def ops_html(ops):
         return '<span class="muted">—</span>'
     out = []
     for f in ops:
-        if f.get('status') == 'rejected':
-            badge = '<span class="mood mood-rej">مرفوضة بالكتابة</span>'
+        st = f.get('status')
+        stbadge = f'<span class="st st-{esc(st)}">{esc(STATUS_AR.get(st, ""))}</span>'
+        if st == BLOCKED:
+            badge = stbadge
         else:
             mood = op_mood(f)
             mcls = 'mood-in' if mood == 'إنشائي' else 'mood-kh'
-            badge = f'<span class="mood {mcls}">{esc(mood)}</span>'
+            badge = stbadge + f' <span class="mood {mcls}">{esc(mood)}</span>'
         bits = [f'<b>{esc(f["operator"])}</b>', badge]
         bits.append(f'<span class="meta">مج {esc(f["group"])}: {esc(f["operator_class"])}</span>')
         meth = esc(f['method'])
@@ -136,11 +141,22 @@ def ops_html(ops):
             meth += f' · بقية={esc(f["host_rest"])}'
         bits.append(f'<span class="meta">{meth}</span>')
         if f.get('reject_reason'):
-            bits.append(f'<span class="meta">({esc(f["reject_reason"])})</span>')
-        elif f.get('relation'):
-            bits.append(f'<span class="meta">المعمول: {esc(relation_text(f["relation"]))}</span>')
+            bits.append(f'<span class="meta">(سبب المنع: {esc(f["reject_reason"])})</span>')
+        else:
+            if f.get('relation'):
+                bits.append(f'<span class="meta">المعمول: {esc(relation_text(f["relation"]))}</span>')
+            why = (f.get('judgement') or {}).get('deferred_because')
+            if why:
+                bits.append(f'<span class="meta">(سبب التأجيل: {esc(" | ".join(why))})</span>')
         out.append('<span class="op">' + ' — '.join(bits) + '</span>')
     return ''.join(out)
+
+
+def irab_html(items):
+    if not items:
+        return '<span class="muted">—</span>'
+    return ''.join(f'<span class="op"><b>{esc(slot)}</b>: {esc(role)} '
+                   f'<span class="meta">[{esc(st)}]</span></span>' for slot, role, st in items)
 
 
 def summary_pills(counter, extra_class=''):
@@ -191,6 +207,7 @@ def verse_html(a, idx):
             f'<td class="word">{esc(word)}</td>'
             f'<td>{"".join(cells)}</td>'
             f'<td class="cv">{esc(" | ".join(pats))}</td>'
+            f'<td>{irab_html(word_irab(a, wi))}</td>'
             f'<td>{ops_html(ops_by_word.get(wi, []))}</td>'
             '</tr>'
         )
@@ -207,7 +224,7 @@ def verse_html(a, idx):
 
     table = (
         '<table><thead><tr>'
-        '<th>#</th><th>الكلمة</th><th>المقاطع</th><th>نمط CV</th><th>العوامل</th>'
+        '<th>#</th><th>الكلمة</th><th>المقاطع</th><th>نمط CV</th><th>الإعراب</th><th>العوامل</th>'
         '</tr></thead><tbody>' + ''.join(rows) + '</tbody></table>'
     )
 
@@ -235,14 +252,16 @@ def build_html(analyses):
         key.append(f'<span class="chip {cls}">{esc(t)}<small>{esc(TYPE_LABEL[t].split(" — ")[-1])}</small></span>')
     key.append('</div>')
 
-    # عدّ خبري/إنشائي: الآيات بوجود عاملٍ إنشائيّ؛ والمرشَّحات بحالتها (المرفوض صنفٌ ثالث)
+    # عدّ خبري/إنشائي: الآيات بوجود عاملٍ إنشائيّ غير ممنوع؛ والمرشَّحات بحالتها (T09)
     v_in = sum(1 for a in analyses if has_inshai_operator(a['operators']))
-    n_in = n_kh = n_rej = 0
+    n_in = n_kh = 0
+    states = {k: 0 for k in STATUS_AR}
     for a in analyses:
         for f in a['operators']:
-            if f.get('status') == 'rejected':
-                n_rej += 1
-            elif op_mood(f) == 'إنشائي':
+            states[f.get('status')] = states.get(f.get('status'), 0) + 1
+            if f.get('status') == BLOCKED:
+                continue
+            if op_mood(f) == 'إنشائي':
                 n_in += 1
             else:
                 n_kh += 1
@@ -250,10 +269,11 @@ def build_html(analyses):
         '<div class="summary">'
         f'<span class="pill">الآيات: <span class="mood mood-in">فيها عامل إنشائي</span> {v_in}'
         f' · <span class="mood mood-kh">ليس فيها</span> {len(analyses) - v_in}</span>'
-        f'<span class="pill">المرشَّحات: <span class="mood mood-in">إنشائي</span> {n_in}'
-        f' · <span class="mood mood-kh">خبري</span> {n_kh}'
-        f' · <span class="mood mood-rej">مرفوضة بالكتابة</span> {n_rej}</span>'
-        '</div>'
+        f'<span class="pill">المرشَّحات غير الممنوعة: <span class="mood mood-in">إنشائي</span> {n_in}'
+        f' · <span class="mood mood-kh">خبري</span> {n_kh}</span>'
+        '<span class="pill">حالات الحكم (T09): '
+        + ' · '.join(f'<span class="st st-{k}">{STATUS_AR[k]}</span> {v}' for k, v in states.items()) +
+        '</span></div>'
     )
 
     header = [
@@ -276,7 +296,8 @@ def build_html(analyses):
         '<div class="muted">بنود مفتوحة، مصنّفة الآن خبرية: التعجب (هَيْهَاتَ، شَتَّانَ، سُرْعَانَ)، ولَوْ، وكَمْ، ورُبَّ.</div>',
         '<div class="muted">لا يشمل وسم الآية الإنشاء بالصيغ (فعل الأمر، اللهم، همزة الاستفهام). '
         'فمصدر الطلب في «اُخْرُجْ» صيغة الأمر لا عامل (T13).</div>',
-        '<div class="muted">المرشَّح المرفوض بالكتابة لا يُعَدّ إنشائياً ولا خبرياً، ولا يدخل في وسم الآية.</div>',
+        '<div class="muted">حالات الحكم (T09): مقبول إذا ثبت السبب والشرط بالكتابة ولا منافس له على خانته؛ '
+        'وممنوع إذا ثبت مانع بالكتابة، ولا يُعَدّ إنشائياً ولا خبرياً ولا يدخل في وسم الآية؛ ومؤجَّل فيما سوى ذلك.</div>',
         mood_pills,
         '</div>',
     ]
