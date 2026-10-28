@@ -31,8 +31,36 @@ DAGGER_ON_MAQSURA = re.compile('(ى[\u064B-\u0652]*)\u0670')
 UTHMANI_DROP = set(chr(c) for c in range(0x06D6, 0x06EE)) - set(UTHMANI_MAP) | {'۟', 'ـ', '\u0653'}
 MADD_AFTER_FATHA = re.compile('(\u064E\u0651?|\u0651\u064E)\u0622')
 
+KFGQPC_MAP = {0x08F0: 0x064B, 0x08F1: 0x064C, 0x08F2: 0x064D, 0x200F: None, 0x065C: None}
+# الهمزة المنفصلة عن كرسيّها بحركة: على المطّة ← ء (مَـَٔابًا)، وعلى الياء غير المنقوطة ← ئ (لِقَاۤىِٕ)،
+# وعلى الواو ← ؤ (ٱللُّؤۡلُوِٕ)، وعلى الألف الخنجرية ← أ (فَٱدَّٰرَٰٔتُمۡ)؛ والحركة بينهما تبقى
+ZERO = '\u06DF'                                       # الصفر المستدير (حرف زائد)
+ALIF_ZERO = re.compile('ا' + SUKUN)
+HAMZA_SEAT = {'\u0640': 'ء', '\u0649': 'ئ', '\u064A': 'ئ', '\u0648': 'ؤ', '\u0670': 'أ'}
+HAMZA_ON_TATWEEL = re.compile('([\u0640\u0649\u064A\u0648])([\u064B-\u0652\u0670]*)[\u0654\u0655]|(\u0670)()\u0654')
+
 MADD_LETTERS = set('اويىآ')
-UTHMANI_SIGNS = {'ٱ'} | set(chr(c) for c in range(0x06D6, 0x06EE))
+UTHMANI_SIGNS = {'ٱ', '\u0653', '\u0670'} | set(chr(c) for c in range(0x06D6, 0x06EE))   # والمدّة والخنجرية
+
+def drop_zero_letters(text):
+    """الصفر المستدير (۟) فوق حرف علّة يدل على زيادته فلا يُنطق وصلاً ولا وقفاً (اصطلاح ضبط المصحف):
+    يُحذف الحرف (جِا۟ىٓءَ ← جِىٓءَ، أُو۟لَٰٓئِكَ ← أُلَٰٓئِكَ)، إلا الألف بعد الواو، فهي الألف الفارقة
+    بعد واو الجماعة، ويحتاجها المقشِّر دليلاً على الفعل (كَفَرُوا۟)؛ وتُحذف علامتها وحدها."""
+    out = []
+    i = 0
+    while i < len(text):
+        ch = text[i]
+        if i + 1 < len(text) and text[i + 1] == ZERO and ch in 'اويى':
+            prev = next((c for c in reversed(out) if not ('\u064B' <= c <= '\u0655' or c == '\u0670' or
+                                                          '\u06D6' <= c <= '\u06ED')), '')
+            if ch == 'ا' and prev == 'و':
+                out.append(ch)
+            i += 2
+            continue
+        out.append(ch)
+        i += 1
+    return ''.join(out)
+
 
 def uthmani_normalize(text, implicit_sukun=None):
     """
@@ -40,11 +68,24 @@ def uthmani_normalize(text, implicit_sukun=None):
     None ⇒ يُفعَّل تلقائياً إن ظهرت علامات عثمانية في النص.
     """
     text = unicodedata.normalize('NFC', text)
+    if implicit_sukun is None:                         # يُكشف قبل أي تعديل يحذف العلامات العثمانية
+        implicit_sukun = any(ch in UTHMANI_SIGNS or ch in KFGQPC_MAP or ch == '\u06E1' for ch in text)
+    # ترميز مصحف المجمّع (KFGQPC): التنوين «المفتوح» صورةٌ للتنوين نفسه (إخفاء/إدغام)،
+    # والهمزة فوق المطّة همزةٌ على السطر (مَـَٔابًا ← مَءَابًا)؛ وعلامة الاتجاه تُحذف
+    text = text.translate(KFGQPC_MAP)
+    # السكون ْ في مصحف المجمّع صفرٌ مستدير على الحرف الزائد (كَفَرُواْ، أُوْلَٰٓئِكَ)، وسكونه ۡ:
+    # فإن وُجد ۡ في النص فكل ْ صفر؛ وعلى الألف صفرٌ في كل حال (الألف لا تحمل سكوناً)
+    text = text.replace('أٓ', 'آ')                     # الهمزة والمدّة: ٱلۡأٓخِرَةِ
+    if '\u06E1' in text:
+        text = text.replace(SUKUN, ZERO)
+    else:
+        text = ALIF_ZERO.sub('ا' + ZERO, text)
+    text = drop_zero_letters(text)
+    text = HAMZA_ON_TATWEEL.sub(lambda m: HAMZA_SEAT[m.group(1) or m.group(3)] + (m.group(2) or ''), text)
+    text = unicodedata.normalize('NFC', text)          # الهمزة فوق الحرف بعد حركته: يُـِٔ ← ئِ
     # «آ» بعد فتحة = ألف مدّ عليها علامة المدّ العثمانية لا همزة: إِنَّمَآ، جَآءَ (وتبقى همزةً بعد ساكن: ٱلْقُرْآنُ)
     text = MADD_AFTER_FATHA.sub(r'\1ا', text)
     text = DAGGER_ON_MAQSURA.sub(r'\1', text)
-    if implicit_sukun is None:
-        implicit_sukun = any(ch in UTHMANI_SIGNS for ch in text)
     out = []
     for ch in text:
         if ch in UTHMANI_MAP:
