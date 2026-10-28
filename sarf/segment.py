@@ -32,7 +32,7 @@ from .chars import (FATHA, DAMMA, KASRA, SUKUN, FATHATAN, DAMMATAN, KASRATAN,
 from .divine import divine_name
 from .match import PRON_SUFFIXES, match_letters, vocal_compatible
 from . import syllabify as cv
-from .affix import stem_info, radical_nun
+from .affix import stem_info, radical_nun, short_host, ha_kasra_ok
 from .status import BLOCKED
 
 AMIL, MABNI, ARTICLE, STEM, DIVINE = 'عامل', 'مبني', 'أل', 'جذع', 'لفظ الجلالة'
@@ -45,6 +45,7 @@ MIN_STEM = 3                                                # أقلّ حروف 
 
 # حكم المعمول بمجموعة العامل (الاسم بعد الجار، واسم إنّ، واسم كان؛ والفعل بعد الناصب والجازم)
 EXPECTED = {'1': 'جر', '2': 'نصب', '5': 'نصب', '6': 'جزم', '7': 'جزم', '10': 'رفع', '11': 'رفع', '13': 'نصب'}
+NO_JAZM = {'لو', 'إذا'}                                    # في باب الشرط ولا تجزم (الفهرس: «لا يجزم»)
 CHECKED = {'1', '2', '10', '11'}                            # يُقارَن بالعلامة المكتوبة على الاسم
 VERB_CHECKED = {'1', '5', '6', '7'}                         # ويُقارَن بعلامة المضارع (sarf.affix)
 MARK_CASE = {KASRA: 'جر', KASRATAN: 'جر', FATHA: 'نصب', FATHATAN: 'نصب',
@@ -90,6 +91,11 @@ def _host(word, toks, offs, a, b, lex, at_word_start):
     """خانات ما ليس عاملاً: مبني من المعجم كاملاً، أو [أل][جذع][ضمير متصل]"""
     text = word[offs[a][0]:offs[b - 1][1]]
     hits = lex.lookup(text) if lex else []
+    if not hits and lex and not at_word_start:
+        # بقية الكلمة بعد السابقة ضمير متصل بصورته (بِهِمْ، لَهُ): مبني
+        e = lex.attested(text)
+        if e and e['category'] == 'attached_pronoun':
+            hits = [e]
     if hits:
         return [_slot(word, offs, a, b, MABNI, 'lexicon', lexicon=[h['entry_id'] for h in hits],
                       note=hits[0]['category'])]
@@ -107,7 +113,10 @@ def _host(word, toks, offs, a, b, lex, at_word_start):
     for suf in sorted(STEM_SUFFIXES, key=lambda s: -len(letters(s))):
         stoks = match_letters(suf)
         k = len(stoks)
-        if b - k - a < MIN_STEM or radical_nun(toks[a:b], suf):
+        if suf == 'نَا' and b - k - 1 >= a and SUKUN in toks[b - k - 1][1]:
+            continue                                # «نَا» بعد ساكن ضمير الفاعل في الماضي (جَعَلۡنَا) لا يُفصل كالتاء
+        if (b - k - a < MIN_STEM and not short_host(toks[a:b - k])) or radical_nun(toks[a:b], suf) or \
+                toks[b - k][0] == 'ة' or not ha_kasra_ok(toks[a:b], suf):   # التاء المربوطة ليست هاء الضمير (ٱلۡجِنَّةِ)
             continue
         cand = [(L, frozenset(m)) for L, m in toks[b - k:b]]
         if plain(cand, True) == plain(stoks, True) and vocal_compatible(cand, stoks)[0]:
@@ -120,10 +129,22 @@ def _host(word, toks, offs, a, b, lex, at_word_start):
         slots.append(tail)
     return slots
 
+# الحروف المقطّعة في أوائل السور: تُقرأ بأسماء حروفها (ألِفْ لامْ ميمْ)، فلا تُقطَّع كلماتٍ
+MUQATTAAT = {'الم', 'المص', 'الر', 'المر', 'كهيعص', 'طه', 'طسم', 'طس', 'يس', 'ص', 'حم', 'عسق', 'ق', 'ن'}
+
+def _muqattaat(toks):
+    """أوّل كلمة في الآية من الحروف المقطّعة: صورتها في القائمة، ولا حركة على حروفها"""
+    return plain(toks) in MUQATTAAT and not any(m & MOVING for _, m in toks)
+
 def segment_word(word, wi, cands, lex):
     toks = [(L, set(m)) for L, m in letters(word)]
     offs = _offsets(word)
     n = len(toks)
+    if wi == 0 and _muqattaat(toks):
+        sl = _slot(word, offs, 0, n, MABNI, 'muqattaat', note='حروف مقطّعة: تُقرأ بأسماء حروفها')
+        sl.update(index=0, unit=0)
+        return dict(word_index=wi, word=word, toks=toks, slots=[sl],
+                    units=[dict(text=word, kind=FIXED, label='حروف مقطّعة', slots=[0], syllables=[])])
     emap = _exp_map(word)
     # 1. خانات العوامل (غير المرفوضة) بمواضعها في الحروف الأصلية
     by_span = {}
@@ -149,8 +170,8 @@ def segment_word(word, wi, cands, lex):
     # 1b. السابقة المرفوضة عاملاً حرفٌ مبني إن كانت في الملف (وَ العاطفة، لَ التوكيد): تبقى خانة لا تُقطَّع
     taken = [o['span'] for o in op_slots]
     for c in cands:
-        if c.get('status') != BLOCKED or not c['method'].startswith('proclitic'):
-            continue
+        if c.get('status') != BLOCKED or not c['method'].startswith('proclitic') or c.get('radical'):
+            continue                                   # الحرف الأصلي (كَيۡفَ، كَذَّبَتۡ) لا يُفصل
         a, b = c['char_span']
         if c.get('expanded', True):
             a, b = emap[a], emap[b - 1] + 1
@@ -319,6 +340,8 @@ def relate(segs, cands):
             continue
         r = dict(operator=c['operator'], group=c['group'], word_index=c['word_index'], slot=si,
                  target=None, expected=EXPECTED.get(c['group']), observed=None, consistent=None, note=None)
+        if c['group'] == '7' and strip_marks(c['operator']) in NO_JAZM:
+            r.update(expected=None, note='لا تجزم (الفهرس)')
         if c.get('kaffa'):
             r.update(expected=None, note='مكفوفة بما: لا تعمل')
             rels.append(r)
@@ -350,6 +373,8 @@ def relate(segs, cands):
             if tg2 != tg:
                 tg = tg2
                 r['note'] = 'شبه جملة مقدَّمة، والاسم مؤخَّر بعدها'
+        if tg and tg[0] == c['word_index'] and segs[tg[0]]['slots'][tg[1]]['text'] == 'تْ':
+            tg = _target(segs, tg[0], tg[1])    # فَكَانَتْ: تاء التأنيث ليست المعمول
         if tg:
             ts = segs[tg[0]]['slots'][tg[1]]
             r['target'] = dict(word_index=tg[0], slot=tg[1], text=ts['text'], type=ts['type'])
@@ -361,7 +386,7 @@ def relate(segs, cands):
                     ((m := stem_info(ts['text']))['pos'] == 'verb' or
                      (m['kind'] == 'mudari' and (c['group'] in ('5', '6', '7') or
                                                  strip_marks(c['operator']) in ('حتى', 'ل')))):   # حتى ولام التعليل قبل المضارع
-                r['target']['pos'] = 'verb'
+                r['target'].update(pos='verb', kind=m['kind'])
                 if c['group'] == '1':
                     r.update(expected='نصب', note='الجار قبل المضارع: النصب بأن مضمرة')
                 if m['kind'] == 'mudari' and c['group'] in VERB_CHECKED and r['expected']:
@@ -375,7 +400,11 @@ def relate(segs, cands):
             elif r['expected'] and c['group'] in CHECKED:
                 obs = _observed(segs[tg[0]], ts)
                 r['observed'] = obs
-                if obs == r['expected']:
+                if c['group'] == '10' and r['expected'] == 'رفع' and obs == 'نصب':
+                    # كَانَ مِيقَٰتًا: المنصوب بعدها خبرها، واسمها مستتر أو مؤخَّر
+                    r.update(expected='نصب', consistent=True, khabar_only=True,
+                             note='المنصوب بعدها خبرها، واسمها ضمير مستتر أو مؤخَّر')
+                elif obs == r['expected']:
                     r['consistent'] = True
                 elif obs and not ((r['expected'], obs) in (('جر', 'نصب'), ('نصب', 'جر'))):
                     r['consistent'] = False      # الجر بالفتحة (الممنوع من الصرف) والنصب بالكسرة (جمع المؤنث) لا يُحكم فيهما
@@ -399,12 +428,20 @@ def _role(r):
             text = f'مضارع منصوب بأن مضمرة بعد «{op}»'
         else:
             verb = {'نصب': 'منصوب', 'جزم': 'مجزوم'}.get(exp, exp)
-            text = f'مضارع {verb} بـ«{op}»' if r['observed'] not in (None,) else f'في محلّ {exp} بـ«{op}»'
+            if r['observed'] is not None:
+                text = f'مضارع {verb} بـ«{op}»'
+            elif t.get('kind') == 'madi':
+                text = f'في محلّ {exp} بـ«{op}»'
+            else:
+                # ماضٍ مبني في محلّه، أو مضارع بعلامة مقدَّرة أو محذوفة (يَخْشَىٰ، يَنتَهِ): لا تُميِّز الكتابة بينهما
+                text = f'أثر «{op}» فيه {exp}، ولا علامة ظاهرة في الكتابة'
     elif r['group'] == '1':
         if r.get('zaida'):
             text = 'مجرور لفظاً بالكاف الزائدة'
         else:
             text = f'في محلّ جر بـ«{op}»' if mahall else f'مجرور بـ«{op}»'
+    elif r.get('khabar_only'):
+        text = f'خبر «{op}» منصوب، واسمها ضمير مستتر أو مؤخَّر'
     elif r['group'] in NAME_OF:
         case = {'نصب': 'منصوب', 'رفع': 'مرفوع'}[exp]
         text = f'في محلّ {exp} اسم «{op}»' if mahall else f'اسم «{op}» {case}'

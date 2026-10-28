@@ -88,6 +88,11 @@ def cvmap(toks, ev):
                 and i >= 1 and toks[i - 1][0] == 'ل':
             ev['SOLAR_LAM_DELETED'] += 1; i += 1; continue       # لِلشَّهَادَةِ
 
+        # --- الإدغام الكامل: حرفٌ عارٍ (غير مدّي) قبل حرفٍ مشدَّد يُحذف، ويقوم نصف الشدة الأول مقامه
+        #     (عَٰهَدتَّ ← عَا.هَتْ.تَ، يُدۡرِككُّمُ) — تعميم حذف اللام الشمسية ---
+        if not mk and L not in ('ا', 'و', 'ي', 'ى') and nxt is not None and SHADDA in nxt[1] and seg:
+            ev['IDGHAM_DELETED'] += 1; i += 1; continue
+
         # --- و / ي حاملة للألف الخنجرية: الصَّلَوٰة / الزَّكَوٰة — الحرف رسم فقط، والخنجرية مدّ للفتحة قبلها ---
         if L in ('و', 'ي') and mk == {DAGGER_ALIF} and prev_v == 'a' and seg and seg[-1][0] == 'V':
             seg[-1] = ('VV', 'aa'); ev['DAGGER_ALIF_ON_CARRIER'] += 1; i += 1; continue

@@ -10,13 +10,19 @@ R1/R2  لام الأمر ولا الناهية: ما بعدها مضارع مج�
 R3     اسم الفعل الناصب: يُرفض إن كان ما بعده مرفوعاً
 R4     وَ الجارّة (القسم) وواو المعية: تُرفضان إن كان بعدها فعل، أو عامل، أو ضمير رفع منفصل
 R5     اللام المفتوحة الجارّة: تُرفض إن كان بعدها فعل (هي لام التوكيد أو جواب القسم)
+R6     حرف الجر وواو المعية: يُمنعان إن كان ما بعدهما مرفوعاً كتابةً (ضمة، أو تنوين ضم، أو ـُونَ)
+R8     السابقة: تُمنع إن بدأت بقية الكلمة بساكن أو مشدَّد (غير اللام وهمزة الوصل وبِسۡمِ)
+R9     بِ وكَ وتَ الجارّة المتصلة: تُمنع إن كان بعدها فعل
+R7     أداة الشرط الجازمة (مج 7، وإِنْ في مج 6): تُمنع إن كان ما بعدها مرفوعاً كتابةً
+       (مَا تَفْعَلُونَ، مَا يَوْمُ ٱلدِّينِ)؛ ولا يشمل لَوْ وإِذَا لأنهما لا تجزمان
 """
-from .chars import FATHA, DAMMA, DAMMATAN, plain, strip_marks as _strip_marks
-from .match import match_letters
-from .affix import stem_info, RAF_PRONOUNS
+from .chars import FATHA, DAMMA, DAMMATAN, SUKUN, SHADDA, plain, strip_marks as _strip_marks
+from .match import match_letters, PRON_SUFFIXES
+from .affix import stem_info, raf_mark, RAF_PRONOUNS
 from .status import DEFERRED, BLOCKED
 
 CASE = {'رفع': 'مرفوع', 'نصب': 'منصوب'}
+PRON_PLAIN = {_strip_marks(p) for p in PRON_SUFFIXES}
 
 
 def _text(toks):
@@ -39,8 +45,24 @@ def reject_candidates(found, words):
             continue
         info = stem_info(tgt)
         reason = None
+        # R8: السابقة لا يليها ساكن ولا مشدَّد في أول البقية، فالحرف أصليّ (كَيۡدَهُمۡ، كَذَّبَتۡ، وَيۡلٌ)؛
+        # إلا اللام (فَلۡيَنظُرِ، لِلَّهِ) وهمزة الوصل، و«بِسۡمِ» (حُذفت ألف «اسم» خطاً)
+        if f['method'].startswith('proclitic'):
+            first_L, first_m = match_letters(tgt)[0]
+            if (SUKUN in first_m or SHADDA in first_m) and first_L not in ('ل', 'ا') and \
+                    not _strip_marks(tgt).startswith('سم'):
+                f['checked'].append('R8 أول البقية ساكن')
+                reason = f"أول ما بعدها {'ساكن' if SUKUN in first_m else 'مشدَّد'}: الحرف من أصل الكلمة لا سابقة"
+                f['radical'] = True
+            # R9: حرف الجر المتصل (بِ، كَ، تَ) لا يدخل على الفعل
+            elif op in ('ب', 'ك', 'ت') and f['group'] == '1' and info['pos'] == 'verb':
+                f['checked'].append('R9 الفعل بعد حرف الجر')
+                reason = f"بعدها فعل ({'، '.join(info['evidence'])}): ليست جارّة"
+                f['radical'] = op == 'ك'            # كَفَرُوا: الكاف أصلية؛ والباء والتاء قد تكونان سابقتين غير جارّتين
         # R1/R2: لام الأمر ولا الناهية — ما بعدها مضارع مجزوم
-        if f['group'] == '6' and op in ('ل', 'لا'):
+        if reason:
+            pass
+        elif f['group'] == '6' and op in ('ل', 'لا'):
             f['checked'].append('R1/R2 المجزوم بعدها')
             if info['pos'] == 'noun':
                 reason = f"ما بعدها اسم ({'، '.join(info['evidence'])})"
@@ -71,6 +93,20 @@ def reject_candidates(found, words):
             f['checked'].append('R5 اللام المفتوحة قبل الفعل')
             if FATHA in match_letters(f['word'])[f['char_span'][0]][1] and info['pos'] == 'verb':
                 reason = f"اللام المفتوحة قبل الفعل ({'، '.join(info['evidence'])}) لام توكيد أو جواب قسم، لا جارّة"
+        # المعمول ضمير متصل بالعامل (عَلَيْكَ، لَهُ): مبني، فلا تدلّ حركته على الإعراب
+        on_pronoun = f['method'] == 'operator+suffix' or _strip_marks(tgt) in PRON_PLAIN
+        if not reason and not on_pronoun and (f['group'] == '1' or op == 'و' and f['group'] == '4'):
+            f['checked'].append('R6 المرفوع بعد الجار')
+            mark = raf_mark(tgt)
+            if mark:
+                what = 'تجرّ' if f['group'] == '1' else 'تنصب المفعول معه'
+                reason = f'ما بعدها مرفوع كتابةً ({mark})، و«{f["operator"]}» {what}'
+        if not reason and not on_pronoun and \
+                (f['group'] == '7' and op not in ('لو', 'إذا') or f['group'] == '6' and op == 'إن'):
+            f['checked'].append('R7 المرفوع بعد أداة الشرط')
+            mark = raf_mark(tgt)
+            if mark:
+                reason = f'ما بعدها مرفوع كتابةً ({mark})، وأداة الشرط تجزم: ليست شرطية هنا'
         if reason:
             f['status'], f['reject_reason'] = BLOCKED, reason
     return found

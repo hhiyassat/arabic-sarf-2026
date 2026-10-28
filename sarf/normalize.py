@@ -7,7 +7,7 @@ sarf.normalize — التطبيع:
 import re, unicodedata
 from collections import OrderedDict
 
-from .chars import SUKUN, MADDA_MARK, FATHA, letters, tokenize
+from .chars import SUKUN, SHADDA, MADDA_MARK, FATHA, letters, tokenize
 
 HAMZA_FORMS = {'أ': 'ء', 'إ': 'ء', 'ؤ': 'ء', 'ئ': 'ء', 'ء': 'ء'}
 
@@ -51,9 +51,13 @@ def drop_zero_letters(text):
     while i < len(text):
         ch = text[i]
         if i + 1 < len(text) and text[i + 1] == ZERO and ch in 'اويى':
-            prev = next((c for c in reversed(out) if not ('\u064B' <= c <= '\u0655' or c == '\u0670' or
-                                                          '\u06D6' <= c <= '\u06ED')), '')
-            if ch == 'ا' and prev == 'و':
+            k = len(out)
+            while k and ('\u064B' <= out[k - 1] <= '\u0655' or out[k - 1] == '\u0670' or '\u06D6' <= out[k - 1] <= '\u06ED'):
+                k -= 1
+            prev = out[k - 1] if k else ''
+            # واو الجماعة لا حركة عليها (كَفَرُوا۟)؛ أما ٱلرِّبَوٰا۟ فواوها مفتوحة
+            prev_marks = [c for c in out[k:] if '\u064B' <= c <= '\u0652' or c == '\u0670']
+            if ch == 'ا' and prev == 'و' and not prev_marks:
                 out.append(ch)
             i += 2
             continue
@@ -67,9 +71,9 @@ def uthmani_normalize(text, implicit_sukun=None):
     implicit_sukun: في الرسم العثماني الحرف العاري (غير المدّي) ساكن مُخفى/مدغم (تَدَايَنتُم).
     None ⇒ يُفعَّل تلقائياً إن ظهرت علامات عثمانية في النص.
     """
+    if implicit_sukun is None:                         # يُكشف قبل أي تعديل (ومنه NFC الذي يدمج ٓ في آ)
+        implicit_sukun = any(ch in UTHMANI_SIGNS or ord(ch) in KFGQPC_MAP or ch in '\u06E1\u0654\u0655' for ch in text)
     text = unicodedata.normalize('NFC', text)
-    if implicit_sukun is None:                         # يُكشف قبل أي تعديل يحذف العلامات العثمانية
-        implicit_sukun = any(ch in UTHMANI_SIGNS or ch in KFGQPC_MAP or ch == '\u06E1' for ch in text)
     # ترميز مصحف المجمّع (KFGQPC): التنوين «المفتوح» صورةٌ للتنوين نفسه (إخفاء/إدغام)،
     # والهمزة فوق المطّة همزةٌ على السطر (مَـَٔابًا ← مَءَابًا)؛ وعلامة الاتجاه تُحذف
     text = text.translate(KFGQPC_MAP)
@@ -105,7 +109,10 @@ def uthmani_normalize(text, implicit_sukun=None):
             mk = set(mk)
             if not mk and L not in MADD_LETTERS and L != 'ة' and 'ء' <= L <= 'ي':
                 prev_al = i > 0 and toks[i - 1][0] == 'ا'
-                if not (L == 'ل' and prev_al):          # لام التعريف تبقى للمقطِّع
+                # الحرف العاري قبل حرفٍ مشدَّد مدغمٌ فيه إدغاماً كاملاً (اصطلاح ضبط المصحف):
+                # يبقى عارياً ليحذفه المقطِّع (لِّلنَّاسِ، عَٰهَدتَّ، يُدۡرِككُّمُ)؛ ولام التعريف بعد الألف كذلك
+                mudgham = i + 1 < len(toks) and SHADDA in toks[i + 1][1]
+                if not (L == 'ل' and prev_al) and not mudgham:
                     mk.add(SUKUN)
             rebuilt.append(L + ''.join(sorted(mk)))
         words.append(''.join(rebuilt))
