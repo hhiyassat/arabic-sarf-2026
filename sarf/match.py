@@ -162,6 +162,16 @@ def _match_word(cat, word, wi, toks):
                 emit(op, (off, off + 2), 'operator+suffix' + tag, 0, 'medium', host_rest=plain(rest),
                      note='أجوف: حُذفت عينه مع ضمير الرفع المتحرك')
                 hit = True
+        # 3d. كُنَّا، كُنَّ: نون الفعل مدغمة في نون الضمير (كُنْ + نَا)
+        for op in cat.single:
+            if op['group'] not in HOLLOW_GROUPS or len(op['toks']) != 3 or op['toks'][1][0] != 'ا' \
+                    or op['toks'][2][0] != 'ن':
+                continue
+            if len(t) in (2, 3) and t[0][0] == op['toks'][0][0] and t[1][0] == 'ن' and SHADDA in t[1][1] \
+                    and plain(t[2:]) in ('ا', ''):
+                emit(op, (off, off + 2), 'operator+suffix' + tag, 0, 'medium', host_rest='ن' + plain(t[2:]),
+                     note='نون الفعل مدغمة في نون الضمير')
+                hit = True
         # اجتماع تحليلي اسم الفعل: مطابقة كاملة + مطابقة مع لاحقة ⇒ ثقة كليهما medium
         if g9_whole and any(r['method'].startswith('operator+suffix') for r in results):
             for r in results:

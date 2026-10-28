@@ -28,7 +28,7 @@ sarf.segment — المقشِّر: تجزئة الكلمة إلى خانات (sl
 وأل، والضمائر). وتقشير زوائد البنية (أحرف المضارعة وغيرها) لم يُكتب بعد.
 """
 from .chars import (FATHA, DAMMA, KASRA, SUKUN, FATHATAN, DAMMATAN, KASRATAN,
-                    MARKS, letters, plain)
+                    MARKS, letters, plain, strip_marks)
 from .divine import divine_name
 from .match import PRON_SUFFIXES, match_letters, vocal_compatible
 from . import syllabify as cv
@@ -181,11 +181,24 @@ def segment_word(word, wi, cands, lex):
         if op:
             slots.append(op)
             pos = op['span'][1]
-    # ياء الحرف المدغمة في ياء المتكلم (إِلَىَّ): نصف الشدة الأول للعامل، والثاني للضمير
-    for i, s in enumerate(slots[:-1]):
-        if s['type'] == AMIL and any('مدغمة' in (c.get('note') or '') for c in s.get('cands', [])):
+    # الحرف المدغم في الضمير: نصف الشدة الأول للعامل، والثاني للضمير
+    #   إِلَىَّ = [إِلَيْ][يَ]، كُنَّا = [كُنْ][نَا]
+    for i, s in enumerate(slots):
+        notes = [c.get('note') or '' for c in s.get('cands', [])] if s['type'] == AMIL else []
+        if any('ياء المتكلم مدغمة' in n for n in notes) and i + 1 < len(slots):
             s['text'] += 'يْ'
             slots[i + 1]['text'] = 'يَ'
+        elif any('نون الفعل مدغمة' in n for n in notes):
+            a, b = s['span']
+            tail = word[offs[b - 1][1]:]
+            s['text'] = word[offs[a][0]:offs[b - 1][0]] + 'نْ'
+            pron = _slot(word, offs, b - 1, n, MABNI, 'enclitic', note='ضمير متصل')
+            pron['text'] = 'نَ' + tail
+            pron['span'] = (b, n) if b < n else (b - 1, n)
+            if i + 1 < len(slots) and slots[i + 1]['role'] == 'enclitic':
+                slots[i + 1] = pron
+            else:
+                slots.insert(i + 1, pron)
     # 3. المبني لا يكون إلا ما في الملف: ما لم يُوجد فيه من حرف عطف أو كافة أو ضمير يصير جذعاً
     for s in slots:
         if s['type'] == MABNI and s['role'] in ('conj', 'kaffa', 'enclitic'):
@@ -231,12 +244,46 @@ def _observed(seg, slot):
     a, b = slot['span']
     toks = seg['toks']
     L, mk = toks[b - 1]
+    if L == 'ا' and not mk and b - a > 1 and FATHATAN in toks[b - 2][1]:
+        return 'نصب'                                   # يُسْرًا: ألف تنوين النصب
     if L == 'ن' and FATHA in mk and b - a > 2 and toks[b - 2][0] in ('و', 'ي'):
         return None                                    # ـونَ/ـينَ: علامة بالحرف
     for m, case in MARK_CASE.items():
         if m in mk:
             return case
     return None
+
+# الاسم المؤخَّر: إنّ وأخواتها وكان وأخواتها قد يليها خبرٌ شبه جملة مقدَّم (فَإِنَّ مَعَ ٱلْعُسْرِ يُسْرًا،
+# لَيْسَ كَمِثْلِهِۦ شَىْءٌ)، فيُتجاوَز الظرف أو الجار مع ما بعده إلى الاسم
+DEFERRED_NAME = {'2', '10', '11'}
+ZURUF = {'مع', 'عند', 'لدى', 'لدن', 'فوق', 'تحت', 'بين', 'قبل', 'بعد', 'أمام', 'خلف', 'وراء', 'دون',
+         'حول', 'قدام', 'إزاء', 'تلقاء'}
+
+def _tawkid_lam(slot):
+    """اللام المفتوحة قبل الاسم الظاهر لام توكيد (مزحلقة) لا جارّة: إِنَّ فِى ذَٰلِكَ لَءَايَةً"""
+    return slot['type'] == AMIL and slot['text'] == 'ل' + FATHA
+
+def _first_content(seg):
+    return next((t['index'] for t in seg['slots']
+                 if t['role'] not in ('conj', 'article', 'proclitic') and not _tawkid_lam(t)), None)
+
+def _skip_semi_clause(segs, tg):
+    """الهدف ظرف أو جار → الكلمة بعد مجروره أو المضاف إليه؛ وإلا الهدف نفسه"""
+    wi, si = tg
+    seg, slot = segs[wi], segs[wi]['slots'][si]
+    is_jar = slot['type'] == AMIL and all(g == '1' for _, g in slot['operators'])
+    bare = strip_marks(slot['text'])
+    with_pron = slot['type'] == STEM and any(bare == z + strip_marks(p) for z in ZURUF for p in PRON_SUFFIXES)
+    is_zarf = slot['type'] == STEM and (bare in ZURUF or with_pron)       # مَعَ، مَعَهُۥ
+    if not (is_jar or is_zarf):
+        return tg
+    rest_in_word = with_pron or any(t['index'] > si for t in seg['slots'])   # مجرور أو مضاف إليه في الكلمة
+    nxt = wi + 1 if rest_in_word else wi + 2
+    if nxt < len(segs):
+        fc = _first_content(segs[nxt])
+        if fc is not None:
+            return nxt, fc
+    return tg
 
 def _after_article(seg, si):
     return si > 0 and seg['slots'][si - 1]['role'] == 'article'
@@ -270,6 +317,18 @@ def relate(segs, cands):
             rels.append(r)
             continue
         tg = _target(segs, c['word_index'], si)
+        slot = seg['slots'][si]
+        if tg and _tawkid_lam(slot) and segs[tg[0]]['slots'][tg[1]]['type'] != MABNI:
+            ts = segs[tg[0]]['slots'][tg[1]]
+            r.update(expected=None, note='اللام المفتوحة قبل الاسم الظاهر لام توكيد: لا تعمل',
+                     target=dict(word_index=tg[0], slot=tg[1], text=ts['text'], type=ts['type']))
+            rels.append(r)
+            continue
+        if tg and c['group'] in DEFERRED_NAME:
+            tg2 = _skip_semi_clause(segs, tg)
+            if tg2 != tg:
+                tg = tg2
+                r['note'] = 'شبه جملة مقدَّمة، والاسم مؤخَّر بعدها'
         if tg:
             ts = segs[tg[0]]['slots'][tg[1]]
             r['target'] = dict(word_index=tg[0], slot=tg[1], text=ts['text'], type=ts['type'])
