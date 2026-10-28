@@ -850,9 +850,28 @@ def word_case(a, wi, verbs=()):
     if 'toks' not in seg:
         seg = dict(seg, toks=[(L, set(m)) for L, m in letters(seg['word'])])
     try:
-        return _observed(seg, stem[-1])
+        c = _observed(seg, stem[-1])
     except (IndexError, KeyError):
         return None
+    st = letters(stem[-1]['text'])
+    bare = _bare_w(stem[-1]['text'])
+    if c == 'جزم':
+        return None                                   # لا جزم في الاسم: قراءةٌ خاطئة للسكون
+    if bare in ('قبل', 'بعد') and c == 'رفع':
+        return None                                   # مبنيّان على الضم إذا قُطعا عن الإضافة
+    # جمع المؤنث السالم يُنصب بالكسرة: الكسرة بعد «ات» جرٌّ أو نصب (ٱلصَّٰلِحَٰتِ، جَنَّٰتٍ)
+    if c == 'جر' and len(st) >= 3 and st[-2][0] == 'ا' and st[-1][0] == 'ت':
+        return 'جر أو نصب'
+    # الممنوع من الصرف يُجرّ بالفتحة: فتحةٌ بلا تنوين ولا «أل» ولا لاحقة جرٌّ أو نصب (إِسۡرَٰٓءِيلَ، إِبۡرَٰهِيمَ)،
+    # إلا أن يكون مضافاً يليه معرَّف (كِتَٰبَ ٱللَّهِ)
+    if c == 'نصب' and st and FATHA in st[-1][1] and not st[-1][1] & {FATHATAN} and \
+            not any(sl['type'] == 'أل' for sl in seg['slots']) and seg['slots'][-1] is stem[-1]:
+        nxt = a['segments'][wi + 1] if wi + 1 < len(a['segments']) else None
+        mudaf = nxt is not None and any(sl['type'] in ('أل', 'لفظ الجلالة') or
+                                        sl['type'] == 'مبني' and _bare_w(sl['text']).startswith('ال') for sl in nxt['slots'])
+        if not mudaf:
+            return 'نصب أو جر'
+    return c
 
 
 def _governed_words(a):
@@ -1270,8 +1289,9 @@ def cross_ayah_links(analyze_fn, prev, nxt):
     conj = len(na['segments'][0]['slots']) > 1 and _bare_w(na['segments'][0]['slots'][0]['text']) in ('و', 'ف')
     if c0:
         verbs_p = {g['word_index'] for g in pa.get('agreement', [])}
-        same = next((w for w in range(n1 - 1, -1, -1) if word_case(pa, w, verbs_p) in (c0, 'جر أو نصب') or
-                     c0 == 'جر أو نصب' and word_case(pa, w, verbs_p) in ('جر', 'نصب')), None)
+        AMB = ('جر أو نصب', 'نصب أو جر')
+        same = next((w for w in range(n1 - 1, -1, -1) if word_case(pa, w, verbs_p) in (c0,) + AMB or
+                     c0 in AMB and word_case(pa, w, verbs_p) in ('جر', 'نصب')), None)
         src = pid(same, len(pa['segments'][same]['slots']) - 1) if same is not None else prev['units'][max(prev['units'])].id
         stem0 = len(na['segments'][0]['slots']) - 1
         if c0 == 'جر' and not conj:
@@ -1283,7 +1303,7 @@ def cross_ayah_links(analyze_fn, prev, nxt):
         elif c0 == 'نصب' and not conj and not nuc_span and not clause_ops:
             out.append(dict(src=src, dst=nid(0, stem0), rel='منصوبٌ بعاملٍ قبل الحدّ', proven=True,
                             rule='منصوبٌ في أول الآية ولا نواة ولا عامل إلى أول حدٍّ فيها: عامله قبل الحدّ'))
-        elif c0 in ('نصب', 'جر أو نصب') and same is not None and not conj:
+        elif c0 in ('نصب', 'جر أو نصب', 'نصب أو جر') and same is not None and not conj:
             out.append(dict(src=src, dst=nid(0, stem0), rel='بدلٌ أو نعتٌ أو حال', proven=False,
                             rule='منصوبٌ في أول الآية يوافق ما قبله في الإعراب: تابعٌ له، أو مفعولٌ مقدَّم لما بعده'))
     if w0.lstrip('وف') in RELATIVES and w0[:1] not in 'وف':

@@ -43,7 +43,8 @@ for l in open(H + 'data/quran_hafs.tsv', encoding='utf-8'):
             C['no_gold'] += 1
             continue
         C['n'] += 1
-        ok = gold[-1] == c or c == 'جر أو نصب' and gold[-1] in ('جر', 'نصب')
+        ok = gold[-1] == c or c in ('جر أو نصب', 'نصب أو جر') and gold[-1] in ('جر', 'نصب')
+        C['ambiguous'] += c in ('جر أو نصب', 'نصب أو جر')
         C['ok'] += ok
         if not ok and len(bad) < 40:
             bad.append(f'{s}:{v} {a["segments"][wi]["word"]} ours={c} qac={gold[-1]}')
