@@ -12,6 +12,7 @@ from .align import syllables_by_word
 from .mood import op_mood, has_inshai_operator
 from .output_text import relation_text, word_irab
 from .root import WAZN, soundness
+from .numbering import code as num_code, ALPHABET
 from .status import STATUS_AR, BLOCKED
 from .output_schema import to_schema
 
@@ -76,6 +77,8 @@ th,td{border:1px solid var(--border);padding:8px 10px;text-align:right;vertical-
 th{background:var(--th);font-size:17px;font-weight:700;white-space:nowrap}
 td.num{color:var(--muted);text-align:center;font-size:17px;width:3ch}
 td.word{font-size:24px;white-space:nowrap}
+td.nums{min-width:8em}
+.num{display:block;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:15px;white-space:nowrap;margin:3px 0;padding:0 6px;border:1px solid var(--border);border-radius:6px;text-align:center}
 td.cv{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:16px;direction:ltr;text-align:left;color:var(--muted)}
 .chip{display:inline-block;margin:2px 3px;padding:3px 10px;border-radius:8px;font-size:21px;
   border:1px solid currentColor;line-height:1.6}
@@ -276,20 +279,24 @@ def verse_html(a, idx, cat=None):
     for wi in range(n_words):
         word = words[wi] if wi < len(words) else raw_words[wi]
         units = a['segments'][wi]['units']
-        cells, pats = [], []
+        cells, pats, nums = [], [], []
         for u in units:
             if u['kind'] == 'cut':
                 cells.append(chips_html(u['syllables']))
                 pats.append(' '.join(s['cv'] for s in u['syllables']))
+                nums.append(''.join(f'<span class="num" dir="ltr">{esc(num_code(x["syl"]))}</span>'
+                                    for x in u['syllables']))
             else:
                 cells.append(f'<span class="chip t-FIXED">{esc(u["text"])}<small>{esc(u["label"])}</small></span>')
                 pats.append('—')
+                nums.append('<span class="muted">—</span>')
         rows.append(
             '<tr>'
             f'<td class="num">{wi}</td>'
             f'<td class="word">{esc(word)}</td>'
             f'<td>{"".join(cells)}</td>'
             f'<td class="cv">{esc(" | ".join(pats))}</td>'
+            f'<td class="nums">{"".join(nums)}</td>'
             f'<td>{irab_html([x for x in word_irab(a, wi) if x[2] != "T19c"])}</td>'
             f'<td>{morph_html(a, wi)}</td>'
             f'<td>{ops_html(ops_by_word.get(wi, []))}</td>'
@@ -308,7 +315,7 @@ def verse_html(a, idx, cat=None):
 
     table = (
         '<table><thead><tr>'
-        '<th>#</th><th>الكلمة</th><th>المقاطع</th><th>نمط CV</th><th>الإعراب</th><th>الفعل والجذر والوزن</th><th>العوامل</th>'
+        '<th>#</th><th>الكلمة</th><th>المقاطع</th><th>نمط CV</th><th>الترقيم</th><th>الإعراب</th><th>الفعل والجذر والوزن</th><th>العوامل</th>'
         '</tr></thead><tbody>' + ''.join(rows) + '</tbody></table>'
     )
 
@@ -487,6 +494,11 @@ def build_html(analyses, cat=None):
         '<div class="card">',
         '<div class="muted">الملخّص الإجمالي:</div>',
         summary_pills(grand, 'total'),
+        '<div class="muted" style="margin-top:6px">الترقيم (تجربة): الحروف من الهمزة إلى الياء، والألف خارجها: ' +
+        ' '.join(f'{L}{i}' for i, L in enumerate(ALPHABET, 1)) +
+        '. والحركات: الفتحة 29، والضمة 30، والكسرة 31، والسكون أو غياب الحركة 0. '
+        'والمد هو الحركة مكرَّرة (قَا = 21 29 29، لُو = 23 30 30، قِي = 21 31 31)، '
+        'والتنوين الحركة ثم نونٌ ساكنة (نٍ = 25 31 25 0)، والمشدَّد حرفان أولهما ساكن. وتُفصل المقاطع بنقطة.</div>',
         '<div class="muted" style="margin-top:6px">مفتاح الألوان:</div>',
         ''.join(key),
         '</div>',
