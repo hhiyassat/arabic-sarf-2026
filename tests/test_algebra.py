@@ -87,5 +87,18 @@ if hfn():
     check('ما لم يُغلق محفوظ: كل خلية يبلغها البناء',
           {c.id for c in flatten(Sg)} == {c.id for G in units.values() for c in G.O['cells']})
     check('والجملة غير المكتملة مؤجَّلة لا مغلقة', not Sg.closed and Sg.open_required())
+# اسم الفاعل من الأجوف: «يعتلّ باعتلال فعله» — الهمزة بدلٌ من العين إن كان الفعل معلّ العين
+if hfn():
+    from sarf.algebra import participle_analyses, sibawayh_analyses, _verb_ilal
+    H_ = hfn()
+    check('قَامَ معلّ العين، فقَائِم يحتمل «ق و م»', _verb_ilal(H_, 'قوم') in ('معلّ', 'كلاهما') and
+          'قوم' in {p[0] for p in participle_analyses(cells_of('قَائِمٌ', 'q')[0])})
+    check('عَاوِر: العين صحيحة لأن الفعل عَوِرَ صحيح العين', {p[0] for p in participle_analyses(cells_of('عَاوِرٌ', 'q')[0])} == {'عور'})
+    check('كَاتِب لا همزة فيه فلا أجوف', {p[0] for p in participle_analyses(cells_of('كَاتِبٌ', 'q')[0])} == {'كتب'})
+    # أبنية سيبويه للاسم
+    for w, root, pat in [('كِتَابٌ', 'كتب', 'فِعَالٌ'), ('رَبِّ', 'ربب', 'فَعْلٌ'), ('أَزْوَٰجًا', 'زوج', 'أَفْعَالٌ')]:
+        r = sibawayh_analyses(cells_of(w, 's')[0])
+        check(f'{w} = Realize({root}, {pat}) من أبنية سيبويه', {x[0] for x in r} == {root} and pat in {x[3] for x in r},
+              [(x[0], x[3]) for x in r])
 print('ALL OK' if not bad else f'FAILED {bad}')
 sys.exit(1 if bad else 0)

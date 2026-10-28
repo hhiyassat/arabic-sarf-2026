@@ -482,6 +482,25 @@ def unit_geo(a, wi, ui, base_id, T, governed_info=None):
                 G.Omega[0].met, G.Omega[0].ev = True, ev
                 close(G, ev, Evidence('حدّ الخانة', ['من المقشِّر: ' + '+'.join(sl['type'] for sl in slots)]), T)
                 return G
+        if not roots:
+            sib = sibawayh_analyses(stem_cells)
+            sroots = sorted({x[0] for x in sib})
+            if len(sroots) == 1:
+                x = sib[0]
+                pats = sorted({f'{y[3]} ({y[1]}، {y[2]})' for y in sib})
+                alpha = ['أل'] * (len(cells) - len(stem_cells)) + x[4]
+                G.Theta.update(R=x[0], P='بناء سيبويه: ' + ' أو '.join(pats), F=dict(kind='اسم', pos='بناء'),
+                               alpha=alpha, ops=[])
+                ev = Evidence(f'Realize({" ".join(x[0])}, {x[3]}): من أبنية الأسماء عند سيبويه',
+                              [f'الاسمية: {noun_proof}', f'الكتاب {x[2]} ({x[1]}): {x[3]}، ومن أمثلته {x[5][:40]}',
+                               f'الجذر {x[0]} في HFN', f'α = ⟨{", ".join(alpha)}⟩',
+                               'الملف غير مصدَّق من صاحب النظرية (owner_ratified=NO)'],
+                              [('جذرٌ آخر بقالبٍ آخر', 'جذر واحد في كل الأبنية المطابقة')])
+                G.Omega[0].met, G.Omega[0].ev = True, ev
+                close(G, ev, Evidence('حدّ الخانة', ['من المقشِّر: ' + '+'.join(sl['type'] for sl in slots)]), T)
+                return G
+            if len(sroots) > 1:
+                roots = sroots
         defer(G, T, 'اسم: ' + ('أكثر من جذر في HFN: ' + '، '.join(roots) if len(roots) > 1 else
                                'لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)'))
         G.Omega[0].reason = 'اسم'
@@ -509,6 +528,9 @@ def unit_geo(a, wi, ui, base_id, T, governed_info=None):
     if agr:
         F.update(subject=agr.get('pronouns'), voice=agr.get('voice'))
     G.Theta.update(R=root, P=m['form_class'], F=F, alpha=alpha, ops=ops)
+    wm = wazn_meaning(m['form_class'])
+    if wm:
+        G.Theta['wazn_meaning'] = dict(wazn=wm[0], meaning=wm[1], sources=wm[2], status=wm[3])
     ev = Evidence(f'Realize({" ".join(root)}, {m["form_class"]}, {kind})',
                   [f'α = ⟨{", ".join(x or "?" for x in alpha)}⟩', 'Flatten(β) = الخلايا نفسها'] + ops,
                   [('خلية زائدة داخل الهيكل', 'كل خلية بين السابقة واللاحقة مقابَلة')])
@@ -616,7 +638,7 @@ def _match_participle(cells, tmpl):
     rad, alpha, ops = {}, [], []
     for (C, H, L), c in zip(tmpl, cells):
         if C.startswith('R'):
-            if c.C in 'وي' or rad.get(C, c.C) != c.C:
+            if c.C in 'وي' and not (C == 'R2' and tmpl[0] == ('R1', 'a', 2) and c.H == 'i') or rad.get(C, c.C) != c.C:
                 return None
             rad[C] = c.C
             alpha.append(C.lower())
@@ -635,6 +657,23 @@ def _match_participle(cells, tmpl):
     return ''.join(rad[k] for k in sorted(rad)), alpha, ops
 
 
+import os as _os
+RANK_BY_ATTESTATION = _os.environ.get('SARF_RANK_ATTESTATION') == '1'
+
+
+def _verb_ilal(H, root):
+    """عين الفعل الثلاثي في HFN: «معلّ» إن جاء ماضيه بألفٍ بعد الفاء (قَامَ، بَاعَ)، و«صحيح» إن ثبتت العين
+    واواً أو ياءً متحركة (عَوِرَ)، وإلا None"""
+    out = set()
+    for e in H.index.get((root, 'I'), []):
+        t = letters(e['verb'])
+        if len(t) >= 2 and t[1][0] == 'ا':
+            out.add('معلّ')
+        elif len(t) >= 2 and t[1][0] in 'وي' and t[1][1] & {FATHA, DAMMA, KASRA}:
+            out.add('صحيح')
+    return 'معلّ' if out == {'معلّ'} else 'صحيح' if out == {'صحيح'} else ('كلاهما' if out else None)
+
+
 def participle_analyses(cells):
     """→ [(الجذر، الوزن، فاعل/مفعول، α، العمليات، المستوى)] مرخَّصة بحدثٍ في HFN بالجذر والوزن،
     أو بالجذر وحده إن لم يُرخَّص بحدثٍ شيء (كما في الفعل)"""
@@ -646,10 +685,14 @@ def participle_analyses(cells):
         if m:
             root, alpha, ops = m
             matched.append((root, cls, kind, alpha, ops))
-            # الأجوف: همزة فاعل بعد الطول بدلٌ من العين (قَائِم ← قوم)
+            # الأجوف: «اسم الفاعل يعتلّ باعتلال فعله» (ابن يعيش، شرح المفصل ج5 ص448): قَامَ ← قَائِم، بَاعَ ← بَائِع.
+            # فهمزة فاعل بعد الطول بدلٌ من العين بشرط أن يكون الفعل نفسه مُعَلَّ العين (في ماضيه ألف: قَامَ)؛
+            # فإن صحّت عينه في الفعل (عَوِرَ) صحّت في اسم الفاعل (عَاوِر) ولم تُهمز
             if cls == 'I' and kind == 'فاعل' and root[1] == 'ء':
                 for w in 'وي':
-                    matched.append((root[0] + w + root[2], cls, kind, alpha, ops + [f'إبدال العين {w} ← ء']))
+                    r2 = root[0] + w + root[2]
+                    if _verb_ilal(H, r2) in ('معلّ', 'كلاهما'):
+                        matched.append((r2, cls, kind, alpha, ops + [f'إبدال العين {w} ← ء: الفعل معلّ العين']))
             # المثال والمهموز في افتعل: الفاء تاء مدغمة (مُتَّخِذ ← ءخذ)
             if cls == 'VIII' and root[0] == 'ت':
                 for w in 'ءوي':
@@ -666,8 +709,123 @@ def participle_analyses(cells):
                     for w in 'وي':
                         matched.append((m[0] + w, cls, kind, m[1] + ['لاحقة'] * (len(cells) - len(short)),
                                         m[2] + [f'حذف اللام {w}']))
+    # وعينٌ واو أو ياء صحيحة في فاعل (عَاوِر) لا تكون إلا من فعلٍ صحيح العين (عَوِرَ)
+    matched = [x for x in matched if not (x[1] == 'I' and x[2] == 'فاعل' and x[0][1] in 'وي' and
+                                          'إبدال العين' not in ' '.join(x[4]) and _verb_ilal(H, x[0]) not in ('صحيح', 'كلاهما'))]
     ev = [x + ('حدث',) for x in matched if (x[0], x[1]) in H.index]
+    if RANK_BY_ATTESTATION and len({x[0] for x in ev}) > 1:
+        # الترجيح بقوة الشهادة في HFN (A أقوى من B … E)، إن تفاضلت؛ وإلا بقي الاحتمال (تجربة تنتظر الإقرار)
+        rank = {x[0]: min((e['tier'][:1] or 'Z') for e in H.index[(x[0], x[1])]) for x in ev}
+        best = min(rank.values())
+        if sum(1 for r in set(rank) if rank[r] == best) == 1:
+            ev = [x + () for x in ev if rank[x[0]] == best]
     return ev or [x + ('جذر',) for x in matched if x[0] in H.roots]
+
+
+# ---------- معاني صيغ الأفعال (ملف أوزان الأفعال بمصادره، غير مصدَّق من صاحب النظرية) ----------
+_WMEAN = None
+
+
+def wazn_meaning(cls):
+    """الوزن I…X ← (المعنى، المصادر، حالة الإقرار) من data/patterns/awzaan_af3aal_all.csv؛
+    والثلاثي المجرد يتوقف على بابه (حركة عين المضارع)، فلا يُسنَد إليه معنى هنا"""
+    global _WMEAN
+    if _WMEAN is None:
+        import csv, os
+        _WMEAN = {}
+        path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                            'data', 'patterns', 'awzaan_af3aal_all.csv')
+        if os.path.exists(path):
+            for x in csv.DictReader(open(path, encoding='utf-8-sig')):
+                code = x['wazn_code'].strip()
+                if code and code != 'I' and code not in _WMEAN:
+                    _WMEAN[code] = (x['wazn'], x['wazn_meaning'] or x['meaning'],
+                                    ' | '.join(u for u in (x['source_shadha'], x['source_sibawayh'], x['source_radi']) if u),
+                                    'مُقَرّ' if x['owner_ratified'] == 'YES' else 'غير مُقَرّ')
+    return _WMEAN.get(cls)
+
+
+# ---------- أبنية الأسماء عند سيبويه (الكتاب ج4 ص242 وما بعدها): قوالب للاسم ----------
+_SIB = None
+SIB_PATHS = ['data/patterns/awzan_sibawayh_308.csv']
+
+
+def sibawayh_patterns():
+    """→ [(المعرِّف، الصفحة، البناء، القالب، الأمثلة)] من ملف أبنية سيبويه: الموجود والنادر المعيَّن الضبط،
+    والقالب بخلايا البناء: ف ع ل ↦ R1 R2 R3 (والرباعي والخماسي لاماته R3…R5)، وآخر خلية حركتها حركة الإعراب"""
+    global _SIB
+    if _SIB is not None:
+        return _SIB
+    import csv, os
+    H = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    path = next((os.path.join(H, x) for x in SIB_PATHS if os.path.exists(os.path.join(H, x))), None)
+    _SIB = []
+    if not path:
+        return _SIB
+    for x in csv.DictReader(open(path, encoding='utf-8-sig')):
+        pat = x['pattern_vocalized']
+        if x['status'] not in ('EXISTS', 'RARE') or x['vocalization_basis'] == 'UNDETERMINED' or '?' in pat:
+            continue
+        cs, _ = cells_of(pat, 'p')
+        if not cs:
+            continue
+        quad = x['section'].startswith(('رباعي', 'خماسي'))
+        seen, tmpl = {}, []
+        lams = 0
+        for c in cs:
+            if c.C in 'فع':
+                C = 'R1' if c.C == 'ف' else 'R2'
+            elif c.C == 'ل':
+                if quad and not (c.H == 'a' and False):
+                    # الرباعي والخماسي: كل لامٍ أصلٌ جديد، إلا الشدة (اللام الثانية من خليتي الشدة)
+                    if c.O.get('role') == 'شدة: الثاني':
+                        C = f'R{2 + lams}'
+                    else:
+                        lams += 1
+                        C = f'R{2 + lams}'
+                else:
+                    C = 'R3'
+            else:
+                C = c.C
+            tmpl.append((C, c.H, c.L))
+        last = len(tmpl) - 1
+        if pat[-1] in '\u064C\u064F':                # الحركة الأخيرة إعراب
+            C, H_, L = tmpl[last]
+            tmpl[last] = (C, '*', '*' if L == 1 else L)
+        _SIB.append((x['id'], x['page'], pat, tmpl, x['examples']))
+    return _SIB
+
+
+def sibawayh_analyses(cells):
+    """→ [(الجذر، المعرِّف، الصفحة، البناء، α، الأمثلة)] لكل بناءٍ يطابق الخلايا وجذرُه في HFN"""
+    from .root import hfn
+    H = hfn()
+    out = []
+    for sid, page, pat, tmpl, ex in sibawayh_patterns():
+        if len(cells) < len(tmpl):
+            continue
+        rad, alpha, ok = {}, [], True
+        for (C, Hh, L), c in zip(tmpl, cells):
+            if C.startswith('R'):
+                if rad.get(C, c.C) != c.C or (c.C in 'وي' and c.H == '∅' and False):
+                    ok = False; break
+                rad[C] = c.C
+                alpha.append(C.lower())
+            elif c.C != C:
+                ok = False; break
+            else:
+                alpha.append(f'زائد:{C}')
+            if Hh != '*' and c.H != Hh or L != '*' and c.L != L:
+                ok = False; break
+        if not ok:
+            continue
+        rest = cells[len(tmpl):]
+        if len(rest) > 1 or rest and rest[0].C not in NOUN_SUFFIX:
+            continue
+        root = ''.join(rad[k] for k in sorted(rad))
+        if root in H.roots:
+            out.append((root, sid, page, pat, alpha + ['لاحقة'] * len(rest), ex))
+    return out
 
 
 # ---------- المستوى 3: الجملة (الآية) ----------

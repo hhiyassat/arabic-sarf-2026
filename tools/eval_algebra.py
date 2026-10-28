@@ -38,19 +38,20 @@ for l in open(H + 'data/quran_hafs.tsv', encoding='utf-8'):
         if not G.closed or not G.Theta.get('R') or wi not in amap:
             continue
         route = ('فعل' if (G.Theta.get('F') or {}).get('kind') != 'اسم' else
-                 'اسم فاعل/مفعول قياساً' if str(G.Theta.get('P', '')).startswith('اسم') else 'مدخل معجمي (مصدر وغيره)')
+                 'اسم فاعل/مفعول قياساً' if str(G.Theta.get('P', '')).startswith('اسم') else
+                 'بناء سيبويه' if str(G.Theta.get('P', '')).startswith('بناء سيبويه') else 'مدخل معجمي (مصدر وغيره)')
         roots = [f[5:].translate(HZ) for _, _, fs in Q[(s, v, amap[wi])] for f in fs if f.startswith('ROOT:')]
         C[route] += 1
         if roots and G.Theta['R'] == roots[0]:
             C[route + ' ✓'] += 1
         elif len(bad[route]) < 25:
             bad[route].append(f'{s}:{v} {G.O["text"]} ours={G.Theta["R"]} qac={roots[:1]}')
-P = H + 'reports/algebra_metrics.json'
+P = os.environ.get('SARF_ALG_METRICS', H + 'reports/algebra_metrics.json')
 M = json.load(open(P, encoding='utf-8'))
 M['root_vs_qac'] = dict(C)
 M['root_vs_qac_misses'] = dict(bad)
 json.dump(M, open(P, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
-for r in ('فعل', 'اسم فاعل/مفعول قياساً', 'مدخل معجمي (مصدر وغيره)'):
+for r in ('فعل', 'اسم فاعل/مفعول قياساً', 'مدخل معجمي (مصدر وغيره)', 'بناء سيبويه'):
     print(r, C[r + ' ✓'], '/', C[r], f'{100 * C[r + " ✓"] / max(C[r], 1):.1f}%')
 for r, xs in bad.items():
     print('==', r); print('\n'.join(xs[:12]))

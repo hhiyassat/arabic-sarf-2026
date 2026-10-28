@@ -133,7 +133,8 @@ for n, (s, v, text) in enumerate(rows):
             C['units_closed'] += 1
             route = ('Lex' if not G.Theta.get('R') else
                      'Realize: فعل' if (G.Theta.get('F') or {}).get('kind') != 'اسم' else
-                     'Realize: اسم فاعل/مفعول' if 'اسم' in str(G.Theta.get('P', ''))[:4] else 'بناء معجمي: مصدر وغيره')
+                     'Realize: اسم فاعل/مفعول' if 'اسم' in str(G.Theta.get('P', ''))[:4] else
+                     'Realize: بناء سيبويه' if str(G.Theta.get('P', '')).startswith('بناء سيبويه') else 'بناء معجمي: مصدر وغيره')
             close_route[route] += 1
         else:
             unit_reason[G.O.get('deferred', '').split(':')[0]] += 1
@@ -169,7 +170,7 @@ C['topic_cells'] = len(flatten(topic))
 M = dict(counts=dict(C), unit_deferred=dict(unit_reason.most_common()), sentence_open=dict(open_kind.most_common()),
          unit_closed_by=dict(close_route.most_common()), failures={k: v[:40] for k, v in fail.items()},
          samples={f'{s}:{v}': x for (s, v), x in sorted(samples.items())})
-json.dump(M, open(H + 'reports/algebra_metrics.json', 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+json.dump(M, open(os.environ.get('SARF_ALG_METRICS', H + 'reports/algebra_metrics.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 print(json.dumps(M['counts'], ensure_ascii=False, indent=1))
 print('unit_deferred', M['unit_deferred'])
 print('sentence_open', M['sentence_open'])
