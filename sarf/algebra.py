@@ -865,6 +865,9 @@ def word_case(a, wi, verbs=()):
     # «انِ»: رفعُ المثنى، أو جرُّ ما آخره ألف ونون (ٱلۡفُرۡقَانِ، ءَاذَانِهِمۡ): لا تدلّ
     if c == 'رفع' and len(st) >= 2 and st[-1][0] == 'ن' and KASRA in st[-1][1] and st[-2][0] == 'ا':
         return None
+    # تنوين «إذ» في يَوۡمَئِذٍ وحِينَئِذٍ تنوينُ عِوَض، لا علامة جرّ للكلمة
+    if bare.endswith('ئذ'):
+        return None
     from .segment import ZURUF
     if bare in ZURUF:
         return None                                   # الظرف: حالته لا تخصّ هذه القواعد
@@ -980,6 +983,21 @@ def find_khabar(a, r, verbs, governed, marks):
     return None
 
 
+def _madi_like(text):
+    """صورة الماضي قبل الضمير: حروفٌ متحركة كلها بلا مدّ ولا سكون (أَكَلَ، جَعَلَ، بعد واوٍ أو فاء)،
+    أو آخرها ضمير رفعٍ بعد ساكن (رَفَعۡنَٰ، قُلۡتُ)"""
+    st = letters(text)
+    if len(st) >= 2 and st[0][0] in 'وف' and FATHA in st[0][1] and len(st) > 3:
+        st = st[1:]
+    if len(st) >= 3 and (st[-1][0] == 'ت' or ''.join(L for L, _ in st[-2:]) == 'نا' or
+                         st[-1][0] == 'ن' and DAGGER_ALIF in st[-1][1]):
+        k = -2 if st[-1][0] == 'ت' or DAGGER_ALIF in st[-1][1] else -3
+        if SUKUN in st[k][1]:
+            return True
+    return 3 <= len(st) <= 4 and all(m & {FATHA, DAMMA, KASRA} and not m & {SUKUN} for _, m in st) and \
+        not any(L in 'اوي' and not m & {FATHA, DAMMA, KASRA} for L, m in st) and FATHA in st[-1][1]
+
+
 def find_object(a, g, verbs, governed, marks, units, unit_of):
     """المفعول به لفعلٍ متعدٍّ: الضمير المتصل بعده في كلمته، أو أول منصوبٍ بعده (يُتجاوز مرفوعٌ واحد هو الفاعل)
     إلى أول حدٍّ أو فعلٍ آخر، ولا عامل فيه غيره. → (رقم الوحدة، الدليل) أو None"""
@@ -992,15 +1010,25 @@ def find_object(a, g, verbs, governed, marks, units, unit_of):
     w = wi + 1
     if _boundary_after(marks, wi):
         return None
+    clause_w = {f['word_index'] for f in a['operators'] if f['group'] in CLAUSE_OPS and f.get('status') != 'blocked'}
     while w < len(a['segments']):
-        if w in verbs:
-            break
+        if w in verbs or w in clause_w:
+            break                                     # فعلٌ آخر أو عامل تركيبٍ جديد (أنّ، كان، الشرط): ما بعده لغيره
+        sg = a['segments'][w]
+        stem = [sl for sl in sg['slots'] if sl['type'] in ('جذع', 'لفظ الجلالة')]
         c = word_case(a, w, verbs)
+        # المعطوف بالواو أو الفاء معطوفٌ على ما قبله، لا مفعولٌ أول (لِتَسۡكُنُواْ فِيهِ وَٱلنَّهَارَ)
+        if len(sg['slots']) > 1 and _bare_w(sg['slots'][0]['text']) in ('و', 'ف') and sg['slots'][0]['type'] != 'جذع':
+            break
+        time_adv = stem and _bare_w(stem[-1]['text']) in ('يوم', 'حين', 'ساعة', 'ليلة', 'غدا')
+        # المنصوب اسمٌ بدليلٍ مكتوب، أو جذعٌ بعده ضمير (أَبۡنَآءَهُمۡ)؛ وفتحة المضارع المؤكَّد (لَيَعۡلَمَنَّ) ليست نصباً
+        nounish = noun_evidence(sg) or (stem and sg['slots'][-1]['type'] == 'مبني' and not _madi_like(stem[-1]['text']))
         if c == 'رفع' and not skipped_subject:
             skipped_subject = True
-        elif c in ('نصب', 'جر أو نصب') and w not in governed:
-            return (units[(w, a['segments'][w]['slots'][-1].get('unit', 0))].id if (w, a['segments'][w]['slots'][-1].get('unit', 0)) in units else None,
-                    'أول منصوب بعد الفعل ولا عامل فيه غيره')
+        elif w not in governed and not time_adv and nounish and stem and \
+                (c == 'نصب' or c == 'جر أو نصب' and w == wi + 1):
+            k = (w, stem[-1].get('unit', 0))
+            return (units[k].id if k in units else None, 'أول منصوب بعد الفعل ولا عامل فيه غيره')
         if _boundary_after(marks, w):
             break
         w += 1
@@ -1099,7 +1127,8 @@ def sentence_geo(a, vid, T):
             S.B.append(('إسناد', G.id, ' أو '.join(prons), ob.ev))
         S.Omega.append(ob)
         # المفعول به: التزامٌ جائز (يُحذف المفعول)، لا لازم؛ والتعدّي من HFN
-        if G.Theta.get('R') and G.Theta.get('P') and g.get('voice') != 'passive':
+        # «قال» ومعموله مقول القول جملةً محكيّة، لا مفعولٌ منصوب: فلا يُفتح له التزام المفعول
+        if G.Theta.get('R') and G.Theta.get('P') and g.get('voice') != 'passive' and G.Theta['R'] != 'قول':
             from .root import hfn
             tr = {e.get('transitivity') for e in hfn().index.get((G.Theta['R'], G.Theta['P']), [])}
             wm = wazn_meaning(G.Theta['P']) or ('', '', '', '')
@@ -1251,6 +1280,9 @@ def find_attachment(prev):
     return None
 
 
+ZURUF_TIME = ('اليوم', 'الآن')
+
+
 def cross_ayah_links(analyze_fn, prev, nxt):
     """الروابط بين آيتين متتاليتين من سورة واحدة. prev/nxt: dict(s, v, text، a، units).
     أ. التحليل المشترك: تُحلَّل الآيتان تياراً واحداً، فكل علاقةٍ مقبولة عاملُها في الأولى ومعمولها في الثانية رابطٌ ثابت.
@@ -1261,6 +1293,7 @@ def cross_ayah_links(analyze_fn, prev, nxt):
        - محتمل: شرطٌ في الأولى لا جواب له فيها؛ وناسخٌ في الأولى لم يُستوفَ خبره فيها
     → [dict(src, dst, rel, proven, rule)] بمعرِّفات الوحدات"""
     from .status import ACCEPTED
+    from .affix import stem_info
     out = []
     pa, na = prev['a'], nxt['a']
     n1 = len(pa['segments'])
@@ -1353,6 +1386,17 @@ def cross_ayah_links(analyze_fn, prev, nxt):
         elif c0 == 'جر' and conj:
             out.append(dict(src=src, dst=nid(0, stem0), rel='عطفٌ على مجرور أو قسم', proven=False,
                             rule='مجرورٌ بعد واو أو فاء في أول الآية: معطوفٌ على ما قبله، أو واو قسم'))
+        # ظرف الزمان المنصوب أولَ الآية (ٱلۡيَوۡمَ أُحِلَّ) عامله ما بعده غالباً؛ ومنصوبٌ يليه مضارعٌ لم تثبت فعليته
+        # (كُلࣰّا نُّمِدُّ) قد يكون مفعولاً مقدَّماً له: فلا يثبت العبور في الحالين
+        stem0_bare = _bare_w(seg0['slots'][-1]['text'])
+        time_adv = stem0_bare in ('يوم', 'حين', 'ساعة', 'ليلة', 'غدا') or stem0_bare in ZURUF_TIME
+        seg1 = na['segments'][1] if len(na['segments']) > 1 else None
+        fronted = seg1 is not None and 1 not in verbs_n and len(seg1['slots']) == 1 and \
+            seg1['slots'][0]['type'] == 'جذع' and not noun_evidence(seg1) and \
+            (stem_info(seg1['slots'][0]['text']) or {}).get('kind') == 'mudari'
+        if c0 == 'نصب' and not conj and (time_adv or fronted):
+            out.append(dict(src=src, dst=nid(0, stem0), rel='منصوبٌ عامله قبل الحدّ أو بعده', proven=False,
+                            rule='ظرف زمان أو منصوبٌ يليه مضارع لم تثبت فعليته: قد يعمل فيه ما بعده'))
         elif c0 == 'نصب' and not conj and not nuc_span and not clause_ops:
             out.append(dict(src=src, dst=nid(0, stem0), rel='منصوبٌ بعاملٍ قبل الحدّ', proven=True,
                             rule='منصوبٌ في أول الآية ولا نواة ولا عامل إلى أول حدٍّ فيها: عامله قبل الحدّ'))
