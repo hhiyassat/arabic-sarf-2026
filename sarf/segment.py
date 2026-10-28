@@ -263,6 +263,12 @@ def _tawkid_lam(slot):
     """اللام المفتوحة قبل الاسم الظاهر لام توكيد (مزحلقة) لا جارّة: إِنَّ فِى ذَٰلِكَ لَءَايَةً"""
     return slot['type'] == AMIL and slot['text'] == 'ل' + FATHA
 
+def _kaf_zaida(seg, si):
+    """كاف التشبيه الداخلة على «مثل» زائدة للتوكيد (لَيْسَ كَمِثْلِهِۦ شَىْءٌ): ترجيح صاحب النظرية"""
+    slots = seg['slots']
+    return (slots[si]['type'] == AMIL and strip_marks(slots[si]['text']) == 'ك' and si + 1 < len(slots)
+            and slots[si + 1]['text'].startswith('م' + KASRA + 'ث' + SUKUN + 'ل'))   # مِثْل لا مَثَل (كَمَثَلِ تشبيه)
+
 def _first_content(seg):
     return next((t['index'] for t in seg['slots']
                  if t['role'] not in ('conj', 'article', 'proclitic') and not _tawkid_lam(t)), None)
@@ -318,13 +324,26 @@ def relate(segs, cands):
             continue
         tg = _target(segs, c['word_index'], si)
         slot = seg['slots'][si]
+        if slot['type'] == AMIL and _kaf_zaida(seg, si):
+            ts = seg['slots'][si + 1]
+            r.update(expected='جر', note='الكاف زائدة للتوكيد قبل «مثل»: جرٌّ لفظي (ترجيح صاحب النظرية)',
+                     target=dict(word_index=c['word_index'], slot=si + 1, text=ts['text'], type=ts['type']))
+            obs = _observed(seg, ts)
+            r.update(observed=obs, consistent=(obs == 'جر') if obs else None)
+            rels.append(r)
+            continue
         if tg and _tawkid_lam(slot) and segs[tg[0]]['slots'][tg[1]]['type'] != MABNI:
             ts = segs[tg[0]]['slots'][tg[1]]
             r.update(expected=None, note='اللام المفتوحة قبل الاسم الظاهر لام توكيد: لا تعمل',
                      target=dict(word_index=tg[0], slot=tg[1], text=ts['text'], type=ts['type']))
             rels.append(r)
             continue
-        if tg and c['group'] in DEFERRED_NAME:
+        if tg and _kaf_zaida(segs[tg[0]], tg[1]) and c['group'] in DEFERRED_NAME:
+            # لَيْسَ كَمِثْلِهِۦ شَىْءٌ: الكاف زائدة، و«مِثْل» خبر ليس مقدَّم، والاسم مؤخَّر
+            khabar = segs[tg[0]]['slots'][tg[1] + 1]['text']
+            tg = _skip_semi_clause(segs, tg)
+            r['note'] = f'الكاف زائدة للتوكيد، و«{khabar}» خبر مقدَّم في محلّ نصب، والاسم مؤخَّر (ترجيح صاحب النظرية)'
+        elif tg and c['group'] in DEFERRED_NAME:
             tg2 = _skip_semi_clause(segs, tg)
             if tg2 != tg:
                 tg = tg2
