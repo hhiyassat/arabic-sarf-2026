@@ -155,6 +155,13 @@ for n, (s, v, text) in enumerate(rows):
         C['reanalyze_same'] += same
         if not same:
             fail['T5b'].append(f'{s}:{v}')
+    for o in S.Omega:
+        k = o.name.split(' ')[0]
+        if k in ('خبر', 'مفعول', 'معمول', 'فاعل'):
+            C[f'obl_{k}'] += 1
+            C[f'obl_{k}_met'] += bool(o.met)
+            if k == 'خبر' and o.met and o.ev:
+                C['khabar_kind:' + o.ev.cause.split(' ', 2)[-1]] += 1
     lite = dict(verse=a['verse'], normalized=a['normalized'], segments=[dict(word=g['word'], units=g['units']) for g in a['segments']])
     by_surah[s].append((s, v, lite, units, S))
     if (s, v) in SAMPLE_REFS:

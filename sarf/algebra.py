@@ -836,6 +836,110 @@ def sibawayh_analyses(cells):
 
 
 # ---------- المستوى 3: الجملة (الآية) ----------
+# ---------- الحالة المكتوبة، والخبر، والمفعول ----------
+def word_case(a, wi, verbs=()):
+    """الحالة المكتوبة على آخر جذع الكلمة wi: رفع، أو نصب، أو جر، أو «جر أو نصب» (الياء)؛ وNone لما لا تدلّ عليه
+    علامته، وللفعل، ولما ليس فيه جذع"""
+    from .segment import _observed
+    if wi in verbs or wi >= len(a['segments']):
+        return None
+    seg = a['segments'][wi]
+    stem = [sl for sl in seg['slots'] if sl['type'] in ('جذع', 'لفظ الجلالة')]
+    if not stem:
+        return None
+    if 'toks' not in seg:
+        seg = dict(seg, toks=[(L, set(m)) for L, m in letters(seg['word'])])
+    try:
+        return _observed(seg, stem[-1])
+    except (IndexError, KeyError):
+        return None
+
+
+def _governed_words(a):
+    """الكلمات التي يعمل فيها عاملٌ مقبول في آيتها (فحالتها مفسَّرة بعاملها)"""
+    from .status import ACCEPTED
+    st = {(f['word_index'], f['operator'], f['group']): f.get('status') for f in a['operators']}
+    return {r['target']['word_index'] for r in a.get('relations', []) if r.get('target') and
+            st.get((r['word_index'], r['operator'], r['group'])) == ACCEPTED}
+
+
+def _boundary_after(marks, w):
+    return 0 <= w < len(marks) and marks[w] in BOUNDARY_WAQF
+
+
+def find_khabar(a, r, verbs, governed, marks):
+    """خبر الناسخ (إنّ وأخواتها مج 2، وكان وأخواتها مج 10) في آيته، إلى أول حدٍّ أو عاملِ تركيبٍ آخر:
+    - ما بين الناسخ واسمه المؤخَّر (فَإِنَّ مَعَ ٱلۡعُسۡرِ يُسۡرًا): خبرٌ مقدَّم شبه جملة
+    - اللام المزحلقة على كلمةٍ بعد اسم «إنّ»: خبرها
+    - أول اسمٍ بعد الاسم علامته المكتوبة حالةُ الخبر (رفعٌ لإنّ، ونصبٌ لكان)، ولا عامل فيه غيره
+    - فعلٌ يلي الاسم مباشرةً (والاسم ليس موصولاً تليه صلته): جملة فعلية
+    - وإلا شبه جملة تلي الاسم، ولا مرفوع/منصوب بعدها إلى الحدّ
+    → (رقم الكلمة، النوع، الدليل) أو None"""
+    t = r.get('target')
+    if t is None:
+        return None
+    op_w, ism_w = r['word_index'], t['word_index']
+    grp = r['group']
+    want = 'رفع' if grp == '2' else 'نصب'
+    if ism_w > op_w + 1:
+        return (op_w + 1, 'شبه جملة مقدَّم', 'ما بين الناسخ واسمه المؤخَّر')
+    ism_text = _bare_w(a['segments'][ism_w]['slots'][t['slot']]['text'])
+    relative = ism_text in RELATIVES or ism_text in ('ما', 'من')
+    n = len(a['segments'])
+    first_pp = None
+    w = ism_w + 1
+    if _boundary_after(marks, ism_w):
+        return None
+    while w < n:
+        seg = a['segments'][w]
+        sl0 = seg['slots'][0]['text']
+        if grp == '2' and sl0 in ('لَ', 'لَّ') and len(seg['slots']) > 1:
+            return (w, 'خبر باللام المزحلقة', 'اللام المزحلقة لا تدخل إلا على خبر «إنّ»')
+        if w in verbs:
+            if w == ism_w + 1 and not relative:
+                return (w, 'جملة فعلية', 'فعلٌ يلي اسم الناسخ مباشرةً')
+            if not relative:
+                break
+        c = word_case(a, w, verbs)
+        if c == want and w not in governed:
+            return (w, 'مفرد', f'العلامة المكتوبة {want}، ولا عامل فيه غير الناسخ')
+        if first_pp is None and w in governed and c == 'جر':
+            first_pp = w
+        if _boundary_after(marks, w):
+            break
+        w += 1
+    if first_pp is not None and first_pp == ism_w + 1:
+        return (first_pp, 'شبه جملة', f'شبه جملة تلي الاسم، ولا {want} بعدها إلى الحدّ')
+    return None
+
+
+def find_object(a, g, verbs, governed, marks, units, unit_of):
+    """المفعول به لفعلٍ متعدٍّ: الضمير المتصل بعده في كلمته، أو أول منصوبٍ بعده (يُتجاوز مرفوعٌ واحد هو الفاعل)
+    إلى أول حدٍّ أو فعلٍ آخر، ولا عامل فيه غيره. → (رقم الوحدة، الدليل) أو None"""
+    wi, si = g['word_index'], g['slot']
+    seg = a['segments'][wi]
+    for sl in seg['slots'][si + 1:]:
+        if sl['type'] == 'مبني':
+            return (units[unit_of[(wi, sl['index'])]].id, 'ضمير متصل بالفعل')
+    skipped_subject = False
+    w = wi + 1
+    if _boundary_after(marks, wi):
+        return None
+    while w < len(a['segments']):
+        if w in verbs:
+            break
+        c = word_case(a, w, verbs)
+        if c == 'رفع' and not skipped_subject:
+            skipped_subject = True
+        elif c in ('نصب', 'جر أو نصب') and w not in governed:
+            return (units[(w, a['segments'][w]['slots'][-1].get('unit', 0))].id if (w, a['segments'][w]['slots'][-1].get('unit', 0)) in units else None,
+                    'أول منصوب بعد الفعل ولا عامل فيه غيره')
+        if _boundary_after(marks, w):
+            break
+        w += 1
+    return None
+
+
 def sentence_geo(a, vid, T):
     """الآية: تمتدّ بالوحدات المغلقة وحدها، بعلاقاتها المقبولة (العامل ← المعمول، والإسناد)؛
     وتُغلق إن استُوفيت التزاماتها اللازمة وثبت حدّها برقم الآية"""
@@ -865,6 +969,11 @@ def sentence_geo(a, vid, T):
             unit_of[(seg['word_index'], sl['index'])] = (seg['word_index'], sl.get('unit', 0))
     status = {(f['word_index'], f['operator'], f['group']): f for f in a['operators']}
     from .status import ACCEPTED
+    verbs = {g['word_index'] for g in a.get('agreement', [])}
+    governed = _governed_words(a)
+    marks = waqf_of(a['verse']) if 'verse' in a else []
+    if len(marks) != len(a['segments']):
+        marks = [None] * len(a['segments'])
     for r in a.get('relations', []):
         f = status.get((r['word_index'], r['operator'], r['group']))
         if not f or f.get('status') != ACCEPTED:
@@ -879,18 +988,34 @@ def sentence_geo(a, vid, T):
         src = units.get(unit_of.get((r['word_index'], r['slot'])))
         dst = units.get(unit_of.get((t['word_index'], t['slot'])))
         proof = (f.get('judgement') or {}).get('proof', [])
-        ok = r.get('consistent') is not False and src is not None and dst is not None and src.closed and dst.closed
+        # العلاقة النحوية ثابتة بالعامل المقبول ومعموله وعلامته؛ وإغلاق الوحدتين بالجذر والوزن التزامٌ آخر («إغلاق»)
+        ok = r.get('consistent') is not False and src is not None and dst is not None
         ob = Obligation(name, met=bool(ok), units=[x.id for x in (src, dst) if x is not None])
         if ok:
             ob.ev = Evidence(f'«{r["operator"]}» عاملٌ مقبول', proof or ['مطابقة'],
                              [('مخالفة العلامة', f'المكتوب {r.get("observed")}')] if r.get('observed') else [])
             S.B.append((r.get('role') or r.get('expected') or 'عمل', src.id, dst.id, ob.ev))
         else:
-            ob.reason = 'المعمول أو العامل غير مغلق'
+            ob.reason = 'العلامة المكتوبة تخالف أثر العامل' if r.get('consistent') is False else 'لا معمول في الآية'
         S.Omega.append(ob)
-        if r['group'] in ('2', '10') and not r.get('khabar'):
-            S.Omega.append(Obligation(f'خبر «{r["operator"]}»', reason='الخبر لم يُحلَّل بعد (T05)',
-                                      units=[src.id] if src is not None else []))
+        if r['group'] in ('2', '10'):
+            ob = Obligation(f'خبر «{r["operator"]}»', units=[src.id] if src is not None else [])
+            kh = r.get('khabar')
+            if kh or 'خبر' in (r.get('role') or ''):
+                ob.met, ob.ev = True, Evidence('الخبر من المقشِّر', [str((kh or {}).get('text') or r.get('role'))])
+            else:
+                found = find_khabar(a, r, verbs, governed, marks)
+                if found:
+                    w, kind, why = found
+                    kslot = a['segments'][w]['slots'][-1]
+                    dstk = units.get((w, kslot.get('unit', 0)))
+                    ob.met, ob.ev = True, Evidence(f'خبر «{r["operator"]}» {kind}', [why])
+                    if dstk is not None and src is not None:
+                        S.B.append((f'خبر «{r["operator"]}» ({kind})', src.id, dstk.id, ob.ev))
+                    ob.units = [x for x in [src.id if src is not None else None, dstk.id if dstk is not None else None] if x]
+                else:
+                    ob.reason = 'لم يوجد الخبر في آيته بالعلامة المكتوبة'
+            S.Omega.append(ob)
             S.O.setdefault('nuclei', []).append((src.id if src is not None else None, f'ناسخ «{r["operator"]}»'))
     for g in a.get('agreement', []):
         G = units.get(unit_of.get((g['word_index'], g['slot'])))
@@ -906,6 +1031,24 @@ def sentence_geo(a, vid, T):
             ob.ev = Evidence('جدول الإسناد R(m, p)', [g.get('rule') or '', 'Φ(p): ' + ' أو '.join(prons)])
             S.B.append(('إسناد', G.id, ' أو '.join(prons), ob.ev))
         S.Omega.append(ob)
+        # المفعول به: التزامٌ جائز (يُحذف المفعول)، لا لازم؛ والتعدّي من HFN
+        if G.Theta.get('R') and G.Theta.get('P') and g.get('voice') != 'passive':
+            from .root import hfn
+            tr = {e.get('transitivity') for e in hfn().index.get((G.Theta['R'], G.Theta['P']), [])}
+            wm = wazn_meaning(G.Theta['P']) or ('', '', '', '')
+            by_wazn = not tr - {''} and 'التعدية' in (wm[1] or '') + ('التعدية' if G.Theta['P'] in ('II', 'IV') else '')
+            if tr & {'متعدي', 'مشترك'} or by_wazn:
+                why_tr = 'الفعل متعدٍّ في HFN' if tr & {'متعدي', 'مشترك'} else \
+                    f'التعدية غالبةٌ في وزن {wm[0] or G.Theta["P"]} (ملف أوزان الأفعال، غير مُقَرّ)'
+                oo = Obligation(f'مفعول «{G.O["text"]}»', required=False, units=[G.id])
+                found = find_object(a, g, verbs, governed, marks, units, unit_of)
+                if found and found[0]:
+                    oo.met, oo.ev = True, Evidence('مفعول به', [found[1], why_tr])
+                    S.B.append(('مفعول به', G.id, found[0], oo.ev))
+                    oo.units = [G.id, found[0]]
+                else:
+                    oo.reason = 'لم يُذكر أو لم يُكشف (قد يُحذف المفعول)'
+                S.Omega.append(oo)
     if S.open_required():
         defer(S, T, f'{len(S.open_required())} التزاماً مفتوحاً')
         return S, units
@@ -1019,6 +1162,28 @@ def _unit_of_slot(a, wi, slot):
     return (wi, a['segments'][wi]['slots'][slot].get('unit', 0))
 
 
+def find_attachment(prev):
+    """المتعلَّق في الآية السابقة لشبه جملةٍ أو مستثنى بعد حدّها، من الأقرب إلى الحدّ:
+    فعلٌ ثابت (T18)، ثم شبه فعلٍ مغلق (اسم فاعل، أو اسم مفعول، أو مصدر)، ثم كلمةٌ بصيغة الفعل لم تثبت فعليتها.
+    → (معرِّف الوحدة، النوع، ثابت؟) أو None"""
+    from .affix import stem_info
+    pa, units = prev['a'], prev['units']
+    verbs = sorted(((g['word_index'], g['slot']) for g in pa.get('agreement', [])), reverse=True)
+    if verbs:
+        wi, sl = verbs[0]
+        return (units[_unit_of_slot(pa, wi, sl)].id, 'فعل', True)
+    for k in sorted(units, reverse=True):
+        G = units[k]
+        pos = (G.Theta.get('F') or {}).get('pos', '')
+        if G.closed and (pos in ('اسم فاعل', 'اسم مفعول', 'مصدر') or str(G.Theta.get('P', '')).startswith('اسم')):
+            return (G.id, f'شبه فعل ({pos or G.Theta.get("P")})', True)
+    for k in sorted(units, reverse=True):
+        G = units[k]
+        if G.tau[1] == 'مقطَّعة' and stem_info(G.O['text']).get('kind') in ('madi', 'mudari', 'amr'):
+            return (G.id, 'كلمة بصيغة الفعل (لم تثبت فعليتها)', False)
+    return None
+
+
 def cross_ayah_links(analyze_fn, prev, nxt):
     """الروابط بين آيتين متتاليتين من سورة واحدة. prev/nxt: dict(s, v, text، a، units).
     أ. التحليل المشترك: تُحلَّل الآيتان تياراً واحداً، فكل علاقةٍ مقبولة عاملُها في الأولى ومعمولها في الثانية رابطٌ ثابت.
@@ -1069,6 +1234,13 @@ def cross_ayah_links(analyze_fn, prev, nxt):
     pp_alone = jar0 is not None and jar0.get('target') is not None and first_b <= jar0['target']['word_index']
     # «كَذَٰلِكَ» وحدها: قد تتعلق بما قبلها، وقد تكون خبر مبتدأ محذوف (الأمرُ كذلك)؛ فعبورها محتمل لا ثابت
     kaf = jar0 is not None and _bare_w(jar0['operator']) == 'ك'
+    att = find_attachment(prev)
+    if jar0 and pp_alone and not nuc_span and not clause_ops and not kaf:
+        if att:
+            out.append(dict(src=att[0], dst=nid(0, jar0['slot']), rel=f'تعلّق شبه الجملة بـ{att[1]}', proven=True,
+                            rule='شبه جملة في أول الآية وحدها إلى أول حدٍّ فيها: متعلَّقها قبل حدّ الآية',
+                            attach_proven=att[2]))
+            jar0 = None                                   # لا تُكرَّر بالقاعدة القديمة
     if jar0 and pp_alone and not nuc_span and not clause_ops and kaf:
         out.append(dict(src=prev['units'][max(prev['units'])].id, dst=nid(0, jar0['slot']), rel='تعلّق «كذلك» بما قبلها',
                         proven=False, rule='«كَذَٰلِكَ» في أول الآية: متعلقة بما قبلها أو خبرٌ لمحذوف'))
@@ -1087,6 +1259,33 @@ def cross_ayah_links(analyze_fn, prev, nxt):
     if w0 in ('إلا', 'الا'):
         out.append(dict(src=tgt, dst=nid(0, 0), rel='استثناء', proven=True,
                         rule='«إِلَّا» في أول الآية: المستثنى منه قبل حدّ الآية'))
+    # التابع عبر الحدّ بالمطابقة الإعرابية: كلمةٌ أولَ الآية لا عامل فيها في آيتها، وعلامتها المكتوبة:
+    #  - جرٌّ بلا حرف عطف: لا يُبتدأ بمجرور، فعامله (جارٌّ أو مضاف) أو متبوعه قبل الحدّ — ثابت (مَٰلِكِ يَوۡمِ ٱلدِّينِ)
+    #  - جرٌّ بعد واو أو فاء: عطفٌ على مجرورٍ قبله، أو واو قسم — محتمل
+    #  - نصبٌ ولا نواة ولا عامل تركيبٍ إلى أول حدٍّ: عامله قبل الحدّ — ثابت؛ وإلا فبدلٌ أو نعتٌ أو حال محتمل إن وافق ما قبله
+    verbs_n = {g['word_index'] for g in na.get('agreement', [])}
+    gov_n = _governed_words(na)
+    c0 = word_case(na, 0, verbs_n) if 0 not in gov_n else None
+    # الواو والفاء في أول الكلمة، مبنيّاً كان في المقشِّر أو عاملاً مؤجَّلاً (واو القسم)
+    conj = len(na['segments'][0]['slots']) > 1 and _bare_w(na['segments'][0]['slots'][0]['text']) in ('و', 'ف')
+    if c0:
+        verbs_p = {g['word_index'] for g in pa.get('agreement', [])}
+        same = next((w for w in range(n1 - 1, -1, -1) if word_case(pa, w, verbs_p) in (c0, 'جر أو نصب') or
+                     c0 == 'جر أو نصب' and word_case(pa, w, verbs_p) in ('جر', 'نصب')), None)
+        src = pid(same, len(pa['segments'][same]['slots']) - 1) if same is not None else prev['units'][max(prev['units'])].id
+        stem0 = len(na['segments'][0]['slots']) - 1
+        if c0 == 'جر' and not conj:
+            out.append(dict(src=src, dst=nid(0, stem0), rel='تابعٌ أو معمولٌ لما قبل الحدّ (جرّ)', proven=True,
+                            rule='مجرورٌ في أول الآية بلا جارٍّ ولا مضافٍ في آيتها: عامله أو متبوعه قبل الحدّ'))
+        elif c0 == 'جر' and conj:
+            out.append(dict(src=src, dst=nid(0, stem0), rel='عطفٌ على مجرور أو قسم', proven=False,
+                            rule='مجرورٌ بعد واو أو فاء في أول الآية: معطوفٌ على ما قبله، أو واو قسم'))
+        elif c0 == 'نصب' and not conj and not nuc_span and not clause_ops:
+            out.append(dict(src=src, dst=nid(0, stem0), rel='منصوبٌ بعاملٍ قبل الحدّ', proven=True,
+                            rule='منصوبٌ في أول الآية ولا نواة ولا عامل إلى أول حدٍّ فيها: عامله قبل الحدّ'))
+        elif c0 in ('نصب', 'جر أو نصب') and same is not None and not conj:
+            out.append(dict(src=src, dst=nid(0, stem0), rel='بدلٌ أو نعتٌ أو حال', proven=False,
+                            rule='منصوبٌ في أول الآية يوافق ما قبله في الإعراب: تابعٌ له، أو مفعولٌ مقدَّم لما بعده'))
     if w0.lstrip('وف') in RELATIVES and w0[:1] not in 'وف':
         out.append(dict(src=prev['units'][max(prev['units'])].id, dst=nid(0, 0), rel='نعت أو بدل أو ابتداء',
                         proven=False, rule='اسم موصول في أول الآية: قد يكون تابعاً لما قبله، وقد يكون مبتدأ'))
