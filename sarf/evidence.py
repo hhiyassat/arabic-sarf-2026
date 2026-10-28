@@ -10,7 +10,8 @@ R1/R2  لام الأمر ولا الناهية: ما بعدها مضارع مج�
 R3     اسم الفعل الناصب: يُرفض إن كان ما بعده مرفوعاً
 R4     وَ الجارّة (القسم) وواو المعية: تُرفضان إن كان بعدها فعل، أو عامل، أو ضمير رفع منفصل
 R5     اللام المفتوحة الجارّة: تُرفض إن كان بعدها فعل (هي لام التوكيد أو جواب القسم)
-R6     حرف الجر وواو المعية: يُمنعان إن كان ما بعدهما مرفوعاً كتابةً (ضمة، أو تنوين ضم، أو ـُونَ)
+R6     حرف الجر وواو المعية: يُمنعان إن كان ما بعدهما مرفوعاً كتابةً (ضمة، أو تنوين ضم، أو ـُونَ)،
+       أو ساكن الآخر وليس مبنياً من الملف (وَلَقَدۡ، وَلَهُمۡ)
 R8     السابقة: تُمنع إن بدأت بقية الكلمة بساكن أو مشدَّد (غير اللام وهمزة الوصل وبِسۡمِ)
 R9     بِ وكَ وتَ الجارّة المتصلة: تُمنع إن كان بعدها فعل
 R7     أداة الشرط الجازمة (مج 7، وإِنْ في مج 6): تُمنع إن كان ما بعدها مرفوعاً كتابةً
@@ -94,18 +95,22 @@ def reject_candidates(found, words):
             if FATHA in match_letters(f['word'])[f['char_span'][0]][1] and info['pos'] == 'verb':
                 reason = f"اللام المفتوحة قبل الفعل ({'، '.join(info['evidence'])}) لام توكيد أو جواب قسم، لا جارّة"
         # المعمول ضمير متصل بالعامل (عَلَيْكَ، لَهُ): مبني، فلا تدلّ حركته على الإعراب
-        on_pronoun = f['method'] == 'operator+suffix' or _strip_marks(tgt) in PRON_PLAIN
+        on_pronoun = f['method'] == 'operator+suffix' or \
+            f['method'].startswith('proclitic') and _strip_marks(tgt) in PRON_PLAIN
         if not reason and not on_pronoun and (f['group'] == '1' or op == 'و' and f['group'] == '4'):
             f['checked'].append('R6 المرفوع بعد الجار')
-            mark = raf_mark(tgt)
+            mark = raf_mark(tgt, sukun=True)
             if mark:
                 what = 'تجرّ' if f['group'] == '1' else 'تنصب المفعول معه'
-                reason = f'ما بعدها مرفوع كتابةً ({mark})، و«{f["operator"]}» {what}'
+                state = 'ساكن الآخر' if mark == 'السكون' else f'مرفوع كتابةً ({mark})'
+                reason = f'ما بعدها {state}، و«{f["operator"]}» {what}'
         if not reason and not on_pronoun and \
                 (f['group'] == '7' and op not in ('لو', 'إذا') or f['group'] == '6' and op == 'إن'):
             f['checked'].append('R7 المرفوع بعد أداة الشرط')
             mark = raf_mark(tgt)
-            if mark:
+            if plain(match_letters(tgt), True).replace('أ', 'ا') in {p.replace('أ', 'ا') for p in RAF_PRONOUNS}:
+                reason = 'بعدها ضمير رفع منفصل، وأداة الشرط يليها فعل: ليست شرطية هنا'   # إِنۡ هُوَ إِلَّا ذِكۡرٌ
+            elif mark:
                 reason = f'ما بعدها مرفوع كتابةً ({mark})، وأداة الشرط تجزم: ليست شرطية هنا'
         if reason:
             f['status'], f['reject_reason'] = BLOCKED, reason

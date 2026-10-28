@@ -63,11 +63,12 @@ def short_host(toks):
     return len(toks) == 2 and SHADDA in toks[1][1] and plain(toks).replace('أ', 'ا') != 'اي'   # أَيُّهَا: «ها» للتنبيه
 
 
-def raf_mark(text):
+def raf_mark(text, sukun=False):
     """→ دليل الرفع المكتوب على آخر الكلمة (بعد نزع الضمير المتصل)، أو None:
-    الضمة أو تنوينها، أو «ـُونَ» (جمع المذكر والأفعال الخمسة)"""
+    الضمة أو تنوينها، أو «ـُونَ» (جمع المذكر والأفعال الخمسة)؛
+    ومع sukun=True: سكون الآخر أيضاً (المجرور المعرب لا يُختم بالسكون)، إلا المبني من الملف"""
     toks = [(L, set(m)) for L, m in letters(text)]
-    if not toks or _mabni(text):
+    if not toks or _mabni(text) or sukun and _closed(toks):
         return None
     info = stem_info(text)
     if info['pos'] == 'verb' and info['kind'] in ('madi', 'amr'):
@@ -82,6 +83,8 @@ def raf_mark(text):
         return 'ـُونَ'
     if toks[-1][1] & {DAMMA, DAMMATAN}:
         return 'الضمة' if DAMMA in toks[-1][1] else 'تنوين الضم'
+    if sukun and toks[-1][1] == {SUKUN} and toks[-1][0] not in MADD:
+        return 'السكون'
     return None
 
 
