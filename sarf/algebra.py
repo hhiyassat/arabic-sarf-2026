@@ -860,8 +860,14 @@ def word_case(a, wi, verbs=()):
     if bare in ('قبل', 'بعد') and c == 'رفع':
         return None                                   # مبنيّان على الضم إذا قُطعا عن الإضافة
     # جمع المؤنث السالم يُنصب بالكسرة: الكسرة بعد «ات» جرٌّ أو نصب (ٱلصَّٰلِحَٰتِ، جَنَّٰتٍ)
-    if c == 'جر' and len(st) >= 3 and st[-2][0] == 'ا' and st[-1][0] == 'ت':
-        return 'جر أو نصب'
+    if c == 'جر' and len(st) >= 3 and st[-1][0] == 'ت' and (st[-2][0] == 'ا' or DAGGER_ALIF in st[-2][1]):
+        return 'جر أو نصب'                            # والألف قد تُرسم خنجرية (ٱلصَّٰلِحَٰتِ، ءَايَٰتِ)
+    # «انِ»: رفعُ المثنى، أو جرُّ ما آخره ألف ونون (ٱلۡفُرۡقَانِ، ءَاذَانِهِمۡ): لا تدلّ
+    if c == 'رفع' and len(st) >= 2 and st[-1][0] == 'ن' and KASRA in st[-1][1] and st[-2][0] == 'ا':
+        return None
+    from .segment import ZURUF
+    if bare in ZURUF:
+        return None                                   # الظرف: حالته لا تخصّ هذه القواعد
     # الممنوع من الصرف يُجرّ بالفتحة: فتحةٌ بلا تنوين ولا «أل» ولا لاحقة جرٌّ أو نصب (إِسۡرَٰٓءِيلَ، إِبۡرَٰهِيمَ)،
     # إلا أن يكون مضافاً يليه معرَّف (كِتَٰبَ ٱللَّهِ)
     if c == 'نصب' and st and FATHA in st[-1][1] and not st[-1][1] & {FATHATAN} and \
@@ -872,6 +878,37 @@ def word_case(a, wi, verbs=()):
         if not mudaf:
             return 'نصب أو جر'
     return c
+
+
+def noun_evidence(seg, next_wasl=False):
+    """دليلٌ مكتوب على اسمية الكلمة: تنوين، أو «أل»، أو لفظ الجلالة، أو تاء مربوطة، أو «ات» في آخرها.
+    بلا واحدٍ منها لا تُقرأ حركة الآخر حالةً إعرابية: فتحة الماضي (عَلَّمَ، تَبَٰرَكَ)، وكسرة التقاء الساكنين
+    (أَقِمِ، غُلِبَتِ)، وكسرة المنادى المضاف إلى الياء (يَٰقَوۡمِ) تشتبه بالنصب والجر"""
+    if any(sl['type'] in ('أل', 'لفظ الجلالة') for sl in seg['slots']):
+        return True
+    stem = [sl for sl in seg['slots'] if sl['type'] == 'جذع']
+    if not stem:
+        return False
+    st = letters(stem[-1]['text'])
+    if not st:
+        return False
+    if st[-1][1] & {FATHATAN, DAMMATAN, KASRATAN} or st[-1][0] == 'ة' or \
+            len(st) >= 2 and st[-1][0] == 'ت' and (st[-2][0] == 'ا' or DAGGER_ALIF in st[-2][1]):
+        return True
+    # تنوين النصب على ألفٍ بعد الحرف (عَيۡنًا): العلامة على ما قبل الألف
+    if len(st) >= 2 and st[-1][0] == 'ا' and FATHATAN in st[-2][1]:
+        return True
+    # بناءان لا يكونان فعلاً: فاعِل (مَٰلِكِ) وفِعَال (صِرَٰطَ). والكسرة قبل همزة وصلٍ قد تكون كسرة التقاء
+    # الساكنين في أمر فاعَلَ (قَٰتِلِ ٱلۡ…)، فلا تُعدّ
+    if next_wasl and KASRA in st[-1][1]:
+        return False
+    alif_after = lambda i: DAGGER_ALIF in st[i][1] or i + 1 < len(st) and st[i + 1][0] == 'ا' and FATHA in st[i][1]
+    core = [x for x in st if x[0] != 'ا']
+    if len(core) == 3 and alif_after(0) and KASRA in core[1][1] and st[0][0] not in 'اأإ':
+        return True                                   # فاعِل
+    if len(core) == 3 and KASRA in st[0][1] and alif_after(1):
+        return True                                   # فِعَال
+    return False
 
 
 def _governed_words(a):
@@ -905,6 +942,7 @@ def find_khabar(a, r, verbs, governed, marks):
     ism_text = _bare_w(a['segments'][ism_w]['slots'][t['slot']]['text'])
     relative = ism_text in RELATIVES or ism_text in ('ما', 'من')
     n = len(a['segments'])
+    from .status import ACCEPTED
     first_pp = None
     w = ism_w + 1
     if _boundary_after(marks, ism_w):
@@ -912,8 +950,14 @@ def find_khabar(a, r, verbs, governed, marks):
     while w < n:
         seg = a['segments'][w]
         sl0 = seg['slots'][0]['text']
-        if grp == '2' and sl0 in ('لَ', 'لَّ') and len(seg['slots']) > 1:
+        # اللام المزحلقة على اسمٍ أو فعل، أو على ضمير الفصل المنفصل (لَهُوَ، لَهِيَ)؛ أما «لَكُمۡ، لَهُمۡ، لَهُۥ» فلام جرّ
+        nxt_sl = seg['slots'][1] if len(seg['slots']) > 1 else None
+        if grp == '2' and sl0 in ('لَ', 'لَّ') and nxt_sl is not None and \
+                (nxt_sl['type'] != 'مبني' or _bare_w(nxt_sl['text']) in ('هو', 'هي')):
             return (w, 'خبر باللام المزحلقة', 'اللام المزحلقة لا تدخل إلا على خبر «إنّ»')
+        if w == ism_w + 1 and not relative and w not in verbs and any(
+                f['word_index'] == w and f['group'] == '10' and f.get('status') == ACCEPTED for f in a['operators']):
+            return (w, 'جملة فعلية (كان وأخواتها)', 'ناسخٌ فعليٌّ مقبول يلي اسم «إنّ» مباشرةً')
         if w in verbs:
             if w == ism_w + 1 and not relative:
                 return (w, 'جملة فعلية', 'فعلٌ يلي اسم الناسخ مباشرةً')
@@ -921,7 +965,11 @@ def find_khabar(a, r, verbs, governed, marks):
                 break
         c = word_case(a, w, verbs)
         if c == want and w not in governed:
-            return (w, 'مفرد', f'العلامة المكتوبة {want}، ولا عامل فيه غير الناسخ')
+            from .affix import stem_info
+            stem_t = [sl['text'] for sl in seg['slots'] if sl['type'] == 'جذع']
+            mud = stem_t and stem_info(stem_t[-1]).get('kind') == 'mudari'
+            kind = 'مرفوع (اسم أو مضارع لم تثبت فعليته)' if mud and want == 'رفع' else 'مفرد'
+            return (w, kind, f'العلامة المكتوبة {want}، ولا عامل فيه غير الناسخ')
         if first_pp is None and w in governed and c == 'جر':
             first_pp = w
         if _boundary_after(marks, w):
@@ -1284,14 +1332,19 @@ def cross_ayah_links(analyze_fn, prev, nxt):
     #  - نصبٌ ولا نواة ولا عامل تركيبٍ إلى أول حدٍّ: عامله قبل الحدّ — ثابت؛ وإلا فبدلٌ أو نعتٌ أو حال محتمل إن وافق ما قبله
     verbs_n = {g['word_index'] for g in na.get('agreement', [])}
     gov_n = _governed_words(na)
-    c0 = word_case(na, 0, verbs_n) if 0 not in gov_n else None
+    seg0 = na['segments'][0]
+    # يا النداء في أول الكلمة (يَٰقَوۡمِ، يَٰصَٰحِبَيِ): منادى لا تابع
+    l0 = letters(seg0['word'])
+    voc = len(l0) > 2 and l0[0][0] == 'ي' and (DAGGER_ALIF in l0[0][1] or l0[1][0] == 'ا')
+    c0 = word_case(na, 0, verbs_n) if 0 not in gov_n and noun_evidence(seg0, len(na['segments']) > 1 and _bare_w(na['segments'][1]['word'])[:1] == 'ا') and not voc else None
     # الواو والفاء في أول الكلمة، مبنيّاً كان في المقشِّر أو عاملاً مؤجَّلاً (واو القسم)
     conj = len(na['segments'][0]['slots']) > 1 and _bare_w(na['segments'][0]['slots'][0]['text']) in ('و', 'ف')
     if c0:
         verbs_p = {g['word_index'] for g in pa.get('agreement', [])}
         AMB = ('جر أو نصب', 'نصب أو جر')
-        same = next((w for w in range(n1 - 1, -1, -1) if word_case(pa, w, verbs_p) in (c0,) + AMB or
-                     c0 in AMB and word_case(pa, w, verbs_p) in ('جر', 'نصب')), None)
+        same = next((w for w in range(n1 - 1, -1, -1) if noun_evidence(pa['segments'][w], w + 1 < n1 and _bare_w(pa['segments'][w + 1]['word'])[:1] == 'ا') and (
+                     word_case(pa, w, verbs_p) in (c0,) + AMB or
+                     c0 in AMB and word_case(pa, w, verbs_p) in ('جر', 'نصب'))), None)
         src = pid(same, len(pa['segments'][same]['slots']) - 1) if same is not None else prev['units'][max(prev['units'])].id
         stem0 = len(na['segments'][0]['slots']) - 1
         if c0 == 'جر' and not conj:

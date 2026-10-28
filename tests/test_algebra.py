@@ -182,5 +182,21 @@ if hfn() and rows:
     check('الشمس ١–٢: «وَٱلۡقَمَرِ» بعد واو: عطفٌ أو قسم، محتمل لا ثابت', c and not any(x['proven'] for x in c), c)
     c = cross((1, 6), (1, 7))
     check('الفاتحة ٦–٧: «صِرَٰطَ» منصوبٌ يوافق «ٱلصِّرَٰطَ»: بدلٌ محتمل', any(not x['proven'] and 'بدل' in x['rel'] for x in c), c)
+    # تدقيق الخرج: فعلٌ أو منادى أولَ الآية لا يُقرأ حركةُ آخره إعراباً
+    for r1, r2, w in [((55, 1), (55, 2), 'عَلَّمَ'), ((17, 77), (17, 78), 'أَقِمِ'), ((40, 28), (40, 29), 'يَٰقَوۡمِ'),
+                      ((30, 1), (30, 2), 'غُلِبَتِ'), ((36, 29), (36, 30), 'يَٰحَسۡرَةً')]:
+        c = cross(r1, r2)
+        check(f'{r1[0]}:{r2[1]} «{w}»: لا رابطَ إعرابياً ثابت', not any(x['proven'] and ('جرّ' in x['rel'] or 'منصوب' in x['rel'])
+                                                                    for x in c), c)
+if hfn():
+    def khabar(v):
+        a = analyze(cat, v)
+        S_, _ = sentence_geo(a, 'v', Trace())
+        return [(o.name, o.met, o.ev and o.ev.cause) for o in S_.Omega if o.name.startswith('خبر')]
+    k = khabar('إِنَّ ٱلۡكَٰفِرِينَ كَانُواْ لَكُمۡ عَدُوࣰّا مُّبِينࣰا')
+    check('النساء ١٠١: «لَكُمۡ» لام جرّ لا مزحلقة، والخبر جملة «كَانُواْ»',
+          not any('المزحلقة' in str(x) for x in k) and ('خبر «إِنَّ»', True, 'خبر «إِنَّ» جملة فعلية (كان وأخواتها)') in k, k)
+    k = khabar('إِنَّ ٱللَّهَ يُحِبُّ ٱلَّذِينَ يُقَٰتِلُونَ')
+    check('الصف ٤: «يُحِبُّ» لا يُعدّ خبراً مفرداً', k and not any(str(x[2]).endswith('مفرد') for x in k), k)
 print('ALL OK' if not bad else f'FAILED {bad}')
 sys.exit(1 if bad else 0)
