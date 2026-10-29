@@ -169,8 +169,21 @@ if hfn() and rows:
     e = ends((27, 58))
     check('النمل ٥٨: فعلُ الذمّ العامل بعد الفاء يبدأ جملة (مَّطَرࣰا ‖ فَسَآءَ)', e.get(2, {}).get('J') == 'proven', e.get(2))
     e = ends((27, 92))
-    check('النمل ٩٢: لا حدّ بين «فَمَنِ» وفعلها، والفاء بعدها جوابٌ محتمل (فَمَنِ ٱهۡتَدَىٰ ‖ فَإِنَّمَا)',
-          e.get(3, {}).get('J') is None and e.get(4, {}).get('J') == 'possible', [(k, r['J']) for k, r in e.items()])
+    check('النمل ٩٢: الشرط وجوابه مكوّنٌ واحد: لا حدّ بين «فَمَنِ» وفعلها، ولا قبل فاء الجواب الرابطة (فَمَنِ ٱهۡتَدَىٰ فَإِنَّمَا)',
+          e.get(3, {}).get('J') is None and e.get(4, {}).get('J') is None, [(k, r['J']) for k, r in e.items()])
+    def structs(ref):
+        recs([ref])
+        return linguistic_layer.samples
+    sm = structs((2, 274))
+    r0 = sm['rel'][0] if sm['rel'] else {}
+    check('البقرة ٢٧٤: «ٱلَّذِينَ يُنفِقُونَ» صلةٌ فعلية، والعائد فاعلها المطابق (هم)',
+          r0.get('silah') == 'جملة فعلية' and all(o[1] for o in r0.get('obligations', [])), r0)
+    e = ends((2, 23))
+    check('البقرة ٢٣: «وَإِن كُنتُمۡ … فَأۡتُواْ»: الفاء رابطة الجواب، فلا حدّ قبلها', e.get(7, {}).get('J') is None,
+          [(k, r['J'], r['J_why'][:20]) for k, r in e.items()])
+    sm = structs((2, 20))
+    lw = [x for x in sm['cond'] if x['tool'] == 'لَوْ']
+    check('البقرة ٢٠: جواب «لَوۡ» باللام المفتوحة على الماضي (لَذَهَبَ)', lw and lw[0]['obligations'][1][1], lw)
     at26 = {r['location'][2]: r for r in recs([(4, 26)])}
     check('النساء ٢٦: الجملة تنتهي قبل «وَٱللَّهُ عَلِيمٌ حَكِيمٌ» (عطفٌ على جملةٍ تامّة يشاركها التمام)',
           at26.get(10, {}).get('J') == 'proven', at26.get(10))

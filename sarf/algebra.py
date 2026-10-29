@@ -1606,8 +1606,8 @@ def clause_start(a, wi):
     for f in ops:
         if f['group'] == '2' and f.get('status') == ACCEPTED and is_form(f['operator'], SADARA_V):
             return ('ناسخ له الصدارة', conj)
-        if f['group'] == '7' and is_form(f['operator'], COND_STRICT_V):
-            return ('شرط', conj)
+        if f['group'] in ('6', '7') and is_form(f['operator'], COND_STRICT_V):
+            return ('شرط', conj)                      # «إِنْ» الشرطية في باب الجزم (6)، وسائر الأدوات في باب الشرط (7)
     if not toks:
         return None
     L0, m0 = toks[0]
@@ -1632,6 +1632,7 @@ def clause_start(a, wi):
 
 
 def word_feats(a):
+    from .affix import stem_info
     """سمات الكلمة المكتوبة اللازمة لعلاقات الجملة التالية R(G, Q, c) (حكم صاحب النظرية في الصفة والحال والاستئناف):
     conj حرف عطف (و، ف) في أولها مقطَّعاً؛ nakira اسمٌ عليه تنوين بلا «أل»؛ verb نوع الفعل (madi، mudari، amr) وشخصه؛
     qad «قد»؛ rel اسم موصول؛ case الحالة المكتوبة"""
@@ -1667,17 +1668,219 @@ def word_feats(a):
             nakira=tanwin and not has_al and noun_evidence(seg), noun=noun_evidence(seg),
             verb=g['kind'] if g else None, person=(g['features'][0][0] if g and g.get('features') else None),
             qad=is_form(w_, ('قَدْ', 'لَقَدْ'), prefix=True), rel=is_form(w_, RELATIVES_V, prefix=True),
-            case=word_case(a, wi, set(verbs)) if not g else None))
+            case=word_case(a, wi, set(verbs)) if not g else None,
+            text=w_, agr=[tuple(x) for x in g['features']] if g and g.get('features') else [],
+            prons=[x['text'] for x in sl[1:] if x['type'] == 'مبني'],
+            rel_agr=next((v for k, v in RELATIVE_AGR.items() if is_form(w_, (k,), prefix=True)), None),
+            zarf=any(x['type'] == 'جذع' and is_form(x['text'], ZURUF_V, i3rab=True) for x in sl),
+            mood=(stem_info(next((x['text'] for x in sl if x['type'] == 'جذع'), w_)).get('mood') if g and g['kind'] == 'mudari' else None),
+            lam_fatha=len(sl) > 1 and is_form(sl[0]['text'], ('لَ',)),
+            demo=is_form(w_, ('أُولَٰئِكَ', 'أُولَئِكَ', 'ذَٰلِكَ', 'ذَلِكَ', 'تِلْكَ', 'هَٰذَا', 'هَذَا', 'هَٰذِهِ', 'هَٰؤُلَاءِ'), prefix=True)))
     return out
 
 
-def sentence_boundary(p, js, n, spans, cspans, nuc_pos, qawl_pos, starts, obls, pos_of, feats=None, chain=False):
+# الموصول الاسمي ← (العدد، النوع) لمطابقة العائد
+RELATIVE_AGR = {'الَّذِي': ('singular', 'masc'), 'الَّتِي': ('singular', 'fem'), 'الَّذِينَ': ('plural', 'masc'),
+                'اللَّذَانِ': ('dual', 'masc'), 'اللَّذَيْنِ': ('dual', 'masc'), 'الَّذَانِ': ('dual', 'masc'),
+                'الَّذَيْنِ': ('dual', 'masc'), 'اللَّتَانِ': ('dual', 'fem'), 'اللَّتَيْنِ': ('dual', 'fem'),
+                'اللَّاتِي': ('plural', 'fem'), 'الَّٰتِي': ('plural', 'fem'), 'اللَّائِي': ('plural', 'fem'), 'الَّٰٓئِي': ('plural', 'fem')}
+# ضمير الغائب المتصل ← (العدد، النوع): العائد في الصلة
+PRON_AGR = {'هُ': ('singular', 'masc'), 'هِ': ('singular', 'masc'), 'هُو': ('singular', 'masc'), 'هِي': ('singular', 'masc'),
+            'هَا': ('singular', 'fem'), 'هُمْ': ('plural', 'masc'), 'هِمْ': ('plural', 'masc'), 'هُمَا': ('dual', None),
+            'هِمَا': ('dual', None), 'هُنَّ': ('plural', 'fem'), 'هِنَّ': ('plural', 'fem')}
+PRON_FREE_AGR = {'هُوَ': ('singular', 'masc'), 'هِيَ': ('singular', 'fem'), 'هُمْ': ('plural', 'masc'), 'هُمَا': ('dual', None),
+                 'هُنَّ': ('plural', 'fem')}
+
+
+def _agrees(want, got):
+    """(العدد، النوع) للموصول مطابقٌ لما في العائد؛ والنوع غير المعيَّن لا يعارض"""
+    return want[0] == got[0] and (got[1] is None or want[1] is None or want[1] == got[1])
+
+
+def relative_structs(feats, nuc_pos, starts):
+    """N = Relative_e(M, Q, ρ) لكل موصولٍ اسمي (حكم صاحب النظرية؛ الأصول من ابن عقيل):
+    - الموصول الاسمي (الذي، التي، الذين، اللذان، اللاتي…) يفتح التزامين لازمين: «الصلة» و«العائد»؛ و«مَن» و«ما»
+      لا يُفتح لهما شيء حتى يثبت أنهما موصولتان (قد تكونان شرطيتين أو استفهاميتين)
+    - الصلة: جملةٌ فعلية خبرية (فعلٌ غير أمر)، أو اسمية (ضمير منفصل أو مرفوع أوّلها)، أو شبه جملة (جارّ أو ظرف)
+    - نطاقها: من بعد الموصول إلى أول ما له الصدارة، أو عاطفٍ يبدأ جملة بعد نواة الصلة، أو نواةٍ ثانية بلا عاطف
+    - العائد: فاعل الفعل للغائب مطابقاً للموصول عدداً ونوعاً، أو ضميرٌ متصل في الصلة مطابق، أو ضميرٌ منفصل
+      مطابق في الاسمية؛ وفي شبه الجملة مستترٌ في متعلَّقها؛ وإن كان الفعل متعدياً لم يُذكر مفعوله فالعائد المنصوب
+      محذوفٌ بقاعدة (حذف العائد المنصوب بفعلٍ تام)، وإلا بقي العائد مفتوحاً، ولا يُجعل الغياب شهادةَ حذف
+    → [dict(kind, head, start, end, obligations=[(الاسم، مستوفى؟، الدليل)])]؛ end أول كلمة بعد الصلة"""
+    out = []
+    n = len(feats)
+    for m in range(n - 1):
+        want = feats[m].get('rel_agr')
+        if not want:
+            continue
+        q = m + 1
+        g = feats[q]
+        # نطاق الصلة
+        first_nuc = next((k for k in range(q, n) if k in nuc_pos or feats[k]['verb']), None)
+        end = q + 1
+        while end < n and end - q < 12:
+            f = feats[end]
+            # الصلة تنتهي عند موصولٍ آخر، أو ما له الصدارة، أو فاء، أو عاطفٍ لا يليه اسمٌ بدليله المكتوب (المعطوف المفرد
+            # داخل الصلة: بِٱلَّيۡلِ وَٱلنَّهَارِ)، أو نواةٍ ثانية بلا عاطف
+            if f.get('rel_agr') or starts[end] or f['conj'] and (f['conj_letter'] != 'و' or not f.get('noun')) or \
+                    (end in nuc_pos or f['verb']) and first_nuc is not None and end > first_nuc and not f['conj']:
+                break
+            end += 1
+        span = range(q, end)
+        obl = []
+        kind = None
+        if g['verb'] and g['verb'] != 'amr' or q in nuc_pos:
+            kind = 'جملة فعلية'
+        elif g.get('head') == 'pron' or g['case'] == 'رفع' and not g['conj']:
+            kind = 'جملة اسمية'
+        elif g.get('head') == 'pp' or g.get('zarf'):
+            kind = 'شبه جملة'
+        elif g.get('neg') or g.get('qad'):
+            kind = 'جملة فعلية' if any(feats[k]['verb'] for k in span) else None
+        obl.append(('صلة', kind is not None, f'{kind} بعد الموصول' if kind else 'لم يُكشف ما يصلح صلةً'))
+        rho = None
+        if kind == 'جملة فعلية':
+            v = next((k for k in span if feats[k]['verb'] or k in nuc_pos), None)
+            if v is not None and any(x[0] == 3 and _agrees(want, (x[1], x[2])) for x in feats[v]['agr']):
+                rho = f'فاعل «{feats[v]["text"]}» المستتر أو المتصل للغائب، مطابقٌ للموصول'
+        if rho is None and kind in ('جملة فعلية', 'جملة اسمية'):
+            for k in span:
+                for pr in feats[k]['prons']:
+                    got = next((v for f_, v in PRON_AGR.items() if is_form(pr, (f_,))), None)
+                    if got and _agrees(want, got):
+                        rho = f'الضمير «{pr}» في «{feats[k]["text"]}» مطابقٌ للموصول'
+                        break
+                if rho:
+                    break
+                got = next((v for f_, v in PRON_FREE_AGR.items() if is_form(feats[k]['text'], (f_,), prefix=True)), None)
+                if got and _agrees(want, got):
+                    rho = f'الضمير المنفصل «{feats[k]["text"]}» مطابقٌ للموصول'
+                    break
+        if rho is None and kind == 'شبه جملة':
+            rho = 'مستترٌ في متعلَّق شبه الجملة (استقرّ)'
+        if rho is None and kind == 'جملة فعلية':
+            v = next((k for k in span if feats[k]['verb']), None)
+            if v is not None and feats[v]['verb'] != 'amr' and not feats[v]['prons'] and \
+                    not any(feats[k]['case'] == 'نصب' and feats[k].get('noun') for k in span if k > v):
+                rho = f'عائدٌ منصوب محذوف بعد «{feats[v]["text"]}» (حذف العائد المنصوب بفعلٍ تام)'
+        obl.append(('عائد', rho is not None, rho or 'لم يُكشف العائد، ولا قاعدة حذفٍ منطبقة'))
+        out.append(dict(kind='صلة', head=m, start=q, end=end, silah=kind, obligations=obl))
+    return out
+
+
+COND_JAZM = ('إِنْ', 'مَنْ', 'مَا', 'مَهْمَا', 'أَيْنَمَا', 'حَيْثُمَا', 'مَتَى', 'مَتَىٰ', 'أَيَّانَ', 'أَيَّمَا', 'إِذْمَا')
+COND_NONJAZM = ('إِذَا', 'لَوْ', 'لَمَّا', 'كُلَّمَا', 'لَئِنْ')
+
+
+def _lam_madi(word):
+    """لامٌ مفتوحة على ماضٍ (لَذَهَبَ، لَٱتَّبَعۡنَٰكُمۡ): جواب «لو» — اللام مكتوبةٌ بفتحتها، وما بعدها على صورة الماضي"""
+    from .affix import stem_info
+    t = letters(word)
+    if len(t) < 4 or t[0][0] != 'ل' or set(t[0][1]) != {FATHA}:
+        return False
+    rest = word[2:] if word[1:2] == FATHA else word[1:]
+    for suf in ('هُمْ', 'هُمُ', 'كُمْ', 'كُمُ', 'هَا', 'نَا', 'هُ', 'كَ'):
+        if rest.endswith(suf) and len(letters(rest)) - len(letters(suf)) >= 3:
+            rest = rest[:-len(suf)]                    # لَجَعَلَهُۥ: الضمير المتصل مفعول
+            break
+    return stem_info(rest).get('kind') == 'madi' or _madi_like(rest)
+
+
+def cond_structs(feats, nuc_pos, starts):
+    """G = Cond_t,e(S, Q) لكل أداة شرط (حكم صاحب النظرية؛ الأصول من ابن عقيل):
+    - الأداة: ما له صدارة الشرط (إِنْ، إِذَا، لَوْ، لَئِنْ، أَيْنَمَا…)، و«لَمَّا» يليها ماضٍ، و«مَن، ما، مهما» يليها فعل
+      (وهذه تبقى بقراءتيها: شرطية أو موصولة/استفهامية)
+    - تفتح التزامين: «فعل الشرط» (أول فعلٍ بعدها) و«الجواب»
+    - الجواب: كلمةٌ بفاءٍ رابطة بعد جملة الشرط (فاء الجواب لا عاطفة)؛ أو مع «لَوْ» لامٌ مفتوحة على فعل (لَذَهَبَ)؛
+      أو مع الجازمة مضارعٌ مجزوم بلا عاطف. وما سوى ذلك (نواةٌ بلا دليل الربط) جوابٌ محتمل لا مستوفى
+    - لا يُحكم بحذف الجواب لغيابه؛ وإن سبقت الأداةَ جملةٌ تامّة فقد يكون ما قبلها دليلَ الجواب، وهي قراءةٌ محفوظة
+    → [dict(kind='شرط', head, tool, s_pos, q_pos, q_kind, obligations)]"""
+    out = []
+    n = len(feats)
+    for t in range(n - 1):
+        f = feats[t]
+        text = f['text']
+        strict = starts[t] and starts[t][0] == 'شرط'
+        lamma = is_form(text, ('لَمَّا',), prefix=True) and feats[t + 1]['verb'] == 'madi'
+        amb = f.get('cond_amb') and (feats[t + 1]['verb'] or t + 1 in nuc_pos)
+        if not (strict or lamma or amb):
+            continue
+        jazm = is_form(text, COND_JAZM, prefix=True)
+        tool = next((x for x in COND_JAZM + COND_NONJAZM if is_form(text, (x,), prefix=True)), text)
+        # فعل الشرط: أول فعلٍ بعد الأداة في كلماتٍ قليلة (إِذَا ٱلسَّمَآءُ ٱنشَقَّتۡ)
+        s_pos = next((k for k in range(t + 1, min(n, t + 5)) if feats[k]['verb'] or k in nuc_pos), None)
+        obl = [('فعل الشرط', s_pos is not None, f'«{feats[s_pos]["text"]}»' if s_pos is not None else 'لم يُكشف فعل الشرط')]
+        q_pos, q_kind = None, None
+        if True:
+            # يُبحث عن دليل ربط الجواب ولو لم يُكشف فعل الشرط (وَلَوۡ شَآءَ ٱللَّهُ لَذَهَبَ)
+            for k in range((s_pos if s_pos is not None else t) + 1, min(n, t + 30)):
+                g = feats[k]
+                if starts[k] and not (g['conj'] and g['conj_letter'] == 'ف'):
+                    break                              # ما له الصدارة: الجواب لم يأتِ قبله
+                if g['conj'] and g['conj_letter'] == 'ف':
+                    q_pos, q_kind = k, 'فاءٌ رابطة للجواب'
+                    break
+                if tool == 'لَوْ' and (g.get('lam_fatha') and (g['verb'] or k in nuc_pos) or _lam_madi(g['text'])):
+                    q_pos, q_kind = k, 'لامٌ مفتوحة على الفعل في جواب «لو»'
+                    break
+                if jazm and g['verb'] == 'mudari' and g.get('mood') == 'جزم' and not g['conj']:
+                    q_pos, q_kind = k, 'مضارعٌ مجزوم في جواب الجازمة'
+                    break
+                if g['conj'] and g['conj_letter'] in ('و', 'ثم', 'أو'):
+                    continue                           # معطوفٌ على فعل الشرط
+            cand = None
+            if q_pos is None and s_pos is not None:
+                cand = next((k for k in range(s_pos + 1, min(n, s_pos + 30))
+                             if (feats[k]['verb'] or k in nuc_pos) and not feats[k]['conj']), None)
+                if cand is not None:
+                    q_kind = f'جوابٌ محتمل: «{feats[cand]["text"]}» (نواةٌ بلا دليل ربط)'
+        obl.append(('الجواب', q_pos is not None, q_kind or 'لم يُكشف الجواب، ولا يُحكم بحذفه بلا دليل'))
+        # نطاق الحدّ المحتمل حين لم يُستوفَ الجواب: إلى الجواب المحتمل، أو أول ما له الصدارة، أو ثماني كلمات
+        nxt_start = next((k for k in range((s_pos or t) + 1, min(n, t + 8)) if starts[k]), min(n, t + 8))
+        stop = min(cand, nxt_start) if cand is not None else nxt_start
+        out.append(dict(kind='شرط', head=t, tool=tool, s_pos=s_pos, q_pos=q_pos, q_kind=q_kind, open_to=stop,
+                        amb=bool(amb and not strict),
+                        obligations=obl))
+    return out
+
+
+def relative_khabar(feats, nuc_pos, starts, st_):
+    """خبر الموصول المبتدأ (الَّذِي كَتَبَ الدَّرْسَ …): بعد الصلة، إن لم تُعطف عليها صلةٌ أخرى:
+    فاءٌ داخلة على الخبر (ٱلَّذِينَ يُنفِقُونَ … فَلَهُمۡ)، أو نواةٌ بلا عاطف، أو مرفوعٌ أو ضمير منفصل أو اسم إشارة
+    أو شبه جملة → (موضع الخبر، الدليل) أو (None، السبب)"""
+    k = st_['end']
+    n = len(feats)
+    while k < n:
+        f = feats[k]
+        # صلةٌ معطوفة على الصلة (وَيُقِيمُونَ ٱلصَّلَوٰةَ): تُتخطّى إلى آخرها
+        if f['conj'] and f['conj_letter'] == 'و' and (f['verb'] or k in nuc_pos):
+            k += 1
+            while k < n and not feats[k]['conj'] and not starts[k] and not (k in nuc_pos or feats[k]['verb']):
+                k += 1
+            continue
+        if f['conj'] and f['conj_letter'] == 'ف':
+            return k, 'فاءٌ داخلة على خبر الموصول المبتدأ'
+        if f['conj']:
+            return None, 'عاطفٌ بعد الصلة لا يُعيَّن خبراً'
+        if k in nuc_pos or f['verb']:
+            return k, 'جملةٌ فعلية بعد الصلة'
+        if f.get('demo') or f.get('head') in ('pron', 'pp') or f['case'] == 'رفع':
+            return k, 'مرفوعٌ أو ضمير أو إشارة أو شبه جملة بعد الصلة'
+        return None, 'لم يُكشف الخبر بعد الصلة'
+    return None, 'انتهى النص قبل الخبر'
+
+
+def sentence_boundary(p, js, n, spans, cspans, nuc_pos, qawl_pos, starts, obls, pos_of, feats=None, chain=False,
+                      block=None):
     """Boundary(J | W) بين الكلمة p والتي بعدها، والجملة الجارية J تبدأ عند js (هندسة الخانات، لا علامات الوقف):
     Boundary ⟺ Complete(J) ∧ BlockedExtension(J, W)
     - Complete(J): في J نواة إسناد، ولا التزامٌ نحوي لازم مفتوح فيها (فهو يطلب ما بعده)
     - BlockedExtension: لا رابطٌ ثابت يعبر الموضع، وليست W مقولَ قولٍ لنواةٍ قبلها، وW تبدأ بما له الصدارة
       (فلا يعمل فيه ما قبله): ناسخ مكسور، أو استفهام، أو نداء، أو شرط، أو تنبيه
     → ('proven', السبب) أو ('possible', السبب) حين يحتمل الموضع الحدّ والامتداد معاً، أو None"""
+    # التزامات البنى (الصلة، والشرط): داخل المكوّن الداخلي لا حدّ، والمكوّن الأعلى المفتوح يجعل الحدّ محتملاً
+    if block is not None:
+        return None if block[0] == 'inner' else ('possible', block[1])
     # J تامّة بنواتها، أو هي معطوفةٌ بواوٍ أو فاء على جملةٍ تامّة قبلها (تشاركها في التمام: وَيَهۡدِيَكُمۡ … وَيَتُوبَ عَلَيۡكُمۡ)
     if not any(js <= x <= p for x in nuc_pos) and not chain:
         return None
@@ -1716,10 +1919,6 @@ def _boundary_kind(p, js, spans, cspans, nuc_pos, qawl_pos, starts, feats=None):
     if starts[p] and starts[p][0] in ('تنبيه', 'استفهام', 'نداء', 'شرط') or feats and feats[p].get('cond_amb'):
         return None                                   # ما له الصدارة، وأداة الشرط، تطلب كلامها بعدها (أَلَآ إِنَّهُمۡ، فَمَنِ ٱهۡتَدَىٰ)
     w = starts[p + 1]
-    # شرطٌ في J لم يتلُه شرطٌ وجوابٌ (نواتان): جوابه بعدُ، فما بعد الموضع قد يكون جوابه (وَلَئِنِ ٱتَّبَعۡتَ … إِنَّكَ إِذࣰا)
-    conds = [k for k in range(js, p + 1) if starts[k] and starts[k][0] == 'شرط']
-    if conds and sum(1 for x in nuc_pos if conds[-1] <= x <= p) < 2:
-        return ('possible', 'شرطٌ قبل الموضع لم يُستوفَ جوابه')
     if any(min(a, b) <= p < max(a, b) for a, b in cspans):
         return ('possible', 'رابط محتمل يعبر الموضع')
     # نهاية الجملة قبل الواو أو الفاء (حكم صاحب النظرية): الجملة التامّة قبلها جملةٌ صحيحة، وما بعدها عطفٌ أو حال
@@ -1799,12 +1998,14 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
     import collections
     st = collections.Counter()
     out, records = [], []
+    rel_samples, cond_samples = [], []
     sources = waqf_sources()
     by_surah = collections.OrderedDict()
     for it in items:
         by_surah.setdefault(it[0], []).append(it)
     for s, its in by_surah.items():
         words, wunits, marks, ay_end, starts, wtext, feats = [], [], [], [], [], [], []
+        khabar_done, pending_open = set(), []
         pos_of, qawl = {}, set()
         bonds, obls, nuclei = [], [], []
         for s_, v, a, units, S in its:
@@ -1859,14 +2060,67 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
         qawl_pos = {pos_of[x[0]] for x in nuclei if x[0] in qawl} | {p for p, w in enumerate(wtext) if is_qawl(w)}
         js = 0                                        # أول الجملة الجارية بقراءة القطع عند آخر حدٍّ مسجَّل (ثابتٍ أو محتمل)
         chain = False                                 # الجملة الجارية معطوفة على جملةٍ تامّة قبلها
+        # البنى والتزاماتها: الصلة (ثم الشرط والعطف)
+        rels = relative_structs(feats, set(nuc_pos), starts)
+        inner = {}
+        for r in rels:
+            for k in range(r['head'], r['end'] - 1):
+                inner.setdefault(k, ('inner', 'داخل الصلة'))
+            st['rel'] += 1
+            for name, met, _ in r['obligations']:
+                st[f'rel:{name}'] += 1
+                st[f'rel:{name}:met'] += bool(met)
+            st[f'rel:نوع:{r["silah"]}'] += 1
+            if len(rel_samples) < 40:
+                rel_samples.append(dict(location=words_text(words, r['head']), text=' '.join(wtext[r['head']:r['end']]),
+                                        silah=r['silah'], obligations=[list(o) for o in r['obligations']]))
+        rel_at = {r['head']: r for r in rels}
+        for c_ in cond_structs(feats, set(nuc_pos), starts):
+            st['cond'] += 1
+            st['cond:ambiguous'] += c_['amb']
+            for name, met, _ in c_['obligations']:
+                st[f'cond:{name}'] += 1
+                st[f'cond:{name}:met'] += bool(met)
+            if c_['q_pos'] is not None:
+                st['cond:ربط:' + c_['q_kind'].split(':')[0]] += 1
+                # الشرط وجوابه مكوّنٌ واحد: لا حدّ بين الأداة وأول الجواب، والفاء الرابطة ليست عاطفة
+                for k in range(c_['head'], c_['q_pos']):
+                    inner.setdefault(k, ('inner', 'بين الشرط وجوابه'))
+            elif not c_['amb']:
+                # بلا جوابٍ مستوفى لا يُجزم بنطاق جملة الشرط (فعلُ الشرط قد لا يُعرف: وَإِذَآ أَظۡلَمَ … قَامُواْ):
+                # يُمنع الحدّ بعد الأداة وحدها، وما بعدها إلى الجواب المحتمل حدٌّ محتمل
+                inner.setdefault(c_['head'], ('inner', 'بعد أداة الشرط'))
+                for k in range(c_['head'] + 1, min(n - 1, c_['open_to'])):
+                    inner.setdefault(k, ('open', f'جواب «{c_["tool"]}» غير مستوفى' + (f' ({c_["q_kind"]})' if c_['q_kind'] else '')))
+            if len(cond_samples) < 40:
+                cond_samples.append(dict(location=words_text(words, c_['head']),
+                                         text=' '.join(wtext[c_['head']:(c_['q_pos'] or c_['head']) + 4]),
+                                         tool=c_['tool'], amb=c_['amb'], obligations=[list(o) for o in c_['obligations']]))
+        pending = {}                                  # موضع الحدّ ← (inner | open، السبب) لخبر الموصول المبتدأ
         for p in range(n):
             last = p == n - 1
+            # الموصول في أول الجملة الجارية مبتدأٌ ينتظر خبره بعد صلته
+            if p == js and p in rel_at and p not in khabar_done:
+                khabar_done.add(p)
+                r = rel_at[p]
+                k, why = relative_khabar(feats, set(nuc_pos), starts, r)
+                st['rel:خبر'] += 1
+                st['rel:خبر:met'] += k is not None
+                if k is not None:
+                    for g_ in range(r['end'] - 1, k):
+                        pending[g_] = ('inner', 'الموصول المبتدأ ينتظر خبره')
+                else:
+                    pending_open.append((r['end'] - 1, f'خبر الموصول «{wtext[p]}» غير مستوفى: {why}'))
+            blk = inner.get(p) or pending.get(p)
+            if blk is None and pending_open and p >= pending_open[-1][0]:
+                blk = ('open', pending_open[-1][1])
             dec = None if last else sentence_boundary(p, js, n, spans, cspans, nuc_pos, qawl_pos, starts,
-                                                      obls, pos_of, feats, chain)
+                                                      obls, pos_of, feats, chain, blk)
             if dec:
                 js = p + 1
                 if dec[0] == 'proven':
                     chain = dec[1].startswith('نهاية جملة قبل')
+                    pending_open.clear()
             if marks[p] or ay_end[p] or last or dec:
                 rec = boundary_record(p, words, pos_of, bonds, obls, nuclei, du_start, marks[p], ay_end[p], last,
                                       sources, a_id, q, cand, checked_ends)
@@ -1971,6 +2225,7 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
             if D.O['boundary'].get('M'):
                 sp.B.append(('تعلّق معنوي عابر', D.id, None, Evidence(D.O['boundary']['M'][0], ['من سجل الوقف'])))
         out.append(sp)
+    linguistic_layer.samples = dict(rel=rel_samples, cond=cond_samples)
     return out, st, records
 
 
