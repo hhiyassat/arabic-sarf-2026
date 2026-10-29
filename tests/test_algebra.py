@@ -121,11 +121,8 @@ if hfn():
         check('نهاية الآية ١٣٧ ليست حدّاً: لا علامة وقف عليها', waqf_of(rows[(37, 137)])[-1] is None)
         MU, (LT, st) = layers([(2, 282)])
         Ds = LT[0].A + LT[0].O['pending']
-        check('البقرة ٢٨٢: آية واحدة فيها وحدات خطابية كثيرة بعلامات الوقف', len(Ds) >= 10 and MU.closed, len(Ds))
+        check('البقرة ٢٨٢: علامات الوقف لا تقسم الآية: لا حدّ ثابت فيها إلا بدليل الخانات', len(Ds) == 1 and MU.closed, len(Ds))
         check('ولا رابطة تعبر حدّ وحدة خطابية', st['bond_cross_du'] == 0, st)
-        closed = [D for D in Ds if D.closed]
-        check('«وَٱتَّقُواْ ٱللَّهَۖ» جملة مغلقة داخل الآية، والآية لا تُغلقها',
-              any((D.A[0].A[-1].O['text'] if D.A else '') == 'اللَّهَ' for D in closed), [D.id for D in closed])
 # سجل الحدّ B(b | a, q, c) = ⟨F, L, M, W, I, E⟩: جواز الوقف لا يساوي انغلاق العلاقة
 if hfn() and rows:
     def recs(refs):
@@ -135,6 +132,12 @@ if hfn() and rows:
             S_, u_ = sentence_geo(a, f'Q{s_}:{v_}', T_)
             items.append((s_, v_, a, u_, S_))
         return linguistic_layer(items, T_, 'test')[2]
+    R = recs([(2, 282)])
+    at = {r['location'][2]: r for r in R}
+    check('البقرة ٢٨٢: «قلى» قبل «وَٱتَّقُواْ» حدٌّ محتمل بالخانات (نواة بعد جملة تامّة)، لا إغلاق بالعلامة',
+          at.get(120, {}).get('J') == 'possible' and at[120]['mark'] == 'قلى', at.get(120))
+    check('البقرة ٢٨٢: الشرط بعد جملة تامّة لا يثبت به الحدّ (وَلَا يَأۡبَ ٱلشُّهَدَآءُ إِذَا مَا دُعُواْ)',
+          at.get(74, {}).get('J') == 'possible', at.get(74))
     R = {r['location']: r for r in recs([(37, 137), (37, 138)])}
     r = R[(37, 137, 3)]
     check('رأس الآية ١٣٧: W رأس آية، وL من نص الداني، فلا يُبتدأ بما بعده',

@@ -244,13 +244,28 @@ def render_cells(cells, text, orphans=()):
 
 
 # ---------- المستوى 1: المقطع بقوالبه الستة ----------
+SYLLABLE_SHAPES = ('CV', 'CVC', 'CVV', 'CVVC', 'CVVCC', 'CVCC')     # M: الأشكال الستة المرخَّصة
+WORD_FINAL_ONLY = ('CVCC', 'CVVCC')                                # لا يقعان إلا في آخر الكلمة (حكم صاحب النظرية)
+
+
+def rem_M(u, word_end=True):
+    """Rem_M(u) = {v | uv ∈ M}: البقايا الممكنة للمقطع الجاري u. وإذا لم يكن الموضع آخر الكلمة
+    سقط من M ما لا يقع إلا في آخرها (CVCC، CVVCC)"""
+    shapes = SYLLABLE_SHAPES if word_end else tuple(x for x in SYLLABLE_SHAPES if x not in WORD_FINAL_ONLY)
+    return {m[len(u):] for m in shapes if m.startswith(u)}
+
+
+def cell_shape(c, first):
+    """قراءة الخلية في المقطع: المتحركة صامتٌ ونواة (CV أو CVV)، والساكنة صامتٌ C"""
+    if c.H == '∅':
+        return 'C'
+    return 'CVV' if c.L == 2 else 'CV'
+
+
 def syllable_next(G):
-    """Next_Γ(G): ما يرخَّص إضافته إلى المقطع: خلية متحركة إن كان فارغاً، وإلا خلية ساكنة ما دامت
-    الخواتم أقل من اثنتين (CV، CVV، CVC، CVVC، CVCC، CVVCC)"""
-    if not G.A:
-        return 'onset'
-    codas = sum(1 for c in G.A[1:])
-    return 'coda' if codas < 2 else None
+    """Next_Γ(G) مشتقٌّ من Rem_M: ما يمكن أن يلي المقطع الجاري (بقاياه غير ε)"""
+    u = cv(G) if G.A else ''
+    return {v for v in rem_M(u) if v}
 
 
 def cv(G):
@@ -258,8 +273,10 @@ def cv(G):
     return 'C' + ('VV' if c0.L == 2 else 'V') + 'C' * (len(G.A) - 1)
 
 
-def syllabify(cells, base_id, T):
-    """المقاطع من الخلايا بالامتداد المرخَّص، وكل مقطع يُغلق بشهادتَي الإكمال والحدّ.
+def syllabify(cells, base_id, T, word_end=True):
+    """المقاطع من الخلايا بالامتداد المرخَّص: تُضاف الخلية x إلى المقطع الجاري u إذا كان
+    Rem_M(u·x) ≠ ∅ (و CVCC/CVVCC لا تُقبل إلا والخلية آخر الكلمة)؛ ويُغلق المقطع بشهادتَي الإكمال
+    (u ∈ M) والحدّ (Rem_M(u·x) = ∅ للخلية التالية x، أو لا خلية بعده).
     → (المقاطع المغلقة، الخلايا التي لم يُبنَ لها مقطع مع السبب)"""
     out, stray = [], []
     i, n = 0, len(cells)
@@ -267,23 +284,37 @@ def syllabify(cells, base_id, T):
         G = Geo(f'{base_id}.σ{len(out)}', (SYLLABLE, 'مقطع'),
                 Omega=[Obligation('نواة متحركة')])
         c = cells[i]
-        if c.H == '∅':
-            stray.append((c, 'لا يُبتدأ بساكن'))     # بلا دليل امتداد: لا يُبنى مقطع ولا يُغلق
+        x = cell_shape(c, True)
+        # الساكنة في أول المقطع: Rem_M(C) يطلب V بعدها، وكل خلية تالية تبدأ بصامت، فلا تبلغ M: لا مقطع
+        if x == 'C':
+            stray.append((c, 'لا يُبتدأ بساكن'))
             i += 1
             continue
-        extend(G, c, None, Evidence('الخلية متحركة', [f'الحركة {c.H}'], [('الابتداء بساكن', 'الحركة مكتوبة')]),
+        extend(G, c, None, Evidence('الخلية متحركة', [f'الحركة {c.H}', f'Rem_M({x}) ≠ ∅'],
+                                    [('الابتداء بساكن', 'الحركة مكتوبة')]),
                T, discharge=['نواة متحركة'])
         i += 1
-        while i < n and syllable_next(G) == 'coda' and cells[i].H == '∅':
-            extend(G, cells[i], 'خاتمة', Evidence('الخلية ساكنة', [f'الخواتم {len(G.A) - 1} < 2']), T)
+        why_end = None
+        while i < n:
+            u = cv(G)
+            x = cell_shape(cells[i], False)
+            last = i == n - 1 and word_end
+            r = rem_M(u + x, word_end=last)
+            if x != 'C' or not r:
+                why_end = (u, x, last)
+                break
+            extend(G, cells[i], 'خاتمة', Evidence('الخلية ساكنة', [f'Rem_M({u}·C) = {{{", ".join(sorted(v or "ε" for v in r))}}}']), T)
             i += 1
-        ec = Evidence('قالب المقطع', [cv(G)], [('مقطع بلا نواة', 'النواة الخلية الأولى')])
+        u = cv(G)
+        ec = Evidence('قالب المقطع', [u, f'{u} ∈ M'], [('مقطع بلا نواة', 'النواة الخلية الأولى')])
         if i == n:
             eb = Evidence('نهاية الوحدة', ['لا خلية بعدها'])
-        elif cells[i].H != '∅':
-            eb = Evidence('الخلية التالية متحركة', ['المتحرك يبدأ مقطعاً، فلا يكون خاتمة'])
+        elif why_end[1] != 'C':
+            eb = Evidence('الخلية التالية متحركة', [f'Rem_M({u}·{why_end[1]}) = ∅: المتحرك يبدأ مقطعاً'])
+        elif not why_end[2] and rem_M(u + 'C'):
+            eb = Evidence('CVCC وCVVCC لا يقعان إلا في آخر الكلمة', [f'{u}·C ليس آخر الكلمة'])
         else:
-            eb = Evidence('الخواتم استوفت حدّها', ['خاتمتان'])
+            eb = Evidence('المقطع مشبَع', [f'Rem_M({u}) = {{ε}}'])
         close(G, ec, eb, T)
         out.append(G)
     return out, stray
@@ -423,7 +454,7 @@ def unit_geo(a, wi, ui, base_id, T, governed_info=None):
         G.Theta['lex'] = lab
         close(G, ev, Evidence('حدّ الخانة', ['من المقشِّر: ' + ' + '.join(sl['type'] for sl in slots)]), T)
         return G
-    sylls, stray = syllabify(cells, base_id, T)
+    sylls, stray = syllabify(cells, base_id, T, word_end=ui == len(seg['units']) - 1)
     G.O['pending'] = [c for c, _ in stray]
     for S in sylls:
         extend(G, S, 'تتابع', Evidence('مقطع مغلق', [cv(S)]), T)
@@ -951,7 +982,10 @@ def find_khabar(a, r, verbs, governed, marks):
     w = ism_w + 1
     if _boundary_after(marks, ism_w):
         return None
+    clause_w = {f['word_index'] for f in a['operators'] if f['group'] in CLAUSE_OPS and f.get('status') != 'blocked'}
     while w < n:
+        if w > ism_w + 1 and (w in clause_w or clause_start(a, w)):
+            break                                     # عامل تركيبٍ جديد أو ما له الصدارة: ما بعده لغيره
         seg = a['segments'][w]
         sl0 = seg['slots'][0]['text']
         # اللام المزحلقة على اسمٍ أو فعل، أو على ضمير الفصل المنفصل (لَهُوَ، لَهِيَ)؛ أما «لَكُمۡ، لَهُمۡ، لَهُۥ» فلام جرّ
@@ -1067,9 +1101,8 @@ def sentence_geo(a, vid, T):
     from .status import ACCEPTED
     verbs = {g['word_index'] for g in a.get('agreement', [])}
     governed = _governed_words(a)
-    marks = waqf_of(a['verse']) if 'verse' in a else []
-    if len(marks) != len(a['segments']):
-        marks = [None] * len(a['segments'])
+    # علامات الوقف لا تدخل التحليل (حكم صاحب النظرية): الحدّ يُشتقّ من الخانات، والعلامات للتقييم وحده
+    marks = [None] * len(a['segments'])
     for r in a.get('relations', []):
         f = status.get((r['word_index'], r['operator'], r['group']))
         if not f or f.get('status') != ACCEPTED:
@@ -1321,9 +1354,9 @@ def cross_ayah_links(analyze_fn, prev, nxt):
                     pass
     nuc_prev = [g for g in pa.get('agreement', [])]
     last_nuc = nuc_prev[-1] if nuc_prev else None
-    # أول حدٍّ في الآية التالية: علامة وقف مثبتة أو آخرها
-    marks = waqf_of(na['verse'])
-    first_b = next((i for i, m in enumerate(marks) if m in BOUNDARY_WAQF), len(na['segments']) - 1)
+    # مدى بداية الآية التالية: إلى ما قبل أول كلمةٍ لها الصدارة (فلا يعمل ما بعدها فيما قبلها)، أو آخرها.
+    # (علامات الوقف لا تدخل التحليل)
+    first_b = next((i - 1 for i in range(1, len(na['segments'])) if clause_start(na, i)), len(na['segments']) - 1)
     span = range(0, first_b + 1)
     nst = {(f['word_index'], f['operator'], f['group']): f.get('status') for f in na['operators']}
     jar0 = next((r for r in na.get('relations', []) if r['word_index'] == 0 and r.get('expected') == 'جر' and
@@ -1408,11 +1441,10 @@ def cross_ayah_links(analyze_fn, prev, nxt):
         out.append(dict(src=prev['units'][max(prev['units'])].id, dst=nid(0, 0), rel='نعت أو بدل أو ابتداء',
                         proven=False, rule='اسم موصول في أول الآية: قد يكون تابعاً لما قبله، وقد يكون مبتدأ'))
     # شرطٌ لا جواب له في آيته
-    pmarks = waqf_of(pa['verse'])
     for f in pa['operators']:
         if f['group'] == '7' and f.get('status') != 'blocked' and _bare_w(f['operator']) in COND_STRICT:
             after = [g for g in pa.get('agreement', []) if g['word_index'] > f['word_index']]
-            later_b = any(m in BOUNDARY_WAQF for m in pmarks[f['word_index']:-1]) if len(pmarks) == n1 else True
+            later_b = any(clause_start(pa, w) for w in range(f['word_index'] + 1, n1))
             if len(after) <= 1 and not later_b:
                 out.append(dict(src=pid(f['word_index'], 0) if False else prev['units'][(f['word_index'], 0)].id,
                                 dst=nid(0, 0), rel='جواب الشرط بعدُ', proven=False,
@@ -1499,6 +1531,83 @@ def boundary_record(p, words, pos_of, bonds, obls, nuclei, du_start, mark, ayah_
                 mark=mark, ayah_end=ayah_end)
 
 
+SADARA_NAWASIKH = ('إن', 'كأن', 'لكن', 'ليت', 'لعل')   # «إنّ» المكسورة وأخواتها سوى «أنّ»: لها الصدارة
+
+
+def clause_start(a, wi):
+    """ما يبدأ به الكلام في أول الكلمة wi وله الصدارة، فلا يعمل فيه ما قبله ولا يكون من جملةٍ قبله إلا معطوفاً:
+    → (النوع، بعد حرف عطف؟) أو None. الأنواع: ناسخ، استفهام، نداء، شرط، تنبيه.
+    - «إِنَّ» وكأنّ ولكنّ وليت ولعلّ عاملاً مقبولاً في أول الكلمة (لا «أَنَّ»)
+    - الاستفهام: هَلۡ، والهمزة المفتوحة قبل فاء أو واو مفتوحتين (أَفَلَا، أَوَلَمۡ)، أو قبل «لَمۡ» (أَلَمۡ)، أو قبل همزة (أَءِنَّكُمۡ)
+    - النداء: ياءٌ بعدها ألف أو خنجرية في أول الكلمة (يَٰقَوۡمِ، يَٰٓأَيُّهَا)
+    - الشرط الذي لا يلتبس بالموصول (COND_STRICT)
+    - التنبيه: أَلَا"""
+    from .status import ACCEPTED
+    seg = a['segments'][wi]
+    word = seg['word']
+    toks = letters(word)
+    conj = len(seg['slots']) > 1 and seg['slots'][0]['type'] != 'جذع' and _bare_w(seg['slots'][0]['text']) in ('و', 'ف')
+    if conj:
+        toks = toks[1:]
+    bare = ''.join(L for L, _ in toks).replace('أ', 'ا').replace('إ', 'ا')
+    ops = [f for f in a['operators'] if f['word_index'] == wi and f.get('status') != 'blocked']
+    for f in ops:
+        b = _bare_w(f['operator'])
+        if f['group'] == '2' and f.get('status') == ACCEPTED and b in SADARA_NAWASIKH and b != 'أن' and \
+                not _bare_w(f['operator']).startswith('أ'):
+            return ('ناسخ له الصدارة', conj)
+        if f['group'] == '7' and b in COND_STRICT:
+            return ('شرط', conj)
+    if not toks:
+        return None
+    L0, m0 = toks[0]
+    if bare in ('هل',) or bare.startswith('هل') and len(seg['slots']) > 1:
+        return ('استفهام', conj)
+    if L0 in 'أ' and FATHA in m0 and len(toks) > 2:
+        L1, m1 = toks[1]
+        if L1 in 'فو' and FATHA in m1 or L1 in 'ءأإ' or \
+                L1 == 'ل' and toks[2][0] == 'م' and len(toks) == 3 and SUKUN in toks[2][1]:
+            return ('استفهام', conj)
+        if L1 == 'ل' and FATHA in m1 and SHADDA not in m1 and toks[2][0] == 'ا' and len(toks) <= 4:
+            return ('تنبيه', conj)
+    if L0 == 'ي' and len(toks) > 2 and (DAGGER_ALIF in m0 or toks[1][0] == 'ا'):
+        return ('نداء', conj)
+    return None
+
+
+def sentence_boundary(p, js, n, spans, cspans, nuc_pos, qawl_pos, starts, obls, pos_of):
+    """Boundary(J | W) بين الكلمة p والتي بعدها، والجملة الجارية J تبدأ عند js (هندسة الخانات، لا علامات الوقف):
+    Boundary ⟺ Complete(J) ∧ BlockedExtension(J, W)
+    - Complete(J): في J نواة إسناد، ولا التزامٌ نحوي لازم مفتوح فيها (فهو يطلب ما بعده)
+    - BlockedExtension: لا رابطٌ ثابت يعبر الموضع، وليست W مقولَ قولٍ لنواةٍ قبلها، وW تبدأ بما له الصدارة
+      (فلا يعمل فيه ما قبله): ناسخ مكسور، أو استفهام، أو نداء، أو شرط، أو تنبيه
+    → ('proven', السبب) أو ('possible', السبب) حين يحتمل الموضع الحدّ والامتداد معاً، أو None"""
+    if not any(js <= x <= p for x in nuc_pos):
+        return None
+    for o in obls:
+        if o.required and not o.met and o.name.startswith(SYNTACTIC_OBL) and \
+                any(js <= pos_of.get(u, -1) <= p for u in o.units):
+            return None
+    if any(min(a, b) <= p < max(a, b) for a, b in spans):
+        return None
+    q = [x for x in qawl_pos if js <= x <= p]
+    if q and not any(starts[k] or k in nuc_pos for k in range(max(q) + 1, p + 1)):
+        return None                                   # ما بعد «قال» مقولُه: معمولٌ له لا جملة مستقلة
+    w = starts[p + 1]
+    if any(min(a, b) <= p < max(a, b) for a, b in cspans):
+        return ('possible', 'رابط محتمل يعبر الموضع')
+    # الشرط بعد جملة تامّة قد يكون ما قبله دليلَ جوابه (وَلَا يَأۡبَ ٱلشُّهَدَآءُ إِذَا مَا دُعُواْ): فلا يثبت به الحدّ
+    if w and not w[1] and w[0] != 'شرط':
+        return ('proven', f'{w[0]}: له الصدارة بعد جملة تامّة، ولا رابط يعبر الموضع')
+    if w and w[0] == 'شرط':
+        return ('possible', 'شرطٌ بعد جملة تامّة: يبدأ جملة، أو ما قبله دليل جوابه')
+    if w:
+        return ('possible', f'{w[0]} بعد حرف عطف: جملةٌ معطوفة أو حالية')
+    if p + 1 in nuc_pos:
+        return ('possible', 'نواةٌ بعد جملة تامّة: استئناف، أو حال، أو صفة، أو خبر')
+    return None
+
+
 def words_text(words, p):
     return f'{words[p][0]}:{words[p][1]}:{words[p][2]}'
 
@@ -1519,8 +1628,8 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
     for it in items:
         by_surah.setdefault(it[0], []).append(it)
     for s, its in by_surah.items():
-        words, wunits, marks, ay_end = [], [], [], []
-        pos_of = {}
+        words, wunits, marks, ay_end, starts = [], [], [], [], []
+        pos_of, qawl = {}, set()
         bonds, obls, nuclei = [], [], []
         for s_, v, a, units, S in its:
             mk = waqf_of(a['verse'])
@@ -1531,8 +1640,11 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
                 us = [units[(wi, ui)] for ui in range(len(seg['units']))]
                 for G in us:
                     pos_of[G.id] = len(words)
+                    if G.Theta.get('R') == 'قول':
+                        qawl.add(G.id)
                 words.append((s, v, wi)); wunits.append(us); marks.append(mk[wi])
                 ay_end.append(wi == len(a['segments']) - 1)
+                starts.append(clause_start(a, wi))
             bonds += [b for b in S.B if isinstance(b[1], str) and b[0] != 'تجاور']
             obls += list(S.Omega)
             nuclei += [n for n in S.O.get('nuclei', []) if n[0]]
@@ -1549,19 +1661,49 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
                     st['cross_candidate'] += 1
         n = len(words)
         segs, du_start = [], 0
+        spans = [(pos_of[b[1]], pos_of[b[2]]) for b in bonds if b[1] in pos_of and b[2] in pos_of]
+        cspans = [(pos_of[c['src']], pos_of[c['dst']]) for c in cand]
+        nuc_pos = sorted({pos_of[x[0]] for x in nuclei if x[0] in pos_of})
+        qawl_pos = {pos_of[x[0]] for x in nuclei if x[0] in qawl}
         for p in range(n):
             last = p == n - 1
-            if marks[p] or ay_end[p] or last:
+            dec = None if last else sentence_boundary(p, du_start, n, spans, cspans, nuc_pos, qawl_pos, starts,
+                                                      obls, pos_of)
+            if marks[p] or ay_end[p] or last or dec:
                 rec = boundary_record(p, words, pos_of, bonds, obls, nuclei, du_start, marks[p], ay_end[p], last,
                                       sources, a_id, q, cand, checked_ends)
+                rec['J'] = ('proven' if last else dec[0]) if (dec or last) else None
+                rec['J_why'] = 'آخر السورة' if last else dec[1] if dec else ''
                 records.append(rec)
                 st['b_candidates'] += 1
                 st['b_cat:' + rec['category'].split(':')[0].split(' (')[0]] += 1
                 if rec['mark'] in BOUNDARY_WAQF and rec['L']:
                     st['b_mark_with_L'] += 1          # جواز الوقف مع تعلّق لفظي عابر (حسن، أو خطأ في التحليل)
-                if rec['mark'] in BOUNDARY_WAQF or last:
+                if rec['J'] and not last:
+                    st[f'Jb_{rec["J"]}'] += 1
+                    st[f'Jb_{rec["J"]}:' + rec['J_why'].split(':')[0]] += 1
+                if last or rec['J'] == 'proven':
                     segs.append((du_start, p, rec))
                     du_start = p + 1
+        # التقييم بتقسيم مصحف المجمّع (العلامات مرجعٌ لا مدخل): كل علامةٍ حدٌّ في المرجع، والمعانقة حدٌّ في أحد موضعيها
+        srec = [r for r in records if r['location'][0] == s]
+        muan = []
+        for r in srec:
+            if r['mark'] == '∴':
+                muan.append(r)
+            elif r['mark'] in BOUNDARY_WAQF:
+                st[f'eval:{r["mark"]}'] += 1
+                st[f'eval:{r["mark"]}:{r["J"] or "none"}'] += 1
+            elif r['J'] == 'proven' and r['location'] != words[-1]:
+                st['eval:بلا علامة:proven' + (':رأس آية' if r['ayah_end'] else '')] += 1
+            elif r['J'] == 'possible' and not r['mark']:
+                st['eval:بلا علامة:possible'] += 1
+        for k in range(0, len(muan) - 1, 2):
+            pair = muan[k:k + 2]
+            st['eval:∴'] += 1
+            best = 'proven' if any(r['J'] == 'proven' for r in pair) else \
+                'possible' if any(r['J'] == 'possible' for r in pair) else 'none'
+            st[f'eval:∴:{best}'] += 1
         disc = []
         for k, (p0, p1, rec) in enumerate(segs):
             ids = {G.id for p in range(p0, p1 + 1) for G in wunits[p]}
