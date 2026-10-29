@@ -1531,7 +1531,7 @@ def boundary_record(p, words, pos_of, bonds, obls, nuclei, du_start, mark, ayah_
                 mark=mark, ayah_end=ayah_end)
 
 
-SADARA_NAWASIKH = ('إن', 'كأن', 'لكن', 'ليت', 'لعل')   # «إنّ» المكسورة وأخواتها سوى «أنّ»: لها الصدارة
+SADARA_NAWASIKH = ('إن', 'لكن', 'ليت', 'لعل')   # «إنّ» المكسورة وأخواتها سوى «أنّ» و«كأنّ» (جملتها تقع حالاً: كَأَنَّهُمۡ لَا يَعۡلَمُونَ)
 
 
 def clause_start(a, wi):
@@ -1563,9 +1563,12 @@ def clause_start(a, wi):
     L0, m0 = toks[0]
     if bare in ('هل',) or bare.startswith('هل') and len(seg['slots']) > 1:
         return ('استفهام', conj)
+    if bare in ('لئن', 'لءن'):
+        return ('شرط', conj)                          # اللام الموطِّئة للقسم و«إنْ»
     if L0 in 'أ' and FATHA in m0 and len(toks) > 2:
         L1, m1 = toks[1]
-        if L1 in 'فو' and FATHA in m1 or L1 in 'ءأإ' or \
+        madd_verb = len(toks) > 3 and toks[2][0] == 'ا' and not toks[2][1] and toks[3][1] & {FATHA, DAMMA, KASRA}
+        if L1 in 'فو' and FATHA in m1 and SHADDA not in m1 and not madd_verb or L1 in 'ءأإ' or \
                 L1 == 'ل' and toks[2][0] == 'م' and len(toks) == 3 and SUKUN in toks[2][1]:
             return ('استفهام', conj)
         if L1 == 'ل' and FATHA in m1 and SHADDA not in m1 and toks[2][0] == 'ا' and len(toks) <= 4:
@@ -1594,13 +1597,30 @@ def sentence_boundary(p, js, n, spans, cspans, nuc_pos, qawl_pos, starts, obls, 
     return d
 
 
+QAWL_FORMS = {'قال', 'قالوا', 'قالت', 'قالتا', 'قالا', 'قلن', 'قلت', 'قلنا', 'قلتم', 'يقول', 'يقولون', 'يقولوا', 'يقولا',
+              'تقول', 'تقولون', 'تقولوا', 'نقول', 'أقول', 'اقول', 'قل', 'قولوا', 'قولي', 'قيل', 'يقال', 'نادى', 'نادوا',
+              'ينادي', 'ينادون', 'وصى', 'دعا', 'دعوا', 'ليقولن', 'لتقولن', 'لنقولن', 'فليقل', 'ليقولوا'}
+
+
+def is_qawl(word):
+    """فعل القول (وما في معناه: نادى، وصّى، دعا) بصورته المكتوبة، بعد واو أو فاء: معموله مقول القول"""
+    b = _bare_w(word).replace('ٱ', 'ا')
+    return b in QAWL_FORMS or b[:1] in 'وف' and b[1:] in QAWL_FORMS
+
+
 def _boundary_kind(p, js, spans, cspans, nuc_pos, qawl_pos, starts):
     if any(min(a, b) <= p < max(a, b) for a, b in spans):
         return None
     q = [x for x in qawl_pos if js <= x <= p]
     if q and not any(starts[k] or k in nuc_pos for k in range(max(q) + 1, p + 1)):
         return None                                   # ما بعد «قال» مقولُه: معمولٌ له لا جملة مستقلة
+    if starts[p] and starts[p][0] in ('تنبيه', 'استفهام', 'نداء'):
+        return None                                   # ما له الصدارة يطلب كلامه بعده (أَلَآ إِنَّهُمۡ)
     w = starts[p + 1]
+    # شرطٌ في J لم يتلُه شرطٌ وجوابٌ (نواتان): جوابه بعدُ، فما بعد الموضع قد يكون جوابه (وَلَئِنِ ٱتَّبَعۡتَ … إِنَّكَ إِذࣰا)
+    conds = [k for k in range(js, p + 1) if starts[k] and starts[k][0] == 'شرط']
+    if conds and sum(1 for x in nuc_pos if conds[-1] <= x <= p) < 2:
+        return ('possible', 'شرطٌ قبل الموضع لم يُستوفَ جوابه')
     if any(min(a, b) <= p < max(a, b) for a, b in cspans):
         return ('possible', 'رابط محتمل يعبر الموضع')
     # الشرط بعد جملة تامّة قد يكون ما قبله دليلَ جوابه (وَلَا يَأۡبَ ٱلشُّهَدَآءُ إِذَا مَا دُعُواْ): فلا يثبت به الحدّ
@@ -1635,7 +1655,7 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
     for it in items:
         by_surah.setdefault(it[0], []).append(it)
     for s, its in by_surah.items():
-        words, wunits, marks, ay_end, starts = [], [], [], [], []
+        words, wunits, marks, ay_end, starts, wtext = [], [], [], [], [], []
         pos_of, qawl = {}, set()
         bonds, obls, nuclei = [], [], []
         for s_, v, a, units, S in its:
@@ -1649,7 +1669,7 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
                     pos_of[G.id] = len(words)
                     if G.Theta.get('R') == 'قول':
                         qawl.add(G.id)
-                words.append((s, v, wi)); wunits.append(us); marks.append(mk[wi])
+                words.append((s, v, wi)); wunits.append(us); marks.append(mk[wi]); wtext.append(seg['word'])
                 ay_end.append(wi == len(a['segments']) - 1)
                 starts.append(a['starts'][wi] if 'starts' in a else clause_start(a, wi))
             bonds += [b for b in S.B if isinstance(b[1], str) and b[0] != 'تجاور']
@@ -1671,7 +1691,7 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
         spans = [(pos_of[b[1]], pos_of[b[2]]) for b in bonds if b[1] in pos_of and b[2] in pos_of]
         cspans = [(pos_of[c['src']], pos_of[c['dst']]) for c in cand]
         nuc_pos = sorted({pos_of[x[0]] for x in nuclei if x[0] in pos_of})
-        qawl_pos = {pos_of[x[0]] for x in nuclei if x[0] in qawl}
+        qawl_pos = {pos_of[x[0]] for x in nuclei if x[0] in qawl} | {p for p, w in enumerate(wtext) if is_qawl(w)}
         js = 0                                        # أول الجملة الجارية بقراءة القطع عند آخر حدٍّ مسجَّل (ثابتٍ أو محتمل)
         for p in range(n):
             last = p == n - 1
