@@ -924,6 +924,13 @@ def noun_evidence(seg, next_wasl=False):
     if any(sl['type'] in ('أل', 'لفظ الجلالة') for sl in seg['slots']):
         return True
     stem = [sl for sl in seg['slots'] if sl['type'] == 'جذع']
+    # «ال» لم يفصلها المقطِّع قبل اللام (ٱلَّيۡلِ: لامُ التعريف ولامُ الكلمة لامٌ مشدَّدة)، والموصول مستثنى
+    if stem:
+        t0 = vtoks(stem[0]['text'])
+        if len(t0) > 3 and t0[0][0] == 'ا' and not t0[0][1] and t0[1][0] == 'ل' and \
+                (SHADDA in t0[1][1] or not t0[1][1] - {SUKUN} and SHADDA in t0[2][1]) and \
+                not is_form(stem[0]['text'], RELATIVES_V):
+            return True
     if not stem:
         return False
     st = letters(stem[-1]['text'])
@@ -1844,6 +1851,49 @@ def cond_structs(feats, nuc_pos, starts):
     return out
 
 
+COORD_EFFECT = {'و': 'مطلق الجمع (لا يثبت به ترتيب)', 'ف': 'الترتيب والتعقيب', 'ثم': 'الترتيب والتراخي',
+                'أو': 'التخيير أو الإباحة أو الشك، بحسب السياق'}
+CASE_COMPAT = {'رفع': {'رفع'}, 'نصب': {'نصب', 'جر أو نصب', 'نصب أو جر'}, 'جر': {'جر', 'جر أو نصب', 'نصب أو جر'},
+               'جر أو نصب': {'جر', 'نصب', 'جر أو نصب', 'نصب أو جر'}, 'نصب أو جر': {'جر', 'نصب', 'جر أو نصب', 'نصب أو جر'}}
+
+
+def coord_structs(feats, nuc_pos, starts, not_conj, is_clause):
+    """G = Coord_h,e(A, B) لكل حرف عطف (حكم صاحب النظرية؛ الأصول من ابن عقيل):
+    - الحرف عاطفٌ هنا ما لم يثبت غيره: فاء الجواب الرابطة، وفاء خبر الموصول المبتدأ ليستا عاطفتين (not_conj)
+    - المستوى: جملةٌ (المعطوف فعلٌ أو ما له الصدارة أو جملة اسمية من أكثر من كلمة) أو مفرد
+    - المعطوف عليه في المفرد: اسمٌ قبله في الجملة الجارية يوافقه في الحالة المكتوبة وعليه دليل الاسمية؛ وليس بالضرورة
+      أقربَ كلمة، فإن صلح أكثر من واحد حُفظت البدائل؛ وفي الجملة: الجملة قبله، والعلاقة عطفٌ أو حال أو استئناف
+    - الأثر: الواو لمطلق الجمع، والفاء للترتيب والتعقيب، وثُمَّ للترتيب والتراخي
+    → [dict(kind='عطف', pos, letter, level, B, A=[مرشحات]، effect)]"""
+    out = []
+    n = len(feats)
+    for k in range(1, n):
+        f = feats[k]
+        if not f['conj'] or k in not_conj:
+            continue
+        letter = f['conj_letter']
+        h = k + 1 if letter in ('أو', 'ثم') else k
+        if h >= n:
+            continue
+        if is_clause(k - 1):
+            out.append(dict(kind='عطف', pos=k, letter=letter, level='جملة', B=h, A=['الجملة قبله'],
+                            effect=COORD_EFFECT.get(letter, '')))
+            continue
+        g = feats[h]
+        c = g['case']
+        cands = []
+        if g.get('noun') and c in CASE_COMPAT:
+            for j in range(k - 1, max(-1, k - 12), -1):
+                if starts[j] and j < k - 1:
+                    break
+                fj = feats[j]
+                if fj.get('noun') and fj['case'] in CASE_COMPAT[c]:
+                    cands.append(j)
+        out.append(dict(kind='عطف', pos=k, letter=letter, level='مفرد', B=h, A=cands,
+                        effect=COORD_EFFECT.get(letter, '')))
+    return out
+
+
 def relative_khabar(feats, nuc_pos, starts, st_):
     """خبر الموصول المبتدأ (الَّذِي كَتَبَ الدَّرْسَ …): بعد الصلة، إن لم تُعطف عليها صلةٌ أخرى:
     فاءٌ داخلة على الخبر (ٱلَّذِينَ يُنفِقُونَ … فَلَهُمۡ)، أو نواةٌ بلا عاطف، أو مرفوعٌ أو ضمير منفصل أو اسم إشارة
@@ -1998,7 +2048,7 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
     import collections
     st = collections.Counter()
     out, records = [], []
-    rel_samples, cond_samples = [], []
+    rel_samples, cond_samples, coord_samples = [], [], []
     sources = waqf_sources()
     by_surah = collections.OrderedDict()
     for it in items:
@@ -2075,6 +2125,7 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
                 rel_samples.append(dict(location=words_text(words, r['head']), text=' '.join(wtext[r['head']:r['end']]),
                                         silah=r['silah'], obligations=[list(o) for o in r['obligations']]))
         rel_at = {r['head']: r for r in rels}
+        not_conj = set()
         for c_ in cond_structs(feats, set(nuc_pos), starts):
             st['cond'] += 1
             st['cond:ambiguous'] += c_['amb']
@@ -2092,10 +2143,25 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
                 inner.setdefault(c_['head'], ('inner', 'بعد أداة الشرط'))
                 for k in range(c_['head'] + 1, min(n - 1, c_['open_to'])):
                     inner.setdefault(k, ('open', f'جواب «{c_["tool"]}» غير مستوفى' + (f' ({c_["q_kind"]})' if c_['q_kind'] else '')))
+            if c_['q_pos'] is not None and feats[c_['q_pos']]['conj'] and feats[c_['q_pos']]['conj_letter'] == 'ف':
+                not_conj.add(c_['q_pos'])
             if len(cond_samples) < 40:
                 cond_samples.append(dict(location=words_text(words, c_['head']),
                                          text=' '.join(wtext[c_['head']:(c_['q_pos'] or c_['head']) + 4]),
                                          tool=c_['tool'], amb=c_['amb'], obligations=[list(o) for o in c_['obligations']]))
+        def _is_clause(p_):
+            d_ = _boundary_kind(p_, 0, [], [], nuc_pos, set(), starts, feats)
+            return bool(d_) and d_[1].startswith('نهاية جملة قبل')
+        for c_ in coord_structs(feats, set(nuc_pos), starts, not_conj, _is_clause):
+            st['coord'] += 1
+            st[f'coord:{c_["level"]}'] += 1
+            st[f'coord:{c_["letter"]}'] += 1
+            if c_['level'] == 'مفرد':
+                st['coord:مفرد:' + ('معيَّن' if len(c_['A']) == 1 else 'بدائل' if c_['A'] else 'غير معيَّن')] += 1
+            if len(coord_samples) < 60:
+                coord_samples.append(dict(location=words_text(words, c_['pos']), letter=c_['letter'], level=c_['level'],
+                                          B=wtext[c_['B']], A=[wtext[j] for j in c_['A']][:4] if c_['level'] == 'مفرد' else c_['A'],
+                                          effect=c_['effect']))
         pending = {}                                  # موضع الحدّ ← (inner | open، السبب) لخبر الموصول المبتدأ
         for p in range(n):
             last = p == n - 1
@@ -2225,7 +2291,7 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
             if D.O['boundary'].get('M'):
                 sp.B.append(('تعلّق معنوي عابر', D.id, None, Evidence(D.O['boundary']['M'][0], ['من سجل الوقف'])))
         out.append(sp)
-    linguistic_layer.samples = dict(rel=rel_samples, cond=cond_samples)
+    linguistic_layer.samples = dict(rel=rel_samples, cond=cond_samples, coord=coord_samples)
     return out, st, records
 
 

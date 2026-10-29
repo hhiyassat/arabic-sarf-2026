@@ -234,7 +234,8 @@ M = dict(counts=dict(C), unit_deferred=dict(unit_reason.most_common()), sentence
          unit_closed_by=dict(close_route.most_common()), failures={k: v[:40] for k, v in fail.items()},
          samples=samples.get('du', []),
          cross=dict(cross_samples),
-         boundaries=dict(xtab={k: dict(v) for k, v in xtab.items()}, scholars=scholar_cmp, samples=brec_samples))
+         boundaries=dict(xtab={k: dict(v) for k, v in xtab.items()}, scholars=scholar_cmp, samples=brec_samples),
+         structures=getattr(linguistic_layer, 'samples', {}))
 json.dump(M, open(os.environ.get('SARF_ALG_METRICS', H + 'reports/algebra_metrics.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 print(json.dumps(M['counts'], ensure_ascii=False, indent=1))
 print('unit_deferred', M['unit_deferred'])
