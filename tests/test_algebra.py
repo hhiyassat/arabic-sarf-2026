@@ -148,6 +148,22 @@ if hfn() and rows:
     ato = {r['location'][2]: r for r in recs([(2, 74)])}
     check('البقرة ٧٤: نهاية الجملة قبل «أَوۡ» مقبولة (فَهِيَ كَٱلۡحِجَارَةِ ‖ أَوۡ أَشَدُّ قَسۡوَةࣰ)',
           any(r['J'] == 'proven' and '«أو»' in r['J_why'] for r in ato.values()), [(k, r['J'], r['J_why'][:30]) for k, r in ato.items()])
+    def ends(ref):
+        return {r['location'][2]: r for r in recs([ref])}
+    e = ends((17, 49))
+    check('الإسراء ٤٩: «عِظَٰمࣰا ‖ وَرُفَٰتًا» اسمٌ معطوف على مفرد، ليس جملة: لا حدّ', e.get(3, {}).get('J') != 'proven',
+          [(k, r['J'], r['J_why'][:25]) for k, r in e.items()])
+    e = ends((18, 29))
+    check('الكهف ٢٩: «وَمَن شَآءَ ‖ فَلۡيَكۡفُرۡ» فاء الجواب: لا حدّ ثابت',
+          not any(r['J'] == 'proven' and 'الفاء' in r['J_why'] and 'فَلْيَكْفُرْ' in str(r) for r in e.values()) and
+          all(r['J'] != 'proven' for k, r in e.items() if r['J_why'].startswith('نهاية جملة قبل الفاء') and k in (8, 9)),
+          [(k, r['J'], r['J_why'][:25]) for k, r in e.items()])
+    e = ends((17, 103))
+    check('الإسراء ١٠٣: «فَأَغۡرَقۡنَٰهُ ‖ وَمَن مَّعَهُۥ» معطوفٌ على المفعول، ليس جملة: لا حدّ', e.get(5, {}).get('J') != 'proven',
+          [(k, r['J'], r['J_why'][:25]) for k, r in e.items()])
+    e = ends((6, 46))
+    check('الأنعام ٤٦: «ثُمَّ» كالفاء: نهاية جملة قبلها وما بعدها جملة (ثُمَّ هُمۡ يَصۡدِفُونَ)',
+          e.get(19, {}).get('J') == 'proven' and '«ثُمَّ»' in e[19]['J_why'], e.get(19))
     at26 = {r['location'][2]: r for r in recs([(4, 26)])}
     check('النساء ٢٦: الجملة تنتهي قبل «وَٱللَّهُ عَلِيمٌ حَكِيمٌ» (عطفٌ على جملةٍ تامّة يشاركها التمام)',
           at26.get(10, {}).get('J') == 'proven', at26.get(10))

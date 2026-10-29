@@ -1582,6 +1582,7 @@ def clause_start(a, wi):
     return None
 
 
+JARR_HEADS = ('ب', 'ل', 'ك', 'في', 'من', 'على', 'إلى', 'عن', 'عند', 'لدى')
 PRON_FREE = ('هو', 'هي', 'هم', 'هما', 'هن', 'أنت', 'أنتم', 'أنتما', 'أنتن', 'أنا', 'نحن')
 
 
@@ -1599,15 +1600,22 @@ def word_feats(a):
         has_al = any(x['type'] in ('أل', 'لفظ الجلالة') for x in sl)
         g = verbs.get(wi)
         b = _bare_w(seg['word'])
-        if b in ('او', 'أو') and not conj:
-            conj = True                               # «أَوۡ» كلمةٌ مستقلة: نهاية الجملة قبلها مقبولة (حكم صاحب النظرية)
+        if b in ('او', 'أو', 'ثم') and not conj:
+            conj = True                               # «أَوۡ» و«ثُمَّ» كلمتان مستقلتان، و«ثُمَّ» كالفاء (حكم صاحب النظرية)
         # واوٌ أو فاء ملتصقة بضمير رفعٍ منفصل (فَهِيَ، وَهُمۡ): الضمير لا يبدأ بهما، فهما عاطفتان
         if not conj and len(b) > 1 and b[0] in 'وف' and b[1:] in PRON_FREE:
             conj, sl0 = True, b[0]
         else:
             sl0 = None
         out.append(dict(
-            conj=conj, conj_letter=('أو' if b in ('او', 'أو') else sl0 or _bare_w(sl[0]['text'])) if conj else None,
+            conj=conj, conj_letter=({'او': 'أو', 'أو': 'أو', 'ثم': 'ثم'}.get(b) or sl0 or _bare_w(sl[0]['text'])) if conj else None,
+            # «مَن» و«ما» تكونان شرطاً فتطلبان جواباً بالفاء (وَمَن شَآءَ فَلۡيَكۡفُرۡ)، أو موصولاً أو غيره
+            cond_amb=b.lstrip('وف') in ('من', 'ما', 'مهما') and any(L == 'م' and FATHA in m for L, m in st[:2]),
+            # أول المعطوف: فعل، أو مرفوع، أو ضمير منفصل، أو شبه جملة (جارٌّ في أوله بعد العاطف): بداية جملة
+            head=('pron' if b.lstrip('وف') in PRON_FREE else
+                  'pp' if any(x['type'] == 'عامل' and _bare_w(x['text']) in JARR_HEADS and
+                              not (_bare_w(x['text']) == 'من' and FATHA in letters(x['text'])[0][1])   # مَن ليست مِن
+                              for x in sl[1 if conj and len(sl) > 1 else 0:2]) else None),
             first=st[0][0] if st else '', first_fatha=bool(st) and FATHA in st[0][1],
             nakira=tanwin and not has_al and noun_evidence(seg), noun=noun_evidence(seg),
             verb=g['kind'] if g else None, person=(g['features'][0][0] if g and g.get('features') else None),
@@ -1666,8 +1674,23 @@ def _boundary_kind(p, js, spans, cspans, nuc_pos, qawl_pos, starts, feats=None):
     # أو معيّة أو استئناف، تُحفظ بدائله ولا يُختار منها اعتباطاً
     f = feats[p + 1] if feats else None
     if f and f['conj']:
-        return ('proven', f'نهاية جملة قبل {({"و": "الواو", "ف": "الفاء"}).get(f["conj_letter"], "«أو»")}: '
-                          f'وما بعدها {relations_after(feats, p)}')
+        name = {'و': 'الواو', 'ف': 'الفاء', 'ثم': '«ثُمَّ»'}.get(f['conj_letter'], '«أو»')
+        # فاء الجواب: «مَن» أو «ما» في J قبلها قد تكون شرطاً، فما بعد الفاء جوابه لا جملة مستقلة
+        if f['conj_letter'] == 'ف' and any(feats[k].get('cond_amb') for k in range(js, p + 1)):
+            return ('possible', 'فاءٌ قد تكون جوابَ شرطٍ بـ«مَن» أو «ما» قبلها')
+        # يُقصر الحكم على الجملة (حكم صاحب النظرية): المعطوف فعلٌ، أو ما له الصدارة، أو جملةٌ اسمية أولها مرفوع
+        # أو ضمير منفصل أو شبه جملة، وهي أكثر من كلمة؛ أما الاسم المعطوف على مفرد فليس جملة (عِظَٰمًا ‖ وَرُفَٰتًا)
+        # «أَوۡ» و«ثُمَّ» كلمتان: المعطوف يبدأ بما بعدهما
+        h = p + 2 if f['conj_letter'] in ('أو', 'ثم') else p + 1
+        if h >= len(feats):
+            return None
+        g = feats[h]
+        span = next((k for k in range(h + 1, len(feats)) if feats[k]['conj'] or starts[k]), len(feats)) - h
+        clause = (g['verb'] or starts[h] or h in nuc_pos) and not (h > p + 1 and g['conj']) or \
+            (g['case'] == 'رفع' or g.get('head') in ('pron', 'pp')) and span > 1
+        if clause:
+            return ('proven', f'نهاية جملة قبل {name}: وما بعدها {relations_after(feats, p)}')
+        return None
     # الشرط بعد جملة تامّة قد يكون ما قبله دليلَ جوابه (وَلَا يَأۡبَ ٱلشُّهَدَآءُ إِذَا مَا دُعُواْ): فلا يثبت به الحدّ
     if w and not w[1] and w[0] != 'شرط':
         return ('proven', f'{w[0]}: له الصدارة بعد جملة تامّة، ولا رابط يعبر الموضع')
