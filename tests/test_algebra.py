@@ -106,12 +106,17 @@ if hfn():
     rows = {(int(x[0]), int(x[1])): x[2] for x in (l.rstrip('\n').split('\t') for l in open(H + 'data/quran_hafs.tsv', encoding='utf-8'))} \
         if os.path.exists(H + 'data/quran_hafs.tsv') else {}
     def layers(refs):
-        T_ = Trace(); items = []
+        from sarf.algebra import cross_ayah_links
+        T_ = Trace(); items = []; cr = []; prev_ = None
         for s_, v_ in refs:
             a = analyze(cat, rows[(s_, v_)])
             S_, u_ = sentence_geo(a, f'Q{s_}:{v_}', T_)
             items.append((s_, v_, a, u_, S_))
-        return mushaf_layer([x[:4] for x in items], T_), linguistic_layer(items, T_)[:2]
+            cur_ = dict(s=s_, v=v_, text=rows[(s_, v_)], a=a, units=u_, S=S_)
+            if prev_ and prev_['s'] == s_:
+                cr += cross_ayah_links(lambda t: analyze(cat, t), prev_, cur_)
+            prev_ = cur_
+        return mushaf_layer([x[:4] for x in items], T_), linguistic_layer(items, T_, cross=cr)[:2]
     if rows:
         MU, (LT, st) = layers([(37, 137), (37, 138)])
         D0 = (LT[0].A + LT[0].O['pending'])[0]
@@ -121,7 +126,8 @@ if hfn():
         check('نهاية الآية ١٣٧ ليست حدّاً: لا علامة وقف عليها', waqf_of(rows[(37, 137)])[-1] is None)
         MU, (LT, st) = layers([(2, 282)])
         Ds = LT[0].A + LT[0].O['pending']
-        check('البقرة ٢٨٢: علامات الوقف لا تقسم الآية: لا حدّ ثابت فيها إلا بدليل الخانات', len(Ds) == 1 and MU.closed, len(Ds))
+        check('البقرة ٢٨٢: الحدود من الخانات (ما له الصدارة، والواو والفاء بعد جملة تامّة)، لا من العلامات',
+              len(Ds) > 1 and MU.closed and all(D.O['boundary'].get('J') == 'proven' for D in Ds), len(Ds))
         check('ولا رابطة تعبر حدّ وحدة خطابية', st['bond_cross_du'] == 0, st)
 # سجل الحدّ B(b | a, q, c) = ⟨F, L, M, W, I, E⟩: جواز الوقف لا يساوي انغلاق العلاقة
 if hfn() and rows:
@@ -134,10 +140,16 @@ if hfn() and rows:
         return linguistic_layer(items, T_, 'test')[2]
     R = recs([(2, 282)])
     at = {r['location'][2]: r for r in R}
-    check('البقرة ٢٨٢: «قلى» قبل «وَٱتَّقُواْ» حدٌّ محتمل بالخانات (نواة بعد جملة تامّة)، لا إغلاق بالعلامة',
-          at.get(120, {}).get('J') == 'possible' and at[120]['mark'] == 'قلى', at.get(120))
+    check('البقرة ٢٨٢: قبل «وَٱتَّقُواْ» نهاية جملة قبل الواو (حكم صاحب النظرية)، وما بعدها بدائل محفوظة',
+          at.get(120, {}).get('J') == 'proven' and at[120]['J_why'].startswith('نهاية جملة قبل الواو'), at.get(120))
+    at98 = {r['location'][2]: r for r in recs([(37, 98)])}
+    check('الصافات ٩٨: «فَأَرَادُواْ بِهِۦ كَيۡدࣰا» جملة صحيحة تنتهي قبل الفاء الملتصقة بـ«فَجَعَلۡنَٰهُمُ»',
+          at98.get(2, {}).get('J') == 'proven' and at98[2]['J_why'].startswith('نهاية جملة قبل الفاء'), at98.get(2))
+    at26 = {r['location'][2]: r for r in recs([(4, 26)])}
+    check('النساء ٢٦: الجملة تنتهي قبل «وَٱللَّهُ عَلِيمٌ حَكِيمٌ» (عطفٌ على جملةٍ تامّة يشاركها التمام)',
+          at26.get(10, {}).get('J') == 'proven', at26.get(10))
     check('البقرة ٢٨٢: الشرط بعد جملة تامّة لا يثبت به الحدّ (وَلَا يَأۡبَ ٱلشُّهَدَآءُ إِذَا مَا دُعُواْ)',
-          at.get(74, {}).get('J') == 'possible', at.get(74))
+          at.get(74, {}).get('J') != 'proven', at.get(74))
     R = {r['location']: r for r in recs([(37, 137), (37, 138)])}
     r = R[(37, 137, 3)]
     check('رأس الآية ١٣٧: W رأس آية، وL من نص الداني، فلا يُبتدأ بما بعده',

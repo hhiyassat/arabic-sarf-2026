@@ -1587,20 +1587,45 @@ def clause_start(a, wi):
     return None
 
 
-def sentence_boundary(p, js, n, spans, cspans, nuc_pos, qawl_pos, starts, obls, pos_of):
+def word_feats(a):
+    """سمات الكلمة المكتوبة اللازمة لعلاقات الجملة التالية R(G, Q, c) (حكم صاحب النظرية في الصفة والحال والاستئناف):
+    conj حرف عطف (و، ف) في أولها مقطَّعاً؛ nakira اسمٌ عليه تنوين بلا «أل»؛ verb نوع الفعل (madi، mudari، amr) وشخصه؛
+    qad «قد»؛ rel اسم موصول؛ case الحالة المكتوبة"""
+    verbs = {g['word_index']: g for g in a.get('agreement', [])}
+    out = []
+    for wi, seg in enumerate(a['segments']):
+        sl = seg['slots']
+        conj = len(sl) > 1 and sl[0]['type'] != 'جذع' and _bare_w(sl[0]['text']) in ('و', 'ف')
+        st = letters(seg['word'])
+        tanwin = any(m & {FATHATAN, DAMMATAN, KASRATAN} for _, m in st)
+        has_al = any(x['type'] in ('أل', 'لفظ الجلالة') for x in sl)
+        g = verbs.get(wi)
+        b = _bare_w(seg['word'])
+        out.append(dict(
+            conj=conj, conj_letter=_bare_w(sl[0]['text']) if conj else None,
+            first=st[0][0] if st else '', first_fatha=bool(st) and FATHA in st[0][1],
+            nakira=tanwin and not has_al and noun_evidence(seg), noun=noun_evidence(seg),
+            verb=g['kind'] if g else None, person=(g['features'][0][0] if g and g.get('features') else None),
+            qad=b in ('قد', 'وقد', 'فقد', 'لقد'), rel=b.lstrip('وف') in RELATIVES,
+            case=word_case(a, wi, set(verbs)) if not g else None))
+    return out
+
+
+def sentence_boundary(p, js, n, spans, cspans, nuc_pos, qawl_pos, starts, obls, pos_of, feats=None, chain=False):
     """Boundary(J | W) بين الكلمة p والتي بعدها، والجملة الجارية J تبدأ عند js (هندسة الخانات، لا علامات الوقف):
     Boundary ⟺ Complete(J) ∧ BlockedExtension(J, W)
     - Complete(J): في J نواة إسناد، ولا التزامٌ نحوي لازم مفتوح فيها (فهو يطلب ما بعده)
     - BlockedExtension: لا رابطٌ ثابت يعبر الموضع، وليست W مقولَ قولٍ لنواةٍ قبلها، وW تبدأ بما له الصدارة
       (فلا يعمل فيه ما قبله): ناسخ مكسور، أو استفهام، أو نداء، أو شرط، أو تنبيه
     → ('proven', السبب) أو ('possible', السبب) حين يحتمل الموضع الحدّ والامتداد معاً، أو None"""
-    if not any(js <= x <= p for x in nuc_pos):
+    # J تامّة بنواتها، أو هي معطوفةٌ بواوٍ أو فاء على جملةٍ تامّة قبلها (تشاركها في التمام: وَيَهۡدِيَكُمۡ … وَيَتُوبَ عَلَيۡكُمۡ)
+    if not any(js <= x <= p for x in nuc_pos) and not chain:
         return None
     # التزامٌ لازم مفتوح (خبرٌ لم يُكشف): J غير تامّة في التحليل، فلا يثبت الحدّ؛ لكن قد يملؤه ما بعد الموضع
     # أو يكون التحليل قاصراً عنه، فيبقى الحدّ محتملاً ولا يُغلق الباب على ما بعده
     open_ = next((o.name for o in obls if o.required and not o.met and o.name.startswith(SYNTACTIC_OBL) and
                   any(js <= pos_of.get(u, -1) <= p for u in o.units)), None)
-    d = _boundary_kind(p, js, spans, cspans, nuc_pos, qawl_pos, starts)
+    d = _boundary_kind(p, js, spans, cspans, nuc_pos, qawl_pos, starts, feats)
     if d and open_:
         return ('possible', f'التزامٌ مفتوح ({open_}): قد يملؤه ما بعد الموضع')
     return d
@@ -1617,7 +1642,7 @@ def is_qawl(word):
     return b in QAWL_FORMS or b[:1] in 'وف' and b[1:] in QAWL_FORMS
 
 
-def _boundary_kind(p, js, spans, cspans, nuc_pos, qawl_pos, starts):
+def _boundary_kind(p, js, spans, cspans, nuc_pos, qawl_pos, starts, feats=None):
     if any(min(a, b) <= p < max(a, b) for a, b in spans):
         return None
     q = [x for x in qawl_pos if js <= x <= p]
@@ -1632,6 +1657,12 @@ def _boundary_kind(p, js, spans, cspans, nuc_pos, qawl_pos, starts):
         return ('possible', 'شرطٌ قبل الموضع لم يُستوفَ جوابه')
     if any(min(a, b) <= p < max(a, b) for a, b in cspans):
         return ('possible', 'رابط محتمل يعبر الموضع')
+    # نهاية الجملة قبل الواو أو الفاء (حكم صاحب النظرية): الجملة التامّة قبلها جملةٌ صحيحة، وما بعدها عطفٌ أو حال
+    # أو معيّة أو استئناف، تُحفظ بدائله ولا يُختار منها اعتباطاً
+    f = feats[p + 1] if feats else None
+    if f and f['conj']:
+        return ('proven', f'نهاية جملة قبل {"الواو" if f["conj_letter"] == "و" else "الفاء"}: '
+                          f'وما بعدها {relations_after(feats, p)}')
     # الشرط بعد جملة تامّة قد يكون ما قبله دليلَ جوابه (وَلَا يَأۡبَ ٱلشُّهَدَآءُ إِذَا مَا دُعُواْ): فلا يثبت به الحدّ
     if w and not w[1] and w[0] != 'شرط':
         return ('proven', f'{w[0]}: له الصدارة بعد جملة تامّة، ولا رابط يعبر الموضع')
@@ -1640,8 +1671,33 @@ def _boundary_kind(p, js, spans, cspans, nuc_pos, qawl_pos, starts):
     if w:
         return ('possible', f'{w[0]} بعد حرف عطف: جملةٌ معطوفة أو حالية')
     if p + 1 in nuc_pos:
-        return ('possible', 'نواةٌ بعد جملة تامّة: استئناف، أو حال، أو صفة، أو خبر')
+        return ('possible', 'نواةٌ بعد جملة تامّة: ' + (relations_after(feats, p) if feats else 'استئناف، أو حال، أو صفة، أو خبر'))
     return None
+
+
+def relations_after(feats, p):
+    """R(G, Q, c): العلاقات المرخَّصة بين البناء السابق والجملة التالية Q (أولها الكلمة p + 1)، بشروطها المكتوبة؛
+    وما ثبت مانعه يُستبعد وحده، والباقي بدائل محفوظة (حكم صاحب النظرية):
+    - صفة: قبلها نكرة، والجملة خبرية (ليست أمراً)، وفيها رابطٌ يعود على المنعوت (فعلٌ للغائب)
+    - حال: بالواو مع جملة اسمية أو «قد» والماضي؛ وبلا واو مضارعٌ مثبت للغائب. والواو مع المضارع المثبت لا تُعتمد حالاً مباشرةً
+    - عطف (بالواو أو الفاء)، ومعيّة (واوٌ بعدها منصوب)، واستئناف
+    والتنكير وحده لا يحسم الصفة، ولا الواو وحدها الحال، ولا فشلُ غيرهما الاستئناف"""
+    q, prev = feats[p + 1], feats[p]
+    R = []
+    if q['conj']:
+        R.append('عطف')
+    if q['verb'] and not q['conj'] and prev['nakira'] and q['verb'] != 'amr' and q['person'] == 3:
+        R.append('صفة')
+    if q['conj'] and q['conj_letter'] == 'و':
+        if q['qad'] or not q['verb']:
+            R.append('حال')
+        if q['case'] == 'نصب' and q.get('noun') and not q['verb']:
+            R.append('معيّة')
+    elif not q['conj'] and q['verb'] == 'mudari' and q['person'] == 3:
+        R.append('حال')
+    if q['verb'] or q['conj'] or q['qad']:
+        R.append('استئناف')
+    return 'أو '.join(x + '، ' for x in R).rstrip('، ') if R else 'علاقته غير معيَّنة'
 
 
 def words_text(words, p):
@@ -1664,7 +1720,7 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
     for it in items:
         by_surah.setdefault(it[0], []).append(it)
     for s, its in by_surah.items():
-        words, wunits, marks, ay_end, starts, wtext = [], [], [], [], [], []
+        words, wunits, marks, ay_end, starts, wtext, feats = [], [], [], [], [], [], []
         pos_of, qawl = {}, set()
         bonds, obls, nuclei = [], [], []
         for s_, v, a, units, S in its:
@@ -1681,6 +1737,22 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
                 words.append((s, v, wi)); wunits.append(us); marks.append(mk[wi]); wtext.append(seg['word'])
                 ay_end.append(wi == len(a['segments']) - 1)
                 starts.append(a['starts'][wi] if 'starts' in a else clause_start(a, wi))
+                fv = (a['feats'] if 'feats' in a else word_feats(a))[wi] if wi == 0 or 'feats' in a else fv_all[wi]
+                if wi == 0 and 'feats' not in a:
+                    fv_all = word_feats(a)
+                    fv = fv_all[0]
+                fv = dict(fv)
+                # فاء أو واو ملتصقة لم يقطعها المقطِّع (فَأَرَادُواْ، فَجَعَلۡنَٰهُمُ): عاطفةٌ إن لم تكن فاءَ الجذر أو واوَه:
+                # جذرُ الوحدة المغلقة لا يبدأ بها، أو ما بعدها فعلٌ بدليله المكتوب (ضمير رفعٍ متصل)
+                if not fv['conj'] and fv['first'] in 'وف' and fv['first_fatha'] and len(letters(seg['word'])) >= 4:
+                    R_ = next((G.Theta.get('R') for G in us if G.Theta.get('R')), None)
+                    from .affix import stem_info as _si
+                    rest = seg['word'][seg['word'].index(fv['first']) + 1:].lstrip(FATHA).replace(DAGGER_ALIF, 'ا')
+                    if R_ and R_[0] != fv['first'] or not R_ and _si(rest).get('pos') == 'verb':
+                        fv['conj'], fv['conj_letter'] = True, fv['first']
+                        if not fv['verb'] and not R_:
+                            fv['verb'] = _si(rest).get('kind')
+                feats.append(fv)
             bonds += [b for b in S.B if isinstance(b[1], str) and b[0] != 'تجاور']
             obls += list(S.Omega)
             nuclei += [n for n in S.O.get('nuclei', []) if n[0]]
@@ -1702,12 +1774,15 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
         nuc_pos = sorted({pos_of[x[0]] for x in nuclei if x[0] in pos_of})
         qawl_pos = {pos_of[x[0]] for x in nuclei if x[0] in qawl} | {p for p, w in enumerate(wtext) if is_qawl(w)}
         js = 0                                        # أول الجملة الجارية بقراءة القطع عند آخر حدٍّ مسجَّل (ثابتٍ أو محتمل)
+        chain = False                                 # الجملة الجارية معطوفة على جملةٍ تامّة قبلها
         for p in range(n):
             last = p == n - 1
             dec = None if last else sentence_boundary(p, js, n, spans, cspans, nuc_pos, qawl_pos, starts,
-                                                      obls, pos_of)
+                                                      obls, pos_of, feats, chain)
             if dec:
                 js = p + 1
+                if dec[0] == 'proven':
+                    chain = dec[1].startswith('نهاية جملة قبل')
             if marks[p] or ay_end[p] or last or dec:
                 rec = boundary_record(p, words, pos_of, bonds, obls, nuclei, du_start, marks[p], ay_end[p], last,
                                       sources, a_id, q, cand, checked_ends)
@@ -1733,6 +1808,8 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
             elif r['mark'] in BOUNDARY_WAQF:
                 st[f'eval:{r["mark"]}'] += 1
                 st[f'eval:{r["mark"]}:{r["J"] or "none"}'] += 1
+                if r['J'] == 'proven' and r['J_why'].startswith('نهاية جملة قبل'):
+                    st[f'eval:{r["mark"]}:proven:عطف'] += 1
             elif r['J'] == 'proven' and r['location'] != words[-1]:
                 st['eval:بلا علامة:proven' + (':رأس آية' if r['ayah_end'] else '')] += 1
             elif r['J'] == 'possible' and not r['mark']:
