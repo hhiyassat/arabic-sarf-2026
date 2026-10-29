@@ -1584,10 +1584,17 @@ def sentence_boundary(p, js, n, spans, cspans, nuc_pos, qawl_pos, starts, obls, 
     → ('proven', السبب) أو ('possible', السبب) حين يحتمل الموضع الحدّ والامتداد معاً، أو None"""
     if not any(js <= x <= p for x in nuc_pos):
         return None
-    for o in obls:
-        if o.required and not o.met and o.name.startswith(SYNTACTIC_OBL) and \
-                any(js <= pos_of.get(u, -1) <= p for u in o.units):
-            return None
+    # التزامٌ لازم مفتوح (خبرٌ لم يُكشف): J غير تامّة في التحليل، فلا يثبت الحدّ؛ لكن قد يملؤه ما بعد الموضع
+    # أو يكون التحليل قاصراً عنه، فيبقى الحدّ محتملاً ولا يُغلق الباب على ما بعده
+    open_ = next((o.name for o in obls if o.required and not o.met and o.name.startswith(SYNTACTIC_OBL) and
+                  any(js <= pos_of.get(u, -1) <= p for u in o.units)), None)
+    d = _boundary_kind(p, js, spans, cspans, nuc_pos, qawl_pos, starts)
+    if d and open_:
+        return ('possible', f'التزامٌ مفتوح ({open_}): قد يملؤه ما بعد الموضع')
+    return d
+
+
+def _boundary_kind(p, js, spans, cspans, nuc_pos, qawl_pos, starts):
     if any(min(a, b) <= p < max(a, b) for a, b in spans):
         return None
     q = [x for x in qawl_pos if js <= x <= p]
@@ -1644,7 +1651,7 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
                         qawl.add(G.id)
                 words.append((s, v, wi)); wunits.append(us); marks.append(mk[wi])
                 ay_end.append(wi == len(a['segments']) - 1)
-                starts.append(clause_start(a, wi))
+                starts.append(a['starts'][wi] if 'starts' in a else clause_start(a, wi))
             bonds += [b for b in S.B if isinstance(b[1], str) and b[0] != 'تجاور']
             obls += list(S.Omega)
             nuclei += [n for n in S.O.get('nuclei', []) if n[0]]
@@ -1665,10 +1672,13 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
         cspans = [(pos_of[c['src']], pos_of[c['dst']]) for c in cand]
         nuc_pos = sorted({pos_of[x[0]] for x in nuclei if x[0] in pos_of})
         qawl_pos = {pos_of[x[0]] for x in nuclei if x[0] in qawl}
+        js = 0                                        # أول الجملة الجارية بقراءة القطع عند آخر حدٍّ مسجَّل (ثابتٍ أو محتمل)
         for p in range(n):
             last = p == n - 1
-            dec = None if last else sentence_boundary(p, du_start, n, spans, cspans, nuc_pos, qawl_pos, starts,
+            dec = None if last else sentence_boundary(p, js, n, spans, cspans, nuc_pos, qawl_pos, starts,
                                                       obls, pos_of)
+            if dec:
+                js = p + 1
             if marks[p] or ay_end[p] or last or dec:
                 rec = boundary_record(p, words, pos_of, bonds, obls, nuclei, du_start, marks[p], ay_end[p], last,
                                       sources, a_id, q, cand, checked_ends)

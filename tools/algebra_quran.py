@@ -14,7 +14,7 @@ H = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/'
 sys.path.insert(0, H)
 from sarf.analyze import analyze
 from sarf.catalog import Catalog
-from sarf.algebra import (Trace, sentence_geo, mushaf_layer, linguistic_layer, cross_ayah_links, SENTENCE, DISCOURSE, render_sentence, render_cells, spans, flatten, build, cv,
+from sarf.algebra import (Trace, clause_start, sentence_geo, mushaf_layer, linguistic_layer, cross_ayah_links, SENTENCE, DISCOURSE, render_sentence, render_cells, spans, flatten, build, cv,
                           Geo, Cell, LEVELS, PARAGRAPH, TOPIC)
 
 ap = argparse.ArgumentParser()
@@ -162,7 +162,8 @@ for n, (s, v, text) in enumerate(rows):
             C[f'obl_{k}_met'] += bool(o.met)
             if k == 'خبر' and o.met and o.ev:
                 C['khabar_kind:' + o.ev.cause.split(' ', 2)[-1]] += 1
-    lite = dict(verse=a['verse'], normalized=a['normalized'], segments=[dict(word=g['word'], units=g['units']) for g in a['segments']])
+    lite = dict(verse=a['verse'], normalized=a['normalized'], segments=[dict(word=g['word'], units=g['units']) for g in a['segments']],
+                starts=[clause_start(a, wi) for wi in range(len(a['segments']))])
     by_surah[s].append((s, v, lite, units, S))
     if (s, v) in SAMPLE_REFS:
         samples[(s, v)] = dict(text=a['normalized'], units={G.id: unit_expr(G) for G in units.values()})
