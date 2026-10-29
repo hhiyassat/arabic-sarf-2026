@@ -180,11 +180,14 @@ def cells_of(text, base_id, wasl_vowel=None):
             prev.O['tok'].append(j); prev.O['madd'] = L
             continue
         # ما لا يُنطق: الألف الفارقة، وألف تنوين النصب، والحرف العاري قبل المشدَّد (مدغمٌ تامّاً في الرسم)
-        if not m and (L in 'اى' or mudgham([(x, set(y)) for x, y in toks], j)):
+        is_mudgham = mudgham([(x, set(y)) for x, y in toks], j)
+        if not m and L in 'اى' or is_mudgham:
             why = ('لام شمسية' if L == 'ل' else 'مدغم') if L not in 'اى' else \
                 'ألف بعد التنوين' if prev is not None and prev.O.get('tanwin') else 'ألف لا تُنطق'
             if prev is not None:
                 prev.O.setdefault('silent', []).append((j, why)); prev.O['tok'].append(j)
+                if is_mudgham and L != 'ل':
+                    prev.O.setdefault('mudgham', []).append(HAMZA.get(L, L))   # حرفٌ مكتوب يقابل أصلاً، بلا خلية
             else:
                 pending_silent.append((j, why))
             continue
@@ -383,6 +386,7 @@ def align_alpha(cells, root, cls, kind):
     ops = []
     i = 0
     pre = []
+    used_mudgham = set()
     while i < len(cells) and (cells[i].O.get('role') == 'همزة وصل' or kind == 'mudari' and not pre and i == 0):
         alpha[i] = 'وصل' if cells[i].O.get('role') == 'همزة وصل' else 'سابقة'
         pre.append(i); i += 1
@@ -397,6 +401,11 @@ def align_alpha(cells, root, cls, kind):
             continue
         if lab.startswith('زائد:ت') and i < len(cells) and cells[i].C in 'طد':
             alpha[i] = lab; ops.append(f'إبدال ت ← {cells[i].C}'); i += 1
+            continue
+        # الأصل المدغم في ما بعده (عَبَدتُّمۡ، عُدتُّمۡ): حرفٌ مكتوب بلا خلية، محفوظ في الخلية قبله
+        if i > 0 and C in cells[i - 1].O.get('mudgham', []) and lab.startswith('r') and (i - 1) not in used_mudgham:
+            used_mudgham.add(i - 1)
+            ops.append(f'إدغام {lab} ({C}) في ما بعده: حرفٌ مكتوب بلا خلية')
             continue
         if lab.startswith('r') and C in WEAK:
             # فاء المثال في افتعل تُقلب تاءً وتُدغم (ٱتَّقَى ← وقي)

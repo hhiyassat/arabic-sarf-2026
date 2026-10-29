@@ -7,7 +7,7 @@ sarf.normalize — التطبيع:
 import re, unicodedata
 from collections import OrderedDict
 
-from .chars import SUKUN, SHADDA, MADDA_MARK, FATHA, letters, tokenize, mudgham as _mudgham
+from .chars import SUKUN, SHADDA, MADDA_MARK, FATHA, letters, tokenize
 
 HAMZA_FORMS = {'أ': 'ء', 'إ': 'ء', 'ؤ': 'ء', 'ئ': 'ء', 'ء': 'ء'}
 
@@ -151,9 +151,10 @@ def uthmani_normalize(text, implicit_sukun=None):
             mk = set(mk)
             if not mk and L not in MADD_LETTERS and L != 'ة' and 'ء' <= L <= 'ي':
                 prev_al = i > 0 and toks[i - 1][0] == 'ا'
-                # الحرف العاري قبل المشدَّد مدغمٌ تامّاً يبقى عارياً ليحذفه المقطِّع (لِّلنَّاسِ، أَرَدتُّمۡ، يُوَجِّههُّ)،
-                # كلام التعريف بعد الألف (D22 معمَّماً بحكم صاحب النظرية؛ والعاري قبل غير المشدَّد يُسكَّن كما كُتب: أَحَطتُ)
-                mudgham = _mudgham([(x, set(y)) for x, y in toks], i)
+                # اللام الشمسية العارية قبل المشدَّد تبقى عارية ليحذفها المقطِّع (لِّلنَّاسِ)، كلام التعريف بعد الألف؛
+                # وما سواها يُسكَّن كما كُتب (عَٰهَدْتَّ، أَحَطْتُ): فالصرف يراه ساكناً، والمقطِّع يعدّ الساكن قبل المشدَّد
+                # مدغماً لا خلية له (D22 معمَّماً، chars.mudgham)
+                mudgham = L == 'ل' and i + 1 < len(toks) and SHADDA in toks[i + 1][1] and toks[i + 1][0] in SOLAR
                 if not (L == 'ل' and prev_al) and not mudgham:
                     mk.add(SUKUN)
             rebuilt.append(L + ''.join(sorted(mk)))

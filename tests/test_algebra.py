@@ -214,5 +214,11 @@ if hfn():
           not any('المزحلقة' in str(x) for x in k) and ('خبر «إِنَّ»', True, 'خبر «إِنَّ» جملة فعلية (كان وأخواتها)') in k, k)
     k = khabar('إِنَّ ٱللَّهَ يُحِبُّ ٱلَّذِينَ يُقَٰتِلُونَ')
     check('الصف ٤: «يُحِبُّ» لا يُعدّ خبراً مفرداً', k and not any(str(x[2]).endswith('مفرد') for x in k), k)
+if hfn():
+    a = analyze(cat, 'وَلَآ أَنَا۠ عَابِدࣱ مَّا عَبَدتُّمۡ')
+    S_, u_ = sentence_geo(a, 'v', Trace())
+    G = [G for G in u_.values() if G.Theta.get('R') == 'عبد' and G.Theta.get('P') == 'I']
+    check('«عَبَدتُّمۡ»: الدال مدغمة بلا خلية (لا CVCC داخل الكلمة)، وتقابل لام الجذر: عبد، I',
+          G and [cv(x) for x in G[0].A] == ['CV', 'CVC', 'CVC'], [(G.O['text'], G.Theta.get('R')) for G in u_.values()])
 print('ALL OK' if not bad else f'FAILED {bad}')
 sys.exit(1 if bad else 0)
