@@ -890,10 +890,9 @@ def word_case(a, wi, verbs=()):
     except (IndexError, KeyError):
         return None
     st = letters(stem[-1]['text'])
-    bare = _bare_w(stem[-1]['text'])
     if c == 'جزم':
         return None                                   # لا جزم في الاسم: قراءةٌ خاطئة للسكون
-    if bare in ('قبل', 'بعد') and c == 'رفع':
+    if is_form(stem[-1]['text'], ('قَبْلُ', 'بَعْدُ')) and c == 'رفع':
         return None                                   # مبنيّان على الضم إذا قُطعا عن الإضافة
     # جمع المؤنث السالم يُنصب بالكسرة: الكسرة بعد «ات» جرٌّ أو نصب (ٱلصَّٰلِحَٰتِ، جَنَّٰتٍ)
     if c == 'جر' and len(st) >= 3 and st[-1][0] == 'ت' and (st[-2][0] == 'ا' or DAGGER_ALIF in st[-2][1]):
@@ -902,10 +901,9 @@ def word_case(a, wi, verbs=()):
     if c == 'رفع' and len(st) >= 2 and st[-1][0] == 'ن' and KASRA in st[-1][1] and st[-2][0] == 'ا':
         return None
     # تنوين «إذ» في يَوۡمَئِذٍ وحِينَئِذٍ تنوينُ عِوَض، لا علامة جرّ للكلمة
-    if bare.endswith('ئذ'):
+    if len(st) >= 2 and st[-2][0] == 'ئ' and st[-1][0] == 'ذ':
         return None
-    from .segment import ZURUF
-    if bare in ZURUF:
+    if is_form(stem[-1]['text'], ZURUF_V, i3rab=True):
         return None                                   # الظرف: حالته لا تخصّ هذه القواعد
     # الممنوع من الصرف يُجرّ بالفتحة: فتحةٌ بلا تنوين ولا «أل» ولا لاحقة جرٌّ أو نصب (إِسۡرَٰٓءِيلَ، إِبۡرَٰهِيمَ)،
     # إلا أن يكون مضافاً يليه معرَّف (كِتَٰبَ ٱللَّهِ)
@@ -913,7 +911,7 @@ def word_case(a, wi, verbs=()):
             not any(sl['type'] == 'أل' for sl in seg['slots']) and seg['slots'][-1] is stem[-1]:
         nxt = a['segments'][wi + 1] if wi + 1 < len(a['segments']) else None
         mudaf = nxt is not None and any(sl['type'] in ('أل', 'لفظ الجلالة') or
-                                        sl['type'] == 'مبني' and _bare_w(sl['text']).startswith('ال') for sl in nxt['slots'])
+                                        sl['type'] == 'مبني' and is_form(sl['text'], RELATIVES_V) for sl in nxt['slots'])
         if not mudaf:
             return 'نصب أو جر'
     return c
@@ -978,8 +976,8 @@ def find_khabar(a, r, verbs, governed, marks):
     want = 'رفع' if grp == '2' else 'نصب'
     if ism_w > op_w + 1:
         return (op_w + 1, 'شبه جملة مقدَّم', 'ما بين الناسخ واسمه المؤخَّر')
-    ism_text = _bare_w(a['segments'][ism_w]['slots'][t['slot']]['text'])
-    relative = ism_text in RELATIVES or ism_text in ('ما', 'من')
+    ism_text = a['segments'][ism_w]['slots'][t['slot']]['text']
+    relative = is_form(ism_text, RELATIVES_V + ('مَا', 'مَنْ'))
     n = len(a['segments'])
     from .status import ACCEPTED
     first_pp = None
@@ -995,7 +993,7 @@ def find_khabar(a, r, verbs, governed, marks):
         # اللام المزحلقة على اسمٍ أو فعل، أو على ضمير الفصل المنفصل (لَهُوَ، لَهِيَ)؛ أما «لَكُمۡ، لَهُمۡ، لَهُۥ» فلام جرّ
         nxt_sl = seg['slots'][1] if len(seg['slots']) > 1 else None
         if grp == '2' and sl0 in ('لَ', 'لَّ') and nxt_sl is not None and \
-                (nxt_sl['type'] != 'مبني' or _bare_w(nxt_sl['text']) in ('هو', 'هي')):
+                (nxt_sl['type'] != 'مبني' or is_form(nxt_sl['text'], ('هُوَ', 'هِيَ'))):
             return (w, 'خبر باللام المزحلقة', 'اللام المزحلقة لا تدخل إلا على خبر «إنّ»')
         if w == ism_w + 1 and not relative and w not in verbs and any(
                 f['word_index'] == w and f['group'] == '10' and f.get('status') == ACCEPTED for f in a['operators']):
@@ -1057,9 +1055,9 @@ def find_object(a, g, verbs, governed, marks, units, unit_of):
         stem = [sl for sl in sg['slots'] if sl['type'] in ('جذع', 'لفظ الجلالة')]
         c = word_case(a, w, verbs)
         # المعطوف بالواو أو الفاء معطوفٌ على ما قبله، لا مفعولٌ أول (لِتَسۡكُنُواْ فِيهِ وَٱلنَّهَارَ)
-        if len(sg['slots']) > 1 and _bare_w(sg['slots'][0]['text']) in ('و', 'ف') and sg['slots'][0]['type'] != 'جذع':
+        if len(sg['slots']) > 1 and is_form(sg['slots'][0]['text'], ('وَ', 'فَ')) and sg['slots'][0]['type'] != 'جذع':
             break
-        time_adv = stem and _bare_w(stem[-1]['text']) in ('يوم', 'حين', 'ساعة', 'ليلة', 'غدا')
+        time_adv = stem and is_form(stem[-1]['text'], TIME_V, i3rab=True)
         # المنصوب اسمٌ بدليلٍ مكتوب، أو جذعٌ بعده ضمير (أَبۡنَآءَهُمۡ)؛ وفتحة المضارع المؤكَّد (لَيَعۡلَمَنَّ) ليست نصباً
         nounish = noun_evidence(sg) or (stem and sg['slots'][-1]['type'] == 'مبني' and not _madi_like(stem[-1]['text']))
         if c == 'رفع' and not skipped_subject:
@@ -1281,15 +1279,70 @@ def mushaf_layer(items, T):
 
 
 # ---------- الروابط عبر حدّ الآية ----------
-RELATIVES = ('الذين', 'الذي', 'التي', 'اللذين', 'اللتين', 'اللاتي', 'اللائي', 'الذين')
+RELATIVES_V = ('الَّذِينَ', 'الَّذِي', 'الَّتِي', 'اللَّذَيْنِ', 'اللَّتَيْنِ', 'اللَّاتِي', 'الَّٰتِي', 'اللَّائِي', 'الَّٰٓئِي',
+               'الَّذَانِ', 'اللَّذَانِ', 'الَّذَيْنِ')
+COND_STRICT_V = ('إِذَا', 'إِنْ', 'لَوْ', 'أَيْنَمَا', 'حَيْثُمَا', 'مَهْمَا', 'كُلَّمَا', 'إِذْمَا', 'مَتَى', 'مَتَىٰ', 'أَيَّانَ')
+SADARA_V = ('إِنَّ', 'لَٰكِنَّ', 'لَكِنَّ', 'لَيْتَ', 'لَعَلَّ')   # «إنّ» المكسورة وأخواتها سوى «أنّ» و«كأنّ»
+TIME_V = ('يَوْمَ', 'حِينَ', 'سَاعَةَ', 'لَيْلَةَ', 'غَدًا', 'ءَانَ', 'آنَ')
+ZURUF_V = ('مَعَ', 'عِنْدَ', 'لَدَى', 'لَدَىٰ', 'لَدُنْ', 'فَوْقَ', 'تَحْتَ', 'بَيْنَ', 'قَبْلَ', 'بَعْدَ', 'أَمَامَ', 'خَلْفَ',
+           'وَرَاءَ', 'دُونَ', 'حَوْلَ', 'قُدَّامَ', 'إِزَاءَ', 'تِلْقَاءَ')
+JARR_V = ('بِ', 'لِ', 'لَ', 'لَّ', 'كَ', 'فِي', 'فِى', 'مِنْ', 'مِّنْ', 'عَلَى', 'عَلَىٰ', 'عَلَيْ', 'إِلَى', 'إِلَىٰ', 'إِلَيْ',
+          'عَنْ', 'عِنْدَ', 'لَدَى', 'لَدَىٰ', 'لَدَيْ')
+PRON_FREE_V = ('هُوَ', 'هِيَ', 'هُمْ', 'هُمَا', 'هُنَّ', 'أَنْتَ', 'أَنْتِ', 'أَنْتُمْ', 'أَنْتُمَا', 'أَنْتُنَّ', 'أَنَا', 'نَحْنُ')
+QAWL_V = ('قَالَ', 'قَالُوا', 'قَالَتْ', 'قَالَتَا', 'قَالَا', 'قُلْنَ', 'قُلْتُ', 'قُلْتَ', 'قُلْتِ', 'قُلْنَا', 'قُلْتُمْ',
+          'يَقُولُ', 'يَقُولَ', 'يَقُولُونَ', 'يَقُولُوا', 'يَقُولَا', 'يَقُولَانِ', 'تَقُولُ', 'تَقُولَ', 'تَقُولُونَ', 'تَقُولُوا',
+          'نَقُولُ', 'نَقُولَ', 'أَقُولُ', 'أَقُولَ', 'قُلْ', 'قُولُوا', 'قُولِي', 'قِيلَ', 'يُقَالُ', 'يَقُلْ', 'نَادَى', 'نَادَىٰ',
+          'نَادَوْا', 'يُنَادِي', 'يُنَادُونَ', 'وَصَّى', 'وَصَّىٰ', 'دَعَا', 'دَعَوْا', 'لَيَقُولُنَّ', 'لَيَقُولَنَّ', 'لَتَقُولُنَّ',
+          'فَلْيَقُلْ', 'لِيَقُولُوا', 'لْيَقُولُوا', 'قَٰلَ', 'دَعَوُا', 'دَعَوَا', 'نَادَوْا', 'نَادَوا', 'يُنَادَوْنَ')
+
+
+def _wasl_start(word):
+    """الكلمة تبدأ بهمزة وصل: ألفٌ بلا حركة في أولها (ٱلۡ…)"""
+    t = vtoks(word)
+    return bool(t) and t[0][0] == 'ا' and not t[0][1]
+
+
 # أدوات الشرط التي لا تلتبس بالموصول أو الاستفهام في الكتابة (ما ومن تلتبسان فتُترك)
-COND_STRICT = ('إذا', 'إن', 'لو', 'أينما', 'حيثما', 'مهما', 'كلما', 'إذما', 'متى', 'أيان')
 CLAUSE_OPS = ('2', '5', '6', '7', '10')            # النواسخ، والنواصب، والجوازم، والشرط: تفتح تركيباً جديداً
 
 
 def _bare_w(t):
+    """الحروف وحدها، للعرض والمفاتيح فقط؛ ولا تُقارَن بها الكلمات (حكم صاحب النظرية: يُمنع تجريد الكلمة من الحركات)"""
     import re
     return re.sub('[^ء-ي]', '', t.replace('ٱ', 'ا'))
+
+
+_VMARKS = {FATHA, DAMMA, KASRA, SUKUN, SHADDA, FATHATAN, DAMMATAN, KASRATAN, DAGGER_ALIF}
+_CASE_MARKS = {FATHA, DAMMA, KASRA, FATHATAN, DAMMATAN, KASRATAN}
+
+
+def vtoks(t):
+    """الكلمة مشكولةً للمقارنة: حروفها وحركاتها كما كُتبت (ٱ ألفٌ، وتُترك علامات الضبط القرآني التي ليست حركات)"""
+    return [(L, frozenset(m & _VMARKS)) for L, m in letters(t.replace('ٱ', 'ا'))]
+
+
+def is_form(t, forms, i3rab=False, prefix=False):
+    """هل الكلمة t إحدى الصيغ المشكولة forms، حرفاً وحركة؟ لا تجريد. ويُقبل في الحرف الأخير وحده:
+    - حركة التقاء الساكنين المكتوبة مكان السكون في الصيغة (هُمُ، مَنِ، قُلِ، عَنِ)
+    - وحركة الإعراب أيّاً كانت إن كانت الصيغة معربة (i3rab: الظروف)
+    prefix: تُقبل الواو أو الفاء المفتوحة قبلها (وَمَن، فَقَدۡ)"""
+    tt = vtoks(t)
+    # الشدّة على أول الكلمة علامةُ إدغامٍ من الكلمة قبلها (نَّحۡنُ، وَّقَالُواْ): مكتوبةٌ على الحدّ لا من حركات الكلمة
+    if tt and SHADDA in tt[0][1]:
+        tt = [(tt[0][0], tt[0][1] - {SHADDA})] + tt[1:]
+    cands = [tt]
+    if prefix and len(tt) > 1 and tt[0][0] in 'وف' and tt[0][1] == {FATHA}:
+        cands.append(tt[1:])
+    for f in forms:
+        ff = vtoks(f)
+        for c in cands:
+            if len(c) != len(ff) or any(a != b for a, b in zip(c[:-1], ff[:-1])) or c[-1][0] != ff[-1][0]:
+                continue
+            lm, fm = c[-1][1], ff[-1][1]
+            if lm == fm or fm == {SUKUN} and len(lm) == 1 and lm <= {FATHA, DAMMA, KASRA} or \
+                    i3rab and (lm - _CASE_MARKS) == (fm - _CASE_MARKS):
+                return True
+    return False
 
 
 def _unit_of_slot(a, wi, slot):
@@ -1316,9 +1369,6 @@ def find_attachment(prev):
         if G.tau[1] == 'مقطَّعة' and stem_info(G.O['text']).get('kind') in ('madi', 'mudari', 'amr'):
             return (G.id, 'كلمة بصيغة الفعل (لم تثبت فعليتها)', False)
     return None
-
-
-ZURUF_TIME = ('اليوم', 'الآن')
 
 
 def cross_ayah_links(analyze_fn, prev, nxt):
@@ -1371,7 +1421,7 @@ def cross_ayah_links(analyze_fn, prev, nxt):
     # المدى إلى أول حدٍّ لا يحوي إلا شبه الجملة نفسها (الجارّ ومجروره): لا إسناد فيه يُتمّ كلاماً
     pp_alone = jar0 is not None and jar0.get('target') is not None and first_b <= jar0['target']['word_index']
     # «كَذَٰلِكَ» وحدها: قد تتعلق بما قبلها، وقد تكون خبر مبتدأ محذوف (الأمرُ كذلك)؛ فعبورها محتمل لا ثابت
-    kaf = jar0 is not None and _bare_w(jar0['operator']) == 'ك'
+    kaf = jar0 is not None and is_form(jar0['operator'], ('كَ',))
     att = find_attachment(prev)
     if jar0 and pp_alone and not nuc_span and not clause_ops and not kaf:
         if att:
@@ -1392,9 +1442,9 @@ def cross_ayah_links(analyze_fn, prev, nxt):
             out.append(dict(src=prev['units'][max(prev['units'])].id, dst=nid(0, jar0['slot']),
                             rel='تعلّق شبه الجملة بما قبل الحدّ (المتعلَّق غير معيَّن)', proven=True,
                             rule='شبه جملة في أول الآية وحدها إلى أول حدٍّ فيها: متعلَّقها قبل حدّ الآية'))
-    w0 = _bare_w(na['segments'][0]['word'])
+    w0 = na['segments'][0]['word']
     tgt = (pid(last_nuc['word_index'], last_nuc['slot']) if last_nuc else prev['units'][max(prev['units'])].id)
-    if w0 in ('إلا', 'الا'):
+    if is_form(w0, ('إِلَّا',)):
         out.append(dict(src=tgt, dst=nid(0, 0), rel='استثناء', proven=True,
                         rule='«إِلَّا» في أول الآية: المستثنى منه قبل حدّ الآية'))
     # التابع عبر الحدّ بالمطابقة الإعرابية: كلمةٌ أولَ الآية لا عامل فيها في آيتها، وعلامتها المكتوبة:
@@ -1407,13 +1457,13 @@ def cross_ayah_links(analyze_fn, prev, nxt):
     # يا النداء في أول الكلمة (يَٰقَوۡمِ، يَٰصَٰحِبَيِ): منادى لا تابع
     l0 = letters(seg0['word'])
     voc = len(l0) > 2 and l0[0][0] == 'ي' and (DAGGER_ALIF in l0[0][1] or l0[1][0] == 'ا')
-    c0 = word_case(na, 0, verbs_n) if 0 not in gov_n and noun_evidence(seg0, len(na['segments']) > 1 and _bare_w(na['segments'][1]['word'])[:1] == 'ا') and not voc else None
+    c0 = word_case(na, 0, verbs_n) if 0 not in gov_n and noun_evidence(seg0, len(na['segments']) > 1 and _wasl_start(na['segments'][1]['word'])) and not voc else None
     # الواو والفاء في أول الكلمة، مبنيّاً كان في المقشِّر أو عاملاً مؤجَّلاً (واو القسم)
-    conj = len(na['segments'][0]['slots']) > 1 and _bare_w(na['segments'][0]['slots'][0]['text']) in ('و', 'ف')
+    conj = len(na['segments'][0]['slots']) > 1 and is_form(na['segments'][0]['slots'][0]['text'], ('وَ', 'فَ'))
     if c0:
         verbs_p = {g['word_index'] for g in pa.get('agreement', [])}
         AMB = ('جر أو نصب', 'نصب أو جر')
-        same = next((w for w in range(n1 - 1, -1, -1) if noun_evidence(pa['segments'][w], w + 1 < n1 and _bare_w(pa['segments'][w + 1]['word'])[:1] == 'ا') and (
+        same = next((w for w in range(n1 - 1, -1, -1) if noun_evidence(pa['segments'][w], w + 1 < n1 and _wasl_start(pa['segments'][w + 1]['word'])) and (
                      word_case(pa, w, verbs_p) in (c0,) + AMB or
                      c0 in AMB and word_case(pa, w, verbs_p) in ('جر', 'نصب'))), None)
         src = pid(same, len(pa['segments'][same]['slots']) - 1) if same is not None else prev['units'][max(prev['units'])].id
@@ -1426,8 +1476,7 @@ def cross_ayah_links(analyze_fn, prev, nxt):
                             rule='مجرورٌ بعد واو أو فاء في أول الآية: معطوفٌ على ما قبله، أو واو قسم'))
         # ظرف الزمان المنصوب أولَ الآية (ٱلۡيَوۡمَ أُحِلَّ) عامله ما بعده غالباً؛ ومنصوبٌ يليه مضارعٌ لم تثبت فعليته
         # (كُلࣰّا نُّمِدُّ) قد يكون مفعولاً مقدَّماً له: فلا يثبت العبور في الحالين
-        stem0_bare = _bare_w(seg0['slots'][-1]['text'])
-        time_adv = stem0_bare in ('يوم', 'حين', 'ساعة', 'ليلة', 'غدا') or stem0_bare in ZURUF_TIME
+        time_adv = is_form(seg0['slots'][-1]['text'], TIME_V, i3rab=True)
         seg1 = na['segments'][1] if len(na['segments']) > 1 else None
         fronted = seg1 is not None and 1 not in verbs_n and len(seg1['slots']) == 1 and \
             seg1['slots'][0]['type'] == 'جذع' and not noun_evidence(seg1) and \
@@ -1441,12 +1490,12 @@ def cross_ayah_links(analyze_fn, prev, nxt):
         elif c0 in ('نصب', 'جر أو نصب', 'نصب أو جر') and same is not None and not conj:
             out.append(dict(src=src, dst=nid(0, stem0), rel='بدلٌ أو نعتٌ أو حال', proven=False,
                             rule='منصوبٌ في أول الآية يوافق ما قبله في الإعراب: تابعٌ له، أو مفعولٌ مقدَّم لما بعده'))
-    if w0.lstrip('وف') in RELATIVES and w0[:1] not in 'وف':
+    if is_form(w0, RELATIVES_V):
         out.append(dict(src=prev['units'][max(prev['units'])].id, dst=nid(0, 0), rel='نعت أو بدل أو ابتداء',
                         proven=False, rule='اسم موصول في أول الآية: قد يكون تابعاً لما قبله، وقد يكون مبتدأ'))
     # شرطٌ لا جواب له في آيته
     for f in pa['operators']:
-        if f['group'] == '7' and f.get('status') != 'blocked' and _bare_w(f['operator']) in COND_STRICT:
+        if f['group'] == '7' and f.get('status') != 'blocked' and is_form(f['operator'], COND_STRICT_V):
             after = [g for g in pa.get('agreement', []) if g['word_index'] > f['word_index']]
             later_b = any(clause_start(pa, w) for w in range(f['word_index'] + 1, n1))
             if len(after) <= 1 and not later_b:
@@ -1535,39 +1584,36 @@ def boundary_record(p, words, pos_of, bonds, obls, nuclei, du_start, mark, ayah_
                 mark=mark, ayah_end=ayah_end)
 
 
-SADARA_NAWASIKH = ('إن', 'لكن', 'ليت', 'لعل')   # «إنّ» المكسورة وأخواتها سوى «أنّ» و«كأنّ» (جملتها تقع حالاً: كَأَنَّهُمۡ لَا يَعۡلَمُونَ)
-
-
 def clause_start(a, wi):
     """ما يبدأ به الكلام في أول الكلمة wi وله الصدارة، فلا يعمل فيه ما قبله ولا يكون من جملةٍ قبله إلا معطوفاً:
     → (النوع، بعد حرف عطف؟) أو None. الأنواع: ناسخ، استفهام، نداء، شرط، تنبيه.
     - «إِنَّ» وكأنّ ولكنّ وليت ولعلّ عاملاً مقبولاً في أول الكلمة (لا «أَنَّ»)
     - الاستفهام: هَلۡ، والهمزة المفتوحة قبل فاء أو واو مفتوحتين (أَفَلَا، أَوَلَمۡ)، أو قبل «لَمۡ» (أَلَمۡ)، أو قبل همزة (أَءِنَّكُمۡ)
     - النداء: ياءٌ بعدها ألف أو خنجرية في أول الكلمة (يَٰقَوۡمِ، يَٰٓأَيُّهَا)
-    - الشرط الذي لا يلتبس بالموصول (COND_STRICT)
+    - الشرط الذي لا يلتبس بالموصول (COND_STRICT_V)
     - التنبيه: أَلَا"""
     from .status import ACCEPTED
     seg = a['segments'][wi]
     word = seg['word']
     toks = letters(word)
-    conj = len(seg['slots']) > 1 and seg['slots'][0]['type'] != 'جذع' and _bare_w(seg['slots'][0]['text']) in ('و', 'ف')
+    conj = len(seg['slots']) > 1 and seg['slots'][0]['type'] != 'جذع' and is_form(seg['slots'][0]['text'], ('وَ', 'فَ'))
+    rest = word
     if conj:
         toks = toks[1:]
-    bare = ''.join(L for L, _ in toks).replace('أ', 'ا').replace('إ', 'ا')
+        rest = word[len(seg['slots'][0]['text']):]
     ops = [f for f in a['operators'] if f['word_index'] == wi and f.get('status') != 'blocked']
     for f in ops:
-        b = _bare_w(f['operator'])
-        if f['group'] == '2' and f.get('status') == ACCEPTED and b in SADARA_NAWASIKH and b != 'أن' and \
-                not _bare_w(f['operator']).startswith('أ'):
+        if f['group'] == '2' and f.get('status') == ACCEPTED and is_form(f['operator'], SADARA_V):
             return ('ناسخ له الصدارة', conj)
-        if f['group'] == '7' and b in COND_STRICT:
+        if f['group'] == '7' and is_form(f['operator'], COND_STRICT_V):
             return ('شرط', conj)
     if not toks:
         return None
     L0, m0 = toks[0]
-    if bare in ('هل',) or bare.startswith('هل') and len(seg['slots']) > 1:
+    if is_form(rest, ('هَلْ',)) or len(toks) > 2 and toks[0][0] == 'ه' and toks[0][1] == {FATHA} and toks[1][0] == 'ل' \
+            and toks[1][1] == {SUKUN} and len(seg['slots']) > 1:
         return ('استفهام', conj)
-    if bare in ('لئن', 'لءن'):
+    if is_form(rest, ('لَئِنْ',)):
         return ('شرط', conj)                          # اللام الموطِّئة للقسم و«إنْ»
     if L0 in 'أ' and FATHA in m0 and len(toks) > 2:
         L1, m1 = toks[1]
@@ -1582,10 +1628,6 @@ def clause_start(a, wi):
     return None
 
 
-JARR_HEADS = ('ب', 'ل', 'ك', 'في', 'من', 'على', 'إلى', 'عن', 'عند', 'لدى')
-PRON_FREE = ('هو', 'هي', 'هم', 'هما', 'هن', 'أنت', 'أنتم', 'أنتما', 'أنتن', 'أنا', 'نحن')
-
-
 def word_feats(a):
     """سمات الكلمة المكتوبة اللازمة لعلاقات الجملة التالية R(G, Q, c) (حكم صاحب النظرية في الصفة والحال والاستئناف):
     conj حرف عطف (و، ف) في أولها مقطَّعاً؛ nakira اسمٌ عليه تنوين بلا «أل»؛ verb نوع الفعل (madi، mudari، amr) وشخصه؛
@@ -1594,32 +1636,32 @@ def word_feats(a):
     out = []
     for wi, seg in enumerate(a['segments']):
         sl = seg['slots']
-        conj = len(sl) > 1 and sl[0]['type'] != 'جذع' and _bare_w(sl[0]['text']) in ('و', 'ف')
+        conj = len(sl) > 1 and sl[0]['type'] != 'جذع' and is_form(sl[0]['text'], ('وَ', 'فَ'))
         st = letters(seg['word'])
+        w_ = seg['word']
         tanwin = any(m & {FATHATAN, DAMMATAN, KASRATAN} for _, m in st)
         has_al = any(x['type'] in ('أل', 'لفظ الجلالة') for x in sl)
         g = verbs.get(wi)
-        b = _bare_w(seg['word'])
-        if b in ('او', 'أو', 'ثم') and not conj:
+        standalone = 'أو' if is_form(w_, ('أَوْ',)) else 'ثم' if is_form(w_, ('ثُمَّ',)) else None
+        if standalone and not conj:
             conj = True                               # «أَوۡ» و«ثُمَّ» كلمتان مستقلتان، و«ثُمَّ» كالفاء (حكم صاحب النظرية)
         # واوٌ أو فاء ملتصقة بضمير رفعٍ منفصل (فَهِيَ، وَهُمۡ): الضمير لا يبدأ بهما، فهما عاطفتان
-        if not conj and len(b) > 1 and b[0] in 'وف' and b[1:] in PRON_FREE:
-            conj, sl0 = True, b[0]
+        if not conj and len(st) > 2 and st[0][0] in 'وف' and set(st[0][1]) == {FATHA} and is_form(w_[2:], PRON_FREE_V):
+            conj, sl0 = True, st[0][0]
         else:
             sl0 = None
         out.append(dict(
-            conj=conj, conj_letter=({'او': 'أو', 'أو': 'أو', 'ثم': 'ثم'}.get(b) or sl0 or _bare_w(sl[0]['text'])) if conj else None,
+            conj=conj, conj_letter=(standalone or sl0 or sl[0]['text'][:1]) if conj else None,
             # «مَن» و«ما» تكونان شرطاً فتطلبان جواباً بالفاء (وَمَن شَآءَ فَلۡيَكۡفُرۡ)، أو موصولاً أو غيره
-            cond_amb=b.lstrip('وف') in ('من', 'ما', 'مهما') and any(L == 'م' and FATHA in m for L, m in st[:2]),
+            cond_amb=is_form(w_, ('مَنْ', 'مَا', 'مَهْمَا'), prefix=True),
             # أول المعطوف: فعل، أو مرفوع، أو ضمير منفصل، أو شبه جملة (جارٌّ في أوله بعد العاطف): بداية جملة
-            head=('pron' if b.lstrip('وف') in PRON_FREE else
-                  'pp' if any(x['type'] == 'عامل' and _bare_w(x['text']) in JARR_HEADS and
-                              not (_bare_w(x['text']) == 'من' and FATHA in letters(x['text'])[0][1])   # مَن ليست مِن
+            head=('pron' if is_form(w_, PRON_FREE_V, prefix=True) else
+                  'pp' if any(x['type'] == 'عامل' and is_form(x['text'], JARR_V)
                               for x in sl[1 if conj and len(sl) > 1 else 0:2]) else None),
             first=st[0][0] if st else '', first_fatha=bool(st) and FATHA in st[0][1],
             nakira=tanwin and not has_al and noun_evidence(seg), noun=noun_evidence(seg),
             verb=g['kind'] if g else None, person=(g['features'][0][0] if g and g.get('features') else None),
-            qad=b in ('قد', 'وقد', 'فقد', 'لقد'), rel=b.lstrip('وف') in RELATIVES,
+            qad=is_form(w_, ('قَدْ', 'لَقَدْ'), prefix=True), rel=is_form(w_, RELATIVES_V, prefix=True),
             case=word_case(a, wi, set(verbs)) if not g else None))
     return out
 
@@ -1644,15 +1686,11 @@ def sentence_boundary(p, js, n, spans, cspans, nuc_pos, qawl_pos, starts, obls, 
     return d
 
 
-QAWL_FORMS = {'قال', 'قالوا', 'قالت', 'قالتا', 'قالا', 'قلن', 'قلت', 'قلنا', 'قلتم', 'يقول', 'يقولون', 'يقولوا', 'يقولا',
-              'تقول', 'تقولون', 'تقولوا', 'نقول', 'أقول', 'اقول', 'قل', 'قولوا', 'قولي', 'قيل', 'يقال', 'نادى', 'نادوا',
-              'ينادي', 'ينادون', 'وصى', 'دعا', 'دعوا', 'ليقولن', 'لتقولن', 'لنقولن', 'فليقل', 'ليقولوا'}
 
 
 def is_qawl(word):
-    """فعل القول (وما في معناه: نادى، وصّى، دعا) بصورته المكتوبة، بعد واو أو فاء: معموله مقول القول"""
-    b = _bare_w(word).replace('ٱ', 'ا')
-    return b in QAWL_FORMS or b[:1] in 'وف' and b[1:] in QAWL_FORMS
+    """فعل القول (وما في معناه: نادى، وصّى، دعا) بصيغته المشكولة، وبعد واو أو فاء: معموله مقول القول"""
+    return is_form(word, QAWL_V, prefix=True)
 
 
 def _boundary_kind(p, js, spans, cspans, nuc_pos, qawl_pos, starts, feats=None):
