@@ -1281,11 +1281,12 @@ def mushaf_layer(items, T):
 # ---------- الروابط عبر حدّ الآية ----------
 RELATIVES_V = ('الَّذِينَ', 'الَّذِي', 'الَّتِي', 'اللَّذَيْنِ', 'اللَّتَيْنِ', 'اللَّاتِي', 'الَّٰتِي', 'اللَّائِي', 'الَّٰٓئِي',
                'الَّذَانِ', 'اللَّذَانِ', 'الَّذَيْنِ')
-COND_STRICT_V = ('إِذَا', 'إِنْ', 'لَوْ', 'أَيْنَمَا', 'حَيْثُمَا', 'مَهْمَا', 'كُلَّمَا', 'إِذْمَا', 'مَتَى', 'مَتَىٰ', 'أَيَّانَ')
+COND_STRICT_V = ('أَيَّمَا', 'إِذَا', 'إِنْ', 'لَوْ', 'أَيْنَمَا', 'حَيْثُمَا', 'مَهْمَا', 'كُلَّمَا', 'إِذْمَا', 'مَتَى', 'مَتَىٰ', 'أَيَّانَ')
 SADARA_V = ('إِنَّ', 'لَٰكِنَّ', 'لَكِنَّ', 'لَيْتَ', 'لَعَلَّ')   # «إنّ» المكسورة وأخواتها سوى «أنّ» و«كأنّ»
 TIME_V = ('يَوْمَ', 'حِينَ', 'سَاعَةَ', 'لَيْلَةَ', 'غَدًا', 'ءَانَ', 'آنَ')
 ZURUF_V = ('مَعَ', 'عِنْدَ', 'لَدَى', 'لَدَىٰ', 'لَدُنْ', 'فَوْقَ', 'تَحْتَ', 'بَيْنَ', 'قَبْلَ', 'بَعْدَ', 'أَمَامَ', 'خَلْفَ',
            'وَرَاءَ', 'دُونَ', 'حَوْلَ', 'قُدَّامَ', 'إِزَاءَ', 'تِلْقَاءَ')
+VERBAL_OPS = {'10', '11', '12', '13'}            # كان وأخواتها، وأفعال المقاربة، والمدح والذم، وأفعال القلوب: أفعالٌ تبدأ جملة
 JARR_V = ('بِ', 'لِ', 'لَ', 'لَّ', 'كَ', 'فِي', 'فِى', 'مِنْ', 'مِّنْ', 'عَلَى', 'عَلَىٰ', 'عَلَيْ', 'إِلَى', 'إِلَىٰ', 'إِلَيْ',
           'عَنْ', 'عِنْدَ', 'لَدَى', 'لَدَىٰ', 'لَدَيْ')
 PRON_FREE_V = ('هُوَ', 'هِيَ', 'هُمْ', 'هُمَا', 'هُنَّ', 'أَنْتَ', 'أَنْتِ', 'أَنْتُمْ', 'أَنْتُمَا', 'أَنْتُنَّ', 'أَنَا', 'نَحْنُ')
@@ -1615,8 +1616,10 @@ def clause_start(a, wi):
         return ('استفهام', conj)
     if is_form(rest, ('لَئِنْ',)):
         return ('شرط', conj)                          # اللام الموطِّئة للقسم و«إنْ»
-    if L0 in 'أ' and FATHA in m0 and len(toks) > 2:
+    if L0 in 'أء' and FATHA in m0 and len(toks) > 2:
         L1, m1 = toks[1]
+        if L1 == 'آ':
+            return ('استفهام', conj)                  # ءَآللَّهُ، ءَآلۡـَٰٔنَ: همزة الاستفهام قبل همزة الوصل الممدودة
         madd_verb = len(toks) > 3 and toks[2][0] == 'ا' and not toks[2][1] and toks[3][1] & {FATHA, DAMMA, KASRA}
         if L1 in 'فو' and FATHA in m1 and SHADDA not in m1 and not madd_verb or L1 in 'ءأإ' or \
                 L1 == 'ل' and toks[2][0] == 'م' and len(toks) == 3 and SUKUN in toks[2][1]:
@@ -1654,6 +1657,8 @@ def word_feats(a):
             conj=conj, conj_letter=(standalone or sl0 or sl[0]['text'][:1]) if conj else None,
             # «مَن» و«ما» تكونان شرطاً فتطلبان جواباً بالفاء (وَمَن شَآءَ فَلۡيَكۡفُرۡ)، أو موصولاً أو غيره
             cond_amb=is_form(w_, ('مَنْ', 'مَا', 'مَهْمَا'), prefix=True),
+            neg=is_form(w_, ('مَا', 'لَا', 'لَمْ', 'لَنْ', 'لَمَّا'), prefix=True),
+            ops=[f['group'] for f in a['operators'] if f['word_index'] == wi and f.get('status') != 'blocked'],
             # أول المعطوف: فعل، أو مرفوع، أو ضمير منفصل، أو شبه جملة (جارٌّ في أوله بعد العاطف): بداية جملة
             head=('pron' if is_form(w_, PRON_FREE_V, prefix=True) else
                   'pp' if any(x['type'] == 'عامل' and is_form(x['text'], JARR_V)
@@ -1697,10 +1702,19 @@ def _boundary_kind(p, js, spans, cspans, nuc_pos, qawl_pos, starts, feats=None):
     if any(min(a, b) <= p < max(a, b) for a, b in spans):
         return None
     q = [x for x in qawl_pos if js <= x <= p]
-    if q and not any(starts[k] or k in nuc_pos for k in range(max(q) + 1, p + 1)):
+    if q and feats:
+        # يمتنع الحدّ قبل بداية المقول وحدها: بعد «قال» فاعلُه المرفوع وشبهُ الجملة (قَالَ مُوسَىٰ لِقَوۡمِهِۦٓ)، ثم يبدأ المقول؛
+        # وداخل المقول تقع الحدود كما تقع في غيره
+        k = max(q) + 1
+        while k < len(feats) and not starts[k] and k not in nuc_pos and \
+                (feats[k]['case'] == 'رفع' and feats[k].get('noun') or feats[k].get('head') == 'pp'):
+            k += 1
+        if p < k:
+            return None
+    elif q and not any(starts[k] or k in nuc_pos for k in range(max(q) + 1, p + 1)):
         return None                                   # ما بعد «قال» مقولُه: معمولٌ له لا جملة مستقلة
-    if starts[p] and starts[p][0] in ('تنبيه', 'استفهام', 'نداء'):
-        return None                                   # ما له الصدارة يطلب كلامه بعده (أَلَآ إِنَّهُمۡ)
+    if starts[p] and starts[p][0] in ('تنبيه', 'استفهام', 'نداء', 'شرط') or feats and feats[p].get('cond_amb'):
+        return None                                   # ما له الصدارة، وأداة الشرط، تطلب كلامها بعدها (أَلَآ إِنَّهُمۡ، فَمَنِ ٱهۡتَدَىٰ)
     w = starts[p + 1]
     # شرطٌ في J لم يتلُه شرطٌ وجوابٌ (نواتان): جوابه بعدُ، فما بعد الموضع قد يكون جوابه (وَلَئِنِ ٱتَّبَعۡتَ … إِنَّكَ إِذࣰا)
     conds = [k for k in range(js, p + 1) if starts[k] and starts[k][0] == 'شرط']
@@ -1724,7 +1738,11 @@ def _boundary_kind(p, js, spans, cspans, nuc_pos, qawl_pos, starts, feats=None):
             return None
         g = feats[h]
         span = next((k for k in range(h + 1, len(feats)) if feats[k]['conj'] or starts[k]), len(feats)) - h
+        nxt_v = h + 1 < len(feats) and (feats[h + 1]['verb'] or h + 1 in nuc_pos or
+                                         set(feats[h + 1].get('ops', [])) & VERBAL_OPS)
         clause = (g['verb'] or starts[h] or h in nuc_pos) and not (h > p + 1 and g['conj']) or \
+            set(g.get('ops', [])) & VERBAL_OPS or \
+            (set(g.get('ops', [])) & {'6', '7'} or g.get('neg') or g.get('cond_amb')) and nxt_v or \
             (g['case'] == 'رفع' or g.get('head') in ('pron', 'pp')) and span > 1
         if clause:
             return ('proven', f'نهاية جملة قبل {name}: وما بعدها {relations_after(feats, p)}')
