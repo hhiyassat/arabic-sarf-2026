@@ -66,3 +66,14 @@ def strip_marks(s):
     return ''.join(ch for ch in s if ch not in MARKS)
 
 _strip_marks = strip_marks
+
+
+def mudgham(toks, i):
+    """حرفٌ في الرسم لا خلية له قبل المشدَّد: الياء الزائدة رسماً قبل الياء المشدَّدة (بِأَييِّكُمُ)، كالمرسوم عليه
+    الصفر المستدير (D21؛ حكم صاحب النظرية). أما سائر العاري قبل المشدَّد (عَبَدتُّمۡ، يُوَجِّههُّ) فخليةٌ ساكنة
+    كما كُتب، والمشدَّد بعده خليتان (حكم صاحب النظرية: النص لا الأداء). واللام الشمسية لها حكمها (D22)."""
+    if i + 1 >= len(toks):
+        return False
+    L, m = toks[i]
+    return L == 'ي' and not (m & (MARKS - {MADDA_MARK, SUKUN})) and toks[i + 1][0] == 'ي' and SHADDA in toks[i + 1][1] \
+        and i > 0 and vowel(toks[i - 1][1]) != KASRA

@@ -133,7 +133,9 @@ def _mudari_shape(toks):
     (_, m0), (L1, m1) = toks[0], toks[1]
     hollow = len(toks) > 2 and toks[2][0] in ('و', 'ي', 'ا') and not toks[2][1]    # يَقُولُوا، يُقِيمُوا
     if FATHA in m0:
-        return SUKUN in m1 or hollow or L1 == 'ت' and FATHA in m1 and len(toks) >= 5
+        # والمضعَّف الثلاثي: حركةٌ ثم مشدَّد (تَمُرُّونَ، يَمُدُّ، يَفِرُّ)
+        doubled1 = bool(m1 & {DAMMA, KASRA, FATHA}) and len(toks) > 2 and SHADDA in toks[2][1] and L1 != toks[2][0]
+        return SUKUN in m1 or hollow or L1 == 'ت' and FATHA in m1 and len(toks) >= 5 or doubled1
     # والمضموم يليه كسرٌ ثم مشدَّد: أَفۡعَلَ المضعَّف (يُحِبُّونَ، تُمِدُّونَ)
     doubled = KASRA in m1 and len(toks) > 2 and SHADDA in toks[2][1]
     return bool(m1 & {FATHA, SUKUN}) or hollow or doubled

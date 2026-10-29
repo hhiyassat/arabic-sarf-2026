@@ -10,7 +10,7 @@ sarf.syllabify — محوّل CV رباعي الطبقات للعربية (وض�
 """
 from collections import Counter
 
-from .chars import (FATHA, DAMMA, KASRA, SUKUN, SHADDA, FATHATAN, DAMMATAN, KASRATAN,
+from .chars import (FATHA, DAMMA, KASRA, SUKUN, SHADDA, FATHATAN, DAMMATAN, KASRATAN, mudgham,
                     DAGGER_ALIF, vowel_of, tanwin_of)
 from .normalize import normalize
 from .divine import divine_name
@@ -87,6 +87,9 @@ def cvmap(toks, ev):
         if L == 'ل' and not mk and nxt is not None and SHADDA in nxt[1] and nxt[0] in SOLAR \
                 and i >= 1 and toks[i - 1][0] == 'ل':
             ev['SOLAR_LAM_DELETED'] += 1; i += 1; continue       # لِلشَّهَادَةِ
+        # الياء الزائدة رسماً قبل الياء المشدَّدة (بِأَييِّكُمُ): لا تُقطَّع، كالمرسوم عليه الصفر المستدير (D21)
+        if mudgham([(x, set(y)) for x, y in toks], i):
+            ev['MUDGHAM_DELETED'] += 1; i += 1; continue
 
         # --- و / ي حاملة للألف الخنجرية: الصَّلَوٰة / الزَّكَوٰة — الحرف رسم فقط، والخنجرية مدّ للفتحة قبلها ---
         if L in ('و', 'ي') and mk == {DAGGER_ALIF} and prev_v == 'a' and seg and seg[-1][0] == 'V':
@@ -129,6 +132,8 @@ def cvmap(toks, ev):
             pass
         elif DAGGER_ALIF in mk:
             seg.append(('VV', 'aa')); ev['DAGGER_ALIF'] += 1
+        elif nxt is not None and nxt[0] not in 'اى':
+            ev['BARE_AS_SUKUN'] += 1        # العاري قبل حرفٍ غير مشدَّد ساكنٌ كما كُتب (أَحَطتُ، بَسَطتَ)
         else:
             seg.append(('POISON', L)); ev['POISON_UNMARKED'] += 1
         i += 1
