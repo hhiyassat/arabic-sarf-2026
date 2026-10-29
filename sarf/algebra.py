@@ -2178,15 +2178,16 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
                 else:
                     pending_open.append((r['end'] - 1, f'خبر الموصول «{wtext[p]}» غير مستوفى: {why}'))
             blk = inner.get(p) or pending.get(p)
-            if blk is None and pending_open and p >= pending_open[-1][0]:
-                blk = ('open', pending_open[-1][1])
             dec = None if last else sentence_boundary(p, js, n, spans, cspans, nuc_pos, qawl_pos, starts,
                                                       obls, pos_of, feats, chain, blk)
+            # خبر الموصول المبتدأ غير المستوفى: أول حدٍّ مرشَّح بعد الصلة قد يكون موضع الخبر، فيُجعل محتملاً، ثم يُترك
+            if dec and pending_open and p >= pending_open[-1][0]:
+                dec = ('possible', pending_open[-1][1])
+                pending_open.clear()
             if dec:
                 js = p + 1
                 if dec[0] == 'proven':
                     chain = dec[1].startswith('نهاية جملة قبل')
-                    pending_open.clear()
             if marks[p] or ay_end[p] or last or dec:
                 rec = boundary_record(p, words, pos_of, bonds, obls, nuclei, du_start, marks[p], ay_end[p], last,
                                       sources, a_id, q, cand, checked_ends)
