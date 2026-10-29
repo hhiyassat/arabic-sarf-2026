@@ -12,6 +12,7 @@ sarf.output_schema — السجل الجامع: ناتج التحليل بصيغ
 """
 from .affix import stem_info
 from .chars import (FATHA, DAMMA, KASRA, SUKUN, FATHATAN, DAMMATAN, KASRATAN, letters, strip_marks)
+from .match import vform_match
 from .lexicon import MabniLexicon
 from .normalize import UTHMANI_SIGNS
 from .root import soundness, WAZN
@@ -31,7 +32,7 @@ MARK_MOOD = {DAMMA: 'indicative', FATHA: 'subjunctive', SUKUN: 'jussive'}
 EFFECT = {'1': 'jarr', '2': 'nasb_ism_raf_khabar', '4': 'nasb', '5': 'nasb_verb', '6': 'jazm_one'}
 # أفعالٌ في الفهرس (كان وأخواتها، وأفعال المقاربة، والمدح والذم، وأفعال القلوب)
 VERB_GROUPS = {'10', '11', '12', '13'}
-JAMID = {'ليس', 'عسى', 'نعم', 'بئس', 'حبذا'}
+JAMID = ('لَيْسَ', 'عَسَى', 'نِعْمَ', 'بِئْسَ', 'حَبَّذَا')
 # ضمير الفاعل في الماضي بلاحقته: (الشخص، العدد، الجنس)
 PAST_SUBJECT = {'وا': (3, 'plural', 'masc'), 'و': (3, 'plural', 'masc'), 'تْ': (3, 'singular', 'fem'),
                 'تُمْ': (2, 'plural', 'masc'), 'تُمَا': (2, 'dual', 'common'), 'تُنَّ': (2, 'plural', 'fem'),
@@ -218,34 +219,33 @@ def _operator_ids(cat, op, group):
 
 
 def _clitic_type(op, group):
-    bare = strip_marks(op)
+    """العامل بصيغته المشكولة من الفهرس (لا يُجرَّد)"""
     if group == '1':
-        return 'oath' if bare in ('و', 'ت') else 'preposition'
-    if group == '6' and bare == 'ل':
+        return 'oath' if vform_match(op, ('وَ', 'تَ')) else 'preposition'
+    if group == '6' and vform_match(op, ['لِ']):
         return 'imperative_lam'
     if group == '4':
-        return 'vocative' if bare in ('يا', 'أ', 'أي') else 'conjunction'
+        return 'vocative' if vform_match(op, ('يَا', 'أَ', 'أَيْ')) else 'conjunction'
     return 'conjunction'
 
 
 # نوع العامل من مجموعته في الفهرس، لا من أول مدخلٍ في المعجم (مَا: نافية في 3، وشرطية في 7)
 NOUN_CATEGORY = {'7': 'conditional_noun', '8': 'kinaya', '9': 'verb_name'}
 NOUN_SUBTYPE = {'7': 'conditional', '8': 'number', '9': 'ism_fiil'}
-KINAYA = {'كم', 'كأين', 'كذا', 'كيت'}
-PARTICLES_IN_7 = {'لو'}                                   # في باب الشرط وهي حرف
+KINAYA = ('كَمْ', 'كَأَيِّنْ', 'كَذَا', 'كَيْتَ')
+PARTICLES_IN_7 = ('لَوْ',)                                # في باب الشرط وهي حرف
 
 
 def _noun_object(op, group):
     """كائن noun للعامل الاسمي: من المعجم بفئة بابه إن وُجد، وإلا الحدّ الأدنى المعلوم"""
     cat_name = NOUN_CATEGORY.get(group)
-    bare = strip_marks(op)
-    if group == '8' and bare in KINAYA:
+    if group == '8' and vform_match(op, KINAYA):
         cat_name = 'kinaya'
-    for e in _lex().forms.get(op, []) + [x for x in _lex().entries if x['plain'] == bare]:
+    for e in _lex().forms.get(op, []) + _lex().lookup(op):
         if e['pos'] == 'noun' and e['category'] == cat_name:
             return dict(e['noun'])
     subtype = 'kinaya' if cat_name == 'kinaya' else NOUN_SUBTYPE[group]
-    if bare == 'إذا':
+    if vform_match(op, ['إِذَا']):
         subtype = 'adverbial'
     status = 'murab' if subtype in ('number', 'common') else 'mabni'
     return dict(subtype=subtype, inflection=dict(status=status))
@@ -253,29 +253,28 @@ def _noun_object(op, group):
 
 def _operator_segment(cand, slot, cat, role):
     op, group = cand['operator'], cand['group']
-    bare = strip_marks(op)
     seg = dict(role=role, form=slot['text'])
     if role == 'proclitic':
         seg['clitic_type'] = _clitic_type(op, group)
     ids = _operator_ids(cat, op, group)
     if group in VERB_GROUPS:
         v = dict(tense='past', voice='active', subject=_pron(3, 'singular', 'masc', 'subject'),
-                 inflection=dict(status='mabni'), conjugability='jamid' if bare in JAMID else 'mutasarrif')
+                 inflection=dict(status='mabni'), conjugability='jamid' if vform_match(op, JAMID) else 'mutasarrif')
         if group in ('10', '11'):
             v['completeness'] = 'naqis'
         seg.update(pos='verb', verb=v)
-    elif group in NOUN_CATEGORY and bare not in PARTICLES_IN_7 and not (group == '8' and bare == 'ذو'):
+    elif group in NOUN_CATEGORY and not vform_match(op, PARTICLES_IN_7) and not (group == '8' and vform_match(op, ['ذُو'])):
         seg.update(pos='noun', noun=_noun_object(op, group))
-    elif group == '8' and bare == 'ذو':
+    elif group == '8' and vform_match(op, ['ذُو']):
         seg.update(pos='noun', noun=dict(subtype='common', five_nouns=True, inflection=dict(status='murab')))
     else:
-        p = dict(governing=bare not in PARTICLES_IN_7, operator_ids=ids, catalog_group=group)
+        p = dict(governing=not vform_match(op, PARTICLES_IN_7), operator_ids=ids, catalog_group=group)
         eff = EFFECT.get(group, 'none')
-        if group == '6' and bare == 'إن':
+        if group == '6' and vform_match(op, ['إِنْ']):
             eff = 'jazm_two'
         if group == '3':
-            eff = 'raf_ism_nasb_khabar' if bare == 'ما' else 'nasb_ism_raf_khabar'
-        if bare in PARTICLES_IN_7:
+            eff = 'raf_ism_nasb_khabar' if vform_match(op, ['مَا']) else 'nasb_ism_raf_khabar'
+        if vform_match(op, PARTICLES_IN_7):
             eff = 'none'
         p['effect'] = eff
         if cand.get('kaffa'):
@@ -292,8 +291,8 @@ def _mabni_segment(slot, prev_seg):
         e = next((x for x in _lex().entries if x['entry_id'] == slot['lexicon'][0]), None)
     e = e or _lex().attested(text)
     if slot['role'] in ('conj', 'proclitic'):
-        bare = strip_marks(text)
-        ct = 'resumption_fa' if bare == 'ف' else 'emphasis_lam' if bare == 'ل' else 'conjunction'
+        from .match import vform_match
+        ct = 'resumption_fa' if vform_match(text, ['فَ']) else 'emphasis_lam' if vform_match(text, ['لَ']) else 'conjunction'
         seg = dict(role='proclitic', form=text, clitic_type=ct, pos='particle',
                    particle=dict(governing=False, effect='none'))
         return seg, e

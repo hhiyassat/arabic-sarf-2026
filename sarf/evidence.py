@@ -18,12 +18,11 @@ R7     اسم الشرط الجازم (مج 7): يُمنع إن كان ما بع
        (مَا تَفْعَلُونَ، مَا يَوْمُ ٱلدِّينِ)؛ ولا يشمل لَوْ وإِذَا لأنهما لا تجزمان
 """
 from .chars import FATHA, DAMMA, DAMMATAN, SUKUN, SHADDA, plain, strip_marks as _strip_marks
-from .match import match_letters, PRON_SUFFIXES
+from .match import match_letters, PRON_SUFFIXES, vform_match
 from .affix import stem_info, raf_mark, RAF_PRONOUNS
 from .status import DEFERRED, BLOCKED
 
 CASE = {'رفع': 'مرفوع', 'نصب': 'منصوب'}
-PRON_PLAIN = {_strip_marks(p) for p in PRON_SUFFIXES}
 
 
 def _text(toks):
@@ -40,7 +39,7 @@ def reject_candidates(found, words):
     for f in found:
         f['status'], f['reject_reason'], f['checked'] = DEFERRED, None, []
     for f in found:
-        op = _strip_marks(f['operator'])
+        op = f['operator']                    # العامل بصيغته المشكولة من الفهرس (لا يُجرَّد)
         tgt = _target_after(f, words)
         if not tgt:
             continue
@@ -51,19 +50,20 @@ def reject_candidates(found, words):
         if f['method'].startswith('proclitic'):
             first_L, first_m = match_letters(tgt)[0]
             if (SUKUN in first_m or SHADDA in first_m) and first_L not in ('ل', 'ا') and \
-                    not _strip_marks(tgt).startswith('سم'):
+                    not (len(match_letters(tgt)) > 1 and match_letters(tgt)[0][0] == 'س' and
+                         SUKUN in match_letters(tgt)[0][1] and match_letters(tgt)[1][0] == 'م'):   # بِسۡمِ
                 f['checked'].append('R8 أول البقية ساكن')
                 reason = f"أول ما بعدها {'ساكن' if SUKUN in first_m else 'مشدَّد'}: الحرف من أصل الكلمة لا سابقة"
                 f['radical'] = True
             # R9: حرف الجر المتصل (بِ، كَ، تَ) لا يدخل على الفعل
-            elif op in ('ب', 'ك', 'ت') and f['group'] == '1' and info['pos'] == 'verb':
+            elif vform_match(op, ('بِ', 'كَ', 'تَ')) and f['group'] == '1' and info['pos'] == 'verb':
                 f['checked'].append('R9 الفعل بعد حرف الجر')
                 reason = f"بعدها فعل ({'، '.join(info['evidence'])}): ليست جارّة"
-                f['radical'] = op == 'ك'            # كَفَرُوا: الكاف أصلية؛ والباء والتاء قد تكونان سابقتين غير جارّتين
+                f['radical'] = vform_match(op, ['كَ'])            # كَفَرُوا: الكاف أصلية؛ والباء والتاء قد تكونان سابقتين غير جارّتين
         # R1/R2: لام الأمر ولا الناهية — ما بعدها مضارع مجزوم
         if reason:
             pass
-        elif f['group'] == '6' and op in ('ل', 'لا'):
+        elif f['group'] == '6' and vform_match(op, ('لِ', 'لَا')):
             f['checked'].append('R1/R2 المجزوم بعدها')
             if info['pos'] == 'noun':
                 reason = f"ما بعدها اسم ({'، '.join(info['evidence'])})"
@@ -73,31 +73,31 @@ def reject_candidates(found, words):
                 why = 'ثبوت النون' if info['suffix'] == 'نون الرفع' else CASE[info['mood']]
                 reason = f'الفعل بعدها غير مجزوم كتابةً ({why})'
         # R3: اسم الفعل الناصب للمفعول — ما بعده مرفوع
-        elif f['group'] == '9' and op in ('رويد', 'بله', 'دونك', 'عليك'):
+        elif f['group'] == '9' and vform_match(op, ('رُوَيْدَ', 'بَلْهَ', 'دُونَكَ', 'عَلَيْكَ')):
             f['checked'].append('R3 المنصوب بعده')
             last = match_letters(tgt)[-1][1]
             if last & {DAMMA, DAMMATAN}:
                 reason = 'ما بعده مرفوع كتابةً، واسم الفعل ينصب مفعوله'
         # R4: واو القسم الجارّة وواو المعية — لا تدخلان على فعل ولا حرف ولا ضمير رفع
-        elif op == 'و' and f['group'] in ('1', '4') and f['method'].startswith('proclitic'):
+        elif vform_match(op, ['وَ']) and f['group'] in ('1', '4') and f['method'].startswith('proclitic'):
             f['checked'].append('R4 الاسم بعد الواو')
             after = [g for g in found if g is not f and g['word_index'] == f['word_index'] and
                      g['char_span'] and g['char_span'][0] == f['char_span'][1]]
-            if plain(match_letters(tgt), True).replace('أ', 'ا') in {p.replace('أ', 'ا') for p in RAF_PRONOUNS}:
+            if vform_match(tgt, RAF_PRONOUNS, loose=True):
                 reason = 'بعدها ضمير رفع منفصل: الواو عاطفة أو حالية'
             elif info['pos'] == 'verb':
                 reason = f"بعدها فعل ({'، '.join(info['evidence'])}): الواو عاطفة"
             elif after:
                 reason = f"بعدها عامل ({after[0]['operator']}): الواو عاطفة"
         # R5: اللام المفتوحة قبل الفعل لام توكيد أو جواب قسم، لا جارّة
-        elif op == 'ل' and f['group'] == '1' and f['method'].startswith('proclitic'):
+        elif vform_match(op, ['لِ']) and f['group'] == '1' and f['method'].startswith('proclitic'):
             f['checked'].append('R5 اللام المفتوحة قبل الفعل')
             if FATHA in match_letters(f['word'])[f['char_span'][0]][1] and info['pos'] == 'verb':
                 reason = f"اللام المفتوحة قبل الفعل ({'، '.join(info['evidence'])}) لام توكيد أو جواب قسم، لا جارّة"
         # المعمول ضمير متصل بالعامل (عَلَيْكَ، لَهُ): مبني، فلا تدلّ حركته على الإعراب
         on_pronoun = f['method'] == 'operator+suffix' or \
-            f['method'].startswith('proclitic') and _strip_marks(tgt) in PRON_PLAIN
-        if not reason and not on_pronoun and (f['group'] == '1' or op == 'و' and f['group'] == '4'):
+            f['method'].startswith('proclitic') and vform_match(tgt, PRON_SUFFIXES)
+        if not reason and not on_pronoun and (f['group'] == '1' or vform_match(op, ['وَ']) and f['group'] == '4'):
             f['checked'].append('R6 المرفوع بعد الجار')
             mark = raf_mark(tgt, sukun=True)
             if mark:
@@ -106,10 +106,10 @@ def reject_candidates(found, words):
                 reason = f'ما بعدها {state}، و«{f["operator"]}» {what}'
         # وإِنۡ لا تُمنع بما بعدها: يليها الاسم المرفوع أو الضمير، والفعل مقدَّر يفسّره المذكور
         # (وَإِنۡ أَحَدࣱ مِّنَ ٱلۡمُشۡرِكِينَ ٱسۡتَجَارَكَ، إِنۡ أَنتُمۡ ضَرَبۡتُمۡ)، كما في كتب النحو
-        if not reason and not on_pronoun and f['group'] == '7' and op not in ('لو', 'إذا'):
+        if not reason and not on_pronoun and f['group'] == '7' and not vform_match(op, ('لَوْ', 'إِذَا')):
             f['checked'].append('R7 المرفوع بعد أداة الشرط')
             mark = raf_mark(tgt)
-            if plain(match_letters(tgt), True).replace('أ', 'ا') in {p.replace('أ', 'ا') for p in RAF_PRONOUNS}:
+            if vform_match(tgt, RAF_PRONOUNS, loose=True):
                 reason = 'بعدها ضمير رفع منفصل، وأداة الشرط يليها فعل: ليست شرطية هنا'   # إِنۡ هُوَ إِلَّا ذِكۡرٌ
             elif mark:
                 reason = f'ما بعدها مرفوع كتابةً ({mark})، وأداة الشرط تجزم: ليست شرطية هنا'

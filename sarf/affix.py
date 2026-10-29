@@ -26,23 +26,24 @@ sarf.affix — مقشِّر الزوائد: هل الجذع فعل أم اسم،
 """
 from .chars import (FATHA, DAMMA, KASRA, SUKUN, SHADDA, FATHATAN, DAMMATAN, KASRATAN,
                     letters, plain)
-from .match import PRON_SUFFIXES, ALIF_TO_YA, match_letters, vocal_compatible
+from .match import PRON_SUFFIXES, ALIF_TO_YA, match_letters, vocal_compatible, vform_match
 
 ZAWAID = set('سألتمونيها') | {'ء', 'إ', 'آ'}      # حروف الزيادة (والهمزة بصورها)
 LAWAHIQ = set('هكنيوامت')                        # حروف اللواحق: الضمائر المتصلة وعلامات الفعل
 MUDARI = {'أ', 'ن', 'ي', 'ت'}
 TANWIN = {FATHATAN, DAMMATAN, KASRATAN}
-WASL_NOUNS = {'اسم', 'ابن', 'ابنة', 'ابنم', 'امرؤ', 'امرئ', 'امرأ', 'امرأة', 'اثنان', 'اثنين',
-              'اثنتان', 'اثنتين', 'است', 'امرأت', 'ابنت', 'اثنا', 'اثنت', 'اثنتا', 'اثنتي', 'اثني'}   # أسماء تبدأ بهمزة وصل (وصورها قبل الضمير)
+# مشكولةً، وآخرها بلا حركة: حركة الإعراب فيه غير محدَّدة (ابْنَ، ابْنُ، ابْنِ)
+WASL_NOUNS = ('اسْم', 'ابْن', 'ابْنَة', 'ابْنَت', 'ابْنَم', 'امْرُؤ', 'امْرِئ', 'امْرَأ', 'امْرَأَة', 'امْرَأَت', 'اسْت',
+              'اثْنَان', 'اثْنَيْن', 'اثْنَتَان', 'اثْنَتَيْن', 'اثْنَا', 'اثْنَيْ', 'اثْنَتَا', 'اثْنَتَيْ', 'اثْنَت')   # أسماء تبدأ بهمزة وصل (وصورها قبل الضمير)
 OBJ_SUFFIXES = sorted((s for s in PRON_SUFFIXES if s != 'ي'), key=lambda s: -len(letters(s)))
 MIN_STEM = 3
 MARK_MOOD = {FATHA: 'نصب', DAMMA: 'رفع', SUKUN: 'جزم'}
 MADD = set('اويىآ')
 PROCLITIC_LETTERS = set('وفلبكءأ')
 # مركّبات مبنية بإدغام، وأسماء ملازمة للإضافة تُكتب بواو وألف (ليست في ملف المبنيات)
-CLOSED_COMPOUNDS = {'ممن', 'عمن', 'مما', 'عما', 'ألوا', 'أولوا', 'أولي', 'أولات'}                 # حروف تسبق الكلمة متصلةً بها (والهمزة للاستفهام)
+CLOSED_COMPOUNDS = ('مِمَّنْ', 'عَمَّنْ', 'مِمَّا', 'عَمَّا', 'أُلُو', 'أُلِي', 'أُولُو', 'أُولِي', 'أُولَات', 'أُولَٰت')                 # حروف تسبق الكلمة متصلةً بها (والهمزة للاستفهام)
 # ضمائر الرفع المنفصلة: صورتها تشبه الماضي مع ضمير (أَنْتَ = أَنْ + تَ) فتُستثنى
-RAF_PRONOUNS = {'أنا', 'أنت', 'أنتما', 'أنتم', 'أنتن', 'هو', 'هي', 'هما', 'هم', 'هن', 'نحن'}
+RAF_PRONOUNS = ('أَنَا', 'أَنْتَ', 'أَنْتِ', 'أَنْتُمَا', 'أَنْتُمْ', 'أَنْتُنَّ', 'هُوَ', 'هِيَ', 'هُمَا', 'هُمْ', 'هُنَّ', 'نَحْنُ')
 
 
 def _peelable(*letters_):
@@ -62,7 +63,7 @@ def _mabni(text):
 
 def short_host(toks):
     """جذعٌ من حرفين ثانيهما مشدَّد يحمل الضمير (رَبَّهُ، حَقَّهُ، أُمَّهُ): الشدة لا تقع على حرف الضمير"""
-    return len(toks) == 2 and SHADDA in toks[1][1] and plain(toks).replace('أ', 'ا') != 'اي'   # أَيُّهَا: «ها» للتنبيه
+    return len(toks) == 2 and SHADDA in toks[1][1] and not vform_match(toks, ['أَيُّ'], loose=True)   # أَيُّهَا: «ها» للتنبيه
 
 
 def raf_mark(text, sukun=False):
@@ -78,7 +79,7 @@ def raf_mark(text, sukun=False):
     obj = info['object']
     if obj:
         toks = toks[:-len(match_letters(obj))]
-    elif toks[-1][0] == 'ه' and toks[-1][1] == {DAMMA} and plain(toks) != 'الله':
+    elif toks[-1][0] == 'ه' and toks[-1][1] == {DAMMA} and not vform_match(toks, ['اللَّهُ'], loose=True):
         return None                            # ضمةُ هاءٍ لم تُنزع: الأغلب ضمير (لَهُ)، فلا يُحكم بها
     if len(toks) >= 3 and toks[-1][0] == 'ن' and FATHA in toks[-1][1] and toks[-2][0] == 'و' and \
             not toks[-2][1] and DAMMA in toks[-3][1]:
@@ -108,7 +109,7 @@ def _closed(toks):
         toks[0] = ('إ', toks[0][1])               # ئِنۡ بعد فصل اللام: «إِنۡ»
     if _mabni(text_of(toks)):
         return True
-    if plain(toks) in CLOSED_COMPOUNDS:
+    if vform_match(toks, CLOSED_COMPOUNDS):
         return True
     for k in (1, 2):                              # سابقة أو سابقتان: أَوَلَمۡ، أَفَإِن
         if len(toks) > k + 1 and all(toks[i][0] in PROCLITIC_LETTERS and toks[i][1] & {FATHA, KASRA}
@@ -116,7 +117,7 @@ def _closed(toks):
             rest = list(toks[k:])
             if rest[0][0] == 'ئ':
                 rest[0] = ('إ', rest[0][1])      # لَئِنۡ: همزة «إن» على ياء بعد اللام
-            if _mabni(text_of(rest)) or plain(rest) in CLOSED_COMPOUNDS:
+            if _mabni(text_of(rest)) or vform_match(rest, CLOSED_COMPOUNDS):
                 return True
     return False
 
@@ -188,12 +189,12 @@ def stem_info(text):
     if not toks:
         return info
     ev = info['evidence']
-    if plain(toks) in RAF_PRONOUNS or len(toks) > 2 and toks[0][0] in PROCLITIC_LETTERS and \
-            FATHA in toks[0][1] and plain(toks[1:]) in RAF_PRONOUNS or \
-            len(toks) > 2 and toks[0][0] == 'ه' and plain(toks[1:]) in RAF_PRONOUNS:   # هَٰٓأَنتُمۡ: ها التنبيه
+    if vform_match(toks, RAF_PRONOUNS, loose=True) or len(toks) > 2 and toks[0][0] in PROCLITIC_LETTERS and \
+            FATHA in toks[0][1] and vform_match(toks[1:], RAF_PRONOUNS, loose=True) or \
+            len(toks) > 2 and toks[0][0] == 'ه' and vform_match(toks[1:], RAF_PRONOUNS, loose=True):   # هَٰٓأَنتُمۡ: ها التنبيه
         ev.append('ضمير رفع منفصل')             # وبعد سابقة: فَأَنتَ، ءَأَنتُمۡ
         return info
-    if plain(toks) in CLOSED_COMPOUNDS:
+    if vform_match(toks, CLOSED_COMPOUNDS):
         ev.append('مركّب مبني أو اسم ملازم للإضافة')
         return info
     # اسم: تنوين، أو أل، أو تاء مربوطة
@@ -211,7 +212,7 @@ def stem_info(text):
     # إلا «نا» على حرف جرّ تنقلب ألفه ياءً (عَلَيْنَا، إِلَيْنَا، لَدَيْنَا)
     if len(toks) >= 4 and toks[-1][0] == 'ا' and not toks[-1][1] and toks[-2][0] == 'ن' and \
             toks[-2][1] == {FATHA} and SUKUN in toks[-3][1] and \
-            plain(toks[:-3] + [('ى', frozenset())]) not in ALIF_TO_YA and not _wasl_amr_shape(toks[:-2]):
+            not vform_match(toks[:-3], ('عَلَ', 'إِلَ', 'لَدَ', 'حَتَّ'), loose=True) and not _wasl_amr_shape(toks[:-2]):
         info.update(pos='verb', kind='madi', suffix='نَا'); ev.append('ضمير الرفع «نَا» بعد ساكن')
         return info
     # لاحقة: الضمير المتصل (مفعول به) يُنزع قبل الحكم
@@ -250,7 +251,7 @@ def stem_info(text):
     # ما أوّله همزة وصل (غير أل والأسماء العشرة): أمرٌ، أو ماضي انفعل وافتعل واستفعل، أو مصدرها
     first_L, first_m = toks[0]
     if first_L == 'ا' and not first_m and len(toks) > 2 and toks[1][0] != 'ل' and \
-            plain(toks).translate(str.maketrans('', '', 'ـ')) not in WASL_NOUNS:   # مطابقةً بعد نزع الضمير، لا «يبدأ بـ»: ٱسۡتَغۡفِرُوا، ٱسۡمَعُوا
+            not vform_match([(L, m) for L, m in toks if L != 'ـ'], WASL_NOUNS, loose=True):   # مطابقةً بعد نزع الضمير، لا «يبدأ بـ»: ٱسۡتَغۡفِرُوا، ٱسۡمَعُوا
         kind = _wasl_kind(toks, info['suffix'])
         if kind:
             info.update(pos='verb', kind=kind, prefix='ا' if kind == 'amr' else None)
@@ -277,8 +278,8 @@ def stem_info(text):
         m_ = len(toks)
         # تُ تَ تِ وحدها تلتبس بتاء الاسم الساكن ما قبلها (مَوْتِ، بَيْتِ، وَقْتِ): يُشترط ثلاثة أحرف قبلها
         if m_ - k >= (3 if k == 1 else 2) and SUKUN in toks[m_ - k - 1][1] and \
-                not plain(toks).endswith('ليت') and \
-                plain([(L, frozenset(m)) for L, m in toks[m_ - k:]]) == plain(stoks):
+                not (len(toks) >= 3 and vform_match(toks[-3:], ['لَيْتَ'])) and \
+                vform_match(toks[m_ - k:], [suf]):
             info.update(pos='verb', kind='madi', suffix=suf); ev.append(f'ضمير الرفع «{suf}» بعد ساكن')
             return info
     # المضارع: حرف المضارعة متحركاً بفتح أو ضم

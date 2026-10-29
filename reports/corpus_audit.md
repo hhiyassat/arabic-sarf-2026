@@ -1,6 +1,6 @@
 # فحص المحلل على المصحف (السور 78–114)
 
-- الآيات: 564، الزمن: 6 ث
+- الآيات: 564، الزمن: 7 ث
 - النص: مصحف المجمّع برواية حفص، من `https://raw.githubusercontent.com/fawazahmed0/quran-api/1/editions/ara-quranuthmanihaf.json`
 
 ## الأعداد
