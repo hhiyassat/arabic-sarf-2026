@@ -87,7 +87,7 @@ def cvmap(toks, ev):
         if L == 'ل' and not mk and nxt is not None and SHADDA in nxt[1] and nxt[0] in SOLAR \
                 and i >= 1 and toks[i - 1][0] == 'ل':
             ev['SOLAR_LAM_DELETED'] += 1; i += 1; continue       # لِلشَّهَادَةِ
-        # المدغم إدغاماً تامّاً في الرسم: عارٍ قبل مشدَّد (أَرَدتُّمۡ، يُوَجِّههُّ، بِأَييِّكُمُ): لا يُقطَّع
+        # الياء الزائدة رسماً قبل الياء المشدَّدة (بِأَييِّكُمُ): لا تُقطَّع، كالمرسوم عليه الصفر المستدير (D21)
         if mudgham([(x, set(y)) for x, y in toks], i):
             ev['MUDGHAM_DELETED'] += 1; i += 1; continue
 
