@@ -145,6 +145,9 @@ if hfn() and rows:
     at98 = {r['location'][2]: r for r in recs([(37, 98)])}
     check('الصافات ٩٨: «فَأَرَادُواْ بِهِۦ كَيۡدࣰا» جملة صحيحة تنتهي قبل الفاء الملتصقة بـ«فَجَعَلۡنَٰهُمُ»',
           at98.get(2, {}).get('J') == 'proven' and at98[2]['J_why'].startswith('نهاية جملة قبل الفاء'), at98.get(2))
+    ato = {r['location'][2]: r for r in recs([(2, 74)])}
+    check('البقرة ٧٤: نهاية الجملة قبل «أَوۡ» مقبولة (فَهِيَ كَٱلۡحِجَارَةِ ‖ أَوۡ أَشَدُّ قَسۡوَةࣰ)',
+          any(r['J'] == 'proven' and '«أو»' in r['J_why'] for r in ato.values()), [(k, r['J'], r['J_why'][:30]) for k, r in ato.items()])
     at26 = {r['location'][2]: r for r in recs([(4, 26)])}
     check('النساء ٢٦: الجملة تنتهي قبل «وَٱللَّهُ عَلِيمٌ حَكِيمٌ» (عطفٌ على جملةٍ تامّة يشاركها التمام)',
           at26.get(10, {}).get('J') == 'proven', at26.get(10))
@@ -230,7 +233,9 @@ if hfn():
     a = analyze(cat, 'وَلَآ أَنَا۠ عَابِدࣱ مَّا عَبَدتُّمۡ')
     S_, u_ = sentence_geo(a, 'v', Trace())
     G = [G for G in u_.values() if G.Theta.get('R') == 'عبد' and G.Theta.get('P') == 'I']
-    check('«عَبَدتُّمۡ»: الدال مدغمة بلا خلية (لا CVCC داخل الكلمة)، وتقابل لام الجذر: عبد، I',
-          G and [cv(x) for x in G[0].A] == ['CV', 'CVC', 'CVC'], [(G.O['text'], G.Theta.get('R')) for G in u_.values()])
+    check('«عَبَدتُّمۡ»: الدال خليةٌ ساكنة كما كُتبت والمشدَّد خليتان (حكم صاحب النظرية): عَ.بَدْتْ.تُمْ، والجذر عبد، I',
+          G and [cv(x) for x in G[0].A] == ['CV', 'CVCC', 'CVC'], [(G.O['text'], G.Theta.get('R')) for G in u_.values()])
+    c_, _ = cells_of('قَالْتْ', 'x')
+    check('CVCC بلا مشدَّد لا يقع داخل الكلمة (Rem_M بالموضع)', [cv(x) for x in syllabify(c_, 'x', Trace(), False)[0]] == ['CVVC'])
 print('ALL OK' if not bad else f'FAILED {bad}')
 sys.exit(1 if bad else 0)

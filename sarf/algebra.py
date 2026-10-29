@@ -181,13 +181,11 @@ def cells_of(text, base_id, wasl_vowel=None):
             continue
         # ما لا يُنطق: الألف الفارقة، وألف تنوين النصب، والحرف العاري قبل المشدَّد (مدغمٌ تامّاً في الرسم)
         is_mudgham = mudgham([(x, set(y)) for x, y in toks], j)
-        if not m and L in 'اى' or is_mudgham:
-            why = ('لام شمسية' if L == 'ل' else 'مدغم') if L not in 'اى' else \
+        if not m and (L in 'اى' or L == 'ل' and nxt is not None and SHADDA in nxt[1]) or is_mudgham:
+            why = ('لام شمسية' if L == 'ل' else 'ياء زائدة رسماً') if L not in 'اى' else \
                 'ألف بعد التنوين' if prev is not None and prev.O.get('tanwin') else 'ألف لا تُنطق'
             if prev is not None:
                 prev.O.setdefault('silent', []).append((j, why)); prev.O['tok'].append(j)
-                if is_mudgham and L != 'ل':
-                    prev.O.setdefault('mudgham', []).append(HAMZA.get(L, L))   # حرفٌ مكتوب يقابل أصلاً، بلا خلية
             else:
                 pending_silent.append((j, why))
             continue
@@ -302,7 +300,10 @@ def syllabify(cells, base_id, T, word_end=True):
             u = cv(G)
             x = cell_shape(cells[i], False)
             last = i == n - 1 and word_end
-            r = rem_M(u + x, word_end=last)
+            # الحرف قبل المشدَّد مكتوبٌ بلا حركة، والمشدَّد خليتان (حكم صاحب النظرية: عَ.بَدْتْ.تُمْ):
+            # فالخاتمتان داخل الكلمة كما كُتبتا، لا بالأداء
+            written_cc = x == 'C' and cells[i].O.get('role') == 'شدة: الأول' and G.A[-1].H == '∅' and len(G.A) > 1
+            r = rem_M(u + x, word_end=last or written_cc)
             if x != 'C' or not r:
                 why_end = (u, x, last)
                 break
@@ -314,7 +315,7 @@ def syllabify(cells, base_id, T, word_end=True):
             eb = Evidence('نهاية الوحدة', ['لا خلية بعدها'])
         elif why_end[1] != 'C':
             eb = Evidence('الخلية التالية متحركة', [f'Rem_M({u}·{why_end[1]}) = ∅: المتحرك يبدأ مقطعاً'])
-        elif not why_end[2] and rem_M(u + 'C'):
+        elif not why_end[2] and rem_M(u + 'C') and why_end[1] == 'C':
             eb = Evidence('CVCC وCVVCC لا يقعان إلا في آخر الكلمة', [f'{u}·C ليس آخر الكلمة'])
         else:
             eb = Evidence('المقطع مشبَع', [f'Rem_M({u}) = {{ε}}'])
@@ -386,7 +387,6 @@ def align_alpha(cells, root, cls, kind):
     ops = []
     i = 0
     pre = []
-    used_mudgham = set()
     while i < len(cells) and (cells[i].O.get('role') == 'همزة وصل' or kind == 'mudari' and not pre and i == 0):
         alpha[i] = 'وصل' if cells[i].O.get('role') == 'همزة وصل' else 'سابقة'
         pre.append(i); i += 1
@@ -401,11 +401,6 @@ def align_alpha(cells, root, cls, kind):
             continue
         if lab.startswith('زائد:ت') and i < len(cells) and cells[i].C in 'طد':
             alpha[i] = lab; ops.append(f'إبدال ت ← {cells[i].C}'); i += 1
-            continue
-        # الأصل المدغم في ما بعده (عَبَدتُّمۡ، عُدتُّمۡ): حرفٌ مكتوب بلا خلية، محفوظ في الخلية قبله
-        if i > 0 and C in cells[i - 1].O.get('mudgham', []) and lab.startswith('r') and (i - 1) not in used_mudgham:
-            used_mudgham.add(i - 1)
-            ops.append(f'إدغام {lab} ({C}) في ما بعده: حرفٌ مكتوب بلا خلية')
             continue
         if lab.startswith('r') and C in WEAK:
             # فاء المثال في افتعل تُقلب تاءً وتُدغم (ٱتَّقَى ← وقي)
@@ -1587,6 +1582,9 @@ def clause_start(a, wi):
     return None
 
 
+PRON_FREE = ('هو', 'هي', 'هم', 'هما', 'هن', 'أنت', 'أنتم', 'أنتما', 'أنتن', 'أنا', 'نحن')
+
+
 def word_feats(a):
     """سمات الكلمة المكتوبة اللازمة لعلاقات الجملة التالية R(G, Q, c) (حكم صاحب النظرية في الصفة والحال والاستئناف):
     conj حرف عطف (و، ف) في أولها مقطَّعاً؛ nakira اسمٌ عليه تنوين بلا «أل»؛ verb نوع الفعل (madi، mudari، amr) وشخصه؛
@@ -1601,8 +1599,15 @@ def word_feats(a):
         has_al = any(x['type'] in ('أل', 'لفظ الجلالة') for x in sl)
         g = verbs.get(wi)
         b = _bare_w(seg['word'])
+        if b in ('او', 'أو') and not conj:
+            conj = True                               # «أَوۡ» كلمةٌ مستقلة: نهاية الجملة قبلها مقبولة (حكم صاحب النظرية)
+        # واوٌ أو فاء ملتصقة بضمير رفعٍ منفصل (فَهِيَ، وَهُمۡ): الضمير لا يبدأ بهما، فهما عاطفتان
+        if not conj and len(b) > 1 and b[0] in 'وف' and b[1:] in PRON_FREE:
+            conj, sl0 = True, b[0]
+        else:
+            sl0 = None
         out.append(dict(
-            conj=conj, conj_letter=_bare_w(sl[0]['text']) if conj else None,
+            conj=conj, conj_letter=('أو' if b in ('او', 'أو') else sl0 or _bare_w(sl[0]['text'])) if conj else None,
             first=st[0][0] if st else '', first_fatha=bool(st) and FATHA in st[0][1],
             nakira=tanwin and not has_al and noun_evidence(seg), noun=noun_evidence(seg),
             verb=g['kind'] if g else None, person=(g['features'][0][0] if g and g.get('features') else None),
@@ -1661,7 +1666,7 @@ def _boundary_kind(p, js, spans, cspans, nuc_pos, qawl_pos, starts, feats=None):
     # أو معيّة أو استئناف، تُحفظ بدائله ولا يُختار منها اعتباطاً
     f = feats[p + 1] if feats else None
     if f and f['conj']:
-        return ('proven', f'نهاية جملة قبل {"الواو" if f["conj_letter"] == "و" else "الفاء"}: '
+        return ('proven', f'نهاية جملة قبل {({"و": "الواو", "ف": "الفاء"}).get(f["conj_letter"], "«أو»")}: '
                           f'وما بعدها {relations_after(feats, p)}')
     # الشرط بعد جملة تامّة قد يكون ما قبله دليلَ جوابه (وَلَا يَأۡبَ ٱلشُّهَدَآءُ إِذَا مَا دُعُواْ): فلا يثبت به الحدّ
     if w and not w[1] and w[0] != 'شرط':
