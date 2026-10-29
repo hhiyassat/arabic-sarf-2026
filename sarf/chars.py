@@ -66,3 +66,19 @@ def strip_marks(s):
     return ''.join(ch for ch in s if ch not in MARKS)
 
 _strip_marks = strip_marks
+
+
+def mudgham(toks, i):
+    """الحرف العاري (بلا حركة ولا سكون) قبل حرفٍ مشدَّد في الكلمة نفسها: مدغمٌ إدغاماً تامّاً في الرسم، فلا خلية له
+    (حكم صاحب النظرية، تعميماً لـ D22): ٱلنَّاسِ، لِّلنَّاسِ، أَرَدتُّمۡ، يُوَجِّههُّ، بِأَييِّكُمُ.
+    ويُستثنى حرف المدّ بعد حركته (تَأۡمُرُوٓنِّيٓ)، والألف وما يُرسم ألفاً."""
+    if i + 1 >= len(toks):
+        return False
+    L, m = toks[i]
+    if m & (MARKS - {MADDA_MARK}) or SHADDA not in toks[i + 1][1] or not ('ء' <= L <= 'ي') or L in 'اى':
+        return False
+    if L in 'وي' and i > 0:
+        pv = vowel(toks[i - 1][1])
+        if (L == 'و' and pv == DAMMA) or (L == 'ي' and pv == KASRA) or MADDA_MARK in m:
+            return False
+    return True

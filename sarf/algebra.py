@@ -19,7 +19,7 @@ sarf.algebra — الجبر اللساني: هندسة ذات أنواع، تُ�
 from dataclasses import dataclass, field
 
 from .chars import (FATHA, DAMMA, KASRA, SUKUN, SHADDA, FATHATAN, DAMMATAN, KASRATAN,
-                    MADDA_MARK, DAGGER_ALIF, letters)
+                    MADDA_MARK, DAGGER_ALIF, letters, mudgham)
 
 # طبقتان على النص نفسه تشتركان في الخلايا:
 #   اللغوية: خلية ≺ مقطع ≺ وحدة لفظية ≺ جملة ≺ وحدة خطابية ≺ خطاب السورة — حدودها بالعلاقات وشروط الاكتمال
@@ -179,9 +179,10 @@ def cells_of(text, base_id, wasl_vowel=None):
             prev.L = 2
             prev.O['tok'].append(j); prev.O['madd'] = L
             continue
-        # ما لا يُنطق: الألف الفارقة، وألف تنوين النصب، واللام الشمسية العارية قبل المشدَّد
-        if not m and (L in 'اى' or L == 'ل' and nxt is not None and SHADDA in nxt[1]):
-            why = 'لام شمسية' if L == 'ل' else 'ألف بعد التنوين' if prev is not None and prev.O.get('tanwin') else 'ألف لا تُنطق'
+        # ما لا يُنطق: الألف الفارقة، وألف تنوين النصب، والحرف العاري قبل المشدَّد (مدغمٌ تامّاً في الرسم)
+        if not m and (L in 'اى' or mudgham([(x, set(y)) for x, y in toks], j)):
+            why = ('لام شمسية' if L == 'ل' else 'مدغم') if L not in 'اى' else \
+                'ألف بعد التنوين' if prev is not None and prev.O.get('tanwin') else 'ألف لا تُنطق'
             if prev is not None:
                 prev.O.setdefault('silent', []).append((j, why)); prev.O['tok'].append(j)
             else:
