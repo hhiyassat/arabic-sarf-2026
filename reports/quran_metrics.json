@@ -6,30 +6,30 @@
   "ok": 28086
  },
  "qac": {
-  "agr": 9645,
-  "agr_hit": 9297,
-  "agr_single": 9158,
-  "agr_single_hit": 8813,
-  "ours_verb": 9699,
-  "ours_verb_ok": 9664,
-  "qac_verb_missed": 9689,
+  "agr": 9642,
+  "agr_hit": 9309,
+  "agr_single": 9157,
+  "agr_single_hit": 8827,
+  "ours_verb": 9696,
+  "ours_verb_ok": 9661,
+  "qac_verb_missed": 9692,
   "qac_verbs": 19353,
   "unaligned": 180,
-  "voice": 9630,
-  "voice_hit": 9539
+  "voice": 9627,
+  "voice_hit": 9537
  },
  "root": {
-  "acc": 7359,
-  "acc_event": 6194,
-  "acc_event_root_ok": 6139,
-  "acc_form_ok": 7306,
-  "acc_root": 1165,
-  "acc_root_ok": 7275,
-  "acc_root_root_ok": 1136,
-  "deferred": 9264,
-  "gold_in_cands": 15722,
-  "morph": 26548,
+  "acc": 7362,
+  "acc_event": 6200,
+  "acc_event_root_ok": 6145,
+  "acc_form_ok": 7309,
+  "acc_root": 1162,
+  "acc_root_ok": 7278,
+  "acc_root_root_ok": 1133,
+  "deferred": 9270,
+  "gold_in_cands": 15732,
+  "morph": 26557,
   "not_qac_verb": 9925,
-  "qv": 16623
+  "qv": 16632
  }
 }

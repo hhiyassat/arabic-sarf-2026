@@ -54,12 +54,43 @@ NOUN_WAW = re.compile('^(?:[وف]َ)?(?:[لب][َِ])?(?:أُو?لُ|بَنُ|م
 # يَفۡعُو: لام الفعل الناقص أو واو الجماعة؛ ومع الهمزة يشتبه المتكلم (أَدۡعُوا۟) بأمر أَفۡعَلَ (أَلۡقُوا۟) فتبقى
 DEFECTIVE_WAW = re.compile('^(?:[وف]َ)?(?:أَ)?(?:[لس][َِ])?([يتن])[\u064E\u0651]{1,2}.ۡ.ُ')
 # ما يجزم المضارع أو ينصبه قبله (فلا تكون الواو إلا واو جماعة: لَا تَغۡلُوا۟، أَن تَعۡفُوا۟)
-MOOD_OPS = {'لم', 'لن', 'أن', 'إن', 'كي', 'حتى', 'لا', 'ألا', 'لما', 'أو', 'إلا', 'لكيلا', 'كيلا', 'لئلا'}
 
 
-def _bare(w):
-    w = re.sub('[^\u0621-\u064A\u0671]', '', w).replace('ٱ', 'ا')
-    return re.sub('^[وفأب]+?(?=(?:لم|لن|أن|إن|لا|أو|لما)$)', '', w)
+MOOD_OPS_V = ('لَمْ', 'لَنْ', 'أَنْ', 'إِنْ', 'كَيْ', 'حَتَّى', 'حَتَّىٰ', 'لَا', 'أَلَّا', 'لَمَّا', 'أَوْ', 'إِلَّا', 'لِكَيْلَا',
+              'كَيْلَا', 'لِئَلَّا')
+
+
+def _vword(w):
+    """الكلمة مشكولةً للمقارنة: سكون الرسم العثماني سكونٌ، وتُترك العلامات التي ليست حركات (المدّ، الصفر…)؛ لا تجريد"""
+    w = w.replace('\u06e1', SUKUN).replace('ٱ', 'ا')
+    return re.sub('[^\u0621-\u064A\u064B-\u0652\u0670]', '', w).replace('\u0670', '')
+
+
+def _compatible(word, form):
+    """الحروف نفسها، والحركات لا تتناقض: حركتان مختلفتان على حرفٍ تعارض، والحرف بلا علامة في الرسم لا يعارض
+    (نون «وَأَن» قبل التاء مكتوبةٌ بلا سكون في المصحف)"""
+    a, b = letters(word), letters(form)
+    if len(a) != len(b) or any(x[0] != y[0] for x, y in zip(a, b)):
+        return False
+    for (_, m1), (_, m2) in zip(a, b):
+        v1, v2 = m1 - {SHADDA}, m2 - {SHADDA}
+        if v1 and v2 and v1 != v2 or m1 and m2 and (SHADDA in m1) != (SHADDA in m2):
+            return False
+    return True
+
+
+def _mood_op(w):
+    """الكلمة عاملٌ ينصب المضارع أو يجزمه أو يسبق الواو المعطوفة (MOOD_OPS_V) بصيغته المشكولة، وقد تسبقه سابقة مفتوحة أو
+    مكسورة (وَلَمۡ، فَلَنۡ، أَفَإِن، بِأَن): «أَنْ» غير «أَنَّ»، و«إِنْ» غير «إِنَّ»"""
+    v = _vword(w)
+    for _ in range(3):
+        if any(_compatible(v, f) for f in MOOD_OPS_V):
+            return True
+        m = re.match('^[وفأب][\u064E\u0650]', v)
+        if not m:
+            return False
+        v = v[2:]
+    return False
 
 
 def _jamaa_alif(words, i, head):
@@ -73,11 +104,11 @@ def _jamaa_alif(words, i, head):
     if m and re.fullmatch(DEFECTIVE_WAW.pattern + '[\u0653]*و[\u064F\u0653\u06E5]*', head):
         if m.group(1) == 'ن' or re.match('(?:[وف]َ)?سَأَ', head):   # المتكلم لا تُسند إليه واو الجماعة
             return False
-        prev = _bare(words[i - 1]) if i else ''
-        prev2 = _bare(words[i - 2]) if i > 1 else ''
+        prev = words[i - 1] if i else ''
+        prev2 = _vword(words[i - 2]) if i > 1 else ''
         # المضارع المرفوع بالواو جمعاً تثبت نونه، فلا تأتي الواو بعدها ألف إلا مجزوماً أو منصوباً أو معطوفاً على مثله
-        return (prev in MOOD_OPS or prev2 == 'أيا' or head.startswith('لِ') or
-                (head.startswith('وَ') and re.search('وا$', prev) is not None))
+        return (_mood_op(prev) or prev2 == 'أَيًّا' or head.startswith('لِ') or
+                (head.startswith('وَ') and re.search('\u064Fو\u0627$', _vword(prev)) is not None))
     return True
 
 

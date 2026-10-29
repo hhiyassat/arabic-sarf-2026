@@ -4,7 +4,7 @@ sarf.match — مطابقة العوامل في الكلمة بحسب الفهر
   1. عامل متعدد الكلمات   2. الكلمة كاملة   3. عامل + لاحقة   3a. ما الكافة   3b. نداء موصول
   4. سابقة حرفية + بقية الكلمة؛ ويُسبَق 2–4 بتقشير وَ/فَ العاطفتين.
 """
-from .chars import (FATHA, KASRA, SUKUN, SHADDA, DAGGER_ALIF,
+from .chars import (FATHA, DAMMA, KASRA, SUKUN, SHADDA, DAGGER_ALIF,
                     letters, plain, vowel, strip_marks as _strip_marks)
 from .divine import divine_name
 
@@ -35,6 +35,29 @@ def vocal_compatible(word_toks, op_toks, skip_first_shadda=True):
             if idx != len(op_toks) - 1:
                 return False, checked
     return True, checked
+
+def vform_match(word, forms, loose=False):
+    """الكلمة (نصّاً أو رموزاً) إحدى الصيغ المشكولة forms: الحروف نفسها، والحركات لا تتناقض (vocal_compatible)؛
+    ولا تُقارَن الحروف وحدها (حكم صاحب النظرية: يُمنع تجريد الكلمة من الحركات). وحرفٌ بلا علامة في الصيغة يقبل
+    كل حركة (حركة الإعراب غير محدَّدة في الآخر: «ابْن» = ابْنَ، ابْنُ، ابْنِ)"""
+    wt = match_letters(word) if isinstance(word, str) else [(L, frozenset(m)) for L, m in word]
+    for f in forms:
+        ft = match_letters(f)
+        if len(ft) == len(wt) and plain(wt, loose) == plain(ft, loose) and vocal_compatible(wt, ft)[0]:
+            return True
+    return False
+
+
+def suffix_match(prev_tok, rest, suffix):
+    """اللاحقة suffix (وقد تبدأ بحركة الحرف قبلها: «ُوا») هي ما بقي rest بعد العامل: حروفاً وحركات"""
+    lead = ''
+    while suffix and not ('ء' <= suffix[0] <= 'ي'):
+        lead, suffix = lead + suffix[0], suffix[1:]
+    if not vform_match(rest, [suffix]):
+        return False
+    lv, pv = vowel(set(lead)), vowel(prev_tok[1]) if prev_tok else None
+    return not (lv and pv and lv != pv)
+
 
 PRON_SUFFIXES = ['هُو', 'هِي', 'هُمَا', 'كُمَا', 'هُمْ', 'هُنَّ', 'كُمْ', 'كُنَّ', 'هَا', 'نَا', 'نِي', 'هُ', 'هِ', 'كَ', 'كِ', 'ي', 'هِمْ', 'هِمَا', 'هِنَّ']
 VERB_SUFFIXES = ['ُوا', 'ُوا۟', 'َتْ', 'َا', 'ُونَ', 'ْتُمْ', 'ْتُ', 'ْتَ', 'ْنَا', 'ْنَ', 'ْتِ']
@@ -142,9 +165,9 @@ def _match_word(cat, word, wi, toks):
             rest = plain(t[k:])
             sufs = (PRON_SUFFIXES if mode in ('pron', 'both') else []) + \
                    (VERB_SUFFIXES if mode in ('verb', 'both') else [])
-            if not any(_strip_marks(s) == rest for s in sufs):
+            if not any(suffix_match(t[k - 1], t[k:], s) for s in sufs):
                 continue
-            vsuf = any(_strip_marks(s) == rest for s in VERB_SUFFIXES) and mode in ('verb', 'both')
+            vsuf = any(suffix_match(t[k - 1], t[k:], s) for s in VERB_SUFFIXES) and mode in ('verb', 'both')
             if vsuf:
                 otoks = otoks[:-1] + [(otoks[-1][0], frozenset())]   # كَانَ + ـُوا = كَانُوا: حركة الآخر للاحقة
             ok, n = vocal_compatible(t[:k], otoks)
@@ -155,10 +178,11 @@ def _match_word(cat, word, wi, toks):
         for op in cat.single:
             if op['group'] not in HOLLOW_GROUPS or len(op['toks']) != 3 or op['toks'][1][0] != 'ا':
                 continue
-            if len(t) <= 2 or plain(t[:2]) != op['toks'][0][0] + op['toks'][2][0] or SUKUN not in t[1][1]:
-                continue
+            if len(t) <= 2 or plain(t[:2]) != op['toks'][0][0] + op['toks'][2][0] or SUKUN not in t[1][1] or \
+                    vowel(t[0][1]) not in (DAMMA, KASRA, None):
+                continue                          # الأجوف مع ضمير الرفع المتحرك: فاؤه مضمومة أو مكسورة (كُنتُمۡ، صِرۡنَا)
             rest = t[2:]
-            if any(plain(rest) == _strip_marks(s) for s in HOLLOW_SUFFIXES):
+            if any(vform_match(rest, [s]) for s in HOLLOW_SUFFIXES):
                 emit(op, (off, off + 2), 'operator+suffix' + tag, 0, 'medium', host_rest=plain(rest),
                      note='أجوف: حُذفت عينه مع ضمير الرفع المتحرك')
                 hit = True
@@ -184,7 +208,7 @@ def _match_word(cat, word, wi, toks):
             if op['group'] not in KAFFA_GROUPS:
                 continue
             k = len(op['toks'])
-            if len(t) != k + 2 or plain(t[:k], True) != plain(op['toks'], True) or plain(t[k:]) != 'ما':
+            if len(t) != k + 2 or plain(t[:k], True) != plain(op['toks'], True) or not vform_match(t[k:], ['مَا']):
                 continue
             ok, n = vocal_compatible(t[:k], op['toks'])
             if not ok or vowel(t[k][1]) not in (FATHA, None):
@@ -218,15 +242,14 @@ def _match_word(cat, word, wi, toks):
         v = vowel(mk) or (SUKUN if SUKUN in mk else None)
         if v is not None and v not in PROCLITICS[L]:
             return False
-        rest = plain(t[1:], True)
-        if L == 'ت' and not rest.startswith('الله'):
+        if L == 'ت' and not (len(t) > 4 and vform_match(t[1:5], ['اللَّه'])):
             return False                          # تاء القسم مع لفظ الجلالة فقط
         if L == 'و' and off == 1:
             return False
         if t[1][0] == 'ا' and len(t) > 2 and t[2][0] != 'ل' and SUKUN not in t[2][1] and vowel(t[2][1]):
             return False                          # كَاتِب: ألف مدّ بعد الحرف ⇒ الحرف من الأصل (لا تُمدّ حركة السابقة)
-        strong = lexical_rest or rest.startswith('ال') or (L == 'ل' and v == SUKUN) or \
-                 any(_strip_marks(s) == rest for s in PRON_SUFFIXES)
+        al = len(t) > 2 and t[1][0] == 'ا' and not vowel(t[1][1]) and t[2][0] == 'ل'   # «ال» بهمزة وصل بلا حركة
+        strong = lexical_rest or al or (L == 'ل' and v == SUKUN) or vform_match(t[1:], PRON_SUFFIXES)
         hit = False
         for op in cat.clitic:
             if op['plain'] != L:

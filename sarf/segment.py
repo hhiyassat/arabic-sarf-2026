@@ -30,7 +30,7 @@ sarf.segment — المقشِّر: تجزئة الكلمة إلى خانات (sl
 from .chars import (FATHA, DAMMA, KASRA, SUKUN, FATHATAN, DAMMATAN, KASRATAN,
                     MARKS, letters, plain, strip_marks)
 from .divine import divine_name
-from .match import PRON_SUFFIXES, match_letters, vocal_compatible
+from .match import PRON_SUFFIXES, match_letters, vocal_compatible, vform_match
 from . import syllabify as cv
 from .affix import stem_info, radical_nun, short_host, ha_kasra_ok
 from .status import BLOCKED
@@ -45,7 +45,7 @@ MIN_STEM = 3                                                # أقلّ حروف 
 
 # حكم المعمول بمجموعة العامل (الاسم بعد الجار، واسم إنّ، واسم كان؛ والفعل بعد الناصب والجازم)
 EXPECTED = {'1': 'جر', '2': 'نصب', '5': 'نصب', '6': 'جزم', '7': 'جزم', '10': 'رفع', '11': 'رفع', '13': 'نصب'}
-NO_JAZM = {'لو', 'إذا'}                                    # في باب الشرط ولا تجزم (الفهرس: «لا يجزم»)
+NO_JAZM = ('لَوْ', 'إِذَا')                                    # في باب الشرط ولا تجزم (الفهرس: «لا يجزم»)
 CHECKED = {'1', '2', '10', '11'}                            # يُقارَن بالعلامة المكتوبة على الاسم
 VERB_CHECKED = {'1', '5', '6', '7'}                         # ويُقارَن بعلامة المضارع (sarf.affix)
 YA_CASE = 'جر أو نصب'                                        # ياء الجمع والمثنى
@@ -296,8 +296,9 @@ def _observed(seg, slot):
 # الاسم المؤخَّر: إنّ وأخواتها وكان وأخواتها قد يليها خبرٌ شبه جملة مقدَّم (فَإِنَّ مَعَ ٱلْعُسْرِ يُسْرًا،
 # لَيْسَ كَمِثْلِهِۦ شَىْءٌ)، فيُتجاوَز الظرف أو الجار مع ما بعده إلى الاسم
 DEFERRED_NAME = {'2', '10', '11'}
-ZURUF = {'مع', 'عند', 'لدى', 'لدن', 'فوق', 'تحت', 'بين', 'قبل', 'بعد', 'أمام', 'خلف', 'وراء', 'دون',
-         'حول', 'قدام', 'إزاء', 'تلقاء'}
+# مشكولةً، وآخرها بلا حركة: حركة الإعراب فيه غير محدَّدة (قَبْلَ، قَبْلِ، قَبْلُ)؛ فلا يُعدّ «قِبَلَ» ولا «خِلَٰفٍ» ظرفاً
+ZURUF = ('مَع', 'عِنْد', 'لَدَى', 'لَدَىٰ', 'لَدُن', 'فَوْق', 'تَحْت', 'بَيْن', 'قَبْل', 'بَعْد', 'أَمَام', 'خَلْف', 'وَرَاء',
+         'دُون', 'حَوْل', 'قُدَّام', 'إِزَاء', 'تِلْقَاء')
 
 def _tawkid_lam(slot):
     """اللام المفتوحة قبل الاسم الظاهر لام توكيد (مزحلقة) لا جارّة: إِنَّ فِى ذَٰلِكَ لَءَايَةً"""
@@ -306,7 +307,7 @@ def _tawkid_lam(slot):
 def _kaf_zaida(seg, si):
     """كاف التشبيه الداخلة على «مثل» زائدة للتوكيد (لَيْسَ كَمِثْلِهِۦ شَىْءٌ): ترجيح صاحب النظرية"""
     slots = seg['slots']
-    return (slots[si]['type'] == AMIL and strip_marks(slots[si]['text']) == 'ك' and si + 1 < len(slots)
+    return (slots[si]['type'] == AMIL and vform_match(slots[si]['text'], ['كَ']) and si + 1 < len(slots)
             and slots[si + 1]['text'].startswith('م' + KASRA + 'ث' + SUKUN + 'ل'))   # مِثْل لا مَثَل (كَمَثَلِ تشبيه)
 
 def _first_content(seg):
@@ -318,9 +319,8 @@ def _skip_semi_clause(segs, tg):
     wi, si = tg
     seg, slot = segs[wi], segs[wi]['slots'][si]
     is_jar = slot['type'] == AMIL and all(g == '1' for _, g in slot['operators'])
-    bare = strip_marks(slot['text'])
-    with_pron = slot['type'] == STEM and any(bare == z + strip_marks(p) for z in ZURUF for p in PRON_SUFFIXES)
-    is_zarf = slot['type'] == STEM and (bare in ZURUF or with_pron)       # مَعَ، مَعَهُۥ
+    with_pron = slot['type'] == STEM and any(vform_match(slot['text'], [z + p]) for z in ZURUF for p in PRON_SUFFIXES)
+    is_zarf = slot['type'] == STEM and (vform_match(slot['text'], ZURUF) or with_pron)       # مَعَ، مَعَهُۥ
     if not (is_jar or is_zarf):
         return tg
     rest_in_word = with_pron or any(t['index'] > si for t in seg['slots'])   # مجرور أو مضاف إليه في الكلمة
@@ -358,7 +358,7 @@ def relate(segs, cands):
             continue
         r = dict(operator=c['operator'], group=c['group'], word_index=c['word_index'], slot=si,
                  target=None, expected=EXPECTED.get(c['group']), observed=None, consistent=None, note=None)
-        if c['group'] == '7' and strip_marks(c['operator']) in NO_JAZM:
+        if c['group'] == '7' and vform_match(c['operator'], NO_JAZM):
             r.update(expected=None, note='لا تجزم (الفهرس)')
         if c.get('kaffa'):
             r.update(expected=None, note='مكفوفة بما: لا تعمل')
@@ -405,7 +405,7 @@ def relate(segs, cands):
             elif ts['type'] == STEM and not _after_article(segs[tg[0]], tg[1]) and \
                     ((m := stem_info(ts['text']))['pos'] == 'verb' or
                      (m['kind'] == 'mudari' and (c['group'] in ('5', '6', '7') or
-                                                 strip_marks(c['operator']) in ('حتى', 'ل')))):   # حتى ولام التعليل قبل المضارع
+                                                 vform_match(c['operator'], ('حَتَّى', 'لِ'))))):   # حتى ولام التعليل قبل المضارع
                 r['target'].update(pos='verb', kind=m['kind'])
                 if c['group'] == '1':
                     r.update(expected='نصب', note='الجار قبل المضارع: النصب بأن مضمرة')
