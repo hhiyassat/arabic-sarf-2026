@@ -126,6 +126,29 @@ def signature(text, info):
     return ''
 
 
+# صورة اللاحقة المكتوبة من صنفها، والتحويل الذي يربطهما (شاهدٌ يقابل الخلايا، لا اسمُ الصنف)
+SIG_SHIFT = {('ون', 'وا'): 'حُذفت النون، وكُتبت بعد الواو الألفُ الفارقة',
+             ('ون', 'و'): 'حُذفت النون، وبعد الواو ضميرٌ أو نون توكيد',
+             ('ين', 'ي'): 'حُذفت النون', ('ان', 'ا'): 'حُذفت النون'}
+
+
+def written_suffix(text, sig, info):
+    """اللاحقة كما كُتبت في آخر الفعل لصنفها sig (ون، ين، ان): «ونَ» أو «وا» أو «و» … ؛ وإلا sig نفسه أو ''"""
+    if sig not in ('ون', 'ين', 'ان'):
+        return sig
+    toks = [L for L, _ in letters(text)]
+    if info.get('object'):
+        toks = toks[:-len(letters(info['object']))]
+    w = sig[0]
+    if len(toks) >= 2 and toks[-2:] == [w, 'ن']:
+        return sig
+    if w == 'و' and len(toks) >= 2 and toks[-2:] == ['و', 'ا']:
+        return 'وا'
+    if toks and toks[-1] == w:
+        return w
+    return sig
+
+
 def agreement(text, info=None, shape_only=False):
     """→ dict(features=[(شخص، عدد، جنس)], pronouns=[...], rule=…) أو None إن لم يكن فعلاً بدليل.
     shape_only: يُحسب A(m) لصيغة على شكل المضارع وإن لم يثبت أنها فعل (يُستعمل مع القرينة وحدها)"""
@@ -141,7 +164,10 @@ def agreement(text, info=None, shape_only=False):
         return None
     P = phi()
     feats = [P[p] for p in prons if p in P]
-    note = RULE_NOTE[info['kind']].format(p=info['prefix'] or '', s=sig or '—')
+    seen = written_suffix(text, sig, info)
+    note = RULE_NOTE[info['kind']].format(p=info['prefix'] or '', s=seen or sig or '—')
+    if seen and sig and seen != sig:
+        note += f' (من صنف «{sig}»: {SIG_SHIFT.get((sig, seen), "صورةٌ أخرى للصنف")})'
     return dict(features=feats, pronouns=prons, rule=note, narrowed_by=None, conflict=None,
                 kind=info['kind'], signature=sig, voice=voice(text, info))
 

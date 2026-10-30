@@ -437,16 +437,6 @@ BILITERAL_V = {'يَد': 'يدي', 'دَم': 'دمي', 'غَد': 'غدو', 'أَ
                'سْم': 'سمو', 'فَم': 'فوه', 'شَفَة': 'شفه', 'سَنَة': 'سنو', 'لُغَة': 'لغو', 'مِائَة': 'مءي'}
 
 
-def _madi_exact(t, verb):
-    """الماضي المكتوب بلاحقته يطابق فعل HFN حرفاً وحركة إلا حركة لامه (وَضَعَتۡهَا ← وَضَعَ، فَشِلۡتُمۡ ← فَشِلَ):
-    حروفه وحركاته إلى ما قبل اللام هي هي، ثم اللام، ثم لواحق الإسناد والمفعول"""
-    vt, tt = letters(verb), letters(t)
-    k = len(vt) - 1
-    if k < 2 or len(tt) <= k + 0 or [x for x in tt[:k]] != [x for x in vt[:k]] or tt[k][0] != vt[k][0]:
-        return False
-    return len(tt) > k + 1 and all(L in 'تنواهمكيا' for L, _ in tt[k + 1:])
-
-
 def _hollow_fatha(t, root, cls):
     """الأجوف الماضي المسند إلى ضمير رفعٍ متحرك تُضمّ فاؤه أو تُكسر (قُلۡنَا، بِعۡنَا، خِفۡنَا)، ولا تُفتح:
     فـ«جَدۡنَا» ليس من «جاد»"""
@@ -482,7 +472,7 @@ def stem_licence(text, verbs=True):
     أو بناءٌ من أبنية سيبويه جذرُه في HFN، أو اسم فاعل أو مفعول قياساً، أو فعلٌ يطابق HFN.
     ويُجرَّب بعد نزع الضمير المتصل من آخره (وَلِيُّهُ ← وَلِيُّ). الخالي: لا رخصة"""
     from .match import vform_match
-    from .root import morph, hfn, READING, _plain_vowels
+    from .root import morph, hfn, READING, _plain_vowels, _madi_exact
     from .affix import stem_info
     out = []
     forms = [text]
