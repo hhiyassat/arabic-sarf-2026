@@ -212,7 +212,7 @@ def _forge(J, name, fn):
     checker_tests.append(dict(test=name, J=J.id, rejected=bool(why), reasons=why[:2]))
 def _swapped(X, i, d):
     Y = _copy.copy(X); Y.B = list(X.B); Y.B[i] = (X.B[i][0], X.B[i][1], d, X.B[i][3]); return Y
-for J in closed_J[:6]:
+for J in closed_J[:6] + [J for J in closed_J[6:] if any('«' in c and 'ُ' in c for o in J.Omega if o.ev for c in o.ev.conditions)][:3]:
     checker_tests.append(dict(test='الجملة كما بُنيت', J=J.id, rejected=bool(check_sentence(J, an_all)),
                               reasons=check_sentence(J, an_all)[:2]))
     _forge(J, 'حذف التزامٍ يلزم بالتحليل', lambda X: (X.Omega.__setitem__(slice(None), [o for o in X.Omega
@@ -231,6 +231,29 @@ for J in closed_J[:6]:
                     return True
         return False
     _forge(J, 'تبديل طرف رابطٍ بطرفٍ من نوعٍ خطأ', _swap)
+    # تزوير الشاهد مع بقاء الشهادة مكتملة: حرفٌ في اللاحقة المستشهد بها، أو حركةٌ فيها
+    import re as _re
+    def _forge_witness(X, mode):
+        for o in X.Omega:
+            if not (o.met and o.ev):
+                continue
+            for i, c in enumerate(o.ev.conditions):
+                m_ = _re.search(r'(?:لاحقة[^«]*|اللاحقة)\s*«([^»—]+)»', c)
+                if not m_:
+                    continue
+                x = m_.group(1)
+                if mode == 'حرف':
+                    y = x[:-1] + ('ن' if x[-1] != 'ن' else 'ت')
+                else:
+                    sw = {'\u064E': '\u0650', '\u0650': '\u064F', '\u064F': '\u064E'}
+                    if not any(ch in sw for ch in x):
+                        continue
+                    y = ''.join(sw.get(ch, ch) for ch in x)
+                o.ev.conditions[i] = c.replace(f'«{x}»', f'«{y}»', 1)
+                return True
+        return False
+    _forge(J, 'تزوير حرفٍ في الشاهد (اللاحقة المستشهد بها)', lambda X: _forge_witness(X, 'حرف'))
+    _forge(J, 'تزوير حركةٍ في الشاهد', lambda X: _forge_witness(X, 'حركة'))
 # الأنفال ٣٣ (مراجعة التقرير الثانية): طرف خبر «كان» يُبدَّل بضمير المفعول «هُمۡ» والحقول مكتملة
 J833 = next((J for SP in LT for D in SP.A + SP.O['pending'] for J in D.A + D.O['pending']
              if [8, 33, 3] in [list(x) for x in J.O['location']]), None)

@@ -1614,7 +1614,11 @@ def cond_structs(feats, nuc_pos, starts, ay_end=None):
             # بعد جملةٍ تامّة، ولا جواب قبل شرطٍ جديد أو آخر الآية (إِن كُنتُمۡ صَٰدِقِينَ): جوابٌ محذوف يدلّ عليه ما قبله،
             # قراءةٌ مرشَّحة لا مستوفاة (لا يُحكم بالحذف إلا بدليل، والدليل هنا ما قبل الأداة)
             q_kind = 'جوابٌ محذوف مرشَّح يدلّ عليه ما قبل الأداة'
-        obl.append(('الجواب', q_pos is not None, q_kind or 'لم يُكشف الجواب، ولا يُحكم بحذفه بلا دليل'))
+        if q_pos is not None and not s_verb:
+            # صلاحية الكلمة جواباً غير ثبوت أنها جوابٌ لهذا الشرط: ورأس الشرط نفسه مؤجَّل (مراجعة التقرير الرابعة ١)
+            obl.append(('الجواب', False, f'مرشَّح: {q_kind}، مشروطٌ بثبوت فعل الشرط'))
+        else:
+            obl.append(('الجواب', q_pos is not None, q_kind or 'لم يُكشف الجواب، ولا يُحكم بحذفه بلا دليل'))
         # نطاق الحدّ المحتمل حين لم يُستوفَ الجواب: إلى الجواب المحتمل، أو أول ما له الصدارة، أو ثماني كلمات
         nxt_start = next((k for k in range((s_pos or t) + 1, min(n, t + 8)) if starts[k]), min(n, t + 8))
         stop = min(cand, nxt_start) if cand is not None else nxt_start
@@ -2108,6 +2112,25 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
                     bound.setdefault(b_n, f'معطوفٌ على جملة «{wtext[a_n]}»')
                 else:
                     st['coord:جملة:طرفٌ غير معيَّن'] += 1
+            # الطرف B بهويته ونوعه ونطاقه ورأسه وحاويه (مراجعة التقرير الرابعة ٣)، وحالة المعطوف عليه في المفرد
+            if c_['level'] == 'جملة':
+                b0 = c_['B']
+                stop_ = _next_stop(b0)
+                bh = next((j for j in range(b0, stop_) if j in nset or feats[j]['verb']), b0)
+                fb = feats[bh]
+                c_['B_full'] = dict(id=words_text(words, k0), span=(k0, stop_ - 1), text=' '.join(wtext[k0:stop_]),
+                                    head=wtext[bh],
+                                    type='جملة فعلية' if bh in nset or fb['verb'] else
+                                         'جملة اسمية' if fb.get('demo') or fb.get('head') in ('pron', 'pp') or
+                                         is_form(fb['text'], JARR_V) or _pp_clause(feats, b0, nset) else 'جملة',
+                                    container=(c_.get('B_scope') or {}).get('container'),
+                                    evidence='من العاطف إلى أول عاطفٍ آخر أو ما له الصدارة أو رأس جملةٍ جديدة أو آخر الآية')
+                c_['A_status'] = 'معيَّن' if len(c_['A']) == 1 else 'بدائل معلَّقة' if c_['A'] else 'غير معيَّن'
+            else:
+                c_['B_full'] = dict(id=words_text(words, c_['B']), span=(c_['B'], c_['B']), text=wtext[c_['B']],
+                                    head=wtext[c_['B']], type='مفرد', container=None, evidence='كلمة المعطوف')
+                c_['A_status'] = ('معيَّن' if len(c_['A']) == 1 else
+                                  'بدائل معلَّقة (لم يُعتمد أحدها)' if c_['A'] else 'غير معيَّن')
             if c_['level'] == 'جملة' and c_['A'] or c_['level'] == 'مفرد' and len(c_['A']) == 1:
                 roles.setdefault(c_['pos'], f'حرف عطف «{c_["letter"]}»')
                 if c_['level'] == 'مفرد':
@@ -2122,7 +2145,11 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
                                           B=wtext[c_['B']], A=[wtext[j] for j in c_['A']][:4] if c_['level'] == 'مفرد' else
                                           [f'«{x["text"]}» ({x["type"]}، رأسها «{x["head"]}»' +
                                            (f'، في {x["container"]}' if x.get('container') else '') + ')' for x in c_['A']],
-                                          effect=c_['effect']))
+                                          effect=c_['effect'], A_status=c_.get('A_status'),
+                                          A_full=[{k: (list(v) if isinstance(v, tuple) else v) for k, v in x.items()}
+                                                  for x in c_['A']] if c_['level'] == 'جملة' else [],
+                                          B_full={k: (list(v) if isinstance(v, tuple) else v)
+                                                  for k, v in (c_.get('B_full') or {}).items()}))
         pending = {}                                  # موضع الحدّ ← (inner | open، السبب) لخبر الموصول المبتدأ
         for p in range(n):
             last = p == n - 1

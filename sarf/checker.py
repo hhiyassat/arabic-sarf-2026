@@ -123,6 +123,20 @@ def _letters_of(t):
     return [L for L, _ in letters(t)]
 
 
+def _vowels_ok(text, start, x):
+    """حركات الشاهد x (إن ذُكرت) توافق حركات الخلايا من الموضع start: لا تناقض بين حركتين مذكورتين"""
+    from .chars import letters, FATHA, DAMMA, KASRA, SUKUN
+    V = {FATHA, DAMMA, KASRA, SUKUN}
+    wt, xt = letters(text), letters(x)
+    for i, (_, m) in enumerate(xt):
+        if start + i >= len(wt):
+            return False
+        a, b = set(m) & V, set(wt[start + i][1]) & V
+        if a and b and not a & b:
+            return False
+    return True
+
+
 def witness_problems(J):
     """الشاهد يقابل الخلايا (مراجعة التقرير الثالثة ١): كل لاحقةٍ أو حرف مضارعة يستشهد به دليلُ التزامٍ مستوفى
     يجب أن يكون حروفاً مكتوبةً في وحدته: اللاحقة في آخرها (قبل ضميرٍ متصل)، وحرف المضارعة في أولها
@@ -148,9 +162,11 @@ def witness_problems(J):
                     continue
                 xs = _letters_of(x)
                 if 'المضارعة' in kind:
-                    ok = word[:len(xs)] == xs or word[1:1 + len(xs)] == xs
+                    spans = [(0, len(xs)), (1, 1 + len(xs))]
                 else:
-                    ok = any(word[len(word) - j - len(xs):len(word) - j] == xs for j in range(0, 4))
+                    spans = [(len(word) - j - len(xs), len(word) - j) for j in range(0, 4)]
+                # الحروف تطابق، والحركات المذكورة في الشاهد توافق حركات الخلايا (تُمْ لا تُطابَق بـ«تِمْ»)
+                ok = any(a_ >= 0 and word[a_:b_] == xs and _vowels_ok(G.O.get('text', ''), a_, x) for a_, b_ in spans)
                 if not ok:
                     why.append(f'شاهدٌ لا يقابل الخلايا: {o.name}: «{x}» ليست في «{G.O.get("text")}»')
     return why

@@ -64,7 +64,7 @@ lv = [
     ('خلية', C['cells'], C['cells'], 'كل خلية عنصر أساسي'),
     ('مقطع', C['syllables'], C['syllables_closed'], 'بالقوالب الستة'),
     ('وحدة لفظية', C['units'], C['units_closed'], 'بمدخل معجمي أو بـRealize'),
-    ('جملة', C['J'], C.get('J_closed', 0), 'وحداتها مغلقة، والتزاماتها مستوفاة، ولكل كلمة موضعٌ مرخَّص، ولا نواة غير مرتبطة؛ ويعيد الفاحص المستقل فحصها'),
+    ('جملة (المستوفاة محلياً)', C['J'], C.get('J_closed', 0), 'مستوفاة محلياً وفق القواعد المنفَّذة، والاستقلال الخارجي غير محسوم: وحداتها مغلقة، والتزاماتها مستوفاة، ولكل كلمة موضعٌ مرخَّص، ولا نواة غير مرتبطة؛ ويعيد الفاحص المستقل فحصها'),
     ('وحدة خطابية', C['du'], C.get('du_closed', 0), 'ما بين حدّين ثابتين مشتقَّين من الخانات (لا من علامات الوقف)، وفيها جملة واحدة؛ فعددها يساوي عدد الجمل بالتعريف، وروابط ما بين الوحدات (مستوى الفقرة) لم تُبنَ بعد'),
     ('خطاب السورة', C['speech'], C['speech_closed'], 'وحداته الخطابية كلها مغلقة'),
 ]
@@ -177,7 +177,7 @@ parts.append('<div class="muted">الوحدات الخطابية في آيات �
 for x in M['samples']:
     ay = x['ayahs']
     parts.append(f'<div class="card"><div><b>{esc(x["id"])}</b> — الآيات: {esc(ay[0] + (" … " + ay[-1] if len(ay) > 1 else ""))} ({len(ay)}) — '
-                 + ('<span class="st st-accepted">الجملة مغلقة</span>' if x['sentence_closed'] else '<span class="st st-deferred">الجملة مؤجَّلة</span>')
+                 + ('<span class="st st-accepted">مستوفاة محلياً وفق القواعد المنفَّذة، والاستقلال الخارجي غير محسوم</span>' if x['sentence_closed'] else '<span class="st st-deferred">الجملة مؤجَّلة</span>')
                  + f'</div><div class="muted">Location(J) = ⟨{esc(x["location"][0])} … {esc(x["location"][-1])}⟩ ({len(x["location"])} كلمة)</div>'
                  + f'<div class="muted">الحدّ: {esc(x["boundary"] or "—")}؛ النوى: {esc("، ".join(x["nuclei"]) or "—")}</div>'
                  + '<pre class="json">' + esc('\n'.join(x['units'][:40]) + ('\n…' if len(x['units']) > 40 else '')) + '</pre>')
@@ -298,10 +298,21 @@ if C.get('rel') or C.get('cond') or C.get('coord'):
                 esc('؛ '.join(f'{o[0]}: {"✓" if o[1] else "مفتوح"} ({o[2]})' for o in x['obligations'])))
                for x in SS.get('cond', [])[:12]]),
         '<div class="muted">أمثلة العطف:</div>',
-        table(['الموضع', 'الحرف وأثره', 'المستوى', 'المعطوف', 'المعطوف عليه'],
-              [(esc(x['location']), esc(f'{x["letter"]}: {x["effect"]}'), esc(x['level']), esc(x['B']),
-                esc('، '.join(x['A']) if x['A'] else 'غير معيَّن'))
+        table(['الموضع', 'الحرف وأثره', 'المستوى', 'المعطوف B', 'المعطوف عليه A', 'حالة A'],
+              [(esc(x['location']), esc(f'{x["letter"]}: {x["effect"]}'), esc(x['level']),
+                esc((x.get('B_full') or {}).get('text') or x['B']),
+                esc('، '.join(x['A']) if x['A'] else '—'), esc(x.get('A_status') or ''))
                for x in SS.get('coord', [])[:14]]),
+        '<div class="muted">بنيتان كاملتان لعطف الجملة: Coord(h, A, B) بطرفين لكلٍّ منهما هويةٌ ونوعٌ ونطاقٌ ورأسٌ وحاوٍ ودليل:</div>',
+        '<pre class="json">' + esc('\n\n'.join(
+            f'Coord(h = «{x["letter"]}» عند {x["location"]})\n' +
+            '\n'.join(f'  A{i + 1}: ⟨{a["id"]}، {a["type"]}، [{a["span"][0]}..{a["span"][1]}]، رأسها «{a["head"]}»'
+                      + (f'، في {a["container"]}' if a.get('container') else '') + f'⟩\n      «{a["text"]}»\n      الدليل: {a["evidence"]}'
+                      for i, a in enumerate(x.get('A_full', []))) +
+            (f'\n  B: ⟨{x["B_full"]["id"]}، {x["B_full"]["type"]}، [{x["B_full"]["span"][0]}..{x["B_full"]["span"][1]}]، '
+             f'رأسها «{x["B_full"]["head"]}»' + (f'، في {x["B_full"]["container"]}' if x["B_full"].get('container') else '') +
+             f'⟩\n      «{x["B_full"]["text"]}»\n      الدليل: {x["B_full"]["evidence"]}' if x.get('B_full') else '')
+            for x in [y for y in SS.get('coord', []) if y['location'] in ('2:3:3', '2:4:9') and y.get('A_full')])) + '</pre>',
     ]
 if C.get('obl_خبر'):
     names = [('معمول', 'معمول العامل المقبول'), ('فاعل', 'فاعل الفعل (T18)'), ('خبر', 'خبر الناسخ (إنّ وكان وأخواتهما)'),
@@ -321,6 +332,30 @@ if C.get('obl_خبر'):
         '<div class="muted">«مرفوع (اسم أو مضارع لم تثبت فعليته)»: كلمةٌ مرفوعة بعد اسم «إنّ» على صورة المضارع (إِنَّ ٱللَّهَ يُحِبُّ)، '
         'فهي خبرٌ في الحالين، والحكم بنوعه مؤجَّل حتى تثبت فعليتها.</div>',
     ]
+RC = json.load(open(H + 'reports/root_reconciliation.json', encoding='utf-8')) if os.path.exists(H + 'reports/root_reconciliation.json') else None
+if RC:
+    order = sorted(RC['counts'].items(), key=lambda x: -x[1])
+    parts += [
+        '<h2>٩ب. سياسة الاختيار عند التعارض، ومصالحة الأفعال بهوياتها</h2>',
+        '<div class="muted"><b>السياسة:</b> لكل فعلٍ تُسجَّل المرشحات كلها بقراءاتها وشهادتها في HFN (A سماعي … E). '
+        'وقراءة النص كله التي تطابق فعلاً في HFN حرفاً وحركة (الماضي بلاحقته) تُقدَّم على قراءةٍ نُزعت منها سابقة <b>إن كانت شهادتها أقوى من كل منافسٍ بجذرٍ أو وزنٍ آخر</b> '
+        '(وَضَعَتۡ: «وضع» C على «ضعو» E)؛ فإن تساوت أو ضعفت (وَلَسۡتُمۡ: «ولس» C و«ليس» C؛ تَهِنُواْ: «تهن» E و«وهن» C) بقي التعارض مؤجَّلاً بمرشحيه، ولا يُختار بأولوية البحث. '
+        'ومنافسات الحركة في الجذر نفسه (وَضَعَ، وَضِعَ) ليست تعارضاً.</div>',
+        '<div class="muted"><b>المصالحة بالهويات</b> (<code>tools/reconcile_roots.py</code>): كل وقوع فعلٍ مقابَلٍ بـQAC في المصحف، '
+        'بين النسخة قبل قاعدة المطابقة (main@ac0bd1a) والنسخة الحالية:</div>',
+        table(['التغيّر', 'الوقوعات'], [(esc(k), f'{v:,}') for k, v in order]),
+    ]
+    for k, _ in order:
+        if k == 'لم يتغيّر' or k == 'غير مقابَل':
+            continue
+        rs = RC['rows'].get(k, [])
+        parts.append(f'<div class="muted">{esc(k)} (أول {min(len(rs), 12)} من {RC["totals"].get(k, 0)}):</div>')
+        parts.append(table(['الموضع', 'الكلمة', 'QAC', 'قبل', 'بعد'],
+                           [(esc(r['loc']), esc(r['text']), esc(r['gold']),
+                             esc(f'{r["before"]["status"]} {r["before"]["root"] or ""}/{r["before"]["form"] or ""} — {r["before"]["decision"] or r["before"]["reason"]}'),
+                             esc(f'{r["after"]["status"]} {r["after"]["root"] or ""}/{r["after"]["form"] or ""} — {r["after"]["decision"] or r["after"]["reason"]} '
+                                 f'[المرشحات: {"، ".join(r["after"]["candidates"])}]'))
+                            for r in rs[:12]]))
 parts += [
     '<h2>١٠. ما يلزم لرفع الإغلاق</h2>',
     '<ul class="muted">'
