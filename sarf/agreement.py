@@ -128,12 +128,16 @@ def signature(text, info):
 
 # صورة اللاحقة المكتوبة من صنفها، والتحويل الذي يربطهما (شاهدٌ يقابل الخلايا، لا اسمُ الصنف)
 SIG_SHIFT = {('ون', 'وا'): 'حُذفت النون، وكُتبت بعد الواو الألفُ الفارقة',
+             ('ون', 'نّ'): 'حُذفت واو الجماعة لالتقاء الساكنين قبل نون التوكيد، وبقيت ضمّة ما قبلها',
+             ('وا؟', 'وا'): 'الواو للجماعة أو لامُ الناقص، والكتابة لا تفصل بينهما',
              ('ون', 'و'): 'حُذفت النون، وبعد الواو ضميرٌ أو نون توكيد',
              ('ين', 'ي'): 'حُذفت النون', ('ان', 'ا'): 'حُذفت النون'}
 
 
 def written_suffix(text, sig, info):
     """اللاحقة كما كُتبت في آخر الفعل لصنفها sig (ون، ين، ان): «ونَ» أو «وا» أو «و» … ؛ وإلا sig نفسه أو ''"""
+    if sig == 'وا؟':
+        return 'وا'
     if sig not in ('ون', 'ين', 'ان'):
         return sig
     toks = [L for L, _ in letters(text)]
@@ -146,6 +150,11 @@ def written_suffix(text, sig, info):
         return 'وا'
     if toks and toks[-1] == w:
         return w
+    lt = letters(text)
+    if info.get('object'):
+        lt = lt[:-len(letters(info['object']))]
+    if w == 'و' and lt and lt[-1][0] == 'ن' and SHADDA in lt[-1][1]:
+        return 'نّ'
     return sig
 
 
@@ -166,6 +175,9 @@ def agreement(text, info=None, shape_only=False):
     feats = [P[p] for p in prons if p in P]
     seen = written_suffix(text, sig, info)
     note = RULE_NOTE[info['kind']].format(p=info['prefix'] or '', s=seen or sig or '—')
+    if sig == 'أفعل':
+        # صيغةٌ لا لاحقة: أَفۡعِلۡ بلا ضمير مكتوب (أمر الواحد، أو مضارع المتكلم)
+        note = 'صيغة أَفۡعِلۡ بلا لاحقة مكتوبة (أمر الواحد، أو مضارع المتكلم بحرف المضارعة «أ»)'
     if seen and sig and seen != sig:
         note += f' (من صنف «{sig}»: {SIG_SHIFT.get((sig, seen), "صورةٌ أخرى للصنف")})'
     return dict(features=feats, pronouns=prons, rule=note, narrowed_by=None, conflict=None,
