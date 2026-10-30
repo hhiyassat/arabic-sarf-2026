@@ -19,17 +19,17 @@
   "voice_hit": 9537
  },
  "root": {
-  "acc": 7362,
-  "acc_event": 6200,
-  "acc_event_root_ok": 6145,
-  "acc_form_ok": 7309,
-  "acc_root": 1162,
-  "acc_root_ok": 7278,
-  "acc_root_root_ok": 1133,
-  "deferred": 9270,
-  "gold_in_cands": 15732,
-  "morph": 26557,
-  "not_qac_verb": 9925,
-  "qv": 16632
+  "acc": 7464,
+  "acc_event": 6292,
+  "acc_event_root_ok": 6244,
+  "acc_form_ok": 7410,
+  "acc_root": 1172,
+  "acc_root_ok": 7389,
+  "acc_root_root_ok": 1145,
+  "deferred": 9263,
+  "gold_in_cands": 15876,
+  "morph": 26545,
+  "not_qac_verb": 9818,
+  "qv": 16727
  }
 }

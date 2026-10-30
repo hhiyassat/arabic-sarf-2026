@@ -1,0 +1,1076 @@
+{
+ "counts": {
+  "لم يتغيّر": 16661,
+  "من التأجيل إلى القبول: صحيح": 66
+ },
+ "rows": {
+  "من التأجيل إلى القبول: صحيح": [
+   {
+    "loc": "10:22:15",
+    "text": "فَرِحُوا",
+    "gold": "فرح/I",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: فرح (I)، رحو (I)، رحي (I)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "accepted",
+     "root": "فرح",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (شهادتها A أقوى من C)",
+     "candidates": [
+      "فرح/I (A، مطابق)",
+      "رحو/I (E)",
+      "رحي/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "10:26:1",
+    "text": "أَحْسَنُوا",
+    "gold": "حسن/IV",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: حسن (IV)، حسن (I)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "accepted",
+     "root": "حسن",
+     "form": "IV",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (شهادتها B أقوى من C)",
+     "candidates": [
+      "حسن/IV (B، مطابق)",
+      "حسن/I (C)",
+      "حسن/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "10:28:6",
+    "text": "أَشْرَكُوا",
+    "gold": "شرك/IV",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: شرك (IV)، شرك (I)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "accepted",
+     "root": "شرك",
+     "form": "IV",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (شهادتها B أقوى من C)",
+     "candidates": [
+      "شرك/IV (B، مطابق)",
+      "شرك/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "10:33:6",
+    "text": "فَسَقُوا",
+    "gold": "فسق/I",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: فسق (I)، سقي (I)، وسق (I)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "accepted",
+     "root": "فسق",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (شهادتها A أقوى من C)",
+     "candidates": [
+      "فسق/I (A، مطابق)",
+      "سقي/I (C)",
+      "وسق/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "11:23:5",
+    "text": "أَخْبَتُوا",
+    "gold": "خبت/IV",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: خبت (IV)، خبت (I)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "accepted",
+     "root": "خبت",
+     "form": "IV",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (شهادتها B أقوى من C)",
+     "candidates": [
+      "خبت/IV (B، مطابق)",
+      "خبت/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "12:102:10",
+    "text": "أَجْمَعُوا",
+    "gold": "جمع/IV",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: جمع (IV)، جمع (I)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "accepted",
+     "root": "جمع",
+     "form": "IV",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (شهادتها B أقوى من C)",
+     "candidates": [
+      "جمع/IV (B، مطابق)",
+      "جمع/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "12:15:3",
+    "text": "أَجْمَعُوا",
+    "gold": "جمع/IV",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: جمع (IV)، جمع (I)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "accepted",
+     "root": "جمع",
+     "form": "IV",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (شهادتها B أقوى من C)",
+     "candidates": [
+      "جمع/IV (B، مطابق)",
+      "جمع/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "12:19:2",
+    "text": "أَرْسَلُوا",
+    "gold": "رسل/IV",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: رسل (IV)، رسل (I)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "accepted",
+     "root": "رسل",
+     "form": "IV",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (شهادتها B أقوى من C)",
+     "candidates": [
+      "رسل/IV (B، مطابق)",
+      "رسل/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "13:26:6",
+    "text": "فَرِحُوا",
+    "gold": "فرح/I",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: فرح (I)، رحو (I)، رحي (I)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "accepted",
+     "root": "فرح",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (شهادتها A أقوى من C)",
+     "candidates": [
+      "فرح/I (A، مطابق)",
+      "رحو/I (E)",
+      "رحي/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "16:30:9",
+    "text": "أَحْسَنُوا",
+    "gold": "حسن/IV",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: حسن (IV)، حسن (I)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "accepted",
+     "root": "حسن",
+     "form": "IV",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (شهادتها B أقوى من C)",
+     "candidates": [
+      "حسن/IV (B، مطابق)",
+      "حسن/I (C)",
+      "حسن/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "16:35:2",
+    "text": "أَشْرَكُوا",
+    "gold": "شرك/IV",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: شرك (IV)، شرك (I)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "accepted",
+     "root": "شرك",
+     "form": "IV",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (شهادتها B أقوى من C)",
+     "candidates": [
+      "شرك/IV (B، مطابق)",
+      "شرك/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "16:86:3",
+    "text": "أَشْرَكُوا",
+    "gold": "شرك/IV",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: شرك (IV)، شرك (I)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "accepted",
+     "root": "شرك",
+     "form": "IV",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (شهادتها B أقوى من C)",
+     "candidates": [
+      "شرك/IV (B، مطابق)",
+      "شرك/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "17:16:7",
+    "text": "فَسَقُوا",
+    "gold": "فسق/I",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: فسق (I)، سقي (I)، وسق (I)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "accepted",
+     "root": "فسق",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (شهادتها A أقوى من C)",
+     "candidates": [
+      "فسق/I (A، مطابق)",
+      "سقي/I (C)",
+      "وسق/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "19:29:0",
+    "text": "أَشَارَتْ",
+    "gold": "شور/IV",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: شور (IV)، شور (I)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "accepted",
+     "root": "شور",
+     "form": "IV",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (شهادتها B أقوى من C)",
+     "candidates": [
+      "شور/IV (B، مطابق)",
+      "شور/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "19:59:4",
+    "text": "أَضَاعُوا",
+    "gold": "ضيع/IV",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: ضيع (IV)، ضوع (I)، ضيع (I)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "accepted",
+     "root": "ضيع",
+     "form": "IV",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (شهادتها B أقوى من C)",
+     "candidates": [
+      "ضيع/IV (B، مطابق)",
+      "ضوع/I (C)",
+      "ضيع/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "21:70:0",
+    "text": "أَرَادُوا",
+    "gold": "رود/IV",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: رود (IV)، رود (I)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "accepted",
+     "root": "رود",
+     "form": "IV",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (شهادتها B أقوى من C)",
+     "candidates": [
+      "رود/IV (B، مطابق)",
+      "رود/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "22:17:9",
+    "text": "أَشْرَكُوا",
+    "gold": "شرك/IV",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: شرك (IV)، شرك (I)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "accepted",
+     "root": "شرك",
+     "form": "IV",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (شهادتها B أقوى من C)",
+     "candidates": [
+      "شرك/IV (B، مطابق)",
+      "شرك/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "22:22:1",
+    "text": "أَرَادُوا",
+    "gold": "رود/IV",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: رود (IV)، رود (I)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "accepted",
+     "root": "رود",
+     "form": "IV",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (شهادتها B أقوى من C)",
+     "candidates": [
+      "رود/IV (B، مطابق)",
+      "رود/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "22:36:15",
+    "text": "وَجَبَتْ",
+    "gold": "وجب/I",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: وجب (I)، جبو (I)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "accepted",
+     "root": "وجب",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (شهادتها C أقوى من E)",
+     "candidates": [
+      "وجب/I (C، مطابق)",
+      "وجب/I (C)",
+      "جبو/I (E)"
+     ]
+    }
+   },
+   {
+    "loc": "26:29:5",
+    "text": "أَجْعَلَنَّ",
+    "gold": "جعل/I",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: جعل (I)، جعل (IV)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "accepted",
+     "root": "جعل",
+     "form": "IV",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (شهادتها B أقوى من C)",
+     "candidates": [
+      "جعل/I (C)",
+      "جعل/I (C)",
+      "جعل/IV (B، مطابق)"
+     ]
+    }
+   },
+   {
+    "loc": "28:55:3",
+    "text": "أَعْرَضُوا",
+    "gold": "عرض/IV",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: عرض (IV)، عرض (I)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "accepted",
+     "root": "عرض",
+     "form": "IV",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (شهادتها B أقوى من C)",
+     "candidates": [
+      "عرض/IV (B، مطابق)",
+      "عرض/I (C)",
+      "عرض/I (C)",
+      "عرض/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "2:17:6",
+    "text": "أَضَاءَتْ",
+    "gold": "ضوء/IV",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: ضوء (IV)، ضوء (I)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "accepted",
+     "root": "ضوء",
+     "form": "IV",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (شهادتها B أقوى من C)",
+     "candidates": [
+      "ضوء/IV (B، مطابق)",
+      "ضوء/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "2:228:27",
+    "text": "أَرَادُوا",
+    "gold": "رود/IV",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: رود (IV)، رود (I)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "accepted",
+     "root": "رود",
+     "form": "IV",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (شهادتها B أقوى من C)",
+     "candidates": [
+      "رود/IV (B، مطابق)",
+      "رود/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "2:237:12",
+    "text": "فَرَضْتُمْ",
+    "gold": "فرض/I",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: فرض (I)، روض (I)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "accepted",
+     "root": "فرض",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (شهادتها A أقوى من C)",
+     "candidates": [
+      "فرض/I (A، مطابق)",
+      "روض/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "2:237:7",
+    "text": "فَرَضْتُمْ",
+    "gold": "فرض/I",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: فرض (I)، روض (I)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "accepted",
+     "root": "فرض",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (شهادتها A أقوى من C)",
+     "candidates": [
+      "فرض/I (A، مطابق)",
+      "روض/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "2:50:1",
+    "text": "فَرَقْنَا",
+    "gold": "فرق/I",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: فرق (I)، روق (I)، ريق (I)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "accepted",
+     "root": "فرق",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (شهادتها A أقوى من C)",
+     "candidates": [
+      "فرق/I (A، مطابق)",
+      "فرق/I (A)",
+      "روق/I (C)",
+      "روق/I (C)",
+      "ريق/I (D)"
+     ]
+    }
+   },
+   {
+    "loc": "2:96:7",
+    "text": "أَشْرَكُوا",
+    "gold": "شرك/IV",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: شرك (IV)، شرك (I)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "accepted",
+     "root": "شرك",
+     "form": "IV",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (شهادتها B أقوى من C)",
+     "candidates": [
+      "شرك/IV (B، مطابق)",
+      "شرك/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "30:36:4",
+    "text": "فَرِحُوا",
+    "gold": "فرح/I",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: فرح (I)، رحو (I)، رحي (I)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "accepted",
+     "root": "فرح",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (شهادتها A أقوى من C)",
+     "candidates": [
+      "فرح/I (A، مطابق)",
+      "رحو/I (E)",
+      "رحي/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "30:47:12",
+    "text": "أَجْرَمُوا",
+    "gold": "جرم/IV",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: جرم (IV)، جرم (I)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "accepted",
+     "root": "جرم",
+     "form": "IV",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (شهادتها B أقوى من C)",
+     "candidates": [
+      "جرم/IV (B، مطابق)",
+      "جرم/I (C)",
+      "جرم/I (C)",
+      "جرم/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "30:9:15",
+    "text": "أَثَارُوا",
+    "gold": "ثور/IV",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: ثور (IV)، ثور (I)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "accepted",
+     "root": "ثور",
+     "form": "IV",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (شهادتها B أقوى من C)",
+     "candidates": [
+      "ثور/IV (B، مطابق)",
+      "ثور/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "32:20:2",
+    "text": "فَسَقُوا",
+    "gold": "فسق/I",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: فسق (I)، سقي (I)، وسق (I)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "accepted",
+     "root": "فسق",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (شهادتها A أقوى من C)",
+     "candidates": [
+      "فسق/I (A، مطابق)",
+      "سقي/I (C)",
+      "وسق/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "32:20:6",
+    "text": "أَرَادُوا",
+    "gold": "رود/IV",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: رود (IV)، رود (I)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "accepted",
+     "root": "رود",
+     "form": "IV",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (شهادتها B أقوى من C)",
+     "candidates": [
+      "رود/IV (B، مطابق)",
+      "رود/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "33:50:30",
+    "text": "وَهَبَتْ",
+    "gold": "وهب/I",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: وهب (I)، هبو (I)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "accepted",
+     "root": "وهب",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (شهادتها C أقوى من D)",
+     "candidates": [
+      "وهب/I (C، مطابق)",
+      "هبو/I (D)"
+     ]
+    }
+   },
+   {
+    "loc": "33:50:46",
+    "text": "فَرَضْنَا",
+    "gold": "فرض/I",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: فرض (I)، روض (I)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "accepted",
+     "root": "فرض",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (شهادتها A أقوى من C)",
+     "candidates": [
+      "فرض/I (A، مطابق)",
+      "روض/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "34:16:0",
+    "text": "أَعْرَضُوا",
+    "gold": "عرض/IV",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: عرض (IV)، عرض (I)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "accepted",
+     "root": "عرض",
+     "form": "IV",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (شهادتها B أقوى من C)",
+     "candidates": [
+      "عرض/IV (B، مطابق)",
+      "عرض/I (C)",
+      "عرض/I (C)",
+      "عرض/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "37:98:0",
+    "text": "أَرَادُوا",
+    "gold": "رود/IV",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: رود (IV)، رود (I)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "accepted",
+     "root": "رود",
+     "form": "IV",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (شهادتها B أقوى من C)",
+     "candidates": [
+      "رود/IV (B، مطابق)",
+      "رود/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "39:10:7",
+    "text": "أَحْسَنُوا",
+    "gold": "حسن/IV",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: حسن (IV)، حسن (I)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "accepted",
+     "root": "حسن",
+     "form": "IV",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (شهادتها B أقوى من C)",
+     "candidates": [
+      "حسن/IV (B، مطابق)",
+      "حسن/I (C)",
+      "حسن/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "39:53:3",
+    "text": "أَسْرَفُوا",
+    "gold": "سرف/IV",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: سرف (IV)، سرف (I)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "accepted",
+     "root": "سرف",
+     "form": "IV",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (شهادتها B أقوى من C)",
+     "candidates": [
+      "سرف/IV (B، مطابق)",
+      "سرف/I (C)",
+      "سرف/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "3:151:7",
+    "text": "أَشْرَكُوا",
+    "gold": "شرك/IV",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: شرك (IV)، شرك (I)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "accepted",
+     "root": "شرك",
+     "form": "IV",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (شهادتها B أقوى من C)",
+     "candidates": [
+      "شرك/IV (B، مطابق)",
+      "شرك/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "3:152:9",
+    "text": "فَشِلْتُمْ",
+    "gold": "فشل/I",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: فشل (I)، شول (I)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "accepted",
+     "root": "فشل",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (شهادتها A أقوى من C)",
+     "candidates": [
+      "فشل/I (A)",
+      "فشل/I (A، مطابق)",
+      "شول/I (C)"
+     ]
+    }
+   }
+  ]
+ },
+ "totals": {
+  "من التأجيل إلى القبول: صحيح": 66
+ }
+}
