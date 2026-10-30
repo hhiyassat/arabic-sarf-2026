@@ -72,7 +72,7 @@ def _match(ctx, res):
     return f"{len(ctx.candidates)} مرشَّحاً"
 
 def _evidence(ctx, res):
-    ctx.candidates = reject_candidates(ctx.candidates, ctx.words)
+    ctx.candidates = reject_candidates(ctx.candidates, ctx.words, res.lex)
     n = sum(f['status'] == BLOCKED for f in ctx.candidates)
     return f"ممنوعة بالكتابة: {n}"
 

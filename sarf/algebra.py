@@ -19,7 +19,9 @@ sarf.algebra — الجبر اللساني: هندسة ذات أنواع، تُ�
 from dataclasses import dataclass, field
 
 from .chars import (FATHA, DAMMA, KASRA, SUKUN, SHADDA, FATHATAN, DAMMATAN, KASRATAN,
-                    MADDA_MARK, DAGGER_ALIF, letters, mudgham)
+                    DAGGER_ALIF, letters)
+from .cells import (HAMZA, Cell, cells_of, _lex_key, lex_index, _verb_ilal, participle_analyses,
+                    sibawayh_analyses)
 
 # طبقتان على النص نفسه تشتركان في الخلايا:
 #   اللغوية: خلية ≺ مقطع ≺ وحدة لفظية ≺ جملة ≺ وحدة خطابية ≺ خطاب السورة — حدودها بالعلاقات وشروط الاكتمال
@@ -30,9 +32,6 @@ CELL, SYLLABLE, UNIT, SENTENCE, DISCOURSE, SPEECH = range(6)
 PARAGRAPH, TOPIC = DISCOURSE, SPEECH
 M_WORD, M_AYAH, M_SURAH, M_MUSHAF = 'كلمة', 'آية', 'سورة', 'مصحف'
 
-H_OF = {FATHA: 'a', DAMMA: 'u', KASRA: 'i', FATHATAN: 'a', DAMMATAN: 'u', KASRATAN: 'i'}
-MADD_OF = {'a': 'اى', 'u': 'و', 'i': 'ي'}
-HAMZA = {'أ': 'ء', 'إ': 'ء', 'ؤ': 'ء', 'ئ': 'ء', 'ء': 'ء'}
 
 
 # ---------- الدليل والالتزام ----------
@@ -64,22 +63,6 @@ class Obligation:
     ev: Evidence = None
     reason: str = ''
     units: list = field(default_factory=list)     # الوحدات التي يخصّها الالتزام (لتعيين جملته)
-
-
-# ---------- الخلية ----------
-@dataclass
-class Cell:
-    id: str
-    C: str            # الصامت (الهمزات موحَّدة ء)
-    H: str            # a / u / i / ∅
-    L: int = 1        # 2: بعدها حرف مدّ من جنسها
-    O: dict = field(default_factory=dict)    # tok: موضع الرسم، glyph، role، silent: [مواضع لا تُنطق]
-
-    def key(self):
-        return (self.C, self.H, self.L)
-
-    def show(self):
-        return f"⟨{self.C},{self.H}{'ː' if self.L == 2 else ''}⟩"
 
 
 # ---------- الهندسة ----------
@@ -147,76 +130,6 @@ def defer(G, T, reason):
     T.log('Defer', G, reason=reason)
     G.O['deferred'] = reason
     return G
-
-
-# ---------- المستوى 0: الخلايا من الرسم ----------
-def cells_of(text, base_id, wasl_vowel=None):
-    """خلايا الوحدة من رسمها المطبَّع، ومعها كل حرفٍ لا يُنطق في O['silent'] لخليةٍ مجاورة.
-    → (الخلايا، رموز الرسم [(الحرف، العلامات)])"""
-    toks = letters(text)
-    out = []
-    pending_silent = []
-    for j, (L, m) in enumerate(toks):
-        prev = out[-1] if out else None
-        nxt = toks[j + 1] if j + 1 < len(toks) else None
-        role = None
-        # همزة الوصل أول الوحدة: تُنطق ابتداءً (اصطلاح المقطِّع: كل خانة تبدأ بما يُبتدأ به)
-        if L == 'ا' and j == 0 and not m and nxt is not None:
-            v = wasl_vowel or ('a' if nxt[0] == 'ل' else 'u' if len(toks) > 2 and DAMMA in toks[2][1] else 'i')
-            out.append(Cell(f'{base_id}.{len(out)}', 'ء', v, 1, dict(tok=[j], glyph='ا', role='همزة وصل')))
-            continue
-        if L == 'آ':
-            out.append(Cell(f'{base_id}.{len(out)}', 'ء', 'a', 2, dict(tok=[j], glyph=L, role='همزة ومدّة')))
-            continue
-        # ألف الوصل بعد سابقةٍ من حرف واحد (لَّٱصۡطَفَىٰ، وَّٱسۡتَغۡنَى): لا تُنطق، وما بعدها ساكن
-        if L == 'ا' and not m and len(out) == 1 and out[0].C in 'لوفبك' and out[0].H == 'a' and \
-                nxt is not None and SUKUN in nxt[1]:
-            prev.O.setdefault('silent', []).append((j, 'ألف وصل بعد السابقة')); prev.O['tok'].append(j)
-            continue
-        # حرف المد: يُطيل حركة ما قبله (الألف بعد الفتح، والواو بعد الضم، والياء بعد الكسر)
-        if not m and prev is not None and prev.L == 1 and not prev.O.get('tanwin') and \
-                prev.H in MADD_OF and L in MADD_OF[prev.H]:
-            prev.L = 2
-            prev.O['tok'].append(j); prev.O['madd'] = L
-            continue
-        # ما لا يُنطق: الألف الفارقة، وألف تنوين النصب، والحرف العاري قبل المشدَّد (مدغمٌ تامّاً في الرسم)
-        is_mudgham = mudgham([(x, set(y)) for x, y in toks], j)
-        if not m and (L in 'اى' or L == 'ل' and nxt is not None and SHADDA in nxt[1]) or is_mudgham:
-            why = ('لام شمسية' if L == 'ل' else 'ياء زائدة رسماً') if L not in 'اى' else \
-                'ألف بعد التنوين' if prev is not None and prev.O.get('tanwin') else 'ألف لا تُنطق'
-            if prev is not None:
-                prev.O.setdefault('silent', []).append((j, why)); prev.O['tok'].append(j)
-            else:
-                pending_silent.append((j, why))
-            continue
-        # الواو أو الياء تحمل الخنجرية بلا حركة: كرسيٌّ للألف (ٱلصَّلَوٰةَ = صَلَاة): يُطيل ما قبله ولا يُنطق صامتاً
-        if DAGGER_ALIF in m and not m & {FATHA, DAMMA, KASRA, SUKUN, SHADDA} and L in 'وي' and \
-                prev is not None and prev.H == 'a':
-            prev.L = 2
-            prev.O['tok'].append(j); prev.O['madd'] = L + 'ٰ'
-            continue
-        C = HAMZA.get(L, L)
-        H = next((H_OF[x] for x in (FATHA, DAMMA, KASRA, FATHATAN, DAMMATAN, KASRATAN) if x in m), '∅')
-        tanwin = bool(m & {FATHATAN, DAMMATAN, KASRATAN})
-        if SHADDA in m and out:
-            out.append(Cell(f'{base_id}.{len(out)}', C, '∅', 1, dict(tok=[j], glyph=L, role='شدة: الأول')))
-            role = 'شدة: الثاني'
-        elif SHADDA in m:
-            role = 'شدة أول الوحدة: لا تُكرَّر'
-        c = Cell(f'{base_id}.{len(out)}', C, H, 1, dict(tok=[j], glyph=L, role=role, tanwin=tanwin))
-        if DAGGER_ALIF in m:
-            c.H, c.L = 'a', 2
-            c.O['madd'] = 'ٰ'
-        if pending_silent:
-            c.O['silent'] = pending_silent; c.O['tok'] = [s for s, _ in pending_silent] + c.O['tok']
-            pending_silent = []
-        out.append(c)
-    if pending_silent:
-        # حرفٌ لا يُنطق ولا خلية في وحدته (ى وحدها بعد تنوينٍ في الوحدة السابقة): يُحفظ وقوعاً بلا خلية
-        cells_of.orphans = pending_silent
-    else:
-        cells_of.orphans = []
-    return out, toks
 
 
 def spans(text):
@@ -582,47 +495,6 @@ def unit_geo(a, wi, ui, base_id, T, governed_info=None):
     return G
 
 
-# ---------- البناء المعجمي المرخَّص للاسم: المصدر واسم الفاعل واسم المفعول من HFN ----------
-_LEX = None
-NOUN_POS = ('مصدر', 'اسم فاعل', 'اسم مفعول')
-
-
-def _lex_key(t):
-    """مفتاح المطابقة: الحروف والحركات بلا علامة الإعراب الأخيرة (ولا ألف تنوين النصب)، والهمزات موحَّدة،
-    والخنجرية ألف"""
-    import re
-    t = re.sub('[\u06D6-\u06ED\u0640\u0653]', '', t).replace('\u0670', 'ا')
-    toks = letters(t)
-    if toks and toks[-1][0] in 'اى' and not toks[-1][1] and len(toks) > 1 and toks[-2][1] & {FATHATAN}:
-        toks = toks[:-1]
-    out = []
-    for i, (L, m) in enumerate(toks):
-        m = set(m) - {SUKUN}
-        if i == len(toks) - 1:
-            m -= {FATHA, DAMMA, KASRA, FATHATAN, DAMMATAN, KASRATAN}
-        out.append(HAMZA.get(L, L) + ''.join(sorted(m)))
-    return ''.join(out)
-
-
-def lex_index():
-    """مفتاح الاسم ← [(الجذر، النوع، الوزن، المعرِّف)] من lexical_units.csv في HFN"""
-    global _LEX
-    if _LEX is None:
-        import csv, os
-        from .root import hfn
-        _LEX = {}
-        H = hfn()
-        if H.path and os.path.exists(os.path.join(H.path, 'lexical_units.csv')):
-            ev_root = {}
-            for e in csv.DictReader(open(os.path.join(H.path, 'events.csv'), encoding='utf-8')):
-                ev_root[e['event_id']] = e['root_K']
-            for x in csv.DictReader(open(os.path.join(H.path, 'lexical_units.csv'), encoding='utf-8')):
-                if x['pos_ar'] in NOUN_POS and x['event_id'] in ev_root:
-                    _LEX.setdefault(_lex_key(x['lemma']), []).append(
-                        (ev_root[x['event_id']], x['pos_ar'], x['pattern'], x['lu_id'], x['lemma']))
-    return _LEX
-
-
 def align_radicals(cells, root):
     """α للبناء المعجمي: الأصول بترتيبها في الخلايا، والمعتل منها يجوز إعلاله؛ وما سواها زائد"""
     alpha = ['زائد'] * len(cells)
@@ -641,128 +513,6 @@ def align_radicals(cells, root):
             j += 1
         i = j + 1
     return alpha, ops
-
-
-# ---------- اسما الفاعل والمفعول قياساً: Realize(R, P) مرخَّصاً بحدث (R، الوزن) في HFN ----------
-# كل عنصر: (الصامت أو Rk، الحركة أو *، الطول أو *)؛ والأخير حركته حركة الإعراب
-def _t(spec):
-    out = []
-    for x in spec.split():
-        C, H, L = x.split(':')
-        out.append((C, H, int(L) if L != '*' else '*'))
-    return out
-
-
-PARTICIPLES = {
-    ('I', 'فاعل'): _t('R1:a:2 R2:i:1 R3:*:*'),
-    ('I', 'مفعول'): _t('م:a:1 R1:∅:1 R2:u:2 R3:*:*'),
-    ('II', 'فاعل'): _t('م:u:1 R1:a:1 R2:∅:1 R2:i:1 R3:*:*'),
-    ('II', 'مفعول'): _t('م:u:1 R1:a:1 R2:∅:1 R2:a:1 R3:*:*'),
-    ('III', 'فاعل'): _t('م:u:1 R1:a:2 R2:i:1 R3:*:*'),
-    ('III', 'مفعول'): _t('م:u:1 R1:a:2 R2:a:1 R3:*:*'),
-    ('IV', 'فاعل'): _t('م:u:1 R1:∅:1 R2:i:1 R3:*:*'),
-    ('IV', 'مفعول'): _t('م:u:1 R1:∅:1 R2:a:1 R3:*:*'),
-    ('V', 'فاعل'): _t('م:u:1 ت:a:1 R1:a:1 R2:∅:1 R2:i:1 R3:*:*'),
-    ('VI', 'فاعل'): _t('م:u:1 ت:a:1 R1:a:2 R2:i:1 R3:*:*'),
-    ('VII', 'فاعل'): _t('م:u:1 ن:∅:1 R1:a:1 R2:i:1 R3:*:*'),
-    ('VIII', 'فاعل'): _t('م:u:1 R1:∅:1 ت:a:1 R2:i:1 R3:*:*'),
-    ('VIII', 'مفعول'): _t('م:u:1 R1:∅:1 ت:a:1 R2:a:1 R3:*:*'),
-    ('X', 'فاعل'): _t('م:u:1 س:∅:1 ت:a:1 R1:∅:1 R2:i:1 R3:*:*'),
-    ('X', 'مفعول'): _t('م:u:1 س:∅:1 ت:a:1 R1:∅:1 R2:a:1 R3:*:*'),
-}
-# لواحق الاسم بعد آخر الأصول: التاء المربوطة، ونون الجمع والمثنى، وتاء جمع المؤنث
-NOUN_SUFFIX = ('ة', 'ن', 'ت')
-
-
-def _match_participle(cells, tmpl):
-    """→ (الأصول، α، العمليات) أو None. صحيح الأصول وحده (المعتل يُترك للمدخل المعجمي)"""
-    if len(cells) < len(tmpl):
-        return None
-    rad, alpha, ops = {}, [], []
-    for (C, H, L), c in zip(tmpl, cells):
-        if C.startswith('R'):
-            if c.C in 'وي' and not (C == 'R2' and tmpl[0] == ('R1', 'a', 2) and c.H == 'i') or rad.get(C, c.C) != c.C:
-                return None
-            rad[C] = c.C
-            alpha.append(C.lower())
-        else:
-            if c.C != C and not (C == 'ت' and c.C in 'طد'):
-                return None
-            if c.C != C:
-                ops.append(f'إبدال ت ← {c.C}')
-            alpha.append(f'زائد:{C}')
-        if H != '*' and c.H != H or L != '*' and c.L != L:
-            return None
-    rest = cells[len(tmpl):]
-    if len(rest) > 1 or rest and rest[0].C not in NOUN_SUFFIX:
-        return None
-    alpha += ['لاحقة'] * len(rest)
-    return ''.join(rad[k] for k in sorted(rad)), alpha, ops
-
-
-import os as _os
-RANK_BY_ATTESTATION = _os.environ.get('SARF_RANK_ATTESTATION') == '1'
-
-
-def _verb_ilal(H, root):
-    """عين الفعل الثلاثي في HFN: «معلّ» إن جاء ماضيه بألفٍ بعد الفاء (قَامَ، بَاعَ)، و«صحيح» إن ثبتت العين
-    واواً أو ياءً متحركة (عَوِرَ)، وإلا None"""
-    out = set()
-    for e in H.index.get((root, 'I'), []):
-        t = letters(e['verb'])
-        if len(t) >= 2 and t[1][0] == 'ا':
-            out.add('معلّ')
-        elif len(t) >= 2 and t[1][0] in 'وي' and t[1][1] & {FATHA, DAMMA, KASRA}:
-            out.add('صحيح')
-    return 'معلّ' if out == {'معلّ'} else 'صحيح' if out == {'صحيح'} else ('كلاهما' if out else None)
-
-
-def participle_analyses(cells):
-    """→ [(الجذر، الوزن، فاعل/مفعول، α، العمليات، المستوى)] مرخَّصة بحدثٍ في HFN بالجذر والوزن،
-    أو بالجذر وحده إن لم يُرخَّص بحدثٍ شيء (كما في الفعل)"""
-    from .root import hfn
-    H = hfn()
-    matched = []
-    for (cls, kind), tmpl in PARTICIPLES.items():
-        m = _match_participle(cells, tmpl)
-        if m:
-            root, alpha, ops = m
-            matched.append((root, cls, kind, alpha, ops))
-            # الأجوف: «اسم الفاعل يعتلّ باعتلال فعله» (ابن يعيش، شرح المفصل ج5 ص448): قَامَ ← قَائِم، بَاعَ ← بَائِع.
-            # فهمزة فاعل بعد الطول بدلٌ من العين بشرط أن يكون الفعل نفسه مُعَلَّ العين (في ماضيه ألف: قَامَ)؛
-            # فإن صحّت عينه في الفعل (عَوِرَ) صحّت في اسم الفاعل (عَاوِر) ولم تُهمز
-            if cls == 'I' and kind == 'فاعل' and root[1] == 'ء':
-                for w in 'وي':
-                    r2 = root[0] + w + root[2]
-                    if _verb_ilal(H, r2) in ('معلّ', 'كلاهما'):
-                        matched.append((r2, cls, kind, alpha, ops + [f'إبدال العين {w} ← ء: الفعل معلّ العين']))
-            # المثال والمهموز في افتعل: الفاء تاء مدغمة (مُتَّخِذ ← ءخذ)
-            if cls == 'VIII' and root[0] == 'ت':
-                for w in 'ءوي':
-                    matched.append((w + root[1:], cls, kind, alpha, ops + [f'إبدال الفاء {w} ← ت']))
-        # الناقص: اللام محذوفة، فالعين آخر الأصول بكسرٍ طويل قبل نون الجمع أو بتنوين (مُعۡتَدِينَ، مُعۡتَدٍ)
-        if tmpl[-1][0] == 'R3' and len(cells) >= len(tmpl) - 1:
-            short = tmpl[:-1]
-            head = cells[:len(short)]
-            last = head[-1] if head else None
-            if last is not None and last.H == 'i' and (last.L == 2 or last.O.get('tanwin')):
-                m = _match_participle(head, short[:-1] + [(short[-1][0], 'i', '*')]) if \
-                    len(cells) - len(short) <= 1 else None
-                if m and (len(cells) == len(short) or cells[-1].C == 'ن'):
-                    for w in 'وي':
-                        matched.append((m[0] + w, cls, kind, m[1] + ['لاحقة'] * (len(cells) - len(short)),
-                                        m[2] + [f'حذف اللام {w}']))
-    # وعينٌ واو أو ياء صحيحة في فاعل (عَاوِر) لا تكون إلا من فعلٍ صحيح العين (عَوِرَ)
-    matched = [x for x in matched if not (x[1] == 'I' and x[2] == 'فاعل' and x[0][1] in 'وي' and
-                                          'إبدال العين' not in ' '.join(x[4]) and _verb_ilal(H, x[0]) not in ('صحيح', 'كلاهما'))]
-    ev = [x + ('حدث',) for x in matched if (x[0], x[1]) in H.index]
-    if RANK_BY_ATTESTATION and len({x[0] for x in ev}) > 1:
-        # الترجيح بقوة الشهادة في HFN (A أقوى من B … E)، إن تفاضلت؛ وإلا بقي الاحتمال (تجربة تنتظر الإقرار)
-        rank = {x[0]: min((e['tier'][:1] or 'Z') for e in H.index[(x[0], x[1])]) for x in ev}
-        best = min(rank.values())
-        if sum(1 for r in set(rank) if rank[r] == best) == 1:
-            ev = [x + () for x in ev if rank[x[0]] == best]
-    return ev or [x + ('جذر',) for x in matched if x[0] in H.roots]
 
 
 # ---------- معاني صيغ الأفعال (ملف أوزان الأفعال بمصادره، غير مصدَّق من صاحب النظرية) ----------
@@ -786,89 +536,6 @@ def wazn_meaning(cls):
                                     ' | '.join(u for u in (x['source_shadha'], x['source_sibawayh'], x['source_radi']) if u),
                                     'مُقَرّ' if x['owner_ratified'] == 'YES' else 'غير مُقَرّ')
     return _WMEAN.get(cls)
-
-
-# ---------- أبنية الأسماء عند سيبويه (الكتاب ج4 ص242 وما بعدها): قوالب للاسم ----------
-_SIB = None
-SIB_PATHS = ['data/patterns/awzan_sibawayh_308.csv']
-
-
-def sibawayh_patterns():
-    """→ [(المعرِّف، الصفحة، البناء، القالب، الأمثلة)] من ملف أبنية سيبويه: الموجود والنادر المعيَّن الضبط،
-    والقالب بخلايا البناء: ف ع ل ↦ R1 R2 R3 (والرباعي والخماسي لاماته R3…R5)، وآخر خلية حركتها حركة الإعراب"""
-    global _SIB
-    if _SIB is not None:
-        return _SIB
-    import csv, os
-    H = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    path = next((os.path.join(H, x) for x in SIB_PATHS if os.path.exists(os.path.join(H, x))), None)
-    _SIB = []
-    if not path:
-        return _SIB
-    for x in csv.DictReader(open(path, encoding='utf-8-sig')):
-        pat = x['pattern_vocalized']
-        if x['status'] not in ('EXISTS', 'RARE') or x['vocalization_basis'] == 'UNDETERMINED' or '?' in pat:
-            continue
-        cs, _ = cells_of(pat, 'p')
-        if not cs:
-            continue
-        quad = x['section'].startswith(('رباعي', 'خماسي'))
-        seen, tmpl = {}, []
-        lams = 0
-        for c in cs:
-            if c.C in 'فع':
-                C = 'R1' if c.C == 'ف' else 'R2'
-            elif c.C == 'ل':
-                if quad and not (c.H == 'a' and False):
-                    # الرباعي والخماسي: كل لامٍ أصلٌ جديد، إلا الشدة (اللام الثانية من خليتي الشدة)
-                    if c.O.get('role') == 'شدة: الثاني':
-                        C = f'R{2 + lams}'
-                    else:
-                        lams += 1
-                        C = f'R{2 + lams}'
-                else:
-                    C = 'R3'
-            else:
-                C = c.C
-            tmpl.append((C, c.H, c.L))
-        last = len(tmpl) - 1
-        if pat[-1] in '\u064C\u064F':                # الحركة الأخيرة إعراب
-            C, H_, L = tmpl[last]
-            tmpl[last] = (C, '*', '*' if L == 1 else L)
-        _SIB.append((x['id'], x['page'], pat, tmpl, x['examples']))
-    return _SIB
-
-
-def sibawayh_analyses(cells):
-    """→ [(الجذر، المعرِّف، الصفحة، البناء، α، الأمثلة)] لكل بناءٍ يطابق الخلايا وجذرُه في HFN"""
-    from .root import hfn
-    H = hfn()
-    out = []
-    for sid, page, pat, tmpl, ex in sibawayh_patterns():
-        if len(cells) < len(tmpl):
-            continue
-        rad, alpha, ok = {}, [], True
-        for (C, Hh, L), c in zip(tmpl, cells):
-            if C.startswith('R'):
-                if rad.get(C, c.C) != c.C or (c.C in 'وي' and c.H == '∅' and False):
-                    ok = False; break
-                rad[C] = c.C
-                alpha.append(C.lower())
-            elif c.C != C:
-                ok = False; break
-            else:
-                alpha.append(f'زائد:{C}')
-            if Hh != '*' and c.H != Hh or L != '*' and c.L != L:
-                ok = False; break
-        if not ok:
-            continue
-        rest = cells[len(tmpl):]
-        if len(rest) > 1 or rest and rest[0].C not in NOUN_SUFFIX:
-            continue
-        root = ''.join(rad[k] for k in sorted(rad))
-        if root in H.roots:
-            out.append((root, sid, page, pat, alpha + ['لاحقة'] * len(rest), ex))
-    return out
 
 
 # ---------- المستوى 3: الجملة (الآية) ----------
@@ -1132,7 +799,17 @@ def sentence_geo(a, vid, T):
         if ok:
             ob.ev = Evidence(f'«{r["operator"]}» عاملٌ مقبول', proof or ['مطابقة'],
                              [('مخالفة العلامة', f'المكتوب {r.get("observed")}')] if r.get('observed') else [])
-            S.B.append((r.get('role') or r.get('expected') or 'عمل', src.id, dst.id, ob.ev))
+            rel_ = r.get('role') or r.get('expected') or 'عمل'
+            if src is dst:
+                # العامل ومعموله في وحدةٍ لفظية واحدة (بِسۡمِ): الطرفان خانتان داخلها بهويتيهما، لا الوحدة نفسها
+                ws_ = a['segments'][r['word_index']]['slots']
+                a_id, b_id = f'{src.id}.s{r["slot"]}', f'{dst.id}.s{t["slot"]}'
+                S.B.append((f'{rel_} (داخل الوحدة: «{ws_[r["slot"]]["text"]}» ← '
+                            f'«{a["segments"][t["word_index"]]["slots"][t["slot"]]["text"]}»)', a_id, b_id, ob.ev))
+                S.O.setdefault('inner', {})[a_id] = src.id
+                S.O['inner'][b_id] = dst.id
+            else:
+                S.B.append((rel_, src.id, dst.id, ob.ev))
         else:
             ob.reason = 'العلامة المكتوبة تخالف أثر العامل' if r.get('consistent') is False else 'لا معمول في الآية'
         S.Omega.append(ob)
@@ -1821,9 +1498,29 @@ def cond_structs(feats, nuc_pos, starts):
             continue
         jazm = is_form(text, COND_JAZM, prefix=True)
         tool = next((x for x in COND_JAZM + COND_NONJAZM if is_form(text, (x,), prefix=True)), text)
-        # فعل الشرط: أول فعلٍ بعد الأداة في كلماتٍ قليلة (إِذَا ٱلسَّمَآءُ ٱنشَقَّتۡ)
-        s_pos = next((k for k in range(t + 1, min(n, t + 5)) if feats[k]['verb'] or k in nuc_pos), None)
-        obl = [('فعل الشرط', s_pos is not None, f'«{feats[s_pos]["text"]}»' if s_pos is not None else 'لم يُكشف فعل الشرط')]
+        # رأس جملة الشرط: الكلمة التي تلي الأداة (بعد «ما» الزائدة: إِذَا مَا دُعُواْ)، فعلاً ثبتت فعليته أو بصورته
+        # (وَإِذَا قِيلَ: «قِيلَ» رأسها وإن لم تثبت فعليته بالإسناد، فلا يُتخطّى إلى «لَا تُفۡسِدُواْ» داخل المقول).
+        # فإن كان اسماً بدليله (إِذَا ٱلسَّمَآءُ ٱنشَقَّتۡ) فالفعل بعده، ولا يُتجاوز نفيٌ أو ما له الصدارة
+        h1 = t + 2 if t + 2 < n and is_form(feats[t + 1]['text'], ('مَا',)) and tool in ('إِذَا', 'إِنْ', 'أَيْنَمَا') else t + 1
+        g1 = feats[h1]
+        if g1.get('noun') and not g1['verb'] and h1 not in nuc_pos:
+            s_pos = next((k for k in range(h1 + 1, min(n, h1 + 4)) if feats[k]['verb'] or k in nuc_pos), None)
+            if s_pos is not None and any(starts[j] or feats[j].get('neg') for j in range(h1 + 1, s_pos)):
+                s_pos = None
+        else:
+            s_pos = h1
+        # الجازمة يليها مضارعٌ مرفوع أو منصوب كتابةً (ثبوت النون، الضمة): ليست شرطية هنا (وَمَا يَخۡدَعُونَ: نافية)
+        if jazm and s_pos is not None:
+            from .affix import stem_info as _si
+            sx = _si(feats[s_pos]['text'])
+            mood = feats[s_pos].get('mood') or sx.get('mood')
+            if (feats[s_pos]['verb'] == 'mudari' or sx.get('kind') == 'mudari') and \
+                    (mood in ('رفع', 'نصب') or sx.get('suffix') == 'نون الرفع'):
+                continue
+        s_verb = s_pos is not None and (feats[s_pos]['verb'] or s_pos in nuc_pos or feats[s_pos].get('vshape'))
+        obl = [('فعل الشرط', bool(s_verb),
+                f'«{feats[s_pos]["text"]}»' + ('' if feats[s_pos]['verb'] or s_pos in nuc_pos else ' (بصورته، أو لأنه يلي الأداة)')
+                if s_pos is not None else 'لم يُكشف فعل الشرط')]
         q_pos, q_kind = None, None
         if True:
             # يُبحث عن دليل ربط الجواب ولو لم يُكشف فعل الشرط (وَلَوۡ شَآءَ ٱللَّهُ لَذَهَبَ)
@@ -1890,8 +1587,19 @@ def clause_word(feats, h, nuc_pos):
         return True
     if (g.get('neg') or g.get('cond_amb')) and (nv or nxt and nxt.get('head') in ('pron', 'pp')) and not g.get('rel'):
         return True
-    pp = g.get('head') in ('pron', 'pp') or is_form(g['text'], PP_WORD_V, prefix=True)
-    return bool(nxt) and pp and not nxt['conj']
+    if g.get('head') == 'pron':
+        return bool(nxt) and not nxt['conj']
+    pp = g.get('head') == 'pp' or is_form(g['text'], PP_WORD_V, prefix=True)
+    return pp and _pp_clause(feats, h, nuc_pos)
+
+
+def _pp_clause(feats, h, nuc_pos):
+    """شبه الجملة بعد العاطف يبدأ جملةً إن تلاه ما يتمّ به الكلام: مرفوعٌ (خبرٌ مقدَّم ومبتدأ مؤخَّر: وَلَهُمۡ عَذَابٌ)،
+    أو فعل، أو ضمير؛ فإن تلاه مجرورٌ أو منصوب (وَبِٱلۡيَوۡمِ ٱلۡأٓخِرِ) فهو مفردٌ معطوف"""
+    nxt = feats[h + 1] if h + 1 < len(feats) else None
+    return bool(nxt) and not nxt['conj'] and (nxt['case'] == 'رفع' or nxt['verb'] or h + 1 in nuc_pos or
+                                              nxt.get('head') == 'pron' or nxt.get('demo') or nxt.get('vshape') and
+                                              not nxt.get('noun'))
 
 
 def coord_structs(feats, nuc_pos, starts, not_conj, is_clause):
@@ -2038,7 +1746,8 @@ def _boundary_kind(p, js, spans, cspans, nuc_pos, qawl_pos, starts, feats=None):
         clause = (g['verb'] or starts[h] or h in nuc_pos) and not (h > p + 1 and g['conj']) or \
             set(g.get('ops', [])) & VERBAL_OPS or g.get('amma') or \
             (set(g.get('ops', [])) & {'6', '7'} or g.get('neg') or g.get('cond_amb')) and nxt_v and not g.get('an') or \
-            (g['case'] == 'رفع' or g.get('head') in ('pron', 'pp')) and span > 1
+            (g['case'] == 'رفع' or g.get('head') == 'pron' or g.get('head') == 'pp' and _pp_clause(feats, h, nuc_pos)) and \
+            span > 1
         if clause:
             return ('proven', f'نهاية جملة قبل {name}: وما بعدها {relations_after(feats, p)}')
         return None
@@ -2133,6 +1842,14 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
                         fv['conj'], fv['conj_letter'] = True, fv['first']
                         if not fv['verb'] and not R_:
                             fv['verb'] = _si(rest).get('kind')
+                elif fv['conj'] and not fv['verb'] and fv['conj_letter'] in ('و', 'ف') and 'slots' in seg:
+                    # فصلها المقشِّر برخصة البقية (فَ + جَعَلۡنَٰهُمُ): فعليّة البقية بدليلها المكتوب كما في الملتصقة
+                    from .affix import stem_info as _si
+                    stem = next((x['text'] for x in seg['slots'] if x['type'] == 'جذع'), '')
+                    rest = (stem + ''.join(x['text'] for x in seg['slots'][[x['type'] for x in seg['slots']].index('جذع') + 1:])
+                            if stem else '').replace(DAGGER_ALIF, 'ا')
+                    if rest and _si(rest).get('pos') == 'verb':
+                        fv['verb'] = _si(rest).get('kind')
                 feats.append(fv)
             bonds += [b for b in S.B if isinstance(b[1], str) and b[0] != 'تجاور']
             obls += list(S.Omega)
@@ -2171,6 +1888,25 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
                 rel_samples.append(dict(location=words_text(words, r['head']), text=' '.join(wtext[r['head']:r['end']]),
                                         silah=r['silah'], obligations=[list(o) for o in r['obligations']]))
         rel_at = {r['head']: r for r in rels}
+        # موضع كل كلمة في البناء (مراجعة التقرير ١٠): الموضع ← الدور المرخَّص؛ والتتابع وحده لا يجعل للكلمة موضعاً
+        roles = {}
+        for r in rels:
+            roles.setdefault(r['head'], f'موصول ({r["silah"] or "صلته غير مكشوفة"})')
+        # النوى المرتبطة ببنيةٍ أعلى (مراجعة التقرير ٦): تعدّد النوى طبيعيٌّ في الخبر الجملي والصلة والشرط والمقول
+        # والمعطوف؛ والسؤال: هل بقيت نواةٌ غير مرتبطة؟ → الموضع ← سبب الارتباط
+        nset = set(nuc_pos)
+        bound = {}
+        for r in rels:
+            for k in range(r['head'] + 1, r['end']):
+                if k in nset:
+                    bound.setdefault(k, f'صلة «{wtext[r["head"]]}»')
+        for b in bonds:
+            if b[0].startswith('خبر «') and b[2] in pos_of:
+                bound.setdefault(pos_of[b[2]], b[0])
+        for q in qawl_pos:
+            k = next((k for k in range(q + 1, min(n, q + 6)) if k in nset), None)
+            if k is not None and not any(starts[j] and starts[j][0] != 'نداء' for j in range(q + 1, k)):
+                bound.setdefault(k, f'مقول «{wtext[q]}»')
         not_conj = set()
         for c_ in cond_structs(feats, set(nuc_pos), starts):
             st['cond'] += 1
@@ -2191,6 +1927,12 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
                     inner.setdefault(k, ('open', f'جواب «{c_["tool"]}» غير مستوفى' + (f' ({c_["q_kind"]})' if c_['q_kind'] else '')))
             if c_['q_pos'] is not None and feats[c_['q_pos']]['conj'] and feats[c_['q_pos']]['conj_letter'] == 'ف':
                 not_conj.add(c_['q_pos'])
+            roles.setdefault(c_['head'], f'أداة شرط «{c_["tool"]}»')
+            for k, why in ((c_['s_pos'], 'فعل الشرط'), (c_['q_pos'], 'جواب الشرط')):
+                if k is not None:
+                    kk = next((j for j in range(k, min(n, k + 4)) if j in nset), None)
+                    if kk is not None:
+                        bound.setdefault(kk, f'{why} «{c_["tool"]}»')
             if len(cond_samples) < 40:
                 cond_samples.append(dict(location=words_text(words, c_['head']),
                                          text=' '.join(wtext[c_['head']:(c_['q_pos'] or c_['head']) + 4]),
@@ -2199,6 +1941,22 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
             d_ = _boundary_kind(p_, 0, [], [], nuc_pos, set(), starts, feats)
             return bool(d_) and d_[1].startswith('نهاية جملة قبل')
         for c_ in coord_structs(feats, set(nuc_pos), starts, not_conj, _is_clause):
+            if c_['level'] == 'جملة':
+                # الطرفان بهويتيهما ونطاقيهما (مراجعة التقرير ٧): A الجملة التي تنتهي قبل العاطف (من نواتها السابقة)،
+                # وB الجملة التي تبدأ به (إلى نواتها). وبلا نواةٍ قبلها فالطرف A غير معيَّن، ولا يُعدّ العطف عطفَ جملة مثبتاً
+                k0 = c_['pos']
+                a_n = next((j for j in range(k0 - 1, max(-1, k0 - 15), -1) if j in nset), None)
+                b_n = next((j for j in range(k0, min(n, k0 + 4)) if j in nset), None)
+                c_['A'] = [dict(nucleus=wtext[a_n], span=(a_n, k0 - 1), text=' '.join(wtext[a_n:k0]))] if a_n is not None else []
+                c_['B_scope'] = dict(nucleus=wtext[b_n] if b_n is not None else None, start=k0)
+                if a_n is not None and b_n is not None:
+                    bound.setdefault(b_n, f'معطوفٌ على جملة «{wtext[a_n]}»')
+                else:
+                    st['coord:جملة:طرفٌ غير معيَّن'] += 1
+            if c_['level'] == 'جملة' and c_['A'] or c_['level'] == 'مفرد' and len(c_['A']) == 1:
+                roles.setdefault(c_['pos'], f'حرف عطف «{c_["letter"]}»')
+                if c_['level'] == 'مفرد':
+                    roles.setdefault(c_['B'], f'معطوفٌ على «{wtext[c_["A"][0]]}»')
             st['coord'] += 1
             st[f'coord:{c_["level"]}'] += 1
             st[f'coord:{c_["letter"]}'] += 1
@@ -2206,7 +1964,8 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
                 st['coord:مفرد:' + ('معيَّن' if len(c_['A']) == 1 else 'بدائل' if c_['A'] else 'غير معيَّن')] += 1
             if len(coord_samples) < 60:
                 coord_samples.append(dict(location=words_text(words, c_['pos']), letter=c_['letter'], level=c_['level'],
-                                          B=wtext[c_['B']], A=[wtext[j] for j in c_['A']][:4] if c_['level'] == 'مفرد' else c_['A'],
+                                          B=wtext[c_['B']], A=[wtext[j] for j in c_['A']][:4] if c_['level'] == 'مفرد' else
+                                          [f'«{x["text"]}» (نواتها «{x["nucleus"]}»)' for x in c_['A']],
                                           effect=c_['effect']))
         pending = {}                                  # موضع الحدّ ← (inner | open، السبب) لخبر الموصول المبتدأ
         for p in range(n):
@@ -2297,11 +2056,35 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
             if len(my_nuc) == 0:
                 J.Omega.append(Obligation('نواة الجملة', reason='لا نواة إسنادٍ محلَّلة (الجملة الاسمية لم تُحلَّل بعد)'))
                 st['J_no_nucleus'] += 1
-            elif len(my_nuc) > 1:
-                J.Omega.append(Obligation('حدود الجمل', reason=f'{len(my_nuc)} نوى في وحدة خطابية واحدة، وحدّ ما بينها غير مثبت'))
-                st['J_multi_nucleus'] += 1
+            # كل كلمة موضعها مرخَّص: طرفُ رابطٍ ثابت، أو دورٌ في بنية (صلة، شرط، عطف)، أو نواةٌ، أو نفيٌ/«قد» قبل فعل
+            placed_ids = {x for b in my_bonds for x in (b[1], b[2]) if isinstance(x, str)}
+            unplaced = []
+            for p in range(p0, p1 + 1):
+                ids_p = {G.id for G in wunits[p]}
+                ok_p = any(i in placed_ids or any(x.startswith(i + '.s') for x in placed_ids) for i in ids_p) or \
+                    p in roles or p in bound or p in nset or starts[p] or \
+                    any(G.Theta.get('lex') == 'حروف مقطّعة' for G in wunits[p]) or \
+                    (feats[p].get('neg') or feats[p].get('qad')) and p + 1 < n and (feats[p + 1]['verb'] or p + 1 in nset)
+                if not ok_p:
+                    unplaced.append(wtext[p])
+            J.O['unplaced'] = unplaced
+            if unplaced:
+                J.Omega.append(Obligation('موضع كل كلمة', reason=f'{len(unplaced)} كلمة بلا موضعٍ مرخَّص في البناء '
+                                          f'(التتابع وحده لا يكفي): ' + '، '.join(unplaced[:4])))
+                st['J_unplaced'] += 1
+                for w_ in unplaced:
+                    st['unplaced_words'] += 1
+            if len(my_nuc) == 0:
+                pass
             else:
-                st['J_one_nucleus'] += 1
+                free = [x for x in my_nuc if pos_of.get(x[0]) not in bound]
+                J.O['bound'] = [(x[1], bound[pos_of[x[0]]]) for x in my_nuc if pos_of.get(x[0]) in bound]
+                if len(free) > 1:
+                    J.Omega.append(Obligation('نوى غير مرتبطة', reason=f'{len(free)} نوى لم تثبت علاقتها ببنيةٍ أعلى: ' +
+                                              '، '.join(x[1] for x in free[:3])))
+                    st['J_free_nuclei'] += 1
+                else:
+                    st['J_bound_nuclei' if len(my_nuc) > 1 else 'J_one_nucleus'] += 1
             # جواز الوقف لا يُغلق الجملة: يلزم عند حدّها تمامٌ وخلوٌّ مفحوص من التعلّق اللفظي العابر
             if rec['L'] or not rec['L_checked']:
                 J.Omega.append(Obligation('استقلال الحدّ لفظاً',

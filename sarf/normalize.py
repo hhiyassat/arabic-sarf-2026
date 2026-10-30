@@ -31,7 +31,7 @@ DAGGER_ON_MAQSURA = re.compile('(ى[\u064B-\u0652]*)\u0670')
 UTHMANI_DROP = set(chr(c) for c in range(0x06D6, 0x06EE)) - set(UTHMANI_MAP) | {'۟', 'ـ', '\u0653'}
 MADD_AFTER_FATHA = re.compile('(\u064E\u0651?|\u0651\u064E)\u0622')
 
-LONE_ALIF = re.compile('([\u064B\u08F0][\u0651\u06D6-\u06ED]*)\\s+(ا[\u06D6-\u06ED]*)(?=\\s|$)')
+LONE_ALIF = re.compile('([\u064B\u08F0][\u0651\u06D6-\u06ED]*)\\s+([اى][\u06D6-\u06ED]*)(?=\\s|$)')
 KFGQPC_MAP = {0x08F0: 0x064B, 0x08F1: 0x064C, 0x08F2: 0x064D, 0x200F: None, 0x065C: None}
 # الهمزة المنفصلة عن كرسيّها بحركة: على المطّة ← ء (مَـَٔابًا)، وعلى الياء غير المنقوطة ← ئ (لِقَاۤىِٕ)،
 # وعلى الواو ← ؤ (ٱللُّؤۡلُوِٕ)، وعلى الألف الخنجرية ← أ (فَٱدَّٰرَٰٔتُمۡ)؛ والحركة بينهما تبقى
@@ -142,7 +142,8 @@ def uthmani_normalize(text, implicit_sukun=None):
     implicit_sukun: في الرسم العثماني الحرف العاري (غير المدّي) ساكن مُخفى/مدغم (تَدَايَنتُم).
     None ⇒ يُفعَّل تلقائياً إن ظهرت علامات عثمانية في النص.
     """
-    # ألفُ تنوين النصب مفصولةً بمسافة (عيبٌ في بعض نسخ مصحف المجمّع الرقمية: صَفࣰّ اۖ): لا كلمة هي ألف وحدها
+    # ألفُ تنوين النصب أو الألف المقصورة مفصولةً بمسافة (عيبٌ في بعض نسخ مصحف المجمّع الرقمية: صَفࣰّ اۖ، مُّسَمࣰّ ى):
+    # لا كلمة هي ألفٌ وحدها
     text = LONE_ALIF.sub(r'\1\2', text)
     if implicit_sukun is None:                         # يُكشف قبل أي تعديل (ومنه NFC الذي يدمج ٓ في آ)
         implicit_sukun = any(ch in UTHMANI_SIGNS or ord(ch) in KFGQPC_MAP or ch in '\u06E1\u0654\u0655' for ch in text)

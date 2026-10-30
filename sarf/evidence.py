@@ -14,10 +14,12 @@ R6     حرف الجر وواو المعية: يُمنعان إن كان ما ب
        أو ساكن الآخر وليس مبنياً من الملف (وَلَقَدۡ، وَلَهُمۡ)
 R8     السابقة: تُمنع إن بدأت بقية الكلمة بساكن أو مشدَّد (غير اللام وهمزة الوصل وبِسۡمِ)
 R9     بِ وكَ وتَ الجارّة المتصلة: تُمنع إن كان بعدها فعل
+R10    السابقة ذات الحرف الواحد (و ف ك ل ب): لا تُفصل بلا رخصةٍ للبقية؛ فإن رُخِّصت الكلمة كلها ببنائها
+       أو معجمها ولم تُرخَّص البقية، فالحرف من أصل الكلمة (كَبِيرًا، وَلِيُّهُۥ، لِقَآءَ، فَرِهَٰنٌ ← بل ف + رِهَٰن)
 R7     اسم الشرط الجازم (مج 7): يُمنع إن كان ما بعده مرفوعاً كتابةً أو ضمير رفع منفصلاً
        (مَا تَفْعَلُونَ، مَا يَوْمُ ٱلدِّينِ)؛ ولا يشمل لَوْ وإِذَا لأنهما لا تجزمان
 """
-from .chars import FATHA, DAMMA, DAMMATAN, SUKUN, SHADDA, plain, strip_marks as _strip_marks
+from .chars import letters, FATHATAN, KASRATAN, FATHA, KASRA, DAMMA, DAMMATAN, SUKUN, SHADDA, plain, strip_marks as _strip_marks
 from .match import match_letters, PRON_SUFFIXES, vform_match
 from .affix import stem_info, raf_mark, RAF_PRONOUNS
 from .status import DEFERRED, BLOCKED
@@ -35,7 +37,80 @@ def _target_after(f, words):
     nxt = f['word_index'] + 1
     return words[nxt] if nxt < len(words) else None
 
-def reject_candidates(found, words):
+HAMZA_LETTERS = 'ءأإآؤئ'
+# حرف الجر مدغماً في «ما» أو «مَن» الاستفهامية أو الموصولة: بنيةٌ معروفة بعد السابقة (وَمِمَّا، وَعَمَّا، وَفِيمَا)
+MERGED_V = ('مِمَّا', 'مِمَّنْ', 'عَمَّا', 'عَمَّنْ', 'فِيمَا', 'فِيمَ', 'بِمَا', 'بِمَ', 'لِمَا', 'لِمَ', 'كَمَا', 'مِمَّ',
+            'عَمَّ', 'إِلَامَ',
+            # أسماءٌ مبنية أو ملازمة للإضافة تقع بعد السابقة (وَلِذِي، لَمَعَكُمۡ)
+            'ذِي', 'ذُو', 'ذَا', 'ذَاتِ', 'ذَوَاتَيْ', 'أُولِي', 'أُولُو', 'مَعَ', 'مَعَكُمْ', 'مَعَهُ', 'مَعَهُمْ', 'مَعَنَا', 'مَعِيَ')
+PROCLITIC_ONE = ('وَ', 'فَ', 'كَ', 'لِ', 'لَ', 'بِ')
+
+
+def _strip_enclitic(t):
+    """البقية بلا الضمير المتصل في آخرها (مَعَكُمۡ ← مَعَ)"""
+    from .cells import ENCLITICS_V
+    toks = match_letters(t)
+    for suf in ENCLITICS_V:
+        k = len(match_letters(suf))
+        if len(toks) > k + 1 and vform_match(toks[-k:], [suf]):
+            return _text(toks[:-k])
+    return t
+
+
+def _licence(f, tgt, found, lex):
+    """R10: سببُ منع الفصل إن رُخِّصت الكلمة كلها ولم تُرخَّص البقية، وإلا None.
+    رخصة البقية: جذعٌ مرخَّص (sarf.cells.stem_licence)، أو ضمير متصل، أو مبني في الملف، أو «أل» أو همزة وصل
+    يليها ساكن، أو همزة، أو عاملٌ آخر يبدأ بعدها. والرخصتان تُحفظان في المرشَّح للبيان"""
+    from .cells import stem_licence, licence_strength
+    op = f['operator']
+    if not vform_match(op, PROCLITIC_ONE):
+        return None
+    toks = match_letters(tgt)
+    if not toks:
+        return None
+    L0, m0 = toks[0]
+    nxt = toks[1] if len(toks) > 1 else None
+    bare = _strip_enclitic(tgt)
+    # البقية كما كُتبت (بالخنجرية): ذَٰلِكَ في الملف لا «ذَالِكَ»
+    raw = ''.join(L + ''.join(sorted(m)) for L, m in letters(f['word'])[1:]) if len(f['operator']) <= 2 else tgt
+    # البقية بنيةٌ يعرفها المقشِّر (قوة 3): همزة، ضمير متصل، همزة وصل يليها ساكن، لام «أل» بعد لام الجر، مبنيٌّ في
+    # الملف، حرفٌ وضمير أو مبني (لَهُۥ، لِذِي)، أو عاملٌ آخر يبدأ بعدها
+    structural = L0 in HAMZA_LETTERS or vform_match(tgt, PRON_SUFFIXES) or vform_match(tgt, MERGED_V) or \
+        L0 == 'ا' and nxt is not None and (not nxt[1] or SUKUN in nxt[1] or SHADDA in nxt[1] or nxt[0] == 'ل') or \
+        vform_match(op, ('لِ',)) and L0 == 'ل' and (not m0 or SUKUN in m0) or \
+        bool(lex and any(lex.lookup(t) or lex.attested(t) for t in {tgt, bare, raw, _strip_enclitic(raw)})) or \
+        L0 in 'لبك' and len(toks) > 1 and m0 & {FATHA, KASRA} and \
+        (not any(m & {SHADDA, DAMMATAN, KASRATAN, FATHATAN} for _, m in toks[1:]) and
+         vform_match(toks[1:], PRON_SUFFIXES) or bool(lex and lex.lookup(_strip_enclitic(_text(toks[1:]))))) or \
+        any(g is not f and g['word_index'] == f['word_index'] and g.get('char_span') and
+            g['char_span'][0] >= f['char_span'][1] for g in found)
+    word = _text(match_letters(f['word'], f.get('expanded', True)))
+    whole = stem_licence(word)
+    rest = () if structural else stem_licence(tgt)
+    # الفعل بعد السابقة: لا يدخل الجارّ على الفعل (بِ، كَ)، ولا لام الجر على الماضي (لِقَآءَ ليس لِ + قَاءَ)؛
+    # والبقية التي عليها دليل الاسم (تنوين، أل، تاء مربوطة) ليست فعلاً
+    ri = stem_info(tgt)
+    verb_ok = vform_match(op, ('وَ', 'فَ', 'لَ')) or vform_match(op, ('لِ',)) and ri['kind'] == 'mudari'
+    if not verb_ok or ri['pos'] == 'noun':
+        rest = tuple(x for x in rest if x[0] not in ('فعل', 'فعل محتمل', 'فعل بالكتابة'))
+    s_whole = licence_strength(whole)
+    s_rest = 3 if structural else max(licence_strength(rest), 1 if ri['pos'] == 'verb' and verb_ok else 0)
+    # قراءتا فعلٍ متنافستان (وَجِئۡتُ: «وجء» أو وَ + «جِئۡتُ»): لا تُقدَّم الكلمة كلها على البقية بمرتبة الدليل
+    verbish = ('فعل', 'فعل محتمل', 'فعل بالكتابة')
+    if any(x[0] in verbish for x in whole) and (any(x[0] in verbish for x in rest) or ri['pos'] == 'verb' and verb_ok):
+        s_whole = min(s_whole, s_rest)
+    if 0 < s_whole <= s_rest < 3:
+        f['alternative'] = 'الحرف أصليٌّ في «' + word + '» (' + '، '.join(f'{k}: {r}' for k, r, _ in whole[:2]) + ')'
+    f['licence'] = dict(whole=[list(x) for x in whole[:2]], whole_strength=s_whole,
+                        rest='بنيةٌ معروفة' if structural else [list(x) for x in rest[:2]], rest_strength=s_rest)
+    if s_whole > s_rest:
+        k, root, what = whole[0]
+        return (f'الكلمة كلها مرخَّصة ({k}: {root}، {what}؛ قوة {s_whole})، والبقية «{tgt}» ' +
+                (f'أضعف رخصة (قوة {s_rest})' if s_rest else 'لا رخصة لها') + ': الحرف من أصل الكلمة')
+    return None
+
+
+def reject_candidates(found, words, lex=None):
     for f in found:
         f['status'], f['reject_reason'], f['checked'] = DEFERRED, None, []
     for f in found:
@@ -49,7 +124,19 @@ def reject_candidates(found, words):
         # إلا اللام (فَلۡيَنظُرِ، لِلَّهِ) وهمزة الوصل، و«بِسۡمِ» (حُذفت ألف «اسم» خطاً)
         if f['method'].startswith('proclitic'):
             first_L, first_m = match_letters(tgt)[0]
-            if (SUKUN in first_m or SHADDA in first_m) and first_L not in ('ل', 'ا') and \
+            # اللام المشدَّدة أول البقية لا تكون لام «أل» إلا بعد لام الجر (لِلَّهِ، لِلَّذِينَ: حُذفت الألف خطاً)؛
+            # وبعد غيرها فالشدة من أصل الكلمة (كَلَّا، كَلَّمَ، وَلَّىٰ)
+            shadda_lam = first_L == 'ل' and SHADDA in first_m and not vform_match(op, ('لِ', 'لَ'))
+            lic = _licence(f, tgt, found, lex)
+            if lic:
+                f['checked'].append('R10 رخصة البقية')
+                reason = lic
+                f['radical'] = True
+            elif shadda_lam:
+                f['checked'].append('R8 أول البقية لامٌ مشدَّدة')
+                reason = 'أول ما بعدها لامٌ مشدَّدة بلا لام جرٍّ قبلها: الشدة من أصل الكلمة'
+                f['radical'] = True
+            elif (SUKUN in first_m or SHADDA in first_m) and first_L not in ('ل', 'ا') and \
                     not (len(match_letters(tgt)) > 1 and match_letters(tgt)[0][0] == 'س' and
                          SUKUN in match_letters(tgt)[0][1] and match_letters(tgt)[1][0] == 'م'):   # بِسۡمِ
                 f['checked'].append('R8 أول البقية ساكن')

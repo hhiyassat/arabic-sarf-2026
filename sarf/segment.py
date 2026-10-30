@@ -27,7 +27,7 @@ sarf.segment — المقشِّر: تجزئة الكلمة إلى خانات (sl
 ملاحظة: الحروف من خارج «سألتمونيها» جذرية بعد فصل حروف المعاني المتصلة (العطف، والجر،
 وأل، والضمائر). وتقشير زوائد البنية (أحرف المضارعة وغيرها) لم يُكتب بعد.
 """
-from .chars import (FATHA, DAMMA, KASRA, SUKUN, FATHATAN, DAMMATAN, KASRATAN,
+from .chars import (FATHA, DAMMA, KASRA, SUKUN, SHADDA, FATHATAN, DAMMATAN, KASRATAN,
                     MARKS, letters, plain, strip_marks)
 from .divine import divine_name
 from .match import PRON_SUFFIXES, match_letters, vocal_compatible, vform_match
@@ -91,6 +91,11 @@ def _slot(word, offs, a, b, typ, role, **kw):
     s.update(kw)
     return s
 
+def _wasl_next(tok):
+    """ما يلي همزة الوصل: ساكن، أو حرفٌ عارٍ (لام «أل» الشمسية)، أو مشدَّد، أو لام «أل»"""
+    return not tok[1] or SUKUN in tok[1] or SHADDA in tok[1] or tok[0] == 'ل'
+
+
 def _host(word, toks, offs, a, b, lex, at_word_start):
     """خانات ما ليس عاملاً: مبني من المعجم كاملاً، أو [أل][جذع][ضمير متصل]"""
     text = word[offs[a][0]:offs[b - 1][1]]
@@ -107,10 +112,24 @@ def _host(word, toks, offs, a, b, lex, at_word_start):
                       note=hits[0]['category'])]
     slots = []
     if at_word_start and b - a > 2 and toks[a][0] in ('و', 'ف') and toks[a][1] == {FATHA} and \
-            toks[a + 1][0] == 'ا' and not toks[a + 1][1]:
-        # وَ/فَ قبل همزة الوصل حرف عطف يقيناً: همزة الوصل لا تقع وسط الكلمة (فَٱكْتُبُوهُ)
+            toks[a + 1][0] == 'ا' and not toks[a + 1][1] and _wasl_next(toks[a + 2]):
+        # وَ/فَ قبل همزة الوصل حرف عطف يقيناً: همزة الوصل لا تقع وسط الكلمة (فَٱكْتُبُوهُ)؛ وهمزة الوصل يليها ساكن
+        # أو لام «أل». فإن تحرّك ما بعد الألف فهي ألف مدٍّ من الكلمة (فَاطِرُ، فَارِضٌ، وَابِلٌ)
         slots.append(_slot(word, offs, a, a + 1, MABNI, 'conj', note='حرف عطف'))
         return slots + _host(word, toks, offs, a + 1, b, lex, False)
+    if at_word_start and b - a > 3 and toks[a][0] in ('و', 'ف') and toks[a][1] == {FATHA} and \
+            toks[a + 1][0] != 'ا':
+        # وَ/فَ ملتصقة بما بعدها: تُفصل إن رُخِّصت البقية (فعلاً أو اسماً ببنائه أو مبنياً في الملف) ولم تُرخَّص
+        #   الكلمة كلها (فَجَعَلۡتُمۡ = فَ + جَعَلۡتُمۡ، فَرِهَٰنٌ = فَ + رِهَٰنٌ، فَهُمۡ = فَ + هُمۡ؛ أما وَعَدَ فلا تُفصل)
+        from .cells import stem_licence, licence_strength
+        rest = word[offs[a + 1][0]:offs[b - 1][1]]
+        rest_lic = list(stem_licence(rest)) if _moving(toks[a + 1]) else []
+        rest_mabni = bool(lex and lex.lookup(rest))
+        # لا يُفصل إلا إن خلت الكلمة كلها من رخصة بنائها (أو لم تُرخَّص إلا بصورة المعتلّ): فَشِلۡتُمۡ ماضٍ من «فشل»
+        if licence_strength(stem_licence(text)) <= 0.5 and (rest_mabni or licence_strength(rest_lic) >= 1):
+            why = f'البقية مرخَّصة ({rest_lic[0][0]}: {rest_lic[0][1]})' if rest_lic else 'البقية مبنيٌّ في الملف'
+            slots.append(_slot(word, offs, a, a + 1, MABNI, 'conj', note=f'حرف عطف: {why}، والكلمة كلها بلا رخصة'))
+            return slots + _host(word, toks, offs, a + 1, b, lex, False)
     if b - a > 2 and toks[a][0] == 'ا' and toks[a + 1][0] == 'ل' and \
             (not toks[a + 1][1] or toks[a + 1][1] == {SUKUN}):
         slots.append(_slot(word, offs, a, a + 2, ARTICLE, 'article', note='أل التعريف: ليست في ملف المبنيات'))
@@ -263,7 +282,10 @@ def segment_word(word, wi, cands, lex):
             label = '+'.join(dict.fromkeys(types))
         for s in us:
             s['unit'] = j
-        text = word[offs[a][0]:offs[b - 1][1]] if kind == CUT else ''.join(s['text'] for s in us)
+        # الوحدة المضمومة على شدةٍ بين خانتين (إِلَىَّ = إِلَيْ + يَ، كُنَّ = كُنْ + نَ): نصّها كما كُتب في الكلمة،
+        # لا ضمُّ نصوص الخانتين المفكوكتين، فيعود الرسم بعينه (المبرهنة الخامسة)
+        joined_shadda = len(us) > 1 and any(SHADDA in toks[s['span'][0]][1] for s in us[1:])
+        text = word[offs[a][0]:offs[b - 1][1]] if kind == CUT or joined_shadda else ''.join(s['text'] for s in us)
         out_units.append(dict(text=text, kind=kind, label=label,
                               slots=[s['index'] for s in us], syllables=[]))
     for s in slots:

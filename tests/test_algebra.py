@@ -140,8 +140,10 @@ if hfn() and rows:
         return linguistic_layer(items, T_, 'test')[2]
     R = recs([(2, 282)])
     at = {r['location'][2]: r for r in R}
+    # موضع الكلمة قبل «وَٱتَّقُواْ» (لا رقمٌ ثابت: دمج «مُّسَمࣰّ ى» كلمةً واحدة يغيّر الترقيم)
+    i282 = [s_['word'] for s_ in analyze(cat, rows[(2, 282)])['segments']].index('وَاتَّقُوا') - 1
     check('البقرة ٢٨٢: قبل «وَٱتَّقُواْ» نهاية جملة قبل الواو (حكم صاحب النظرية)، وما بعدها بدائل محفوظة',
-          at.get(120, {}).get('J') == 'proven' and at[120]['J_why'].startswith('نهاية جملة قبل الواو'), at.get(120))
+          at.get(i282, {}).get('J') == 'proven' and at[i282]['J_why'].startswith('نهاية جملة قبل الواو'), at.get(i282))
     at98 = {r['location'][2]: r for r in recs([(37, 98)])}
     check('الصافات ٩٨: «فَأَرَادُواْ بِهِۦ كَيۡدࣰا» جملة صحيحة تنتهي قبل الفاء الملتصقة بـ«فَجَعَلۡنَٰهُمُ»',
           at98.get(2, {}).get('J') == 'proven' and at98[2]['J_why'].startswith('نهاية جملة قبل الفاء'), at98.get(2))
@@ -188,6 +190,52 @@ if hfn() and rows:
     iz = [x for x in sm['cond'] if x['tool'] == 'إِذَا']
     check('البقرة ١١: «وَإِذَا قِيلَ لَهُمۡ … قَالُوٓاْ»: جواب «إذا» ماضٍ بعد جملة الشرط (حكم صاحب النظرية)',
           iz and iz[0]['obligations'][1][1] and 'قَالُوا' in iz[0]['text'], iz)
+    # مراجعة التقرير (٥): رأس جملة الشرط يلي الأداة، لا فعلٌ داخل المقول ولا الجواب نفسه
+    check('البقرة ١١: فعل الشرط «قِيلَ»، لا «تُفۡسِدُواْ» داخل المقول',
+          iz and iz[0]['obligations'][0][2].startswith('«قِيلَ»'), iz and iz[0]['obligations'])
+    sm = structs((2, 20))
+    iz = [x for x in sm['cond'] if x['tool'] == 'إِذَا']
+    check('البقرة ٢٠: «وَإِذَآ أَظۡلَمَ عَلَيۡهِمۡ قَامُواْ»: الشرط «أَظۡلَمَ»، والجواب «قَامُواْ»',
+          iz and iz[0]['obligations'][0][2].startswith('«أَظْلَمَ»') and iz[0]['obligations'][1][1] and
+          'قَامُوا' in iz[0]['text'], iz and iz[0]['obligations'])
+    sm = structs((2, 9))
+    check('البقرة ٩: «وَمَا يَخۡدَعُونَ»: «ما» نافية، والمضارع مرفوعٌ بثبوت النون، فلا شرط',
+          not [x for x in sm['cond'] if 'مَا' in x['tool']], sm['cond'])
+    # مراجعة التقرير (٦، ٧): الخبر الجملي نواةٌ مرتبطة لا مشكلة حدود؛ وطرفا عطف الجملة معيَّنان؛ وشبه الجملة المعطوف مفرد
+    MU, (LT, st_) = layers([(2, 52)])
+    Js = [J for D in LT[0].A + LT[0].O['pending'] for J in D.A + D.O['pending']]
+    jl = next((J for J in Js if any(x.startswith('ناسخ') for x in J.O.get('nuclei', []))), None)
+    check('البقرة ٥٢: «لَعَلَّكُمۡ تَشۡكُرُونَ»: «تَشۡكُرُونَ» خبر «لعل» مرتبط، فلا التزام بحدود الجمل',
+          jl is not None and any(b.startswith('خبر «') for _, b in jl.O.get('bound', [])) and
+          not any(o.name in ('حدود الجمل', 'نوى غير مرتبطة') for o in jl.Omega), jl and (jl.O.get('bound'), [o.name for o in jl.Omega]))
+    sm = structs((2, 8))
+    cy = [x for x in sm['coord'] if x['B'].startswith('وَبِالْيَوْم')]
+    check('البقرة ٨: «وَبِٱلۡيَوۡمِ ٱلۡأٓخِرِ» جارٌّ ومجرور معطوفٌ مفرد (على «بِٱللَّهِ»)، لا جملة', cy and cy[0]['level'] == 'مفرد', cy)
+    sm = structs((2, 3))
+    cj = [x for x in sm['coord'] if x['level'] == 'جملة']
+    check('البقرة ٣: عطف الجملة طرفاه معيَّنان بنواتيهما ونطاقيهما (لا «الجملة قبله»)',
+          cj and all(a_.startswith('«') and 'نواتها' in a_ for x in cj for a_ in x['A']), cj)
+    # الفاحص المستقل (مراجعة التقرير ٩، ١١): يقبل الجملة المغلقة، ويرفضها إن زُيِّفت شهادتها أو حُذف التزامٌ لازم عمداً
+    import copy
+    from sarf.checker import check_sentence
+    T_ = Trace(); items_ = []; an_ = {}
+    for v_ in range(50, 55):
+        a_ = analyze(cat, rows[(2, v_)]); S_, u_ = sentence_geo(a_, f'Q2:{v_}', T_)
+        items_.append((2, v_, a_, u_, S_)); an_[(2, v_)] = a_
+    LT_ = linguistic_layer(items_, T_, 't')[0]
+    Jc = next((J for D in LT_[0].A for J in D.A if J.closed and any(o.name.startswith('معمول') for o in J.Omega)), None)
+    check('الفاحص يقبل جملةً مغلقة بشهادتين صحيحتين (البقرة ٥٤: فَتُوبُوٓاْ إِلَىٰ بَارِئِكُمۡ)',
+          Jc is not None and check_sentence(Jc, an_) == [], Jc and check_sentence(Jc, an_))
+    if Jc is not None:
+        J1 = copy.deepcopy(Jc); J1.Omega = [o for o in J1.Omega if not o.name.startswith('معمول')]
+        check('ويرفضها إن حُذف منها التزامٌ يلزم بالتحليل (معمول العامل المقبول)',
+              any('لم يُولَّد' in w for w in check_sentence(J1, an_)), check_sentence(J1, an_))
+        J2 = copy.deepcopy(Jc); J2.ec = Evidence('', [])
+        check('ويرفضها إن خلت شهادة الإكمال', any('شهادة الإكمال' in w for w in check_sentence(J2, an_)), check_sentence(J2, an_))
+        J3 = copy.deepcopy(Jc); J3.Omega[0].met = False
+        check('ويرفضها إن بقي التزامٌ لازم غير مستوفى', any('غير مستوفى' in w for w in check_sentence(J3, an_)), check_sentence(J3, an_))
+        J4 = copy.deepcopy(Jc); J4.O['unplaced'] = ['رَحِيمٌ']
+        check('ويرفضها إن بقيت كلمةٌ بلا موضعٍ مرخَّص', any('بلا موضع' in w for w in check_sentence(J4, an_)), check_sentence(J4, an_))
     sm = structs((17, 49))
     cw = [x for x in sm['coord'] if x['B'].startswith('وَرُفَٰت')]
     check('الإسراء ٤٩: «وَرُفَٰتًا» معطوفٌ مفرد على «عِظَٰمࣰا» (موافقةٌ في النصب)، والواو لمطلق الجمع',

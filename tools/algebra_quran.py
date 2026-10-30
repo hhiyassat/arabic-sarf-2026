@@ -151,8 +151,16 @@ for n, (s, v, text) in enumerate(rows):
         S2, units2 = sentence_geo(a2, f'Q{s}:{v}', Trace())
         same = ({k: ([c.key() for c in G.O['cells']], G.closed) for k, G in units.items()} ==
                 {k: ([c.key() for c in G.O['cells']], G.closed) for k, G in units2.items()})
+        # تكافؤ البنية لا الخلايا وحدها (مراجعة التقرير ٩): الجذر والوزن وα لكل وحدة، والروابط والتزامات الجملة
+        def struct(units_, S_):
+            return ({k: (str(G.Theta.get('R')), str(G.Theta.get('P')), tuple(G.Theta.get('alpha') or ()), G.closed)
+                     for k, G in units_.items()},
+                    sorted((b[0], str(b[1]), str(b[2])) for b in S_.B),
+                    sorted((o.name, o.met) for o in S_.Omega))
+        same_struct = struct(units, S) == struct(units2, S2)
         C['reanalyze'] += 1
         C['reanalyze_same'] += same
+        C['reanalyze_same_structure'] += same and same_struct
         if not same:
             fail['T5b'].append(f'{s}:{v}')
     for o in S.Omega:
@@ -163,7 +171,11 @@ for n, (s, v, text) in enumerate(rows):
             if k == 'خبر' and o.met and o.ev:
                 C['khabar_kind:' + o.ev.cause.split(' ', 2)[-1]] += 1
     lite = dict(verse=a['verse'], normalized=a['normalized'], segments=[dict(word=g['word'], units=g['units']) for g in a['segments']],
-                starts=[clause_start(a, wi) for wi in range(len(a['segments']))], feats=word_feats(a))
+                starts=[clause_start(a, wi) for wi in range(len(a['segments']))], feats=word_feats(a),
+                operators=[dict(word_index=f['word_index'], operator=f['operator'], group=f['group'], status=f.get('status'))
+                           for f in a['operators']],
+                relations=[dict(word_index=r['word_index'], operator=r['operator'], group=r['group'],
+                                target=bool(r.get('target'))) for r in a.get('relations', [])])
     by_surah[s].append((s, v, lite, units, S))
     if (s, v) in SAMPLE_REFS:
         samples[(s, v)] = dict(text=a['normalized'], units={G.id: unit_expr(G) for G in units.values()})
@@ -178,6 +190,12 @@ import subprocess
 a_id = subprocess.run(['git', '-C', H, 'rev-parse', '--short', 'HEAD'], capture_output=True, text=True).stdout.strip()
 LT, st, brecs = linguistic_layer(items, T, a_id=f'experiment@{a_id}', cross=cross, checked_ends=frozenset(checked_ends))
 C['ayah_ends_checked'] = len(checked_ends)
+# الفاحص المستقل: يعيد اشتقاق الالتزامات من سجلّ التحليل، ولا يثق بشهادة الإغلاق
+from sarf.checker import check_layer
+chk_n, chk_bad, chk_list = check_layer(LT, {(s_, v_): a_ for s_, v_, a_, _, _ in items})
+C['checker_closed'], C['checker_rejected'] = chk_n, chk_bad
+for jid, why in chk_list[:20]:
+    fail['checker'].append(f'{jid}: ' + '؛ '.join(why[:2]))
 for k, x in st.items():
     C[k] = x
 # أمثلة الروابط عبر حدّ الآية
