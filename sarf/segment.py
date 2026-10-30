@@ -78,7 +78,10 @@ def _moving(tok):
     return bool(tok[1] & MOVING)
 
 def _opens(tok):
-    """هل تبدأ الخانة بما يُبتدأ به: حرف متحرك، أو همزة وصل تُنطق ابتداءً (بِٱلْعَدْلِ = بِ + ءَلْعَدْلِ)"""
+    """هل تبدأ الخانة بما يُبتدأ به: حرف متحرك، أو همزة وصل تُنطق ابتداءً (بِٱلْعَدْلِ = بِ + ءَلْعَدْلِ).
+    والمشدَّد خليتان أولاهما ساكنة (حكم صاحب النظرية)، فلا يُبتدأ به: لِلَّهِ وحدةٌ واحدة، ولفظ الجلالة لا يُقطع"""
+    if '\u0651' in tok[1]:
+        return False
     return _moving(tok) or (tok[0] == 'ا' and not tok[1])
 
 
@@ -252,7 +255,7 @@ def segment_word(word, wi, cands, lex):
         a, b = us[0]['span'][0], us[-1]['span'][1]
         types = [s['type'] for s in us]
         if DIVINE in types:
-            kind, label = DIVINE, DIVINE
+            kind, label = DIVINE, '+'.join(dict.fromkeys(types))
         elif CUT_TYPES & set(types):
             kind, label = CUT, None
         else:
