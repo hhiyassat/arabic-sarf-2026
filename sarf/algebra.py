@@ -1835,6 +1835,12 @@ def cond_structs(feats, nuc_pos, starts):
                     break
                 if g['conj'] and g['conj_letter'] in ('و', 'ثم', 'أو'):
                     continue                           # معطوفٌ على فعل الشرط
+            # جواب «إِذَا» ماضٍ بعد جملة الشرط بلا عاطف (حكم صاحب النظرية: وَإِذَا قِيلَ لَهُمۡ … قَالُوٓاْ)
+            if q_pos is None and tool == 'إِذَا' and s_pos is not None:
+                k = next((k for k in range(s_pos + 1, min(n, s_pos + 30))
+                          if feats[k]['verb'] == 'madi' and not feats[k]['conj'] and not starts[k]), None)
+                if k is not None and not any(starts[j] for j in range(s_pos + 1, k)):
+                    q_pos, q_kind = k, 'ماضٍ بعد جملة الشرط في جواب «إذا»'
             cand = None
             if q_pos is None and s_pos is not None:
                 cand = next((k for k in range(s_pos + 1, min(n, s_pos + 30))

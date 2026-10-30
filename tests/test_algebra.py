@@ -184,6 +184,10 @@ if hfn() and rows:
     sm = structs((2, 20))
     lw = [x for x in sm['cond'] if x['tool'] == 'لَوْ']
     check('البقرة ٢٠: جواب «لَوۡ» باللام المفتوحة على الماضي (لَذَهَبَ)', lw and lw[0]['obligations'][1][1], lw)
+    sm = structs((2, 11))
+    iz = [x for x in sm['cond'] if x['tool'] == 'إِذَا']
+    check('البقرة ١١: «وَإِذَا قِيلَ لَهُمۡ … قَالُوٓاْ»: جواب «إذا» ماضٍ بعد جملة الشرط (حكم صاحب النظرية)',
+          iz and iz[0]['obligations'][1][1] and 'قَالُوا' in iz[0]['text'], iz)
     sm = structs((17, 49))
     cw = [x for x in sm['coord'] if x['B'].startswith('وَرُفَٰت')]
     check('الإسراء ٤٩: «وَرُفَٰتًا» معطوفٌ مفرد على «عِظَٰمࣰا» (موافقةٌ في النصب)، والواو لمطلق الجمع',
