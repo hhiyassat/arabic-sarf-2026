@@ -21,7 +21,9 @@ def skel(t):
     t = re.sub('[ً-ٰٟۖ-ࣰۭ-ࣲـ]', '', t)
     return t.translate(str.maketrans('ٱأإآؤئىة', 'اااااييه')).replace('ء', '')
 HZ = str.maketrans('أإؤئآ', 'ءءءءء')
-C = collections.Counter(); bad = collections.defaultdict(list)
+C = collections.Counter(); bad = collections.defaultdict(list); excluded = []
+WEAK = set('ويءا')
+ROMAN = {str(i): r for i, r in enumerate(['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'])}
 for l in open(H + 'data/quran_hafs.tsv', encoding='utf-8'):
     s, v, text = l.rstrip('\n').split('\t'); s, v = int(s), int(v)
     a = analyze(cat, text)
@@ -35,21 +37,51 @@ for l in open(H + 'data/quran_hafs.tsv', encoding='utf-8'):
             for k in range(i2 - i1):
                 amap[i1 + k] = qws[j1 + k]
     for (wi, ui), G in units.items():
-        if not G.closed or not G.Theta.get('R') or wi not in amap:
+        if not G.closed or not G.Theta.get('R'):
             continue
         route = ('فعل' if (G.Theta.get('F') or {}).get('kind') != 'اسم' else
                  'اسم فاعل/مفعول قياساً' if str(G.Theta.get('P', '')).startswith('اسم') else
                  'بناء سيبويه' if str(G.Theta.get('P', '')).startswith('بناء سيبويه') else 'مدخل معجمي (مصدر وغيره)')
-        roots = [f[5:].translate(HZ) for _, _, fs in Q[(s, v, amap[wi])] for f in fs if f.startswith('ROOT:')]
+        if wi not in amap:
+            C['غير مقارن: الكلمة لا تقابل كلمةً في QAC'] += 1
+            excluded.append(f'{s}:{v} {G.O["text"]} (الكلمة لا تقابل كلمةً في QAC)')
+            continue
+        qsegs = Q[(s, v, amap[wi])]
+        roots = [f[5:].translate(HZ) for _, _, fs in qsegs for f in fs if f.startswith('ROOT:')]
+        if not roots:
+            # لا جذر في QAC (علمٌ أعجمي، أو مبني): لا يُعدّ خلافاً ولا وفاقاً
+            C['غير مقارن: لا جذر للكلمة في QAC'] += 1
+            excluded.append(f'{s}:{v} {G.O["text"]} (لا جذر في QAC)')
+            continue
         C[route] += 1
-        if roots and G.Theta['R'] == roots[0]:
+        ours = G.Theta['R']
+        if ours == roots[0]:
             C[route + ' ✓'] += 1
-        elif len(bad[route]) < 25:
-            bad[route].append(f'{s}:{v} {G.O["text"]} ours={G.Theta["R"]} qac={roots[:1]}')
+            # الوزن أيضاً (للفعل): وزن QAC (VF) مقابل وزن الجبر؛ فالجذر وحده لا يثبت صحة الوزن
+            vf = next((f[3:] for _, t, fs in qsegs if t == 'V' for f in fs if f.startswith('VF:')), None)
+            if route == 'فعل' and vf:
+                C['فعل: الوزن مقارن'] += 1
+                ours_f = str(G.Theta.get('P'))
+                if ROMAN.get(vf) == ours_f:
+                    C['فعل: الوزن موافق'] += 1
+                elif len(bad['فعل: الوزن مخالف']) < 25:
+                    bad['فعل: الوزن مخالف'].append(f'{s}:{v} {G.O["text"]} ours={ours_f} qac={ROMAN.get(vf, vf)}')
+            continue
+        g = roots[0]
+        kind = ('حرف علة أو همزة (الجذر نفسه بإبدال المعتلّ)' if len(ours) == len(g) and
+                all(x == y or x in WEAK and y in WEAK for x, y in zip(ours, g)) else
+                'حرفٌ زائد أو سابقة عُدّ أصلاً' if len(set(ours) - set(g)) == 1 and len(set(g) - set(ours)) == 1 and
+                ours[1:] == g[:-1] else
+                'مضعَّفٌ أو مكرَّر' if len(set(ours)) < len(ours) or len(set(g)) < len(g) else 'جذرٌ آخر')
+        C[route + ' ✗'] += 1
+        C['الخلاف: ' + kind] += 1
+        if len(bad[route]) < 25:
+            bad[route].append(f'{s}:{v} {G.O["text"]} ours={ours} qac={g} [{kind}]')
 P = os.environ.get('SARF_ALG_METRICS', H + 'reports/algebra_metrics.json')
 M = json.load(open(P, encoding='utf-8'))
 M['root_vs_qac'] = dict(C)
 M['root_vs_qac_misses'] = dict(bad)
+M['root_vs_qac_excluded'] = excluded[:40]
 json.dump(M, open(P, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 for r in ('فعل', 'اسم فاعل/مفعول قياساً', 'مدخل معجمي (مصدر وغيره)', 'بناء سيبويه'):
     print(r, C[r + ' ✓'], '/', C[r], f'{100 * C[r + " ✓"] / max(C[r], 1):.1f}%')

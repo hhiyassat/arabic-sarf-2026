@@ -97,7 +97,9 @@ def _licence(f, tgt, found, lex):
     s_rest = 3 if structural else max(licence_strength(rest), 1 if ri['pos'] == 'verb' and verb_ok else 0)
     # قراءتا فعلٍ متنافستان (وَجِئۡتُ: «وجء» أو وَ + «جِئۡتُ»): لا تُقدَّم الكلمة كلها على البقية بمرتبة الدليل
     verbish = ('فعل', 'فعل محتمل', 'فعل بالكتابة')
-    if any(x[0] in verbish for x in whole) and (any(x[0] in verbish for x in rest) or ri['pos'] == 'verb' and verb_ok):
+    # ودليل الفعلية المكتوب في آخر الكلمة (ضمير رفعٍ بعد ساكن) تشترك فيه الكلمة كلها وبقيتها، فلا يرجّح إحداهما
+    if any(x[0] in verbish for x in whole) and verb_ok and \
+            (any(x[0] in verbish for x in rest) or ri['pos'] == 'verb' or stem_info(word)['pos'] == 'verb'):
         s_whole = min(s_whole, s_rest)
     if 0 < s_whole <= s_rest < 3:
         f['alternative'] = 'الحرف أصليٌّ في «' + word + '» (' + '، '.join(f'{k}: {r}' for k, r, _ in whole[:2]) + ')'
