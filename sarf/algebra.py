@@ -1682,6 +1682,13 @@ def word_feats(a):
             zarf=any(x['type'] == 'جذع' and is_form(x['text'], ZURUF_V, i3rab=True) for x in sl),
             mood=(stem_info(next((x['text'] for x in sl if x['type'] == 'جذع'), w_)).get('mood') if g and g['kind'] == 'mudari' else None),
             lam_fatha=len(sl) > 1 and is_form(sl[0]['text'], ('لَ',)),
+            amma=is_form(w_, ('أَمَّا', 'إِمَّا'), prefix=True),
+            an=is_form(w_, ('أَنْ',), prefix=True),
+            # صورة الفعل بالمقشِّر (يَهۡدِي، يَشۡعُرُونَ) وإن لم تثبت فعليته بالإسناد: تكفي دليلاً على جملةٍ بعد النفي والشرط
+            vshape=(stem_info(next((x['text'] for x in sl if x['type'] == 'جذع'), w_)).get('kind') if not g else g['kind']),
+            # آخره ألفٌ مقصورة: لا تظهر عليه حركة الإعراب، فيوافق كل حالة
+            maqsur=bool(st) and (st[-1][0] == 'ى' or st[-1][0] == 'ا' and not st[-1][1] and len(st) > 2 and FATHA in st[-2][1]
+                                 and not st[-2][1] & {FATHATAN}),
             demo=is_form(w_, ('أُولَٰئِكَ', 'أُولَئِكَ', 'ذَٰلِكَ', 'ذَلِكَ', 'تِلْكَ', 'هَٰذَا', 'هَذَا', 'هَٰذِهِ', 'هَٰؤُلَاءِ'), prefix=True)))
     return out
 
@@ -1888,12 +1895,14 @@ def coord_structs(feats, nuc_pos, starts, not_conj, is_clause):
         g = feats[h]
         c = g['case']
         cands = []
-        if g.get('noun') and c in CASE_COMPAT:
-            for j in range(k - 1, max(-1, k - 12), -1):
-                if starts[j] and j < k - 1:
-                    break
+        # المعطوف المفرد: اسمٌ بدليله، أو موصولٌ (وَٱلَّذِينَ ءَامَنُواْ)، أو مصدرٌ مؤوَّل بـ«أَنْ» والفعل (وَأَن تَقُولُواْ)؛
+        # والمقصور والمبني والمؤوَّل لا تظهر حالته، فيوافق كل حالة
+        single = g.get('noun') or g.get('rel') or g.get('an')
+        any_case = g.get('maqsur') or g.get('rel') or g.get('an') or c is None
+        if single and (any_case or c in CASE_COMPAT):
+            for j in range(k - 1, max(-1, k - 20), -1):
                 fj = feats[j]
-                if fj.get('noun') and fj['case'] in CASE_COMPAT[c]:
+                if fj.get('noun') and (any_case or fj['case'] in CASE_COMPAT[c] or fj.get('maqsur')):
                     cands.append(j)
         out.append(dict(kind='عطف', pos=k, letter=letter, level='مفرد', B=h, A=cands,
                         effect=COORD_EFFECT.get(letter, '')))
@@ -1993,11 +2002,11 @@ def _boundary_kind(p, js, spans, cspans, nuc_pos, qawl_pos, starts, feats=None):
             return None
         g = feats[h]
         span = next((k for k in range(h + 1, len(feats)) if feats[k]['conj'] or starts[k]), len(feats)) - h
-        nxt_v = h + 1 < len(feats) and (feats[h + 1]['verb'] or h + 1 in nuc_pos or
+        nxt_v = h + 1 < len(feats) and (feats[h + 1]['verb'] or h + 1 in nuc_pos or feats[h + 1].get('vshape') or
                                          set(feats[h + 1].get('ops', [])) & VERBAL_OPS)
         clause = (g['verb'] or starts[h] or h in nuc_pos) and not (h > p + 1 and g['conj']) or \
-            set(g.get('ops', [])) & VERBAL_OPS or \
-            (set(g.get('ops', [])) & {'6', '7'} or g.get('neg') or g.get('cond_amb')) and nxt_v or \
+            set(g.get('ops', [])) & VERBAL_OPS or g.get('amma') or \
+            (set(g.get('ops', [])) & {'6', '7'} or g.get('neg') or g.get('cond_amb')) and nxt_v and not g.get('an') or \
             (g['case'] == 'رفع' or g.get('head') in ('pron', 'pp')) and span > 1
         if clause:
             return ('proven', f'نهاية جملة قبل {name}: وما بعدها {relations_after(feats, p)}')
