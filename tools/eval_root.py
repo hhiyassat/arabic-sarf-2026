@@ -24,6 +24,8 @@ def skel(t):
 HZ = str.maketrans('أإؤئآ', 'ءءءءء')
 VF = {str(i): r for i, r in enumerate(['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'])}
 C = collections.Counter(); ex = collections.defaultdict(list)
+# سجلٌّ لكل وقوعِ فعلٍ مقابَل بـQAC (للمصالحة بالهويات بين نسختين): SARF_ROOT_DUMP=مسار
+DUMP = open(os.environ['SARF_ROOT_DUMP'], 'w', encoding='utf-8') if os.environ.get('SARF_ROOT_DUMP') else None
 for l in open(H + 'data/quran_hafs.tsv', encoding='utf-8'):
     s, v, text = l.rstrip('\n').split('\t'); s, v = int(s), int(v)
     if not lo <= s <= hi:
@@ -60,6 +62,11 @@ for l in open(H + 'data/quran_hafs.tsv', encoding='utf-8'):
             C['gold_in_cands'] += groot in cand_roots
             if groot not in cand_roots:
                 ex['gold_not_in_cands'].append(f"{s}:{v} {sl['text']} gold={groot}/{gvf} cands={sorted(cand_roots)[:5]}")
+            if DUMP is not None:
+                DUMP.write(json.dumps(dict(loc=f'{s}:{v}:{wi}', text=sl['text'], status=m['status'], root=m.get('root'),
+                                           form=m.get('form_class'), level=m.get('level'), reason=m.get('reason'),
+                                           selection=m.get('selection'), gold=groot, gold_form=gvf),
+                                      ensure_ascii=False) + '\n')
             if m['status'] == 'accepted':
                 C['acc'] += 1; C['acc_' + m['level']] += 1
                 okr = m['root'] == groot; okf = m['form_class'] == gvf

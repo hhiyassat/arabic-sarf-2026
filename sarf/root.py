@@ -411,8 +411,23 @@ def morph(text, info=None):
     # (ضَعَتۡ ← «ضعو»)، فالحرف الذي بقي أصلياً بالمطابقة لا يُعاد سابقةً
     exact = [x for x in licensed if READING.get((x['root'], x['form_class'])) == text and
              (_plain_vowels(x['verb']) == _plain_vowels(text) or _madi_exact(text, x['verb']))]
-    if exact:
-        licensed = exact
+    pairs_x = {(x['root'], x['form_class']) for x in exact}
+    others = [x for x in licensed if (x['root'], x['form_class']) not in pairs_x]   # المنافس جذرٌ أو وزنٌ آخر
+    def _tier(xs):
+        return min((x['tier'][:1] or 'Z') for x in xs) if xs else 'Z'
+    selection = dict(candidates=[dict(root=x['root'], form=x['form_class'], verb=x['verb'], tier=x['tier'][:1],
+                                      reading=READING.get((x['root'], x['form_class'])),
+                                      exact=x in exact) for x in licensed])
+    # الحسم بين قراءة النص كله المطابقة وقراءةٍ نُزعت منها سابقة: تُقدَّم المطابقة إن كانت شهادتها في HFN أقوى
+    # من كل منافسٍ (وَضَعَتۡ: «وضع» C على «ضعو» E)؛ فإن تساوتا أو ضعفت (وَلَسۡتُمۡ: «ولس» C و«ليس» C؛ تَهِنُواْ: «تهن» E
+    # و«وهن» C) بقي التعارض مؤجَّلاً بمرشحيه، ولا يُختار بأولوية البحث
+    if exact and (not others or _tier(exact) < _tier(others)):
+        selection['decision'] = ('قراءة النص كله المطابقة لفعل HFN' + (f' (شهادتها {_tier(exact)} أقوى من {_tier(others)})'
+                                                                         if others else ' (لا منافس)'))
+        licensed = [x for x in licensed if (x['root'], x['form_class']) in pairs_x]
+    elif exact:
+        selection['decision'] = (f'تعارضٌ مؤجَّل: المطابقة شهادتها {_tier(exact)}، ومنافسها {_tier(others)}؛ '
+                                 'فلا تُقدَّم بالمطابقة وحدها')
     if info['kind'] == 'madi' and licensed:
         # الماضي: الحدث الذي يطابق فعلُه المكتوب حرفاً وحركة يُقدَّم على أخيه في الوزن (جَعَلَ لا جَعِلَ)
         same = [x for x in licensed if _plain_vowels(x['verb']) == surface]
@@ -420,7 +435,7 @@ def morph(text, info=None):
             licensed = same + [x for x in licensed if x not in same]
     pairs = list(dict.fromkeys((x['root'], x['form_class']) for x in licensed))
     out = dict(cells=cell_code(cells(shown)), candidates=cands, licensed=licensed, kind=info['kind'],
-               level=None)
+               level=None, selection=selection)
     if not H:
         out.update(status='deferred', reason='لا معجم مرخِّص (HFN غير موجود)')
         return out
