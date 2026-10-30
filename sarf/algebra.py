@@ -1870,6 +1870,30 @@ CASE_COMPAT = {'رفع': {'رفع'}, 'نصب': {'نصب', 'جر أو نصب', '�
                'جر أو نصب': {'جر', 'نصب', 'جر أو نصب', 'نصب أو جر'}, 'نصب أو جر': {'جر', 'نصب', 'جر أو نصب', 'نصب أو جر'}}
 
 
+# شبه جملةٍ في كلمة واحدة: جارٌّ وضميرٌ متصل (لَهُمۡ، عَلَيۡهِمۡ)، أو جارٌّ مدغمٌ في «ما» (مِمَّا، عَمَّا)
+PP_WORD_V = tuple(b + p for b in ('لَ', 'لِ', 'بِ', 'عَلَيْ', 'إِلَيْ', 'عَنْ', 'مِنْ', 'فِي', 'لَدَيْ', 'عِنْدَ', 'مَعَ')
+                  for p in ('هُ', 'هِ', 'هَا', 'هُمْ', 'هِمْ', 'هُمَا', 'هِمَا', 'هُنَّ', 'هِنَّ', 'كَ', 'كِ', 'كُمْ', 'كُمَا',
+                            'كُنَّ', 'نَا')) + ('لِي', 'بِي', 'مِنِّي', 'عَنِّي', 'مِمَّا', 'عَمَّا', 'فِيمَا', 'بِمَا', 'لِمَا', 'مِمَّنْ')
+ISTIDRAK_V = ('لَٰكِنْ', 'لَكِنْ', 'لَٰكِنَّ', 'لَكِنَّ', 'بَلْ')
+
+
+def clause_word(feats, h, nuc_pos):
+    """أول المعطوف يبدأ جملةً بنفسه: فعلٌ (ثابت أو بصورته)، أو ما له الصدارة أو ناسخ، أو «أَمَّا»، أو نفيٌ أو شرطٌ
+    يليه فعل، أو ضمير أو شبه جملة يليهما ما يتمّ به الكلام (وَلَهُمۡ عَذَابٌ، وَإِيَّاكَ نَسۡتَعِينُ)"""
+    g = feats[h]
+    nxt = feats[h + 1] if h + 1 < len(feats) else None
+    nv = bool(nxt) and (nxt['verb'] or h + 1 in nuc_pos or nxt.get('vshape'))
+    if g['verb'] or h in nuc_pos or g.get('vshape') and not g.get('noun') or g.get('amma') or \
+            set(g.get('ops', [])) & VERBAL_OPS:
+        return True
+    if is_form(g['text'], ISTIDRAK_V, prefix=True):
+        return True
+    if (g.get('neg') or g.get('cond_amb')) and (nv or nxt and nxt.get('head') in ('pron', 'pp')) and not g.get('rel'):
+        return True
+    pp = g.get('head') in ('pron', 'pp') or is_form(g['text'], PP_WORD_V, prefix=True)
+    return bool(nxt) and pp and not nxt['conj']
+
+
 def coord_structs(feats, nuc_pos, starts, not_conj, is_clause):
     """G = Coord_h,e(A, B) لكل حرف عطف (حكم صاحب النظرية؛ الأصول من ابن عقيل):
     - الحرف عاطفٌ هنا ما لم يثبت غيره: فاء الجواب الرابطة، وفاء خبر الموصول المبتدأ ليستا عاطفتين (not_conj)
@@ -1888,7 +1912,7 @@ def coord_structs(feats, nuc_pos, starts, not_conj, is_clause):
         h = k + 1 if letter in ('أو', 'ثم') else k
         if h >= n:
             continue
-        if is_clause(k - 1):
+        if is_clause(k - 1) or clause_word(feats, h, nuc_pos):
             out.append(dict(kind='عطف', pos=k, letter=letter, level='جملة', B=h, A=['الجملة قبله'],
                             effect=COORD_EFFECT.get(letter, '')))
             continue
@@ -1898,11 +1922,18 @@ def coord_structs(feats, nuc_pos, starts, not_conj, is_clause):
         # المعطوف المفرد: اسمٌ بدليله، أو موصولٌ (وَٱلَّذِينَ ءَامَنُواْ)، أو مصدرٌ مؤوَّل بـ«أَنْ» والفعل (وَأَن تَقُولُواْ)؛
         # والمقصور والمبني والمؤوَّل لا تظهر حالته، فيوافق كل حالة
         single = g.get('noun') or g.get('rel') or g.get('an')
-        any_case = g.get('maqsur') or g.get('rel') or g.get('an') or c is None
+        any_case = g.get('maqsur') or g.get('rel') or g.get('an')
         if single and (any_case or c in CASE_COMPAT):
-            for j in range(k - 1, max(-1, k - 20), -1):
+            # الظاهر الحالة: في الجملة الجارية؛ وما لا تظهر حالته يُبحث له أبعد، متخطّياً ما له الصدارة،
+            # ويُقدَّم ما يماثله: الموصول على الموصول، والمؤوَّل على المؤوَّل
+            for j in range(k - 1, max(-1, k - (20 if any_case else 12)), -1):
+                if starts[j] and j < k - 1 and not any_case:
+                    break
                 fj = feats[j]
-                if fj.get('noun') and (any_case or fj['case'] in CASE_COMPAT[c] or fj.get('maqsur')):
+                if g.get('rel') and fj.get('rel') or g.get('an') and fj.get('an'):
+                    cands = [j]
+                    break
+                if fj.get('noun') and not fj.get('rel') and (any_case or fj['case'] in CASE_COMPAT[c] or fj.get('maqsur')):
                     cands.append(j)
         out.append(dict(kind='عطف', pos=k, letter=letter, level='مفرد', B=h, A=cands,
                         effect=COORD_EFFECT.get(letter, '')))
