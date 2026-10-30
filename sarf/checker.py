@@ -10,6 +10,7 @@ sarf.checker — فاحصٌ مستقل لإغلاق الجملة (مراجعة �
   ٥. أشار دليلٌ إلى وحدةٍ ليست في الجملة (رابطٌ طرفه خارجها)
   ٦. لم يوافق نوعُ طرفَي العلاقة اسمَها (ValidRelation = TypeOK ∧ ScopeOK): خبرٌ «جملة فعلية» طرفه ضمير،
      أو مفعولٌ مصدره غير فعل، أو طرفٌ واحد خبرٌ ومفعولٌ معاً
+  ٧. استشهد دليلٌ بلاحقةٍ أو حرف مضارعة ليس في خلايا وحدته (تُوبُوا: «وا» لا «ون»)
   ونطاقه: اتساق السجل وأنواع أطرافه، لا صحة مقدّماته اللغوية (أن «ما» شرطية، أو أن الفاء جوابٌ لهذه الأداة):
   تلك تُقاس بمرجعٍ مستقل
 
@@ -117,6 +118,44 @@ def relation_problems(J, analyses=None):
     return why
 
 
+def _letters_of(t):
+    from .chars import letters
+    return [L for L, _ in letters(t)]
+
+
+def witness_problems(J):
+    """الشاهد يقابل الخلايا (مراجعة التقرير الثالثة ١): كل لاحقةٍ أو حرف مضارعة يستشهد به دليلُ التزامٍ مستوفى
+    يجب أن يكون حروفاً مكتوبةً في وحدته: اللاحقة في آخرها (قبل ضميرٍ متصل)، وحرف المضارعة في أولها
+    (بعد سابقة). والتحويل المسجَّل (حذف النون) يُذكر بجانب الصورة المكتوبة، ولا يحلّ محلّها"""
+    import re
+    units = {}
+    stack = list(J.A)
+    while stack:
+        X = stack.pop()
+        if hasattr(X, 'Theta') and X.id.startswith('Q'):
+            units[X.id] = X
+    why = []
+    for o in J.Omega:
+        if not (o.met and o.ev) or not o.units:
+            continue
+        G = units.get(o.units[0])
+        if G is None:
+            continue
+        word = _letters_of(G.O.get('text', ''))
+        for cond in [o.ev.cause] + list(o.ev.conditions):
+            for kind, x in re.findall(r'(لاحقة[^«]*|اللاحقة|حرف المضارعة)\s*«([^»]+)»', cond):
+                if x == '—':
+                    continue
+                xs = _letters_of(x)
+                if 'المضارعة' in kind:
+                    ok = word[:len(xs)] == xs or word[1:1 + len(xs)] == xs
+                else:
+                    ok = any(word[len(word) - j - len(xs):len(word) - j] == xs for j in range(0, 4))
+                if not ok:
+                    why.append(f'شاهدٌ لا يقابل الخلايا: {o.name}: «{x}» ليست في «{G.O.get("text")}»')
+    return why
+
+
 def check_sentence(J, analyses):
     why = []
     if not J.closed:
@@ -149,6 +188,7 @@ def check_sentence(J, analyses):
     if J.O.get('unplaced'):
         why.append('كلماتٌ بلا موضعٍ مرخَّص: ' + '، '.join(J.O['unplaced'][:4]))
     why += relation_problems(J, analyses)
+    why += witness_problems(J)
     for b in J.B:
         for end in (b[1], b[2]):
             if isinstance(end, str) and end.startswith('Q') and end.split('.s')[0] not in ids:

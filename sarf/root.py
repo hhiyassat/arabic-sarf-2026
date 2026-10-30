@@ -376,6 +376,16 @@ def _candidates_kind(text, info):
     return res
 
 
+def _madi_exact(t, verb):
+    """الماضي المكتوب بلاحقته يطابق فعل HFN حرفاً وحركة إلا حركة لامه (وَضَعَتۡهَا ← وَضَعَ، فَشِلۡتُمۡ ← فَشِلَ):
+    حروفه وحركاته إلى ما قبل اللام هي هي، ثم اللام، ثم لواحق الإسناد والمفعول"""
+    vt, tt = letters(verb), letters(t)
+    k = len(vt) - 1
+    if k < 2 or len(tt) <= k + 0 or [x for x in tt[:k]] != [x for x in vt[:k]] or tt[k][0] != vt[k][0]:
+        return False
+    return len(tt) > k + 1 and all(L in 'تنواهمكيا' for L, _ in tt[k + 1:])
+
+
 def morph(text, info=None):
     """→ dict(cells, candidates, licensed=[…], status, root, form, wazn, evidence) أو None إن لم يكن فعلاً"""
     info = info or stem_info(text)
@@ -397,6 +407,12 @@ def morph(text, info=None):
                                  masdar=e['masdar'], event_id=e['event_id'], source=e['source'],
                                  sibawayh=e['sibawayh_rules'], tier=e['tier'],
                                  meaning=H.meanings.get(e['event_id'])))
+    # قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (وَضَعَتۡ ← وَضَعَ بلاحقته): تُقدَّم على قراءةٍ نُزعت منها سابقة
+    # (ضَعَتۡ ← «ضعو»)، فالحرف الذي بقي أصلياً بالمطابقة لا يُعاد سابقةً
+    exact = [x for x in licensed if READING.get((x['root'], x['form_class'])) == text and
+             (_plain_vowels(x['verb']) == _plain_vowels(text) or _madi_exact(text, x['verb']))]
+    if exact:
+        licensed = exact
     if info['kind'] == 'madi' and licensed:
         # الماضي: الحدث الذي يطابق فعلُه المكتوب حرفاً وحركة يُقدَّم على أخيه في الوزن (جَعَلَ لا جَعِلَ)
         same = [x for x in licensed if _plain_vowels(x['verb']) == surface]

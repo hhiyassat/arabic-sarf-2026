@@ -214,7 +214,14 @@ if hfn() and rows:
     sm = structs((2, 3))
     cj = [x for x in sm['coord'] if x['level'] == 'جملة']
     check('البقرة ٣: عطف الجملة طرفاه معيَّنان بنواتيهما ونطاقيهما (لا «الجملة قبله»)',
-          cj and all(a_.startswith('«') and 'نواتها' in a_ for x in cj for a_ in x['A']), cj)
+          cj and all(a_.startswith('«') and 'رأسها' in a_ for x in cj for a_ in x['A']), cj)
+    c3 = [x for x in cj if x['B'] == 'وَيُقِيمُونَ']
+    check('البقرة ٣: «وَيُقِيمُونَ» معطوفةٌ على الصلة «يُؤۡمِنُونَ بِٱلۡغَيۡبِ»، والموصول «ٱلَّذِينَ» حاويها لا نواتها',
+          c3 and c3[0]['A'][0].startswith('«يُؤْمِنُونَ بِالْغَيْبِ» (صلة') and 'الموصول «الَّذِينَ»' in c3[0]['A'][0], c3)
+    sm = structs((2, 4))
+    c4b = [x for x in sm['coord'] if x['B'] == 'وَبِالْآخِرَةِ']
+    check('البقرة ٤: «وَبِٱلۡأٓخِرَةِ» معطوفةٌ على صلة «وَٱلَّذِينَ»، لا على نطاقٍ يضمّ «يُنفِقُونَ»',
+          c4b and c4b[0]['A'] and '(صلة' in c4b[0]['A'][0] and 'يُنْفِقُونَ' not in c4b[0]['A'][0], c4b)
     # الفاحص المستقل (مراجعة التقرير ٩، ١١): يقبل الجملة المغلقة، ويرفضها إن زُيِّفت شهادتها أو حُذف التزامٌ لازم عمداً
     import copy
     from sarf.checker import check_sentence
@@ -246,6 +253,10 @@ if hfn() and rows:
     LT_ = linguistic_layer([(8, 33, a_, u_, S_)], T_, 't')[0]
     J8 = next(J for D in LT_[0].A + LT_[0].O['pending'] for J in D.A + D.O['pending'] if (8, 33, 3) in J.O['location'])
     check('والجملة نفسها بلا خطأ نوعٍ في روابطها', relation_problems(J8) == [], relation_problems(J8))
+    if J8.closed:
+        check('الأنفال ٣٣: إغلاق «لِيُعَذِّبَهُمۡ» محليٌّ في مستوى الجملة، والخلوّ من التعلّق بما بعده (وَأَنتَ فِيهِمۡ: حال) غير مثبت',
+              J8.O.get('closure', {}).get('external', '').startswith('غير مثبت') and 'حال' in J8.O['closure']['external'] and
+              not any('L = ∅ مفحوص' == c for c in J8.eb.conditions), J8.O.get('closure'))
     J9 = copy.deepcopy(J8)
     J9.B = [(b[0].replace('لام الجحود', 'جملة فعلية'), b[1], u_[(3, 2)].id, b[3]) if b[0].startswith('خبر «كَانَ»') and 'w3' in str(b[2])
             else b for b in J9.B]
@@ -279,6 +290,19 @@ if hfn() and rows:
     sm = structs((2, 4))
     c4 = [x for x in sm['coord'] if x['location'] == '2:4:5']
     check('البقرة ٤: «وَمَآ أُنزِلَ مِن قَبۡلِكَ» موصولةٌ معطوفة على «بِمَآ»، لا جملة', c4 and c4[0]['level'] == 'مفرد', c4)
+    # مراجعة التقرير الثالثة (١): الشاهد يقابل الخلايا؛ «تُوبُوا» لاحقتها المكتوبة «وا»، و«ون» صنفها
+    from sarf.checker import witness_problems
+    if Jc is not None:
+        fo = next((o for o in Jc.Omega if o.name.startswith('فاعل') and o.ev), None)
+        check('البقرة ٥٤: شاهد فاعل «تُوبُوا» اللاحقة المكتوبة «وا»، والفاحص يقبله',
+              fo is not None and '«وا»' in ' '.join(fo.ev.conditions) and witness_problems(Jc) == [],
+              (fo and fo.ev.conditions, witness_problems(Jc)))
+        J5 = copy.deepcopy(Jc)
+        for o in J5.Omega:
+            if o.name.startswith('فاعل') and o.ev:
+                o.ev.conditions = ['جدول الإسناد', 'لاحقة الأمر «ون»']
+        check('والفاحص يرفض شاهداً لا يقابل الخلايا (لاحقة «ون» في «تُوبُوا»)',
+              any('لا يقابل الخلايا' in w for w in check_sentence(J5, an_)), check_sentence(J5, an_))
     sm = structs((17, 49))
     cw = [x for x in sm['coord'] if x['B'].startswith('وَرُفَٰت')]
     check('الإسراء ٤٩: «وَرُفَٰتًا» معطوفٌ مفرد على «عِظَٰمࣰا» (موافقةٌ في النصب)، والواو لمطلق الجمع',

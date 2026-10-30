@@ -1399,7 +1399,7 @@ def word_feats(a):
             # آخره ألفٌ مقصورة: لا تظهر عليه حركة الإعراب، فيوافق كل حالة
             maqsur=bool(st) and (st[-1][0] == 'ى' or st[-1][0] == 'ا' and not st[-1][1] and len(st) > 2 and FATHA in st[-2][1]
                                  and not st[-2][1] & {FATHATAN}),
-            demo=is_form(w_, ('أُولَٰئِكَ', 'أُولَئِكَ', 'ذَٰلِكَ', 'ذَلِكَ', 'تِلْكَ', 'هَٰذَا', 'هَذَا', 'هَٰذِهِ', 'هَٰؤُلَاءِ'), prefix=True)))
+            demo=is_form(w_, ('أُولَٰئِكَ', 'أُولَئِكَ', 'أُلَٰئِكَ', 'أُلَئِكَ', 'ذَٰلِكَ', 'ذَلِكَ', 'تِلْكَ', 'هَٰذَا', 'هَذَا', 'هَٰذِهِ', 'هَٰؤُلَاءِ'), prefix=True)))
     return out
 
 
@@ -1555,12 +1555,13 @@ def cond_structs(feats, nuc_pos, starts, ay_end=None):
             if (feats[s_pos]['verb'] == 'mudari' or sx.get('kind') == 'mudari') and \
                     (mood in ('رفع', 'نصب') or sx.get('suffix') == 'نون الرفع'):
                 continue
-        # أدوات الشرط مختصّة بالجملة الفعلية (ابن عقيل): ما يلي الأداة بلا دليل اسمية فعلٌ بمقتضاها
-        s_verb = s_pos is not None and (feats[s_pos]['verb'] or s_pos in nuc_pos or feats[s_pos].get('vshape') or
-                                        s_pos == h1 and not feats[s_pos].get('noun'))
+        # الفعلية تثبت بدليلٍ موجب (الإسناد، أو النواة، أو صورة الفعل الصرفية)، لا بغياب دليل الاسمية: فما يلي الأداة
+        # بلا دليلٍ موجب مرشَّحٌ تفتحه البيئة النحوية (الأداة تطلب فعلاً)، ونوعه غير محسوم (مراجعة التقرير الثالثة ٢)
+        s_verb = s_pos is not None and bool(feats[s_pos]['verb'] or s_pos in nuc_pos or feats[s_pos].get('vshape'))
         obl = [('فعل الشرط', bool(s_verb),
                 (f'منفيٌّ بـ«{neg_s}»: ' if neg_s else '') +
-                f'«{feats[s_pos]["text"]}»' + ('' if feats[s_pos]['verb'] or s_pos in nuc_pos else ' (يلي الأداة بلا دليل اسمية، والأداة مختصّة بالفعل)')
+                f'«{feats[s_pos]["text"]}»' + ('' if feats[s_pos]['verb'] or s_pos in nuc_pos else ' (بصورة الفعل الصرفية)' if feats[s_pos].get('vshape') else
+                 ' مرشَّحٌ يلي الأداة، ولم تثبت فعليته بدليلٍ موجب')
                 if s_pos is not None else 'لم يُكشف فعل الشرط')]
         q_pos, q_kind = None, None
         if True:
@@ -2018,8 +2019,50 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
             return bool(d_) and d_[1].startswith('نهاية جملة قبل')
         coords = list(coord_structs(feats, set(nuc_pos), starts, not_conj, _is_clause))
         single_B = {c['B'] for c in coords if c['level'] == 'مفرد'} | {c['pos'] for c in coords if c['level'] == 'مفرد'}
+        # نهاية الصلة الفعلية: تمتدّ بما يُعطف عليها داخلها (صلةٌ معطوفة، أو مفردٌ معطوف في الصلة: وَمَآ أُنزِلَ)
+        eff_end = {r['head']: r['end'] for r in rels}
+        def _next_stop(j):
+            # تنتهي الصلة المعطوفة عند عاطفٍ آخر، أو ما له الصدارة، أو رأس جملةٍ جديدة بلا عاطف (اسم إشارة، ضمير منفصل،
+            # نواةٌ ثانية بعد نواة المعطوف)، أو آخر الآية
+            seen_nuc = False
+            for p_ in range(j + 1, n):
+                f_ = feats[p_]
+                if f_['conj'] or starts[p_] or f_.get('demo') or f_.get('head') == 'pron' and not f_['conj']:
+                    return p_
+                if p_ in nset:
+                    if seen_nuc:
+                        return p_
+                    seen_nuc = True
+                if ay_end[p_]:
+                    return p_ + 1
+            return n
         for c_ in coords:
-            if c_['level'] == 'جملة':
+            k0 = c_['pos']
+            host = next((r for r in sorted(rels, key=lambda r: -r['head']) if r['head'] < k0 <= eff_end[r['head']] and
+                         eff_end[r['head']] >= k0), None)
+            if c_['level'] == 'مفرد' and host is not None and eff_end[host['head']] == k0:
+                eff_end[host['head']] = _next_stop(k0)      # المفرد المعطوف داخل الصلة جزءٌ منها
+            # الموصول حجّةٌ في جملةٍ أوسع (يُخَٰدِعُونَ ٱللَّهَ وَٱلَّذِينَ ءَامَنُواْ): الجملة الخارجية أولى، والصلة بديل
+            def _governed(h_):
+                for j in range(h_ - 1, max(-1, h_ - 7), -1):
+                    if ay_end[j]:
+                        return False                   # الموصول أول آيته: رأسُ عبارته
+                    if (j in nset or feats[j]['verb']) and not any(r['head'] < j < eff_end[r['head']] for r in rels):
+                        return True
+                return False
+            governed = host is not None and _governed(host['head'])
+            if c_['level'] == 'جملة' and host is not None and eff_end[host['head']] == k0 and not governed:
+                # صلةٌ معطوفة على الصلة (ٱلَّذِينَ يُؤۡمِنُونَ بِٱلۡغَيۡبِ وَيُقِيمُونَ): A الصلة، والموصول حاويها
+                h0 = host['head']
+                sv = next((j for j in range(h0 + 1, k0) if j in nset or feats[j]['verb']), h0 + 1)
+                c_['A'] = [dict(id=words_text(words, h0 + 1), type='صلة', head=wtext[sv], span=(h0 + 1, k0 - 1),
+                                text=' '.join(wtext[h0 + 1:k0]), container=f'الموصول «{wtext[h0]}» ({words_text(words, h0)})',
+                                evidence='العاطف يلي الصلة مباشرة، والمعطوف جملة: صلةٌ معطوفة على الصلة داخل الموصول نفسه')]
+                b_n = next((j for j in range(k0, min(n, k0 + 4)) if j in nset), k0)
+                c_['B_scope'] = dict(nucleus=wtext[b_n], start=k0, container=c_['A'][0]['container'])
+                bound.setdefault(b_n, f'صلةٌ معطوفة على صلة «{wtext[h0]}»')
+                eff_end[h0] = _next_stop(k0)
+            elif c_['level'] == 'جملة':
                 # الطرفان بهويتيهما ونطاقيهما (مراجعة التقرير ٧): A الجملة التي تنتهي قبل العاطف (من نواتها السابقة)،
                 # وB الجملة التي تبدأ به (إلى نواتها). وبلا نواةٍ قبلها فالطرف A غير معيَّن، ولا يُعدّ العطف عطفَ جملة مثبتاً
                 k0 = c_['pos']
@@ -2035,13 +2078,31 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
                 # رأس الجملة السابقة: أول رأسٍ يُلقى رجوعاً من العاطف (فعلٌ، أو نواة، أو اسم إشارة أو ضمير يبدأ جملة اسمية،
                 # أو ما له الصدارة)، ولا يُعبر إلى جملةٍ قبله: «أُوْلَٰٓئِكَ عَلَىٰ هُدࣰى» لا «يُوقِنُونَ … أُوْلَٰٓئِكَ»
                 a_n = next((j for j in range(k0 - 1, max(-1, k0 - 15), -1) if _head(j)), None)
+                head0 = a_n
                 while a_n is not None and a_n > 0 and a_n - 1 not in single_B and \
                         (feats[a_n - 1].get('neg') or feats[a_n - 1].get('qad')) and a_n - 1 < k0:
                     a_n -= 1                           # النفي أو «قد» قبل الرأس من الجملة نفسها (وَمَا يَخۡدَعُونَ)
                 b_n = next((j for j in range(k0, min(n, k0 + 4)) if j in nset), None)
                 if b_n is None and _head(k0):
                     b_n = k0
-                c_['A'] = [dict(nucleus=wtext[a_n], span=(a_n, k0 - 1), text=' '.join(wtext[a_n:k0]))] if a_n is not None else []
+                if a_n is not None:
+                    fa = feats[head0]
+                    typ = ('ما له الصدارة' if starts[head0] else
+                           'جملة اسمية' if fa.get('demo') or fa.get('head') in ('pron', 'pp') or head0 in rel_at or
+                           is_form(fa['text'], JARR_V) else
+                           'جملة فعلية' if head0 in nset or fa['verb'] or not fa.get('noun') and
+                           (_madi_like(fa['text']) or _hollow_madi(fa['text'])) else 'جملة اسمية')
+                    c_['A'] = [dict(id=words_text(words, a_n), type=typ, head=wtext[head0], span=(a_n, k0 - 1),
+                                    text=' '.join(wtext[a_n:k0]), container=None,
+                                    evidence='أول رأس جملةٍ رجوعاً من العاطف، لا يُعبر إليه صلةٌ ولا مقولٌ ولا معطوفٌ مفرد')]
+                else:
+                    c_['A'] = []
+                if governed and eff_end[host['head']] == k0:
+                    h0 = host['head']
+                    c_['A'].append(dict(id=words_text(words, h0 + 1), type='صلة (بديل)', head=wtext[h0 + 1],
+                                        span=(h0 + 1, k0 - 1), text=' '.join(wtext[h0 + 1:k0]),
+                                        container=f'الموصول «{wtext[h0]}» ({words_text(words, h0)})',
+                                        evidence='يجوز عطفه على الصلة، والموصول حجّةٌ في جملةٍ أوسع فالخارجية أولى'))
                 c_['B_scope'] = dict(nucleus=wtext[b_n] if b_n is not None else None, start=k0)
                 if a_n is not None and b_n is not None:
                     bound.setdefault(b_n, f'معطوفٌ على جملة «{wtext[a_n]}»')
@@ -2059,7 +2120,8 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
             if len(coord_samples) < 60:
                 coord_samples.append(dict(location=words_text(words, c_['pos']), letter=c_['letter'], level=c_['level'],
                                           B=wtext[c_['B']], A=[wtext[j] for j in c_['A']][:4] if c_['level'] == 'مفرد' else
-                                          [f'«{x["text"]}» (نواتها «{x["nucleus"]}»)' for x in c_['A']],
+                                          [f'«{x["text"]}» ({x["type"]}، رأسها «{x["head"]}»' +
+                                           (f'، في {x["container"]}' if x.get('container') else '') + ')' for x in c_['A']],
                                           effect=c_['effect']))
         pending = {}                                  # موضع الحدّ ← (inner | open، السبب) لخبر الموصول المبتدأ
         for p in range(n):
@@ -2103,7 +2165,7 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
                     # موضع كل حدٍّ مرةً واحدة، للمصالحة: مجموع المواضع = عدد الحدود
                     place = ('عند علامة معتمدة' if rec['mark'] in BOUNDARY_WAQF else 'عند المعانقة' if rec['mark'] == '∴' else
                              f'عند علامة غير معتمدة ({rec["mark"]})' if rec['mark'] else
-                             'بلا علامة: رأس آية' if rec['ayah_end'] else 'بلا علامة: داخل الآية')
+                             'بلا علامة معتمدة: رأس آية' if rec['ayah_end'] else 'بلا علامة معتمدة: داخل الآية')
                     st[f'Jb_place:{rec["J"]}:{place}'] += 1
                 if last or rec['J'] == 'proven':
                     segs.append((du_start, p, rec))
@@ -2194,9 +2256,22 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
             if J.open_required():
                 defer(J, T, '، '.join(o.name for o in J.open_required()[:3]))
             else:
-                close(J, Evidence('استُوفيت التزامات الجملة', [f'النواة: {my_nuc[0][1]}', f'{len(J.Omega)} التزاماً']),
-                      Evidence('حدّ الجملة مستقلّ لفظاً وجاز الوقف عنده', [f'W = {rec["W"]}', f'F = {rec["F"]}', 'L = ∅ مفحوص']), T)
+                # ثلاثة أحكام لا يستلزم أولها ثالثها (مراجعة التقرير الثالثة ٥): LocalComplete(J)، وClosed_k(J) في مستوى
+                # الجملة، وNoExternalDependency(J). والثالث لا يثبت بغياب رابطٍ مسجَّل حين لم تُنفَّذ قواعد الحال والفقرة
+                why_ = rec.get('J_why') or ''
+                ext = ('مثبت: آخر السورة' if why_ == 'آخر السورة' else
+                       'غير مثبت: بعده ' + why_.split('وما بعدها ', 1)[1] + ' — قواعد الحال والعطف بين الجمل لم تُنفَّذ'
+                       if 'وما بعدها ' in why_ else
+                       'غير مثبت: بعده ما له الصدارة فلا يعمل فيه ما قبله لفظاً، وقد يبقى تعلّقٌ معنوي' if why_ else
+                       'غير مثبت')
+                J.O['closure'] = dict(local='مكتملة محلياً', level='جملة (لا فقرة)', external=ext)
+                close(J, Evidence('استُوفيت التزامات الجملة', [f'النواة: {my_nuc[0][1]}', f'{len(J.Omega)} التزاماً',
+                                                              'الإغلاق محلي: Closed_k في مستوى الجملة']),
+                      Evidence('حدّ الجملة ثابتٌ في مستواها', [f'W = {rec["W"]}', f'F = {rec["F"]}',
+                                                              'لا رابط لفظي مسجَّل يعبر الحدّ (L = ∅ في القواعد المنفَّذة)',
+                                                              f'الخلوّ من التعلّق الخارجي: {ext}']), T)
                 st['J_closed'] += 1
+                st['J_closed:external ' + ext.split(':')[0]] += 1
             if J.closed:
                 extend(D, J, 'تتابع', Evidence('جملة مغلقة', [J.id]), T)
                 close(D, Evidence('جملها مغلقة', ['1']), eb, T)

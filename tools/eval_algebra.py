@@ -76,7 +76,7 @@ for l in open(H + 'data/quran_hafs.tsv', encoding='utf-8'):
                     bad['فعل: الوزن مخالف'].append(f'{s}:{v} {G.O["text"]} ours={ours_f} qac={ROMAN.get(vf, vf)}')
             continue
         g = roots[0]
-        kind = ('حرف علة أو همزة (الجذر نفسه بإبدال المعتلّ)' if len(ours) == len(g) and
+        kind = ('يختلف في حرف علة أو همزة فقط (خلافٌ معدود، لا مساواة)' if len(ours) == len(g) and
                 all(x == y or x in WEAK and y in WEAK for x, y in zip(ours, g)) else
                 'حرفٌ زائد أو سابقة عُدّ أصلاً' if len(set(ours) - set(g)) == 1 and len(set(g) - set(ours)) == 1 and
                 ours[1:] == g[:-1] else
