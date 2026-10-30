@@ -98,7 +98,8 @@ def _licence(f, tgt, found, lex):
     # قراءتا فعلٍ متنافستان (وَجِئۡتُ: «وجء» أو وَ + «جِئۡتُ»): لا تُقدَّم الكلمة كلها على البقية بمرتبة الدليل
     verbish = ('فعل', 'فعل محتمل', 'فعل بالكتابة')
     # ودليل الفعلية المكتوب في آخر الكلمة (ضمير رفعٍ بعد ساكن) تشترك فيه الكلمة كلها وبقيتها، فلا يرجّح إحداهما
-    if any(x[0] in verbish for x in whole) and verb_ok and \
+    # إلا أن تطابق الكلمة كلها فعلاً في HFN حرفاً وحركة (وَضَعَتۡ ← وَضَعَ): شهادةٌ معجمية تُقدَّم على قالب البقية
+    if any(x[0] in verbish for x in whole) and verb_ok and not any(x[0] == 'فعل' for x in whole) and \
             (any(x[0] in verbish for x in rest) or ri['pos'] == 'verb' or stem_info(word)['pos'] == 'verb'):
         s_whole = min(s_whole, s_rest)
     if 0 < s_whole <= s_rest < 3:

@@ -103,6 +103,8 @@ SPLITS = [
     ('فَجَعَلۡتُم', ['مبني', 'جذع']),                     # فاءٌ مستقلة + ماضٍ
     ('وَٱللَّهُ', ['مبني', 'لفظ الجلالة']),                # الصحيح المحفوظ: الواو قبل همزة الوصل
     ('بِسۡمِ', ['عامل', 'جذع']),                         # «اسم» محذوف الألف خطاً
+    ('فَلَمَّا وَضَعَتۡهَا', None),                         # يُفحص في الكلمة الثانية أدناه
+    ('فَلَعۡنَةُ ٱللَّهِ', ['مبني', 'جذع']),               # فاءٌ مستقلة + لَعۡنَة (ل ع ن)، لا «فلع»
 ]
 
 RELATIONS = [
@@ -128,8 +130,10 @@ for text, want in CASES:
     ok = got == want
     bad += not ok
     print('OK ' if ok else 'BAD', text, got if not ok else '')
-for text, want in SPLITS:
-    got = [x['type'] for x in PIPE.run(text).segments[0]['slots']]
+SPLITS = [x for x in SPLITS if x[1] is not None] + [('فَلَمَّا وَضَعَتۡهَا', ['جذع', 'مبني'], 1)]
+for text, want, *wi in SPLITS:
+    # وَضَعَتۡهَا: الواو من «وضع» (تطابق «وَضَعَ» في HFN حرفاً وحركة)، والهاء ضمير
+    got = [x['type'] for x in PIPE.run(text).segments[wi[0] if wi else 0]['slots']]
     ok = got == want
     bad += not ok
     print('OK ' if ok else 'BAD', text, got if not ok else '')
