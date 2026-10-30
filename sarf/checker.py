@@ -38,12 +38,25 @@ def expected_obligations(J, analyses):
     return out
 
 
-def _kind(G, verbs):
+VERBAL_GROUPS = {'10', '11', '12', '13'}     # كان وأخواتها، وأفعال المقاربة، والمدح والذم، والظن: عواملُ أفعال
+
+
+def _verbal_operator(G, analyses):
+    """الوحدة عاملٌ فعلي (كَانَ عَلِيمًا): خانتها «عامل»، وفي سجلّ التحليل عاملٌ من مجموعات الأفعال في كلمتها"""
+    if not analyses or not any(t == 'عامل' for t, _ in G.O.get('slots', [])) or '.w' not in G.id:
+        return False
+    s, v = (int(x) for x in G.id.split('.w')[0].lstrip('Q').split(':'))
+    wi = int(G.id.split('.w')[1].split('.')[0])
+    a = analyses.get((s, v))
+    return bool(a) and any(f['word_index'] == wi and f['group'] in VERBAL_GROUPS for f in a['operators'])
+
+
+def _kind(G, verbs, analyses=None):
     """نوع طرف العلاقة من الوحدة نفسها: فعل، أو ضمير (خاناته مبنية كلها)، أو اسم"""
     if G is None:
         return None
     F = (G.Theta.get('F') or {}).get('kind')
-    if G.id in verbs or F in ('madi', 'mudari', 'amr'):
+    if G.id in verbs or F in ('madi', 'mudari', 'amr') or _verbal_operator(G, analyses):
         return 'فعل'
     slots = G.O.get('slots', [])
     if slots and all(t == 'مبني' for t, _ in slots):
@@ -68,7 +81,7 @@ RELATION_TYPES = [
 ARG_ROLES = ('خبر', 'مفعول به', 'اسم «', 'مجرور', 'في محلّ جر')
 
 
-def relation_problems(J):
+def relation_problems(J, analyses=None):
     """ValidRelation(r, A, B) = TypeOK ∧ ScopeOK: نوع الطرفين يوافق اسم العلاقة، وطرفاها في الجملة، ولا يحمل
     طرفٌ دوري حجّةٍ متنافيين. → [أسباب الرفض]"""
     units = {}
@@ -87,7 +100,7 @@ def relation_problems(J):
         A, B = units.get(a.split('.s')[0]), units.get(d.split('.s')[0])
         if A is None or (d.startswith('Q') and B is None):
             continue                                      # الطرف خارج الجملة: يرفضه فحص النطاق
-        ka, kb = _kind(A, verbs), _kind(B, verbs)
+        ka, kb = _kind(A, verbs, analyses), _kind(B, verbs, analyses)
         rule = next(((ra, rb) for key, ra, rb in RELATION_TYPES if key in name), None)
         if rule and '.s' not in d:
             ra, rb = rule
@@ -135,7 +148,7 @@ def check_sentence(J, analyses):
         why.append(f'كلمةٌ لا تغطّيها وحدةٌ من الجملة: {w}')
     if J.O.get('unplaced'):
         why.append('كلماتٌ بلا موضعٍ مرخَّص: ' + '، '.join(J.O['unplaced'][:4]))
-    why += relation_problems(J)
+    why += relation_problems(J, analyses)
     for b in J.B:
         for end in (b[1], b[2]):
             if isinstance(end, str) and end.startswith('Q') and end.split('.s')[0] not in ids:
