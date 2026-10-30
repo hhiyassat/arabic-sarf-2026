@@ -125,8 +125,14 @@ def _host(word, toks, offs, a, b, lex, at_word_start):
         rest = word[offs[a + 1][0]:offs[b - 1][1]]
         rest_lic = list(stem_licence(rest)) if _moving(toks[a + 1]) else []
         rest_mabni = bool(lex and lex.lookup(rest))
-        # لا يُفصل إلا إن خلت الكلمة كلها من رخصة بنائها (أو لم تُرخَّص إلا بصورة المعتلّ): فَشِلۡتُمۡ ماضٍ من «فشل»
-        if licence_strength(stem_licence(text)) <= 0.5 and (rest_mabni or licence_strength(rest_lic) >= 1):
+        # لا يُفصل ما للكلمة كلها فيه شهادة معجمية: فَشِلۡتُمۡ ماضٍ من «فشل» (يطابق فَشِلَ في HFN)
+        # وتُفصل إن ساوت رخصةُ البقية رخصةَ الكلمة كلها ولم تكن للكلمة شهادة معجمية (فَلَعۡنَةُ: «فلع» و«لعن» قالبان)
+        whole_lic = stem_licence(text)
+        # وإن أثبتت الكتابة فعليّة الكلمة كلها (فَعَلۡتَ: ضمير رفعٍ بعد ساكن) فلا تُفصل إلا عن فعلٍ مرخَّص، لا عن اسم
+        if stem_info(text)['pos'] == 'verb' and not rest_mabni:
+            rest_lic = [x for x in rest_lic if x[0] in ('فعل', 'فعل محتمل', 'فعل بالكتابة')]
+        if rest_mabni or licence_strength(rest_lic) >= max(1, licence_strength(whole_lic)) and \
+                licence_strength(whole_lic) < 2:
             why = f'البقية مرخَّصة ({rest_lic[0][0]}: {rest_lic[0][1]})' if rest_lic else 'البقية مبنيٌّ في الملف'
             slots.append(_slot(word, offs, a, a + 1, MABNI, 'conj', note=f'حرف عطف: {why}، والكلمة كلها بلا رخصة'))
             return slots + _host(word, toks, offs, a + 1, b, lex, False)

@@ -236,6 +236,49 @@ if hfn() and rows:
         check('ويرفضها إن بقي التزامٌ لازم غير مستوفى', any('غير مستوفى' in w for w in check_sentence(J3, an_)), check_sentence(J3, an_))
         J4 = copy.deepcopy(Jc); J4.O['unplaced'] = ['رَحِيمٌ']
         check('ويرفضها إن بقيت كلمةٌ بلا موضعٍ مرخَّص', any('بلا موضع' in w for w in check_sentence(J4, an_)), check_sentence(J4, an_))
+    # مراجعة التقرير الثانية (٢): الأنفال ٣٣ «وَمَا كَانَ ٱللَّهُ لِيُعَذِّبَهُمۡ»: لام الجحود، وطرف خبر «كان» الفعل لا «هُمۡ»؛
+    # والفاحص يرفض رابطاً مكتمل الحقول طرفه من النوع الخطأ
+    from sarf.checker import relation_problems
+    T_ = Trace(); a_ = analyze(cat, rows[(8, 33)]); S_, u_ = sentence_geo(a_, 'Q8:33', T_)
+    kb = [b for b in S_.B if b[0].startswith('خبر «كَانَ»') and 'w3' in str(b[2])]
+    check('الأنفال ٣٣: خبر «كان» لام الجحود، وطرفه «يُعَذِّبَ» لا الضمير «هُمۡ»',
+          kb and 'لام الجحود' in kb[0][0] and u_[(3, 1)].id == kb[0][2], kb)
+    LT_ = linguistic_layer([(8, 33, a_, u_, S_)], T_, 't')[0]
+    J8 = next(J for D in LT_[0].A + LT_[0].O['pending'] for J in D.A + D.O['pending'] if (8, 33, 3) in J.O['location'])
+    check('والجملة نفسها بلا خطأ نوعٍ في روابطها', relation_problems(J8) == [], relation_problems(J8))
+    J9 = copy.deepcopy(J8)
+    J9.B = [(b[0].replace('لام الجحود', 'جملة فعلية'), b[1], u_[(3, 2)].id, b[3]) if b[0].startswith('خبر «كَانَ»') and 'w3' in str(b[2])
+            else b for b in J9.B]
+    check('والفاحص يرفض تبديل طرف الخبر الجملي بضمير المفعول مع بقاء الحقول مكتملة',
+          any('نوع الطرف' in w or 'خبرٌ ومفعولٌ' in w for w in relation_problems(J9)), relation_problems(J9))
+    # مراجعة التقرير الثانية (٥، ٦): ملكية الجواب، والشرط المنفي
+    sm = structs((2, 16))
+    check('البقرة ١٦: «فَمَا رَبِحَت» و«وَمَا كَانُواْ»: «ما» نافية، فلا قراءة شرطية', not sm['cond'], sm['cond'])
+    sm = structs((2, 17))
+    lm = [x for x in sm['cond'] if x['tool'] == 'لَمَّا']
+    check('البقرة ١٧: جواب «لَمَّا» «ذَهَبَ» (ماضٍ بعد جملة الشرط)، لا فاءٌ بعيدة',
+          lm and lm[0]['obligations'][1][1] and lm[0]['obligations'][1][2].startswith('ماضٍ'), lm)
+    sm = structs((2, 23))
+    last = [x for x in sm['cond'] if x['location'].endswith(':17')]
+    check('البقرة ٢٣: «إِن كُنتُمۡ صَٰدِقِينَ» لا يستوفي جوابه «فَإِن» التالية (شرطٌ جديد)، وجوابه محذوفٌ مرشَّح',
+          last and not last[0]['obligations'][1][1] and 'محذوف' in last[0]['obligations'][1][2], last)
+    sm = structs((2, 24))
+    ng = [x for x in sm['cond'] if x['location'].endswith(':0')]
+    check('البقرة ٢٤: «فَإِن لَّمۡ تَفۡعَلُواْ»: جملة الشرط منفيّة ورأسها «تَفۡعَلُواْ»، والجواب «فَٱتَّقُواْ»',
+          ng and ng[0]['obligations'][0][2].startswith('منفيٌّ') and 'تَفْعَلُوا' in ng[0]['obligations'][0][2] and
+          ng[0]['obligations'][1][1], ng)
+    # مراجعة التقرير الثانية (٤): نطاق الطرف A في عطف الجملة لا يعبر إلى جملةٍ قبله
+    sm = structs((2, 5))
+    c5 = [x for x in sm['coord'] if x['B'].startswith('وَأُ')]
+    check('البقرة ٥: «وَأُوْلَٰٓئِكَ» معطوفةٌ على «أُوْلَٰٓئِكَ عَلَىٰ هُدࣰى…» (رأسها اسم الإشارة)، لا «يُوقِنُونَ…»',
+          c5 and c5[0]['A'] and c5[0]['A'][0].startswith('«أُلَٰئِكَ عَلَى'), c5)
+    MU, (LT, st_) = layers([(2, 6), (2, 7)])
+    c7 = [x for x in linguistic_layer.samples['coord'] if x['location'] == '2:7:6']
+    check('البقرة ٧: «وَعَلَىٰٓ أَبۡصَٰرِهِمۡ» طرفها «خَتَمَ ٱللَّهُ…» بنواتها «خَتَمَ»، لا «يُؤۡمِنُونَ خَتَمَ…»',
+          c7 and c7[0]['A'] and c7[0]['A'][0].startswith('«خَتَمَ') and 'يُؤْمِنُونَ' not in c7[0]['A'][0], c7)
+    sm = structs((2, 4))
+    c4 = [x for x in sm['coord'] if x['location'] == '2:4:5']
+    check('البقرة ٤: «وَمَآ أُنزِلَ مِن قَبۡلِكَ» موصولةٌ معطوفة على «بِمَآ»، لا جملة', c4 and c4[0]['level'] == 'مفرد', c4)
     sm = structs((17, 49))
     cw = [x for x in sm['coord'] if x['B'].startswith('وَرُفَٰت')]
     check('الإسراء ٤٩: «وَرُفَٰتًا» معطوفٌ مفرد على «عِظَٰمࣰا» (موافقةٌ في النصب)، والواو لمطلق الجمع',

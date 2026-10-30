@@ -42,8 +42,12 @@ for l in open(H + 'data/quran_hafs.tsv', encoding='utf-8'):
         route = ('فعل' if (G.Theta.get('F') or {}).get('kind') != 'اسم' else
                  'اسم فاعل/مفعول قياساً' if str(G.Theta.get('P', '')).startswith('اسم') else
                  'بناء سيبويه' if str(G.Theta.get('P', '')).startswith('بناء سيبويه') else 'مدخل معجمي (مصدر وغيره)')
+        if route == 'فعل':
+            C['فعل: مغلق'] += 1
         if wi not in amap:
             C['غير مقارن: الكلمة لا تقابل كلمةً في QAC'] += 1
+            if route == 'فعل':
+                C['فعل: الوزن غير مقارن: الكلمة لا تقابل كلمةً في QAC'] += 1
             excluded.append(f'{s}:{v} {G.O["text"]} (الكلمة لا تقابل كلمةً في QAC)')
             continue
         qsegs = Q[(s, v, amap[wi])]
@@ -51,6 +55,8 @@ for l in open(H + 'data/quran_hafs.tsv', encoding='utf-8'):
         if not roots:
             # لا جذر في QAC (علمٌ أعجمي، أو مبني): لا يُعدّ خلافاً ولا وفاقاً
             C['غير مقارن: لا جذر للكلمة في QAC'] += 1
+            if route == 'فعل':
+                C['فعل: الوزن غير مقارن: لا جذر في QAC'] += 1
             excluded.append(f'{s}:{v} {G.O["text"]} (لا جذر في QAC)')
             continue
         C[route] += 1
@@ -59,6 +65,8 @@ for l in open(H + 'data/quran_hafs.tsv', encoding='utf-8'):
             C[route + ' ✓'] += 1
             # الوزن أيضاً (للفعل): وزن QAC (VF) مقابل وزن الجبر؛ فالجذر وحده لا يثبت صحة الوزن
             vf = next((f[3:] for _, t, fs in qsegs if t == 'V' for f in fs if f.startswith('VF:')), None)
+            if route == 'فعل' and not vf:
+                C['فعل: الوزن غير مقارن: لا وزن (VF) في QAC'] += 1
             if route == 'فعل' and vf:
                 C['فعل: الوزن مقارن'] += 1
                 ours_f = str(G.Theta.get('P'))
@@ -74,6 +82,8 @@ for l in open(H + 'data/quran_hafs.tsv', encoding='utf-8'):
                 ours[1:] == g[:-1] else
                 'مضعَّفٌ أو مكرَّر' if len(set(ours)) < len(ours) or len(set(g)) < len(g) else 'جذرٌ آخر')
         C[route + ' ✗'] += 1
+        if route == 'فعل':
+            C['فعل: الوزن غير مقارن: الجذر مخالف'] += 1
         C['الخلاف: ' + kind] += 1
         if len(bad[route]) < 25:
             bad[route].append(f'{s}:{v} {G.O["text"]} ours={ours} qac={g} [{kind}]')

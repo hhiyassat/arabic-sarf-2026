@@ -401,6 +401,12 @@ def unit_geo(a, wi, ui, base_id, T, governed_info=None):
                       'التنوين' if any(c.O.get('tanwin') for c in cells) else
                       'التاء المربوطة' if any(c.C == 'ة' for c in cells) else
                       'حرف جر مقبول' if jarr else None)
+        sc = [c for c in cells if c.O['slot'] == 'جذع']
+        if noun_proof is None and len(sc) == 3 and sc[0].L == 2 and sc[0].H == 'a' and sc[1].H == 'i' and \
+                sc[1].L == 1 and sc[2].H in ('u', 'i'):
+            # بناء فاعِل بحركة إعرابٍ على اللام (فَاطِرُ): لا فعل على هذه الصورة؛ فالماضي فَاعَلَ بفتح العين،
+            # والأمر فَاعِلۡ بسكون اللام
+            noun_proof = 'بناء فاعِل: كسر العين وحركة إعرابٍ على اللام'
         if noun_proof is None:
             defer(G, T, 'اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان')
             G.Omega[0].reason = 'لم تثبت الاسمية'
@@ -709,6 +715,18 @@ def _madi_like(text):
         not any(L in 'اوي' and not m & {FATHA, DAMMA, KASRA} for L, m in st) and FATHA in st[-1][1]
 
 
+def _hollow_madi(text):
+    """الأجوف الماضي: فَاعَلَ بلا مقطع ثالث (زَادَ، قَالَ، جَاءَ)، وبعده ضميرٌ متصل أو لا (فَزَادَهُمُ)"""
+    from .cells import ENCLITICS_V
+    st = letters(text)
+    if len(st) > 3 and st[0][0] in 'وف' and set(st[0][1]) == {FATHA}:
+        st = st[1:]
+    if len(st) < 3 or not (set(st[0][1]) == {FATHA} and st[1][0] == 'ا' and not st[1][1] and FATHA in st[2][1]):
+        return False
+    rest = ''.join(L + ''.join(sorted(m)) for L, m in st[3:])
+    return not rest or is_form(rest, ENCLITICS_V)
+
+
 def find_object(a, g, verbs, governed, marks, units, unit_of):
     """المفعول به لفعلٍ متعدٍّ: الضمير المتصل بعده في كلمته، أو أول منصوبٍ بعده (يُتجاوز مرفوعٌ واحد هو الفاعل)
     إلى أول حدٍّ أو فعلٍ آخر، ولا عامل فيه غيره. → (رقم الوحدة، الدليل) أو None"""
@@ -822,7 +840,16 @@ def sentence_geo(a, vid, T):
                 found = find_khabar(a, r, verbs, governed, marks)
                 if found:
                     w, kind, why = found
-                    kslot = a['segments'][w]['slots'][-1]
+                    wsl = a['segments'][w]['slots']
+                    # طرف الخبر رأسُ الكلمة (جذعها أو لفظ الجلالة)، لا آخر خاناتها: «لِيُعَذِّبَهُمۡ» رأسها الفعل لا «هُمۡ»
+                    kslot = next((x for x in wsl if x['type'] in ('جذع', 'لفظ الجلالة')), wsl[-1])
+                    prev_w = a['segments'][r['word_index'] - 1]['word'] if r['word_index'] > 0 else ''
+                    if r['operator'] in ('كَانَ',) and len(wsl) > 1 and wsl[0]['type'] == 'عامل' and \
+                            is_form(wsl[0]['text'], ('لِ',)) and is_form(prev_w, ('مَا', 'لَمْ'), prefix=True):
+                        # لام الجحود بعد «ما كان» و«لم يكن»: اللام والفعل مصدرٌ مؤوَّل متعلّق بخبر «كان» المحذوف
+                        # (مُرِيدًا، عند البصريين)، فالطرف الفعل رأسُ المصدر المؤوَّل، لا جملةٌ فعلية هي الخبر
+                        kind = 'محذوف يتعلّق به المصدر المؤوَّل (لام الجحود)'
+                        why = f'«{prev_w}» + «كان» + «{wsl[0]["text"]}» والمضارع: لام الجحود'
                     dstk = units.get((w, kslot.get('unit', 0)))
                     ob.met, ob.ev = True, Evidence(f'خبر «{r["operator"]}» {kind}', [why])
                     if dstk is not None and src is not None:
@@ -1212,6 +1239,9 @@ WAQF_W = {'م': 'وقف لازم', 'قلى': 'الوقف أولى', 'ج': 'وق�
 SYNTACTIC_OBL = ('معمول', 'خبر', 'فاعل')
 
 
+READINGS = ('حفص عن عاصم (مصحف المجمّع)',)
+
+
 def boundary_record(p, words, pos_of, bonds, obls, nuclei, du_start, mark, ayah_end, surah_end, sources, a_id, q,
                     cand=(), checked_ends=frozenset()):
     """B(b | a, q, c) = ⟨F, L, M, W, I, E⟩ للحدّ المحتمل b بعد الكلمة p (اقتراح صاحب النظرية في النمذجة):
@@ -1265,6 +1295,8 @@ def boundary_record(p, words, pos_of, bonds, obls, nuclei, du_start, mark, ayah_
         cat = 'غير محسوم'
     I = ('لا يُبتدأ بما بعده استقلالاً' if L else 'يُبتدأ بما بعده' if cat in ('تام', 'كافٍ') or cat.startswith('تام أو')
          else 'غير محسوم')
+    if not isinstance(q, str) or q not in READINGS:
+        raise ValueError(f'قراءةٌ غير معرَّفة في سجل الحدّ: {q!r}')   # فاحص المخطط: q من القراءات المعرَّفة
     return dict(location=loc, F=F, L=L, Lp=Lp, L_checked=L_checked, M=M, W=W, I=I, E=E, category=cat, a=a_id, q=q,
                 mark=mark, ayah_end=ayah_end)
 
@@ -1362,7 +1394,8 @@ def word_feats(a):
             amma=is_form(w_, ('أَمَّا', 'إِمَّا'), prefix=True),
             an=is_form(w_, ('أَنْ',), prefix=True),
             # صورة الفعل بالمقشِّر (يَهۡدِي، يَشۡعُرُونَ) وإن لم تثبت فعليته بالإسناد: تكفي دليلاً على جملةٍ بعد النفي والشرط
-            vshape=(stem_info(next((x['text'] for x in sl if x['type'] == 'جذع'), w_)).get('kind') if not g else g['kind']),
+            vshape=(stem_info(next((x['text'] for x in sl if x['type'] == 'جذع'), w_).replace(DAGGER_ALIF, 'ا')).get('kind')
+                    if not g else g['kind']),
             # آخره ألفٌ مقصورة: لا تظهر عليه حركة الإعراب، فيوافق كل حالة
             maqsur=bool(st) and (st[-1][0] == 'ى' or st[-1][0] == 'ا' and not st[-1][1] and len(st) > 2 and FATHA in st[-2][1]
                                  and not st[-2][1] & {FATHATAN}),
@@ -1477,7 +1510,7 @@ def _lam_madi(word):
     return stem_info(rest).get('kind') == 'madi' or _madi_like(rest)
 
 
-def cond_structs(feats, nuc_pos, starts):
+def cond_structs(feats, nuc_pos, starts, ay_end=None):
     """G = Cond_t,e(S, Q) لكل أداة شرط (حكم صاحب النظرية؛ الأصول من ابن عقيل):
     - الأداة: ما له صدارة الشرط (إِنْ، إِذَا، لَوْ، لَئِنْ، أَيْنَمَا…)، و«لَمَّا» يليها ماضٍ، و«مَن، ما، مهما» يليها فعل
       (وهذه تبقى بقراءتيها: شرطية أو موصولة/استفهامية)
@@ -1503,6 +1536,11 @@ def cond_structs(feats, nuc_pos, starts):
         # فإن كان اسماً بدليله (إِذَا ٱلسَّمَآءُ ٱنشَقَّتۡ) فالفعل بعده، ولا يُتجاوز نفيٌ أو ما له الصدارة
         h1 = t + 2 if t + 2 < n and is_form(feats[t + 1]['text'], ('مَا',)) and tool in ('إِذَا', 'إِنْ', 'أَيْنَمَا') else t + 1
         g1 = feats[h1]
+        neg_s = None
+        if is_form(g1['text'], ('لَمْ', 'لَا', 'مَا', 'لَنْ'), prefix=True) and h1 + 1 < n:
+            # جملة الشرط منفيّة (فَإِن لَّمۡ تَفۡعَلُواْ): S = Negation(لم، الجملة الفعلية)، ورأسها الفعل بعد النفي
+            neg_s, h1 = g1['text'], h1 + 1
+            g1 = feats[h1]
         if g1.get('noun') and not g1['verb'] and h1 not in nuc_pos:
             s_pos = next((k for k in range(h1 + 1, min(n, h1 + 4)) if feats[k]['verb'] or k in nuc_pos), None)
             if s_pos is not None and any(starts[j] or feats[j].get('neg') for j in range(h1 + 1, s_pos)):
@@ -1517,19 +1555,35 @@ def cond_structs(feats, nuc_pos, starts):
             if (feats[s_pos]['verb'] == 'mudari' or sx.get('kind') == 'mudari') and \
                     (mood in ('رفع', 'نصب') or sx.get('suffix') == 'نون الرفع'):
                 continue
-        s_verb = s_pos is not None and (feats[s_pos]['verb'] or s_pos in nuc_pos or feats[s_pos].get('vshape'))
+        # أدوات الشرط مختصّة بالجملة الفعلية (ابن عقيل): ما يلي الأداة بلا دليل اسمية فعلٌ بمقتضاها
+        s_verb = s_pos is not None and (feats[s_pos]['verb'] or s_pos in nuc_pos or feats[s_pos].get('vshape') or
+                                        s_pos == h1 and not feats[s_pos].get('noun'))
         obl = [('فعل الشرط', bool(s_verb),
-                f'«{feats[s_pos]["text"]}»' + ('' if feats[s_pos]['verb'] or s_pos in nuc_pos else ' (بصورته، أو لأنه يلي الأداة)')
+                (f'منفيٌّ بـ«{neg_s}»: ' if neg_s else '') +
+                f'«{feats[s_pos]["text"]}»' + ('' if feats[s_pos]['verb'] or s_pos in nuc_pos else ' (يلي الأداة بلا دليل اسمية، والأداة مختصّة بالفعل)')
                 if s_pos is not None else 'لم يُكشف فعل الشرط')]
         q_pos, q_kind = None, None
         if True:
             # يُبحث عن دليل ربط الجواب ولو لم يُكشف فعل الشرط (وَلَوۡ شَآءَ ٱللَّهُ لَذَهَبَ)
+            # ملكية الجواب (مراجعة التقرير الثانية ٥): لا يُستوفى الجواب بفاءٍ لاحقة إلا إن كانت لهذا الشرط: فالفاء
+            # الداخلة على شرطٍ جديد (فَإِن لَّمۡ تَفۡعَلُواْ) ليست جوابه، وأداةُ شرطٍ قبل الجواب جوابُها أولى بما بعدها؛
+            # و«ما/مَن» المحتملة لا يُتجاوز بجوابها آخرُ الآية ولا جملةٌ معطوفة
             for k in range((s_pos if s_pos is not None else t) + 1, min(n, t + 30)):
                 g = feats[k]
+                if starts[k] and starts[k][0] == 'شرط':
+                    break                              # شرطٌ جديد (ولو بفاء): ليس جواب هذا
                 if starts[k] and not (g['conj'] and g['conj_letter'] == 'ف'):
                     break                              # ما له الصدارة: الجواب لم يأتِ قبله
+                if tool in ('إِذَا', 'لَمَّا') and s_pos is not None and k > s_pos + 1 and not g['conj'] and \
+                        (g['verb'] == 'madi' or g.get('vshape') == 'madi' and not g.get('noun') or
+                         not g['verb'] and not g.get('noun') and _madi_like(g['text'])):
+                    q_pos, q_kind = k, f'ماضٍ بعد جملة الشرط في جواب «{tool}»'
+                    break                              # فَلَمَّآ أَضَآءَتۡ … ذَهَبَ: قبل أي فاءٍ بعده
                 if g['conj'] and g['conj_letter'] == 'ف':
                     q_pos, q_kind = k, 'فاءٌ رابطة للجواب'
+                    break
+                if amb and not strict and (ay_end and ay_end[k - 1] or
+                                           g['conj'] and g['conj_letter'] in ('و', 'ثم') and clause_word(feats, k, nuc_pos)):
                     break
                 if tool == 'لَوْ' and (g.get('lam_fatha') and (g['verb'] or k in nuc_pos) or _lam_madi(g['text'])):
                     q_pos, q_kind = k, 'لامٌ مفتوحة على الفعل في جواب «لو»'
@@ -1551,6 +1605,14 @@ def cond_structs(feats, nuc_pos, starts):
                              if (feats[k]['verb'] or k in nuc_pos) and not feats[k]['conj']), None)
                 if cand is not None:
                     q_kind = f'جوابٌ محتمل: «{feats[cand]["text"]}» (نواةٌ بلا دليل ربط)'
+        if amb and not strict and q_pos is None:
+            continue                                   # «ما/مَن» بلا جوابٍ مملوك: لا قراءة شرطية (فَمَا رَبِحَت: نافية)
+        if q_pos is None and t > 0 and any(k in nuc_pos for k in range(max(0, t - 6), t)) and \
+                (t + 1 >= n or any(starts[k] and starts[k][0] == 'شرط' for k in range((s_pos or t) + 1, min(n, (s_pos or t) + 6)))
+                 or ay_end and s_pos is not None and any(ay_end[k] for k in range(s_pos, min(n, s_pos + 4)))):
+            # بعد جملةٍ تامّة، ولا جواب قبل شرطٍ جديد أو آخر الآية (إِن كُنتُمۡ صَٰدِقِينَ): جوابٌ محذوف يدلّ عليه ما قبله،
+            # قراءةٌ مرشَّحة لا مستوفاة (لا يُحكم بالحذف إلا بدليل، والدليل هنا ما قبل الأداة)
+            q_kind = 'جوابٌ محذوف مرشَّح يدلّ عليه ما قبل الأداة'
         obl.append(('الجواب', q_pos is not None, q_kind or 'لم يُكشف الجواب، ولا يُحكم بحذفه بلا دليل'))
         # نطاق الحدّ المحتمل حين لم يُستوفَ الجواب: إلى الجواب المحتمل، أو أول ما له الصدارة، أو ثماني كلمات
         nxt_start = next((k for k in range((s_pos or t) + 1, min(n, t + 8)) if starts[k]), min(n, t + 8))
@@ -1581,6 +1643,7 @@ def clause_word(feats, h, nuc_pos):
     nxt = feats[h + 1] if h + 1 < len(feats) else None
     nv = bool(nxt) and (nxt['verb'] or h + 1 in nuc_pos or nxt.get('vshape'))
     if g['verb'] or h in nuc_pos or g.get('vshape') and not g.get('noun') or g.get('amma') or \
+            not g.get('noun') and (_madi_like(g['text']) or _hollow_madi(g['text'])) or \
             set(g.get('ops', [])) & VERBAL_OPS:
         return True
     if is_form(g['text'], ISTIDRAK_V, prefix=True):
@@ -1597,6 +1660,9 @@ def _pp_clause(feats, h, nuc_pos):
     """شبه الجملة بعد العاطف يبدأ جملةً إن تلاه ما يتمّ به الكلام: مرفوعٌ (خبرٌ مقدَّم ومبتدأ مؤخَّر: وَلَهُمۡ عَذَابٌ)،
     أو فعل، أو ضمير؛ فإن تلاه مجرورٌ أو منصوب (وَبِٱلۡيَوۡمِ ٱلۡأٓخِرِ) فهو مفردٌ معطوف"""
     nxt = feats[h + 1] if h + 1 < len(feats) else None
+    if nxt is not None and is_form(feats[h]['text'], JARR_V) and nxt['case'] in ('جر', 'جر أو نصب', 'نصب أو جر', None) \
+            and h + 2 < len(feats):
+        nxt = feats[h + 2]                              # فِي قُلُوبِهِم مَّرَضٌ: الجارّ كلمة، ومجروره بعده، ثم المرفوع
     return bool(nxt) and not nxt['conj'] and (nxt['case'] == 'رفع' or nxt['verb'] or h + 1 in nuc_pos or
                                               nxt.get('head') == 'pron' or nxt.get('demo') or nxt.get('vshape') and
                                               not nxt.get('noun'))
@@ -1619,6 +1685,15 @@ def coord_structs(feats, nuc_pos, starts, not_conj, is_clause):
         letter = f['conj_letter']
         h = k + 1 if letter in ('أو', 'ثم') else k
         if h >= n:
+            continue
+        # «وَمَآ أُنزِلَ» بعد «بِمَآ أُنزِلَ»: «ما» موصولةٌ معطوفة على «ما» قبلها، لا نافية تبدأ جملة
+        prev_ma = next((j for j in range(k - 1, max(-1, k - 8), -1)
+                        if is_form(feats[j]['text'], ('بِمَا', 'مِمَّا', 'لِمَا', 'عَمَّا', 'فِيمَا'), prefix=True)), None)
+        if prev_ma is not None and is_form(g_text := feats[h]['text'], ('مَا',), prefix=True) and h + 1 < n and \
+                (feats[h + 1]['verb'] or h + 1 in nuc_pos or _madi_like(feats[h + 1]['text']) or
+                 feats[h + 1].get('vshape') and not feats[h + 1].get('noun')):
+            out.append(dict(kind='عطف', pos=k, letter=letter, level='مفرد', B=h, A=[prev_ma],
+                            effect=COORD_EFFECT.get(letter, ''), note=f'«{g_text}» موصولة معطوفة على نظيرتها'))
             continue
         if is_clause(k - 1) or clause_word(feats, h, nuc_pos):
             out.append(dict(kind='عطف', pos=k, letter=letter, level='جملة', B=h, A=['الجملة قبله'],
@@ -1888,6 +1963,7 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
                 rel_samples.append(dict(location=words_text(words, r['head']), text=' '.join(wtext[r['head']:r['end']]),
                                         silah=r['silah'], obligations=[list(o) for o in r['obligations']]))
         rel_at = {r['head']: r for r in rels}
+        silah_pos = {k for r in rels for k in range(r['head'] + 1, r['end'])}
         # موضع كل كلمة في البناء (مراجعة التقرير ١٠): الموضع ← الدور المرخَّص؛ والتتابع وحده لا يجعل للكلمة موضعاً
         roles = {}
         for r in rels:
@@ -1903,12 +1979,12 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
         for b in bonds:
             if b[0].startswith('خبر «') and b[2] in pos_of:
                 bound.setdefault(pos_of[b[2]], b[0])
-        for q in qawl_pos:
-            k = next((k for k in range(q + 1, min(n, q + 6)) if k in nset), None)
-            if k is not None and not any(starts[j] and starts[j][0] != 'نداء' for j in range(q + 1, k)):
-                bound.setdefault(k, f'مقول «{wtext[q]}»')
+        for qp in qawl_pos:
+            k = next((k for k in range(qp + 1, min(n, qp + 6)) if k in nset), None)
+            if k is not None and not any(starts[j] and starts[j][0] != 'نداء' for j in range(qp + 1, k)):
+                bound.setdefault(k, f'مقول «{wtext[qp]}»')
         not_conj = set()
-        for c_ in cond_structs(feats, set(nuc_pos), starts):
+        for c_ in cond_structs(feats, set(nuc_pos), starts, ay_end):
             st['cond'] += 1
             st['cond:ambiguous'] += c_['amb']
             for name, met, _ in c_['obligations']:
@@ -1940,13 +2016,31 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
         def _is_clause(p_):
             d_ = _boundary_kind(p_, 0, [], [], nuc_pos, set(), starts, feats)
             return bool(d_) and d_[1].startswith('نهاية جملة قبل')
-        for c_ in coord_structs(feats, set(nuc_pos), starts, not_conj, _is_clause):
+        coords = list(coord_structs(feats, set(nuc_pos), starts, not_conj, _is_clause))
+        single_B = {c['B'] for c in coords if c['level'] == 'مفرد'} | {c['pos'] for c in coords if c['level'] == 'مفرد'}
+        for c_ in coords:
             if c_['level'] == 'جملة':
                 # الطرفان بهويتيهما ونطاقيهما (مراجعة التقرير ٧): A الجملة التي تنتهي قبل العاطف (من نواتها السابقة)،
                 # وB الجملة التي تبدأ به (إلى نواتها). وبلا نواةٍ قبلها فالطرف A غير معيَّن، ولا يُعدّ العطف عطفَ جملة مثبتاً
                 k0 = c_['pos']
-                a_n = next((j for j in range(k0 - 1, max(-1, k0 - 15), -1) if j in nset), None)
+                def _head(j):
+                    if j in silah_pos or j in single_B or bound.get(j, '').startswith('مقول'):
+                        return False                   # فعل الصلة رأسُ صلته، والمقول داخل القول: ليسا رأس الجملة الخارجية
+                    f_ = feats[j]
+                    return j in nset or bool(f_['verb']) or not f_.get('noun') and (_madi_like(f_['text']) or
+                                                                                    _hollow_madi(f_['text'])) or \
+                        bool(f_.get('demo')) or f_.get('head') == 'pron' or bool(starts[j]) or j in rel_at or \
+                        f_['conj'] and clause_word(feats, j, nset) or \
+                        (f_.get('head') == 'pp' or is_form(f_['text'], JARR_V)) and _pp_clause(feats, j, nset)
+                # رأس الجملة السابقة: أول رأسٍ يُلقى رجوعاً من العاطف (فعلٌ، أو نواة، أو اسم إشارة أو ضمير يبدأ جملة اسمية،
+                # أو ما له الصدارة)، ولا يُعبر إلى جملةٍ قبله: «أُوْلَٰٓئِكَ عَلَىٰ هُدࣰى» لا «يُوقِنُونَ … أُوْلَٰٓئِكَ»
+                a_n = next((j for j in range(k0 - 1, max(-1, k0 - 15), -1) if _head(j)), None)
+                while a_n is not None and a_n > 0 and a_n - 1 not in single_B and \
+                        (feats[a_n - 1].get('neg') or feats[a_n - 1].get('qad')) and a_n - 1 < k0:
+                    a_n -= 1                           # النفي أو «قد» قبل الرأس من الجملة نفسها (وَمَا يَخۡدَعُونَ)
                 b_n = next((j for j in range(k0, min(n, k0 + 4)) if j in nset), None)
+                if b_n is None and _head(k0):
+                    b_n = k0
                 c_['A'] = [dict(nucleus=wtext[a_n], span=(a_n, k0 - 1), text=' '.join(wtext[a_n:k0]))] if a_n is not None else []
                 c_['B_scope'] = dict(nucleus=wtext[b_n] if b_n is not None else None, start=k0)
                 if a_n is not None and b_n is not None:
@@ -2006,6 +2100,11 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
                 if rec['J'] and not last:
                     st[f'Jb_{rec["J"]}'] += 1
                     st[f'Jb_{rec["J"]}:' + rec['J_why'].split(':')[0]] += 1
+                    # موضع كل حدٍّ مرةً واحدة، للمصالحة: مجموع المواضع = عدد الحدود
+                    place = ('عند علامة معتمدة' if rec['mark'] in BOUNDARY_WAQF else 'عند المعانقة' if rec['mark'] == '∴' else
+                             f'عند علامة غير معتمدة ({rec["mark"]})' if rec['mark'] else
+                             'بلا علامة: رأس آية' if rec['ayah_end'] else 'بلا علامة: داخل الآية')
+                    st[f'Jb_place:{rec["J"]}:{place}'] += 1
                 if last or rec['J'] == 'proven':
                     segs.append((du_start, p, rec))
                     du_start = p + 1

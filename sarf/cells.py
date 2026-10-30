@@ -437,6 +437,16 @@ BILITERAL_V = {'يَد': 'يدي', 'دَم': 'دمي', 'غَد': 'غدو', 'أَ
                'سْم': 'سمو', 'فَم': 'فوه', 'شَفَة': 'شفه', 'سَنَة': 'سنو', 'لُغَة': 'لغو', 'مِائَة': 'مءي'}
 
 
+def _madi_exact(t, verb):
+    """الماضي المكتوب بلاحقته يطابق فعل HFN حرفاً وحركة إلا حركة لامه (وَضَعَتۡهَا ← وَضَعَ، فَشِلۡتُمۡ ← فَشِلَ):
+    حروفه وحركاته إلى ما قبل اللام هي هي، ثم اللام، ثم لواحق الإسناد والمفعول"""
+    vt, tt = letters(verb), letters(t)
+    k = len(vt) - 1
+    if k < 2 or len(tt) <= k + 0 or [x for x in tt[:k]] != [x for x in vt[:k]] or tt[k][0] != vt[k][0]:
+        return False
+    return len(tt) > k + 1 and all(L in 'تنواهمكيا' for L, _ in tt[k + 1:])
+
+
 def _hollow_fatha(t, root, cls):
     """الأجوف الماضي المسند إلى ضمير رفعٍ متحرك تُضمّ فاؤه أو تُكسر (قُلۡنَا، بِعۡنَا، خِفۡنَا)، ولا تُفتح:
     فـ«جَدۡنَا» ليس من «جاد»"""
@@ -451,8 +461,10 @@ def licence_strength(lics):
     0.5 بصورة المعتلّ (weak_variants) أو المحذوف الفاء؛ 0 لا رخصة"""
     best = 0
     for kind, root, what in lics:
-        if kind in ('معجم', 'محذوف اللام', 'فعل', 'علم', 'فعل بالكتابة'):
+        if kind in ('معجم', 'محذوف اللام', 'فعل', 'علم'):
             s_ = 2
+        elif kind == 'فعل بالكتابة':
+            s_ = 1.5                             # قالبٌ ودليلٌ مكتوب على الفعلية، دون مطابقة فعلٍ في HFN حرفاً وحركة
         elif 'قُلبت ألفاً' in what or kind in ('محذوف الفاء', 'أمر المثال') or kind == 'فعل محتمل':
             s_ = 1                               # الناقص بألفٍ بعد فتح (بَدَا، عَفَا، هَدَىٰ)، ومصدر المثال (سَعَة)
                                                  # وأمره (عِظۡ، ذَرۡ): كتابةٌ مطّردة
@@ -531,7 +543,7 @@ def stem_licence(text, verbs=True):
                 own = lambda r, c: READING.get((r, c)) == t and not _hollow_fatha(t, r, c)
                 # الشهادة المعجمية: فعلٌ في HFN يطابق المكتوب حرفاً وحركة (الماضي)؛ وما سواه قالبٌ مرشَّح
                 ev = [x for x in m.get('licensed', []) if own(x['root'], x['form_class']) and
-                      _plain_vowels(x['verb']) == _plain_vowels(t)]
+                      (_plain_vowels(x['verb']) == _plain_vowels(t) or _madi_exact(t, x['verb']))]
                 if ev:
                     out.append(('فعل', ev[0]['root'], ev[0]['form_class']))
                 else:

@@ -196,6 +196,59 @@ chk_n, chk_bad, chk_list = check_layer(LT, {(s_, v_): a_ for s_, v_, a_, _, _ in
 C['checker_closed'], C['checker_rejected'] = chk_n, chk_bad
 for jid, why in chk_list[:20]:
     fail['checker'].append(f'{jid}: ' + '؛ '.join(why[:2]))
+# اختبارات الفاحص على جملٍ مغلقة حقيقية: تُزيَّف الشهادة أو يُحذف التزامٌ أو يُبدَّل طرف رابطٍ بطرفٍ من نوعٍ خطأ،
+# فيُسجَّل لكل تزييف هل رُفض، وبأيّ سبب؛ ويُحفظ سجلّ أدلة أمثلةٍ من الجمل المقبولة كما هو
+import copy as _copy
+from sarf.checker import check_sentence, relation_problems
+from sarf.algebra import Evidence as _Ev
+an_all = {(s_, v_): a_ for s_, v_, a_, _, _ in items}
+closed_J = [J for SP in LT for D in SP.A for J in D.A if J.closed]
+checker_tests, closed_evidence = [], []
+def _forge(J, name, fn):
+    J2 = _copy.deepcopy(J)
+    if fn(J2) is False:
+        return
+    why = check_sentence(J2, an_all)
+    checker_tests.append(dict(test=name, J=J.id, rejected=bool(why), reasons=why[:2]))
+def _swapped(X, i, d):
+    Y = _copy.copy(X); Y.B = list(X.B); Y.B[i] = (X.B[i][0], X.B[i][1], d, X.B[i][3]); return Y
+for J in closed_J[:6]:
+    checker_tests.append(dict(test='الجملة كما بُنيت', J=J.id, rejected=bool(check_sentence(J, an_all)),
+                              reasons=check_sentence(J, an_all)[:2]))
+    _forge(J, 'حذف التزامٍ يلزم بالتحليل', lambda X: (X.Omega.__setitem__(slice(None), [o for o in X.Omega
+                                                     if not o.name.startswith(('معمول', 'خبر'))]) or True)
+           if any(o.name.startswith(('معمول', 'خبر')) for o in X.Omega) else False)
+    _forge(J, 'شهادة إكمال خالية', lambda X: setattr(X, 'ec', _Ev('', [])))
+    _forge(J, 'التزامٌ لازم غير مستوفى', lambda X: setattr(X.Omega[0], 'met', False) if X.Omega else False)
+    _forge(J, 'كلمةٌ بلا موضع', lambda X: X.O.__setitem__('unplaced', ['%d:%d:%d' % tuple(X.O['location'][0])]))
+    def _swap(X):
+        ids = [b[2] for b in X.B if isinstance(b[2], str) and b[2].startswith('Q')]
+        for i, b in enumerate(X.B):
+            if b[0] == 'مفعول به' or 'خبر' in b[0] or 'مجرور' in b[0]:
+                other = next((d for d in ids if d != b[2] and relation_problems(_swapped(X, i, d))), None)
+                if other:
+                    X.B[i] = (b[0], b[1], other, b[3])
+                    return True
+        return False
+    _forge(J, 'تبديل طرف رابطٍ بطرفٍ من نوعٍ خطأ', _swap)
+# الأنفال ٣٣ (مراجعة التقرير الثانية): طرف خبر «كان» يُبدَّل بضمير المفعول «هُمۡ» والحقول مكتملة
+J833 = next((J for SP in LT for D in SP.A + SP.O['pending'] for J in D.A + D.O['pending']
+             if [8, 33, 3] in [list(x) for x in J.O['location']]), None)
+if J833 is not None:
+    kb = [i for i, b in enumerate(J833.B) if b[0].startswith('خبر «كَانَ»') and '.w3.' in str(b[2])]
+    checker_tests.append(dict(test='الأنفال ٣٣ كما بُنيت: أنواع الأطراف', J=J833.id,
+                              rejected=bool(relation_problems(J833)), reasons=relation_problems(J833)[:2],
+                              bond=[f'{b[1]} →[{b[0]}] {b[2]}' for b in J833.B if b[0].startswith('خبر «كَانَ»')]))
+    if kb:
+        J9 = _swapped(J833, kb[0], str(J833.B[kb[0]][2]).replace('.u1', '.u2'))
+        J9.B[kb[0]] = (J9.B[kb[0]][0].replace('محذوف يتعلّق به المصدر المؤوَّل (لام الجحود)', 'جملة فعلية'), *J9.B[kb[0]][1:])
+        checker_tests.append(dict(test='الأنفال ٣٣ مزيَّفة: طرف الخبر الجملي ضمير المفعول «هُمۡ»', J=J833.id,
+                                  rejected=bool(relation_problems(J9)), reasons=relation_problems(J9)[:2]))
+for J in closed_J[:5]:
+    closed_evidence.append(dict(J=J.id, location=['%d:%d:%d' % tuple(x) for x in J.O['location']],
+                                ec=J.ec.text() if J.ec else None, eb=J.eb.text() if J.eb else None,
+                                obligations=[(o.name, o.met, o.ev.text() if o.ev else o.reason) for o in J.Omega],
+                                bonds=[f'{b[1]} →[{b[0]}] {b[2]}' for b in J.B if b[0] != 'تجاور']))
 for k, x in st.items():
     C[k] = x
 # أمثلة الروابط عبر حدّ الآية
@@ -248,7 +301,7 @@ for x in LT:
                 boundary=(D.eb.text() if D.eb else ''), units=[ex.get(u.id, u.O['text']) for u in units],
                 bonds=[f'{b[1]} →[{b[0]}] {b[2]}' for b in J.B],
                 open=[o.name + (f' ({o.reason})' if o.reason else '') for o in J.open_required()]))
-M = dict(counts=dict(C), unit_deferred=dict(unit_reason.most_common()), sentence_open=dict(open_kind.most_common()),
+M = dict(checker_tests=checker_tests, closed_evidence=closed_evidence, counts=dict(C), unit_deferred=dict(unit_reason.most_common()), sentence_open=dict(open_kind.most_common()),
          unit_closed_by=dict(close_route.most_common()), failures={k: v[:40] for k, v in fail.items()},
          samples=samples.get('du', []),
          cross=dict(cross_samples),
