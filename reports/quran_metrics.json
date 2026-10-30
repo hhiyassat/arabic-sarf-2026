@@ -1,29 +1,29 @@
 {
  "qac": {
-  "agr": 9642,
-  "agr_hit": 9309,
-  "agr_single": 9157,
-  "agr_single_hit": 8827,
-  "ours_verb": 9696,
-  "ours_verb_ok": 9661,
-  "qac_verb_missed": 9692,
+  "agr": 9654,
+  "agr_hit": 9342,
+  "agr_single": 9151,
+  "agr_single_hit": 8842,
+  "ours_verb": 9708,
+  "ours_verb_ok": 9673,
+  "qac_verb_missed": 9680,
   "qac_verbs": 19353,
-  "unaligned": 180,
-  "voice": 9627,
-  "voice_hit": 9537
+  "unaligned": 11,
+  "voice": 9639,
+  "voice_hit": 9557
  },
  "root": {
-  "acc": 7362,
-  "acc_event": 6200,
-  "acc_event_root_ok": 6145,
-  "acc_form_ok": 7309,
-  "acc_root": 1162,
-  "acc_root_ok": 7278,
-  "acc_root_root_ok": 1133,
-  "deferred": 9270,
-  "gold_in_cands": 15732,
-  "morph": 26557,
-  "not_qac_verb": 9925,
-  "qv": 16632
+  "acc": 7381,
+  "acc_event": 6214,
+  "acc_event_root_ok": 6162,
+  "acc_form_ok": 7328,
+  "acc_root": 1167,
+  "acc_root_ok": 7300,
+  "acc_root_root_ok": 1138,
+  "deferred": 9338,
+  "gold_in_cands": 15849,
+  "morph": 26573,
+  "not_qac_verb": 9854,
+  "qv": 16719
  }
 }
