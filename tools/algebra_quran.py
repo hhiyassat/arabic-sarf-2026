@@ -198,7 +198,8 @@ for n, (s, v, text) in enumerate(rows):
         C['syllables_closed'] += sum(1 for X in G.A if isinstance(X, Geo) and X.closed)
         if G.closed:
             C['units_closed'] += 1
-            route = ('Lex' if not G.Theta.get('R') else
+            route = ('حماية دستورية: ' + G.Theta['protected']['cls'] if G.Theta.get('protected') else
+                     'Lex' if not G.Theta.get('R') else
                      'Realize: فعل' if (G.Theta.get('F') or {}).get('kind') != 'اسم' else
                      'Realize: اسم فاعل/مفعول' if 'اسم' in str(G.Theta.get('P', ''))[:4] else
                      'Realize: بناء سيبويه' if str(G.Theta.get('P', '')).startswith('بناء سيبويه') else 'بناء معجمي: مصدر وغيره')
@@ -268,8 +269,10 @@ C['checker_closed'], C['checker_rejected'] = chk_n, chk_bad
 # ملف الجمل لكل سورة (reports/sentences/surah_NNN.csv)، ومقارنة المجازة بملفها المجاز
 words_of = {(s_, v_): [g['word'] for g in a_['segments']] for s_, v_, a_, _, _ in items}
 os.makedirs(H + 'reports/sentences/drift', exist_ok=True)
-COLS = ['الوحدة', 'من', 'إلى', 'النص', 'الحالة', 'سبب الحدّ', 'الخلوّ من التعلّق الخارجي', 'النوى', 'النوى المرتبطة',
+COLS = ['الوحدة', 'من', 'إلى', 'النص', 'الحالة', 'سبب الحدّ', 'الخلوّ من التعلّق الخارجي', 'النوى',
+        'العلاقات (النواة ← العلاقة [حالتها: مرخّصة، مرجّحة، مرشّحة])', 'علاقات غير محسومة',
         'وقوعات بلا موضع (الموضع [الوحدة] «النص»: الناقص)', 'الالتزامات المفتوحة']
+CHANGES = []                                       # بيان التغيّر عن الملف السابق لكل صف (مراجعة ملفات الجمل ٤)
 for SP in LT:
     s_ = int(SP.id.lstrip('L')) if SP.id.lstrip('L').isdigit() else None
     if s_ is None:
@@ -289,7 +292,9 @@ for SP in LT:
                              'آخر السورة: نهاية نطاق القراءة، لا حدّ جملةٍ مثبت' if rec_.get('J_why') == 'آخر السورة'
                              else rec_.get('J_why', ''),
                              (J.O.get('closure') or {}).get('external', ''), '، '.join(J.O.get('nuclei', [])),
-                             '، '.join(f'{a_} ← {b_}' for a_, b_ in J.O.get('bound', [])), ' | '.join(J.O.get('unplaced', [])),
+                             '، '.join(f'{x[0]} ← {x[1]} [{x[2] if len(x) > 2 else "مرخّصة"}]' for x in J.O.get('bound', [])),
+                             sum(1 for x in J.O.get('bound', []) if len(x) > 2 and x[2] != 'مرخّصة'),
+                             ' | '.join(J.O.get('unplaced', [])),
                              '؛ '.join(f'{o.name}: {o.reason}' for o in J.Omega if o.required and not o.met)])
     import io as _io
     buf = _io.StringIO(); w_ = _csv.writer(buf); w_.writerow(COLS); w_.writerows(out_rows)
@@ -305,7 +310,40 @@ for SP in LT:
                                             f'(الجديد في reports/sentences/drift/surah_{s_:03d}.csv)')
             open(H + f'reports/sentences/drift/surah_{s_:03d}.csv', 'wb').write(data)
         continue                                         # لا يُكتب فوق الملف المجاز
-    open(H + f'reports/sentences/surah_{s_:03d}.csv', 'wb').write(data)
+    old_p = H + f'reports/sentences/surah_{s_:03d}.csv'
+    if os.path.exists(old_p):
+        old = list(_csv.reader(open(old_p, encoding='utf-8')))
+        oh = old[0] if old else []
+        idx = {k: oh.index(k) for k in ('من', 'إلى', 'النص', 'الحالة') if k in oh}
+        if len(idx) == 4:
+            old_by = {(r[idx['من']], r[idx['إلى']]): r for r in old[1:]}
+            new_by = {(r[1], r[2]): r for r in out_rows}
+            starts_old = {k[0] for k in old_by}
+            for key, r in new_by.items():
+                o_ = old_by.get(key)
+                if o_ is None:
+                    CHANGES.append([s_, key[0], key[1], 'حدٌّ جديد' if key[0] in starts_old else 'صفٌّ جديد', '', r[4], r[3][:80]])
+                elif o_[idx['الحالة']] != r[4]:
+                    CHANGES.append([s_, key[0], key[1], 'تغيّر الحالة', o_[idx['الحالة']], r[4],
+                                    '؛ '.join(x for x in str(r[-1]).split('؛ ') if x.startswith(('علاقة غير محسومة', 'إغلاق')))[:160]])
+            for key, o_ in old_by.items():
+                if key not in new_by:
+                    CHANGES.append([s_, key[0], key[1], 'صفٌّ زال (تغيّر حدّه)', o_[idx['الحالة']], '', o_[idx['النص']][:80]])
+    open(old_p, 'wb').write(data)
+# بيان التغيّر، وبيانات الإصدار التي تربط المجموعة بنسخة الكود والنص والقواعد والموارد
+with open(H + 'reports/sentences/CHANGES.csv', 'w', encoding='utf-8', newline='') as fh_:
+    w_ = _csv.writer(fh_)
+    w_.writerow(['السورة', 'من', 'إلى', 'التغيّر', 'قبل', 'بعد', 'السبب أو النص'])
+    w_.writerows(CHANGES)
+C['sentence_changes'] = len(CHANGES)
+from sarf.coord import GAMMA as _GAMMA
+json.dump(dict(code_version=subprocess.run(['git', '-C', H, 'rev-parse', '--short', 'HEAD'], capture_output=True,
+                                           text=True).stdout.strip(),
+               text=dict(file='data/quran_hafs.tsv', sha256=_hashlib.sha256(open(H + 'data/quran_hafs.tsv', 'rb').read()).hexdigest()),
+               reading='حفص عن عاصم (مصحف المجمّع)', coord_rules=_GAMMA, dependencies_fingerprint=DEPS,
+               protected_inventory=dict(file='sarf/protected.py', sha256=_hashlib.sha256(open(H + 'sarf/protected.py', 'rb').read()).hexdigest()),
+               columns=COLS, note='سجلٌّ تجريبي للمراجعة؛ لا إجازة إلا بقرار صاحب النظرية'),
+          open(H + 'reports/sentences/MANIFEST.json', 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 for jid, why in chk_list[:20]:
     fail['checker'].append(f'{jid}: ' + '؛ '.join(why[:2]))
 # اختبارات الفاحص على جملٍ مغلقة حقيقية: تُزيَّف الشهادة أو يُحذف التزامٌ أو يُبدَّل طرف رابطٍ بطرفٍ من نوعٍ خطأ،

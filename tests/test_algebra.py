@@ -210,7 +210,7 @@ if hfn() and rows:
     Js = [J for D in LT[0].A + LT[0].O['pending'] for J in D.A + D.O['pending']]
     jl = next((J for J in Js if any(x.startswith('ناسخ') for x in J.O.get('nuclei', []))), None)
     check('البقرة ٥٢: «لَعَلَّكُمۡ تَشۡكُرُونَ»: «تَشۡكُرُونَ» خبر «لعل» مرتبط، فلا التزام بحدود الجمل',
-          jl is not None and any(b.startswith('خبر «') for _, b in jl.O.get('bound', [])) and
+          jl is not None and any(b[1].startswith('خبر «') for b in jl.O.get('bound', [])) and
           not any(o.name in ('حدود الجمل', 'نوى غير مرتبطة') for o in jl.Omega), jl and (jl.O.get('bound'), [o.name for o in jl.Omega]))
     sm = structs((2, 8))
     cy = [x for x in sm['coord'] if x['B'].startswith('وَبِالْيَوْم')]

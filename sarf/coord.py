@@ -150,6 +150,18 @@ class Ctx:
             out.append(f'{self.wid(p)}:{i + 1}')
         return out
 
+    def unit_text(self, uid):
+        """نصّ الوحدة الصرفية من معرّفها «الكلمة:الرقم»"""
+        wid, i = uid.rsplit(':', 1)
+        p = self.pos_of_wid(wid)
+        sg = self.feats[p].get('segs') or [('جذع', self.wtext[p])]
+        return sg[int(i) - 1][1] if 0 < int(i) <= len(sg) else ''
+
+    def pos_of_wid(self, wid):
+        if not hasattr(self, '_wid_pos'):
+            self._wid_pos = {self.wid(p): p for p in range(len(self.words))}
+        return self._wid_pos[wid]
+
     def letter_cells(self, p, letter):
         """خلايا الحرف الرابط (حرفٌ وحركة) في وحدات كلمته: هوية الحرف غير هوية الكلمة الحاملة"""
         want = {'و': 'و', 'ف': 'ف', 'ثم': 'ثم', 'أو': 'ءو', 'أم': 'ءم', 'بل': 'بل', 'لكن': 'لكن', 'حتى': 'حت'}.get(letter, '')
@@ -175,10 +187,48 @@ class Ctx:
                 best = (r['head'], f'صلة «{self.wtext[r["head"]]}» ({self.wid(r["head"])})')
         if best:
             return best[1]
-        for h, q, tool in self.cond_spans:
-            if q is not None and h < p < q:
+        for h, q, tool, *rest in self.cond_spans:
+            # الشرط حاوٍ إن ثبت جوابه مملوكاً له؛ والجواب المرشَّح لا يُنشئ حاوياً يُرفض به منافس
+            if q is not None and h < p < q and (not rest or rest[0]):
                 return f'جملة الشرط «{tool}» ({self.wid(h)})'
         return None
+
+    def _khabar_after(self, r):
+        """خبر الموصول المبتدأ بقرينةٍ مستقلة عن الطرف: الموصول أول آيته (أو بعد عاطفٍ في أولها)، وبعد صلته
+        كلامٌ كلّه معطوفٌ بالواو، ثم أول مسندٍ بلا عاطف (اسم إشارة، أو ضمير، أو نواة) قبل ما له الصدارة"""
+        f, h = self.feats, r['head']
+        if not (h == 0 or self.ay_end[h - 1] or h > 1 and f[h]['conj'] and self.ay_end[h - 2]):
+            return None, 'الموصول ليس أول آيته: لا يثبت أنه مبتدأ'
+        lim = next((i for i in range(h + 1, len(f)) if self.ay_end[i] and i > h and
+                    sum(1 for j in range(h, i + 1) if self.ay_end[j]) >= 2), len(f) - 1)
+        for k in range(r['end'], min(len(f), lim + 1)):
+            g = f[k]
+            if self.starts[k]:
+                return None, 'ما له الصدارة قبل الخبر'
+            if g['conj']:
+                continue
+            if g.get('demo') or g.get('head') == 'pron' and k > r['end'] and f[k - 1]['conj'] is False and \
+                    self.ay_end[k - 1]:
+                return k, 'اسم إشارةٍ أو ضميرٌ بلا عاطفٍ بعد كلامٍ معطوف'
+        return None, 'لا مسند بلا عاطفٍ بعد الصلة إلى آخر الآية التالية'
+
+    def container_evidence(self, p, b_end):
+        """الدليل المستقل على أن الحاوي باقٍ مفتوحاً بعد الطرف (مراجعة التقرير السادسة ٤): التزامٌ لازمٌ يُستوفى بعده
+        → (الحاوي، الدليل أو None)"""
+        c = self.container(p)
+        if not c:
+            return None, None
+        for r in sorted(self.rels, key=lambda r: -r['head']):
+            if r['head'] < p < self.eff_end[r['head']]:
+                kk, why = self._khabar_after(r)
+                if kk is not None and kk > b_end:
+                    return c, (f'الموصول «{self.wtext[r["head"]]}» مبتدأٌ خبره عند {self.wid(kk)} «{self.wtext[kk]}» '
+                               f'بعد الطرف ({why})، فالتزام الخبر مفتوحٌ عبره')
+                return c, None
+        for h, q, tool, *rest in self.cond_spans:
+            if q is not None and h < p < q and (not rest or rest[0]) and q > b_end:
+                return c, f'جواب «{tool}» ثابتٌ عند {self.wid(q)} بعد الطرف، فجملة الشرط مفتوحةٌ عبره'
+        return c, None
 
 
 def _is_jarr(t):
@@ -192,16 +242,33 @@ def _member(X, pos, head, typ, why, skip_jarr=False):
     for p in pos:
         segs += X.segs(p, skip_conj=(p == pos[0]), skip_jarr=skip_jarr and p == pos[0])
     return dict(head=X.wtext[head], head_id=X.wid(head), head_pos=head, positions=pos, words=[X.wid(p) for p in pos],
-                units=segs, text=' '.join(X.wtext[p] for p in pos), type=typ, extent_evidence=why,
-                envelope=[X.wid(pos[0]), X.wid(pos[-1])],
+                units=segs, text=_units_text(X, segs), envelope_text=' '.join(X.wtext[p] for p in pos), type=typ,
+                extent_evidence=why, envelope=[X.wid(pos[0]), X.wid(pos[-1])],
                 representation='رأس الطرف: الاسم في المفرد، والجارّ ومجروره في شبه الجملة، والنواة في الجملة')
+
+
+def _units_text(X, units):
+    """نصّ الطرف من عضويته (مراجعة التقرير السادسة ٥): وحداتُ الكلمة الواحدة متصلة، والكلمات بمسافة؛ فما خرج
+    من العضوية (العاطف، والجارّ المشترك) لا يظهر في النص، والغلاف النصي يُعرض منفصلاً (envelope_text)"""
+    out, cur, last = [], '', None
+    for u in units:
+        wid = u.rsplit(':', 1)[0]
+        if wid != last and cur:
+            out.append(cur)
+            cur = ''
+        cur += X.unit_text(u)
+        last = wid
+    if cur:
+        out.append(cur)
+    return ' '.join(out)
 
 
 def _ma_silah(X, p, limit):
     """«ما» الموصولة في كلمتها (بِمَا، وَمَا) يليها فعل: صلتها إلى أول حدٍّ قبل limit"""
     from .algebra import is_form, _madi_like
     f = X.feats
-    if not is_form(f[p]['text'], ('مَا', 'وَمَا', 'بِمَا', 'مِمَّا', 'لِمَا', 'عَمَّا', 'فِيمَا', 'وَبِمَا', 'وَمِمَّا')) or \
+    if not is_form(f[p]['text'], ('مَا', 'وَمَا', 'بِمَا', 'مِمَّا', 'لِمَا', 'عَمَّا', 'فِيمَا', 'وَبِمَا', 'وَمِمَّا',
+                                  'مَنْ', 'وَمَنْ', 'بِمَنْ', 'لِمَنْ', 'مِمَّنْ')) or \
             p + 1 >= len(f) or not (f[p + 1]['verb'] or p + 1 in X.nset or _madi_like(f[p + 1]['text']) or
                                     f[p + 1].get('vshape') and not f[p + 1].get('noun')):
         return None
@@ -258,7 +325,9 @@ def _finish(c):
         miss = [k for k, v in c['checks'].items() if not v[0]]
         c['deferrals'].append(('D8', 'لم يتحقق: ' + '، '.join(miss), DEFER['D8'][1]))
         c['status'] = 'مؤجَّل'
-    c['checks']['A8'] = (not c['barriers'], 'لا مانع مثبت ضمن الموانع المفحوصة' if not c['barriers'] else 'قام مانع')
+    req = sorted({b for r in c['rules'] if r in RULES for b in RULES[r]['barriers']})
+    c['checks']['A8'] = (not c['barriers'], ('انتفاء الموانع التي توجب القاعدة فحصها، وقد فُحصت: ' + '؛ '.join(req))
+                         if not c['barriers'] and req else 'لا مانع تفرض القاعدة فحصه' if not c['barriers'] else 'قام مانع')
     ch = c['checks']
     g = lambda a: ch.get(a, (False,))[0]
     # جهاتٌ مستقلة: ترخيص الربط، وإثبات الامتداد (البند ١١)
@@ -281,9 +350,15 @@ def _shared_single(X, c, letter):
     jarr = next((t for i, (typ, t) in enumerate(sg[:2]) if typ == 'عامل' and _is_jarr(t)), None)
     bsg = f[B['positions'][0]].get('segs') or []
     b_jarr = any(typ == 'عامل' and _is_jarr(t) for typ, t in bsg[:2])
-    if jarr and not b_jarr:
+    if jarr and not b_jarr and c['level'] == 'مفرد':
         out.append(dict(element=f'الجارّ «{jarr}» في {X.wid(a0)}', between=[A['head_id'], B['head_id']],
                         status='اشتراك مثبت', evidence='المعطوف على المجرور يتبعه في عامله، والجارّ خارج امتداد الطرف'))
+    if c['level'] == 'شبه جملة' and a0 > 0 and not X.starts[a0] and not X.ay_end[a0 - 1] and \
+            (f[a0 - 1].get('noun') or f[a0 - 1]['verb'] or (a0 - 1) in X.nset):
+        # المتعلَّق الأعلى: الجارّ داخل كل طرف، والطرفان متعلّقان معاً بما قبلهما (مَتَٰعࣰا لَّكُمۡ وَلِأَنۡعَٰمِكُمۡ)
+        out.append(dict(element=f'المتعلَّق «{X.wtext[a0 - 1]}» ({X.wid(a0 - 1)})', between=[A['head_id'], B['head_id']],
+                        status='اشتراك مثبت', evidence='الطرفان شبها جملة متعلّقان بعاملٍ واحد بحكم العطف؛ '
+                                                         'والجارّ عضوٌ في كل طرف لا مشترك'))
     # عامل الجملة قبل الطرف السابق (لا من داخل صلته)
     gov = next((j for j in range(a0 - 1, max(-1, a0 - 6), -1) if j in X.nset or f[j]['verb']), None)
     if gov is not None and not any(X.starts[j] for j in range(gov + 1, a0 + 1)) and \
@@ -309,7 +384,7 @@ def _shared_single(X, c, letter):
                 g['case'] == f[B['head_pos']]['case'] and (g.get('al') == f[B['head_pos']].get('al')):
             out.append(dict(element=f'«{X.wtext[e]}» ({X.wid(e)})', between=None, status='نطاق مؤجَّل',
                             evidence='صفةٌ أو حالٌ أو متعلَّقٌ بعد المعطوف: للأخير أو للمجموعة', defer='D5'))
-    for h, q, tool in X.cond_spans:
+    for h, q, tool, *_ in X.cond_spans:
         if q is not None and h < a0 and B['positions'][-1] < q:
             out.append(dict(element=f'الشرط «{tool}» ({X.wid(h)})', between=[A['head_id'], B['head_id']],
                             status='اشتراك مثبت', evidence='الطرفان بين الأداة وجوابها'))
@@ -329,7 +404,7 @@ def _shared_clause(X, c, letter):
     elif an:
         out.append(dict(element=f'النفي في الطرف السابق ({X.wid(a0)})', between=None, status='نطاق مؤجَّل',
                         evidence='ثبوت الطرفين لا يثبت اشتراكهما في النفي', defer='D5'))
-    for h, q, tool in X.cond_spans:
+    for h, q, tool, *_ in X.cond_spans:
         if q is None:
             continue
         if h < a0 and B['positions'][-1] < q:
@@ -429,7 +504,8 @@ def site_record(c_, X):
                         fb.get('an') or fa.get('an') or not fa['case'] or not fb['case'] or \
                         is_form(fa['text'], PRON_FREE_V) or _ma_silah(X, h, n)
                     if hidden:
-                        case_ok = (True, 'الحالة لا تظهر في أحد الطرفين (مبنيٌّ أو مقصورٌ أو مؤوَّل): العطف على المحلّ')
+                        case_ok = (True, 'لا تعارض في الإعراب: الحالة لا تظهر في أحد الطرفين (مبنيٌّ أو مقصورٌ أو مؤوَّل)؛ '
+                                         'والمحلّ نتيجةٌ للعطف لا دليلٌ عليه، فلا يُحتجّ بخفاء العلامة')
                     elif fb['case'] in CASE_COMPAT and fa['case'] in CASE_COMPAT[fb['case']]:
                         case_ok = (True, f'توافق الحالة المكتوبة ({fa["case"]}): قرينةٌ لا دليلٌ كافٍ وحدها')
                     else:
@@ -504,9 +580,32 @@ def site_record(c_, X):
         bf = c_.get('B_full') or {}
         sp = bf.get('span') or (k, k)
         b_pos = list(range(sp[0], sp[1] + 1))
-        bh = next((p for p in b_pos if p in X.nset or f[p]['verb']), b_pos[0] if not standalone else min(k + 1, n - 1))
+        # رأس اللاحق: أول فعلٍ من أوله (c_['b_head'] من الطبقة)، لا أول نواةٍ فيه (يَبۡكُونَ حالٌ داخل «وَجَآءُوٓ»)
+        bh = c_['b_head'] if c_.get('b_head') is not None and c_['b_head'] in b_pos else \
+            next((p for p in b_pos if p in X.nset or f[p]['verb']), b_pos[0] if not standalone else min(k + 1, n - 1))
         B = _member(X, b_pos, bh, bf.get('type') or 'جملة', [bf.get('evidence', '')] + list(bf.get('relations') or []))
         alts = [a for a in c_['A'] if isinstance(a, dict)]
+        cont_c, cont_ev = X.container_evidence(k, b_pos[-1])
+        # رؤوسٌ أبعد رجوعاً (مراجعة التقرير السادسة ٧): أول رأسٍ رجوعاً مرشّحٌ لا مثبت؛ فيُولَّد ما قبله في الآية
+        # والتي قبلها رؤوساً بديلة، إلا ما خرج عن حاوٍ ثبت بقاؤه مفتوحاً
+        hd = getattr(X, 'clause_head', None)
+        if hd and alts and not any('صلة' in a['type'] for a in alts) and \
+                not (letter == 'أم' and _has_taswiya(X, alts[0]['span'][0])[0]):
+            a_first = min(a['span'][0] for a in alts)
+            lim = a_first
+            vs = [j for j in range(a_first - 1, -1, -1) if X.ay_end[j]]
+            floor = vs[1] + 1 if len(vs) > 1 else 0
+            extra = []
+            for j in range(a_first - 1, max(floor - 1, a_first - 16), -1):
+                if hd(j) and j not in [a['span'][0] for a in alts]:
+                    if cont_ev and X.container(j) != X.container(k):
+                        break
+                    extra.append(dict(span=(j, lim - 1), head=w[j], type='جملة سابقة أبعد',
+                                      container=None, evidence='رأسٌ أبعد رجوعاً: الطرف السابق قد يكون في مستوى أعلى'))
+                    lim = j
+                    if len(extra) == 2:
+                        break
+            alts = alts + extra
         bvk = f[bh]['verb'] or f[bh].get('vshape')
         for a in alts or [None]:
             c = _cand(f'C{len(cands) + 1}', 'عطف', 'جملة', None, B, letter, ['CO-AM'] if letter == 'أم' else ['CO-CLAUSE'])
@@ -518,6 +617,11 @@ def site_record(c_, X):
                 if c['container'] and c['container'].startswith('الموصول'):
                     c['container'] = 'صلة ' + c['container']
                     c['rules'].append('CO-SILAH')
+                    if not cont_ev:
+                        c['deferrals'].append(('D3', 'نطاق الصلة غير مثبتٍ بدليلٍ مستقل: لا التزامَ لازماً للموصول يُستوفى '
+                                                     'بعد الطرف، وموافقة الفعلين قرينةٌ لا دليل', DEFER['D3'][1]))
+                    else:
+                        c['evidence'].append('دليل بقاء الحاوي مفتوحاً: ' + cont_ev)
                 avk = f[ah]['verb'] or f[ah].get('vshape')
                 rule = 'جملةٌ على جملة' if clause_word(f, k if not standalone else k + 1, X.nset) or bh in X.nset or \
                     f[bh]['verb'] or (bf.get('type') or '').startswith('جملة') else None
@@ -543,6 +647,43 @@ def site_record(c_, X):
                                        'لم يُعيَّن رأس جملةٍ سابقة' + ('' if coverage.startswith('مكتملة') else '؛ ' + coverage),
                                        DEFER['D7' if not coverage.startswith('مكتملة') else 'D2'][1]))
             cands.append(_finish(c))
+        # «وَمَنۡ خَلَقۡتُ»، «وَمَا تُعۡلِنُونَ»: «مَن» و«ما» بعد الواو قد تكونان موصولتين معطوفتين على مفرد (على ياء
+        # «ذَرۡنِي»، أو على «ما» قبلها)، فيُولَّد مرشّحٌ مفردٌ منافسٌ للجملة، ولا يُحسم المستوى بلا دليل (D4)
+        if letter == 'و' and is_form(f[k]['text'], ('وَمَنْ', 'وَمَا')) and _ma_silah(X, k, n):
+            e = _ma_silah(X, k, n)
+            bm = _member(X, list(range(k, e)), k, 'مفرد', ['«مَن» أو «ما» موصولةٌ وصلتها داخلة في الطرف'])
+            prev = [j for j in range(k - 1, max(-1, k - 9), -1)
+                    if is_form(f[j]['text'], ('مَا', 'مَنْ', 'بِمَا', 'لِمَا', 'مِمَّا', 'بِمَنْ', 'لِمَنْ'), prefix=True) and
+                    _ma_silah(X, j, k)]
+            enc = None
+            if not prev and k > 0:
+                sg = f[k - 1].get('segs') or []
+                seg_enc = len(sg) > 1 and sg[-1][0] == 'مبني' and is_form(sg[-1][1], ('نِي', 'هُ', 'هُمْ', 'كَ', 'كُمْ', 'نَا', 'هَا'))
+                # نون الوقاية وياء المتكلم في آخر الكلمة (ذَرۡنِي): ضمير نصبٍ متصلٌ بفعل، وإن لم يقطّعه المقشِّر
+                wiqaya = _strip(f[k - 1]['text']).endswith('ني') and len(letters(f[k - 1]['text'])) >= 3 and \
+                    not f[k - 1].get('noun')
+                if seg_enc and (f[k - 1]['verb'] or (k - 1) in X.nset or f[k - 1].get('vshape')) or wiqaya:
+                    enc = k - 1
+            for j in prev[:1] or ([enc] if enc is not None else []):
+                c = _cand(f'C{len(cands) + 1}', 'عطف', 'مفرد', None, bm, letter, ['CO-MA', 'CO-SINGLE'])
+                if j == enc:
+                    am = _member(X, [j], j, 'مفرد', ['الضمير المتصل في آخر الفعل'])
+                    if len(f[j].get('segs') or ()) > 1:
+                        am['units'] = [f'{X.wid(j)}:{len(f[j]["segs"])}']
+                        am['text'] = _units_text(X, am['units'])
+                        am['head'] = am['text']
+                    else:
+                        am['extent_evidence'].append('الضمير غير مقطَّعٍ عن فعله: العضوية الكلمة كلها، والرأس ضميرها')
+                    c['evidence'].append('المعطوف عليه ضمير نصبٍ متصل: العطف على الضمير المنصوب جائزٌ بلا فصل')
+                else:
+                    am = _member(X, list(range(j, _ma_silah(X, j, k))), j, 'مفرد', ['موصولٌ وصلته'],
+                                 skip_jarr=True)
+                c['A'] = am
+                coord_checks(c, True, 'موصولٌ على موصولٍ أو على ضمير', (True, 'لا تعارض في الإعراب: الموصول مبنيّ، '
+                                                                         'والمحلّ نتيجةٌ للعطف لا دليلٌ عليه'),
+                             (True, 'الطرف موصولٌ وصلته'), (True, '—'))
+                c['shared'] = []
+                cands.append(_finish(c))
         # الوظائف الأخرى للحرف في عطف الجمل
         if letter == 'أم' and alts:
             hamza, sawa = _has_taswiya(X, alts[0]['span'][0])
@@ -561,8 +702,8 @@ def site_record(c_, X):
         if letter == 'و' and a_ok:
             pr = lead.get('head') == 'pron' or is_form(lead['text'], tuple('وَ' + p for p in PRON_FREE_V))
             qad = lead.get('qad') and b_start + 1 < n and (f[b_start + 1]['verb'] == 'madi' or _madi_like(f[b_start + 1]['text']))
-            a_v = any(f[p]['verb'] or p in X.nset or _madi_like(f[p]['text']) or _hollow_madi(f[p]['text'])
-                      for p in a_ok[0]['A']['positions'])
+            a_v = any(f[p]['verb'] or p in X.nset or _madi_like(f[p]['text']) or _hollow_madi(f[p]['text']) or
+                      f[p].get('vshape') and not f[p].get('noun') for p in a_ok[0]['A']['positions'])
             if (pr or qad) and a_v:
                 c = _cand(f'C{len(cands) + 1}', 'حال (واو الحال)', 'جملة', None, B, letter, ['FN-HAL'])
                 c['A'] = a_ok[0]['A']
@@ -581,10 +722,17 @@ def site_record(c_, X):
             c = _cand(f'C{len(cands) + 1}', 'استئناف', 'جملة', None, B, letter, ['FN-ISTI'])
             c['checks'] = {a_: (True, '—') for a_ in ('A2', 'A3', 'A4', 'A5', 'A6', 'A7')}
             c['checks']['A1'] = (True, f'{"رأس آية، و" if verse_initial else ""}ما بعد الحرف جملةٌ تامّة الأركان')
-            if in_cont:
-                c['barriers'].append(('R3', f'الاستئناف يقطع {in_cont} قبل اكتماله'))
+            if in_cont and cont_ev:
+                c['barriers'].append(('R3', f'الاستئناف يقطع {in_cont} قبل اكتماله: {cont_ev}'))
+            elif in_cont:
+                c['deferrals'].append(('D3', f'{in_cont} مرشَّحٌ حاوياً بلا دليلٍ مستقلٍّ على بقائه مفتوحاً بعد الطرف',
+                                       DEFER['D3'][1]))
             elif not a_ok:
                 c['deferrals'].append(('D7', 'لا جملة سابقة معيَّنة يُستأنف بعدها', DEFER['D7'][1]))
+            else:
+                # غياب الحاوي المفتوح لا يثبت الاستئناف: لا قاعدة إيجابية له منفَّذة (FN-ISTI قرينة بحثٍ لا ترخيص)
+                c['deferrals'].append(('D8', 'لا قاعدة إيجابية للاستئناف منفَّذة؛ وخلوّ الموضع من حاوٍ مفتوح لا يثبته',
+                                       DEFER['D8'][1]))
             cands.append(_finish(c))
         if letter == 'ف' and f[bh]['verb'] == 'mudari' and f[bh].get('mood') == 'نصب' and a_ok:
             talab = any(f[p]['verb'] == 'amr' or f[p].get('neg') for p in a_ok[0]['A']['positions'])
@@ -865,9 +1013,11 @@ def check_coord(rec, X):
             pos = m['positions']
             if m['head_pos'] not in pos:
                 P.append(f'{c["id"]}.{side}: الرأس خارج عضوية الطرف')
-            if m['head'] != X.wtext[m['head_pos']] or m['head_id'] != X.wid(m['head_pos']):
+            if m['head'] not in (X.wtext[m['head_pos']], _units_text(X, [u for u in m['units'] if u.startswith(
+                    X.wid(m['head_pos']) + ':')])) or m['head_id'] != X.wid(m['head_pos']):
                 P.append(f'{c["id"]}.{side}: الرأس لا يطابق النص في موضعه')
-            if m['words'] != [X.wid(p) for p in pos] or m['text'] != ' '.join(X.wtext[p] for p in pos):
+            if m['words'] != [X.wid(p) for p in pos] or m.get('envelope_text') != ' '.join(X.wtext[p] for p in pos) or \
+                    m['text'] != _units_text(X, m['units']):
                 P.append(f'{c["id"]}.{side}: العضوية لا تطابق النص')
             if any(not any(u.startswith(wd + ':') for wd in m['words']) for u in m['units']):
                 P.append(f'{c["id"]}.{side}: وحدةٌ صرفية من غير كلمات الطرف')
@@ -891,10 +1041,14 @@ def check_coord(rec, X):
                 if side == 'B' and getattr(X, 'b_stop', None) and m['positions'][-1] + 1 != X.b_stop(b0) and \
                         c['function'] not in ('استئناف',) and not c['function'].startswith('رابطة'):
                     P.append(f'{c["id"]}.B: حدّ الطرف اللاحق لا يطابق حدّه المشتقّ')
-                if side == 'A' and m['positions'][-1] != k - 1:
+                far = m['type'] == 'جملة سابقة أبعد'
+                if side == 'A' and not far and m['positions'][-1] != k - 1:
                     P.append(f'{c["id"]}.A: الطرف السابق الجملي لا ينتهي قبل الحرف')
                 hd = getattr(X, 'clause_head', None)
-                if side == 'A' and hd and m['type'].startswith('صلة'):
+                if side == 'A' and far:
+                    if not (hd and hd(m['head_pos'])) or m['head_pos'] != m['positions'][0] or m['positions'][-1] >= k:
+                        P.append(f'{c["id"]}.A: الرأس الأبعد ليس رأس جملةٍ قبل الحرف')
+                elif side == 'A' and hd and m['type'].startswith('صلة'):
                     if m['positions'][0] - 1 not in X.rel_at:
                         P.append(f'{c["id"]}.A: الصلة لا تبدأ بعد موصول')
                 elif side == 'A' and hd and c['function'].startswith('عطف'):
@@ -958,6 +1112,16 @@ def check_coord(rec, X):
         P.append(f'القرار «{rec["decision"]}» لا يطابق حالات المرشّحات («{want}»)')
     if rec['UniqueWithin'] != (rec['decision'] == DECISIONS[0]):
         P.append('UniqueWithin لا يطابق القرار')
+    # إعادة التوليد (مراجعة التقرير السادسة ٨): الشهادة تخصّ البنية التي يولّدها النص بالقواعد نفسها؛ فإحلال مرشّحٍ
+    # آخر جائزٍ محلّ الرأس، وإن اتّسقت حقوله، لا يطابق ما يُعاد توليده
+    src = getattr(X, 'src', {}).get(rec['letter_unit'])
+    if src is not None and not P:
+        fresh = site_record(src, X)
+        sig = lambda r_: [(c['id'], c['function'], c['status'], (c['A'] or {}).get('head_pos'),
+                           tuple((c['A'] or {}).get('positions', ())), tuple((c['B'] or {}).get('positions', ())))
+                          for c in r_['candidates']] + [r_['decision']]
+        if sig(fresh) != sig(rec):
+            P.append('الشهادة لا تطابق إعادة توليد المرشّحات من النص: البنية المسجَّلة غير ما تُرخّصه القواعد في الموضع')
     return P
 
 
@@ -980,10 +1144,11 @@ def mutations(rec, X):
         # تغييرٌ متّسق: تُحدَّث الحقول المشتقّة كلها، فلا يُكشف إلا بفحص المضمون
         pos = sorted(set(pos if pos is not None else m['positions']))
         head = m['head_pos'] if head is None else head
+        units = [u for p in pos for u in X.segs(p, skip_conj=(p == pos[0]))]
         m.update(positions=pos, head_pos=head, head=X.wtext[head], head_id=X.wid(head),
-                 words=[X.wid(p) for p in pos], text=' '.join(X.wtext[p] for p in pos),
-                 envelope=[X.wid(pos[0]), X.wid(pos[-1])],
-                 units=[u for p in pos for u in X.segs(p, skip_conj=(p == pos[0]))])
+                 words=[X.wid(p) for p in pos], text=_units_text(X, units),
+                 envelope_text=' '.join(X.wtext[p] for p in pos), envelope=[X.wid(pos[0]), X.wid(pos[-1])],
+                 units=units)
     a0 = c0['A']['positions']
     alt = next((p for p in range(min(a0) - 1, -1, -1) if p not in a0), None)
     if alt is not None:

@@ -387,7 +387,30 @@ def _madi_exact(t, verb):
 
 
 def morph(text, info=None):
-    """→ dict(cells, candidates, licensed=[…], status, root, form, wazn, evidence) أو None إن لم يكن فعلاً"""
+    """→ dict(cells, candidates, licensed=[…], status, root, form, wazn, evidence) أو None إن لم يكن فعلاً.
+    بوابة الحماية الدستورية أولاً (sarf/protected.py): العوامل المائة والمبنيات والأسماء الذهبية لا يُستخرج لها جذر،
+    فالحالة not_applicable (root_status = NOT_APPLICABLE، reason = CONSTITUTIONAL_PROTECTED_CLASS) بلا مرشّحات؛
+    فإن احتمل الموضع وحدةً محمية وتحليلاً آخر فالحالة class_deferred: الحماية باقية، والتحليل الآخر بديلٌ لا يُقبل"""
+    from .protected import protected
+    prot = protected(text)
+    if prot and not prot['ambiguous']:
+        return dict(cells=cell_code(cells(text)), candidates=[], licensed=[], kind=None, level=None, selection={},
+                    status='not_applicable', root=None, form_class=None, root_status=prot['root_status'],
+                    reason=prot['reason'], protected=prot)
+    out = _morph(text, info)
+    if prot and out is not None:
+        alt = {k: out.get(k) for k in ('status', 'root', 'form_class', 'level', 'reason')}
+        out.update(status='class_deferred', root=None, form_class=None, level=None, root_status='CLASS_DEFERRED',
+                   protected=prot, alternative=alt,
+                   reason=f'تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة ({prot["cls"]} «{prot["identity"]}») أو {prot["alternative"]}')
+    elif prot:
+        return dict(cells=cell_code(cells(text)), candidates=[], licensed=[], kind=None, level=None, selection={},
+                    status='not_applicable', root=None, form_class=None, root_status=prot['root_status'],
+                    reason=prot['reason'], protected=prot)
+    return out
+
+
+def _morph(text, info=None):
     info = info or stem_info(text)
     exact_only = info['pos'] != 'verb'
     shown = text
@@ -456,8 +479,10 @@ def morph(text, info=None):
     if len(pairs) == 1:
         out.update(status='accepted', root=pairs[0][0], form_class=pairs[0][1], level='event')
         if selection.get('ranked'):
-            out.update(level='ranked', reason='مرجَّح لا مثبت: ' + selection['decision'] + ' — البدائل: ' +
-                       '، '.join(selection['alternatives']))
+            # الترجيح منفصلٌ عن الإثبات (مراجعة التقرير السادسة ٦): المرجَّح لا يُقبل ولا يدخل الإغلاق ولا الاستدلال،
+            # ويُحفظ بقراءته ومنافسيه حتى يُحسم
+            out.update(status='ranked', level='ranked', reason='مرجَّح لا مثبت: ' + selection['decision'] +
+                       ' — البدائل: ' + '، '.join(selection['alternatives']))
         return out
     if pairs:
         out.update(status='deferred', reason='أكثر من جذر أو وزن مرخَّص: ' +
