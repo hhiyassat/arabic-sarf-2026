@@ -305,17 +305,25 @@ if hfn() and rows:
     check('البقرة ٤: «وَمَآ أُنزِلَ مِن قَبۡلِكَ» موصولةٌ معطوفة على «بِمَآ»، لا جملة', c4 and c4[0]['level'] == 'مفرد', c4)
     # مراجعة التقرير الثالثة (١): الشاهد يقابل الخلايا؛ «تُوبُوا» لاحقتها المكتوبة «وا»، و«ون» صنفها
     from sarf.checker import witness_problems
-    if Jc is not None:
-        fo = next((o for o in Jc.Omega if o.name.startswith('فاعل') and o.ev), None)
+    # الجملة التي فيها «تُوبُوا» (البقرة ٥٤) — مغلقةً أو مؤجَّلة: الشاهد يُفحص في الحالين
+    T54 = Trace(); it54 = []; an54 = {}
+    for v_ in (53, 54):
+        a_ = analyze(cat, rows[(2, v_)]); S_, u_ = sentence_geo(a_, f'Q2:{v_}', T54)
+        it54.append((2, v_, a_, u_, S_)); an54[(2, v_)] = a_
+    LT54 = linguistic_layer(it54, T54, 't')[0]
+    Jt = next((J for D in LT54[0].A + LT54[0].O.get('pending', []) for J in D.A + D.O.get('pending', [])
+               if any(o.name.startswith('فاعل «تُوبُوا') and o.ev for o in J.Omega)), None)
+    if Jt is not None:
+        fo = next((o for o in Jt.Omega if o.name.startswith('فاعل «تُوبُوا') and o.ev), None)
         check('البقرة ٥٤: شاهد فاعل «تُوبُوا» اللاحقة المكتوبة «وا»، والفاحص يقبله',
-              fo is not None and '«وا»' in ' '.join(fo.ev.conditions) and witness_problems(Jc) == [],
-              (fo and fo.ev.conditions, witness_problems(Jc)))
-        J5 = copy.deepcopy(Jc)
+              fo is not None and '«وا»' in ' '.join(fo.ev.conditions) and witness_problems(Jt) == [],
+              (fo and fo.ev.conditions, witness_problems(Jt)))
+        J5 = copy.deepcopy(Jt)
         for o in J5.Omega:
             if o.name.startswith('فاعل') and o.ev:
                 o.ev.conditions = ['جدول الإسناد', 'لاحقة الأمر «ون»']
         check('والفاحص يرفض شاهداً لا يقابل الخلايا (لاحقة «ون» في «تُوبُوا»)',
-              any('لا يقابل الخلايا' in w for w in check_sentence(J5, an_)), check_sentence(J5, an_))
+              any('لا يقابل الخلايا' in w for w in witness_problems(J5)), witness_problems(J5))
     # مراجعة التقرير الخامسة (١): «وَبِٱلۡأٓخِرَةِ هُمۡ يُوقِنُونَ» معطوفٌ كاملٌ بعلاقاته، ولا يُقطع قبل اكتماله
     sm = structs((2, 4))
     cb = [x for x in sm['coord'] if x['location'] == '2:4:9']
