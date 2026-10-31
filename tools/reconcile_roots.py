@@ -44,7 +44,13 @@ for k in sorted(set(old) | set(new)):
     if a['status'] == b['status'] and a.get('root') == b.get('root') and a.get('form') == b.get('form'):
         C['لم يتغيّر'] += 1
         continue
-    if a['status'] != 'accepted' and b['status'] == 'accepted':
+    if b['status'] in ('not_applicable', 'class_deferred'):
+        kind = ('إلى الحماية الدستورية' if b['status'] == 'not_applicable' else 'إلى فئةٍ مؤجَّلة (محمي مرشّح)') + \
+            (': كان مقبولاً' if a['status'] == 'accepted' else ': كان ' + a['status'])
+    elif b['status'] == 'ranked':
+        kind = 'إلى «مرجَّح» (لا يُقبل): ' + ('كان مقبولاً' if a['status'] == 'accepted' else 'كان ' + a['status']) + \
+            ('، والقراءة المرجَّحة صحيحة' if b.get('root') == b.get('gold') else '، والقراءة المرجَّحة مخالفة لـQAC')
+    elif a['status'] != 'accepted' and b['status'] == 'accepted':
         kind = 'من التأجيل إلى القبول: ' + ('صحيح' if b.get('root') == gold else 'مخالف لـQAC')
     elif a['status'] == 'accepted' and b['status'] != 'accepted':
         kind = 'من القبول إلى التأجيل: ' + ('كان صحيحاً' if a.get('root') == gold else 'كان مخالفاً لـQAC')

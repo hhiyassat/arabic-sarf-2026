@@ -355,5 +355,9 @@ def protected_slot(seg, slot_text=None):
     if len(letters(t)) < 2:
         return None
     p = protected(t, iltiqa=k + 1 == len(sl))
+    if p is not None and p['cls'] == CLASS_GOLDEN and any(x['type'] == 'مبني' for x in sl[k + 1:]):
+        # اشتراك الرسم (مراجعة التقرير السابعة: فَـَٔازَرَهُۥ): العَلَم لا يتصل به ضمير؛ فالجذع العَلَميّ يليه ضميرٌ متصل
+        # فعلٌ بضميره محتمل، فتُؤجَّل الفئة والحماية باقية للمرشّح العَلَميّ
+        p = dict(p, ambiguous=True, alternative='فعلٌ بضمير متصل يشترك رسمه مع العَلَم')
     return p if p is not None and not p['proclitics'] else None
 
