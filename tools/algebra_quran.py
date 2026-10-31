@@ -21,6 +21,7 @@ ap = argparse.ArgumentParser()
 ap.add_argument('--limit', type=int, default=0)
 ap.add_argument('--no-cross', action='store_true', help='بلا فحص الروابط عبر حدّ الآية (أسرع)')
 ap.add_argument('--reanalyze-every', type=int, default=20, help='كل كم آية يُفحص Analyze(Render(a)) ∋ a')
+ap.add_argument('--all', action='store_true', help='يُعاد تحليل السور المجازة أيضاً (حين يُكتشف خطأٌ يمسّ السابق)')
 args = ap.parse_args()
 
 cat = Catalog([H + 'operators_catalog.jsonl', H + 'operators_catalog_split_vocalized.csv'])
@@ -114,10 +115,39 @@ def check_verse(s, v, a, S, units, T):
     return ok, r
 
 
+# السور المجازة (اقتراح صاحب النظرية): يُحمَّل تحليلها من الخبيئة ولا يُعاد؛ وتُعاد طبقة الجمل عليها لتُقارن
+# بالملف المجاز، فإن اختلف فذلك خطأٌ يمسّ السابق: يُبلَّغ، ولا يُكتب فوق المجاز، والإعادة من البداية (--all) قرارٌ
+import csv as _csv, gzip as _gzip, pickle as _pickle, hashlib as _hashlib
+APPROVED_CSV = H + 'approved/surahs.csv'
+APPROVED = {int(r['surah']): r for r in _csv.DictReader(open(APPROVED_CSV, encoding='utf-8'))} \
+    if os.path.exists(APPROVED_CSV) else {}
+CACHE = H + 'data/cache/'
+def _cache_path(s_):
+    return f'{CACHE}surah_{s_:03d}.pkl.gz'
+frozen = {s_ for s_ in APPROVED if not args.all and os.path.exists(_cache_path(s_))}
+loaded, fresh = set(), collections.defaultdict(list)
 verses = []
 cross, checked_ends, prev = [], set(), None
 for n, (s, v, text) in enumerate(rows):
     s, v = int(s), int(v)
+    if s in frozen:
+        if s not in loaded:
+            loaded.add(s)
+            pack = _pickle.loads(_gzip.decompress(open(_cache_path(s), 'rb').read()))
+            for r_ in pack['verses']:
+                C.update(r_['C']); close_route.update(r_['close_route']); unit_reason.update(r_['unit_reason'])
+                for k_, xs in r_['fail'].items():
+                    fail[k_] += xs
+                by_surah[s].append(r_['item'])
+                if r_.get('sample'):
+                    samples[(r_['item'][0], r_['item'][1])] = r_['sample']
+            cross += pack['cross']
+            checked_ends |= set(pack['checked_ends'])
+            C['surahs_from_cache'] += 1
+            prev = None
+        continue
+    snap = (C.copy(), close_route.copy(), unit_reason.copy(), {k_: len(x) for k_, x in fail.items()}, len(cross),
+            set(checked_ends))
     a = analyze(cat, text)
     T = Trace()
     S, units = sentence_geo(a, f'Q{s}:{v}', T)
@@ -179,8 +209,18 @@ for n, (s, v, text) in enumerate(rows):
     by_surah[s].append((s, v, lite, units, S))
     if (s, v) in SAMPLE_REFS:
         samples[(s, v)] = dict(text=a['normalized'], units={G.id: unit_expr(G) for G in units.values()})
+    fresh[s].append(dict(C=C - snap[0], close_route=close_route - snap[1], unit_reason=unit_reason - snap[2],
+                         fail={k_: x[snap[3].get(k_, 0):] for k_, x in fail.items() if len(x) > snap[3].get(k_, 0)},
+                         item=by_surah[s][-1], sample=samples.get((s, v)), cross=cross[snap[4]:],
+                         checked_ends=sorted(checked_ends - snap[5])))
     if n % 500 == 0:
         print(n, dict(C), file=sys.stderr)
+# خبيئة كل سورةٍ حُلِّلت الآن، لتُحمَّل إن أُجيزت
+os.makedirs(CACHE, exist_ok=True)
+for s_, recs in fresh.items():
+    pack = dict(verses=[{k_: r_[k_] for k_ in ('C', 'close_route', 'unit_reason', 'fail', 'item', 'sample')} for r_ in recs],
+                cross=[c for r_ in recs for c in r_['cross']], checked_ends=[e for r_ in recs for e in r_['checked_ends']])
+    open(_cache_path(s_), 'wb').write(_gzip.compress(_pickle.dumps(pack, protocol=5)))
 
 # الطبقتان على النص كله: المصحفية (كلمة ← آية ← سورة ← مصحف) واللغوية (جملة ← وحدة خطابية ← خطاب السورة)
 T = Trace()
@@ -194,6 +234,41 @@ C['ayah_ends_checked'] = len(checked_ends)
 from sarf.checker import check_layer
 chk_n, chk_bad, chk_list = check_layer(LT, {(s_, v_): a_ for s_, v_, a_, _, _ in items})
 C['checker_closed'], C['checker_rejected'] = chk_n, chk_bad
+# ملف الجمل لكل سورة (reports/sentences/surah_NNN.csv)، ومقارنة المجازة بملفها المجاز
+words_of = {(s_, v_): [g['word'] for g in a_['segments']] for s_, v_, a_, _, _ in items}
+os.makedirs(H + 'reports/sentences/drift', exist_ok=True)
+COLS = ['الجملة', 'من', 'إلى', 'النص', 'الحالة', 'سبب الحدّ', 'الخلوّ من التعلّق الخارجي', 'النوى', 'النوى المرتبطة',
+        'كلمات بلا موضع', 'الالتزامات المفتوحة']
+for SP in LT:
+    s_ = int(SP.id.lstrip('L')) if SP.id.lstrip('L').isdigit() else None
+    if s_ is None:
+        continue
+    out_rows = []
+    for D in SP.A + SP.O.get('pending', []):
+        for J in D.A + D.O.get('pending', []):
+            loc = [tuple(x) for x in J.O.get('location', [])]
+            if not loc:
+                continue
+            rec_ = D.O.get('boundary') or {}
+            out_rows.append([J.id, '%d:%d:%d' % loc[0], '%d:%d:%d' % loc[-1],
+                             ' '.join(words_of[(x[0], x[1])][x[2]] for x in loc),
+                             'مستوفاة محلياً' if J.closed else 'مؤجَّلة', rec_.get('J_why', ''),
+                             (J.O.get('closure') or {}).get('external', ''), '، '.join(J.O.get('nuclei', [])),
+                             '، '.join(f'{a_} ← {b_}' for a_, b_ in J.O.get('bound', [])), '، '.join(J.O.get('unplaced', [])),
+                             '؛ '.join(f'{o.name}: {o.reason}' for o in J.Omega if o.required and not o.met)])
+    import io as _io
+    buf = _io.StringIO(); w_ = _csv.writer(buf); w_.writerow(COLS); w_.writerows(out_rows)
+    data = buf.getvalue().encode('utf-8')
+    sha = _hashlib.sha256(data).hexdigest()
+    if s_ in APPROVED:
+        if APPROVED[s_].get('sha256') == sha:
+            C['approved_same'] += 1
+        else:
+            C['approved_drift'] += 1
+            fail['approved_drift'].append(f'سورة {s_}: جملها تخالف الملف المجاز (انظر reports/sentences/drift/surah_{s_:03d}.csv)')
+            open(H + f'reports/sentences/drift/surah_{s_:03d}.csv', 'wb').write(data)
+        continue                                         # لا يُكتب فوق الملف المجاز
+    open(H + f'reports/sentences/surah_{s_:03d}.csv', 'wb').write(data)
 for jid, why in chk_list[:20]:
     fail['checker'].append(f'{jid}: ' + '؛ '.join(why[:2]))
 # اختبارات الفاحص على جملٍ مغلقة حقيقية: تُزيَّف الشهادة أو يُحذف التزامٌ أو يُبدَّل طرف رابطٍ بطرفٍ من نوعٍ خطأ،
