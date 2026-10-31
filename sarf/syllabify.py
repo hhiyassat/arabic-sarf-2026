@@ -60,6 +60,10 @@ def cvmap(toks, ev):
                 ev['SILENT_ALIF_FARIQA'] += 1; i += 1; continue
             # همزة وصل؟
             wasl = False
+            if i > 0 and toks[i - 1][0] in 'ءأ' and prev_v == 'a' and not mk:
+                # الألف بعد همزةٍ مفتوحة مدٌّ لا وصل: لا تلي همزةُ الوصل همزةً مكتوبة (ءَآلذَّكَرَيۡنِ، ءَامَنَ)
+                if seg and seg[-1][0] == 'V':
+                    seg[-1] = ('VV', 'aa'); ev['MADD_ALIF_AFTER_HAMZA'] += 1; i += 1; continue
             if i == 0:
                 wasl = True
             elif prev_v != 'a':
@@ -78,6 +82,10 @@ def cvmap(toks, ev):
                 seg[-1] = ('VV', 'aa'); ev['MADD_ALIF'] += 1; i += 1; continue
             seg.append(('POISON', L)); ev['POISON_ALIF_UNRESOLVED'] += 1; i += 1; continue
 
+        # --- اللام الشمسية بعد مدّ (ءَآلذَّكَرَيۡنِ): لا خلية لها، كما بعد همزة الوصل (D22) ---
+        if L == 'ل' and not mk and seg and seg[-1][0] == 'VV' and nxt is not None and SHADDA in nxt[1] and \
+                nxt[0] in SOLAR:
+            ev['SOLAR_LAM_DELETED'] += 1; i += 1; continue
         # --- لام التعريف ---
         if L == 'ل' and not mk and seg and seg[-1][0] == 'HW':
             if nxt is not None and SHADDA in nxt[1] and nxt[0] in SOLAR:
@@ -257,9 +265,22 @@ def render(s):
     return r
 
 # ---------- driver ----------
+def _ibtida(text):
+    """لام «أل» الساكنة أول الكلمة وألفها محذوفةٌ رسماً (لۡـَٔيۡكَةِ): تُقدَّم همزة الابتداء، كما في الخلايا"""
+    from .chars import letters as _letters
+    t = _letters(text)
+    if len(t) > 1 and t[0][0] == 'ل' and SUKUN in t[0][1] and t[1][0] in 'ءأإآؤئـ':
+        return 'ا' + text, True
+    return text, False
+
+
 def run(text):
     ev = Events()
-    raw_words = text.split()
+    raw_words = []
+    for w in text.split():
+        w2, added = _ibtida(w)
+        ev['IBTIDA_HAMZA_ADDED'] += added
+        raw_words.append(w2)
     divine = {i for i, w in enumerate(raw_words) if divine_name(w) is not None}
     ev['DIVINE_NAME'] += len(divine)
     segs = [[] if i in divine else cvmap(normalize(w, ev), ev) for i, w in enumerate(raw_words)]

@@ -42,6 +42,10 @@ def cells_of(text, base_id, wasl_vowel=None):
         prev = out[-1] if out else None
         nxt = toks[j + 1] if j + 1 < len(toks) else None
         role = None
+        # لام «أل» الساكنة أول الكلمة وألفها محذوفةٌ رسماً (لۡـَٔيۡكَةِ، الشعراء ١٧٦ وص ١٣): همزة الابتداء خليةٌ بلا موضع رسم،
+        # كما تُعطى همزة الوصل المكتوبة خليةً أول الوحدة؛ فلا يبتدئ المقطع بساكن، ويعود الرسم بعينه
+        if j == 0 and L == 'ل' and SUKUN in m and nxt is not None and nxt[0] in 'ءأإآؤئـ':
+            out.append(Cell(f'{base_id}.{len(out)}', 'ء', 'a', 1, dict(tok=[], glyph='', role='همزة الابتداء: ألف أل محذوفة رسماً')))
         # همزة الوصل أول الوحدة: تُنطق ابتداءً (اصطلاح المقطِّع: كل خانة تبدأ بما يُبتدأ به)
         if L == 'ا' and j == 0 and not m and nxt is not None:
             v = wasl_vowel or ('a' if nxt[0] == 'ل' else 'u' if len(toks) > 2 and DAMMA in toks[2][1] else 'i')
