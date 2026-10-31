@@ -421,13 +421,16 @@ def morph(text, info=None):
     # الحسم بين قراءة النص كله المطابقة وقراءةٍ نُزعت منها سابقة: تُقدَّم المطابقة إن كانت شهادتها في HFN أقوى
     # من كل منافسٍ (وَضَعَتۡ: «وضع» C على «ضعو» E)؛ فإن تساوتا أو ضعفت (وَلَسۡتُمۡ: «ولس» C و«ليس» C؛ تَهِنُواْ: «تهن» E
     # و«وهن» C) بقي التعارض مؤجَّلاً بمرشحيه، ولا يُختار بأولوية البحث
-    if exact and (not others or _tier(exact) < _tier(others)):
-        selection['decision'] = ('قراءة النص كله المطابقة لفعل HFN' + (f' (شهادتها {_tier(exact)} أقوى من {_tier(others)})'
-                                                                         if others else ' (لا منافس)'))
+    # الترجيح لا الإثبات (مراجعة التقرير الخامسة ٣): قراءة النص كله المطابقة حرفاً وحركة تُرجَّح على منافسٍ لا يطابق،
+    # والمنافس محفوظٌ بسببه؛ فالنتيجة «مرجَّح» لا «مثبت»، و«مثبت» ما لا منافس له
+    if exact and others:
+        selection['decision'] = (f'ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها {_tier(exact)})، '
+                                 f'ومنافسها لا يطابق (شهادته {_tier(others)})؛ والمنافس محفوظ')
+        selection['ranked'] = True
+        selection['alternatives'] = sorted({f"{x['root']}/{x['form_class']}" for x in others})
         licensed = [x for x in licensed if (x['root'], x['form_class']) in pairs_x]
     elif exact:
-        selection['decision'] = (f'تعارضٌ مؤجَّل: المطابقة شهادتها {_tier(exact)}، ومنافسها {_tier(others)}؛ '
-                                 'فلا تُقدَّم بالمطابقة وحدها')
+        selection['decision'] = 'قراءة النص كله المطابقة لفعل HFN (لا منافس)'
     if info['kind'] == 'madi' and licensed:
         # الماضي: الحدث الذي يطابق فعلُه المكتوب حرفاً وحركة يُقدَّم على أخيه في الوزن (جَعَلَ لا جَعِلَ)
         same = [x for x in licensed if _plain_vowels(x['verb']) == surface]
@@ -452,6 +455,9 @@ def morph(text, info=None):
         return out
     if len(pairs) == 1:
         out.update(status='accepted', root=pairs[0][0], form_class=pairs[0][1], level='event')
+        if selection.get('ranked'):
+            out.update(level='ranked', reason='مرجَّح لا مثبت: ' + selection['decision'] + ' — البدائل: ' +
+                       '، '.join(selection['alternatives']))
         return out
     if pairs:
         out.update(status='deferred', reason='أكثر من جذر أو وزن مرخَّص: ' +

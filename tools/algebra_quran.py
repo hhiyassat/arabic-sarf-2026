@@ -124,7 +124,37 @@ APPROVED = {int(r['surah']): r for r in _csv.DictReader(open(APPROVED_CSV, encod
 CACHE = H + 'data/cache/'
 def _cache_path(s_):
     return f'{CACHE}surah_{s_:03d}.pkl.gz'
-frozen = {s_ for s_ in APPROVED if not args.all and os.path.exists(_cache_path(s_))}
+# بصمة الاعتماديات (مراجعة التقرير الخامسة ٤): صلاح الخبيئة مربوطٌ بالنص وبكل ما أنتج التحليل — الكود، وفهرس العوامل،
+# وملف المبنيات، وملفات HFN، وأبنية سيبويه. فإن تغيّر شيءٌ منها بطلت الخبيئة: يُعاد التحليل، ويُقارن بالمجاز دون مساسه
+def dependency_files():
+    from sarf.root import hfn
+    import glob
+    fs = sorted(glob.glob(H + 'sarf/*.py')) + [H + 'operators_catalog.jsonl', H + 'operators_catalog_split_vocalized.csv',
+                                               H + 'lexicon/mabniyat_lexicon.jsonl']
+    fs += sorted(glob.glob(H + 'data/patterns/*.csv'))
+    hp = hfn().path
+    if hp:
+        fs += [os.path.join(hp, x) for x in ('events.csv', 'lexical_units.csv', 'form_meanings.csv')]
+    return [f for f in fs if os.path.exists(f)]
+def fingerprint(files, extra=b''):
+    h = _hashlib.sha256(extra)
+    for f in files:
+        h.update(os.path.relpath(f, H).encode() if f.startswith(H) else os.path.basename(f).encode())
+        h.update(open(f, 'rb').read())
+    return h.hexdigest()
+DEPS = fingerprint(dependency_files(), os.environ.get('SARF_DEP_SALT', '').encode())
+def _surah_text_fp(s_):
+    return _hashlib.sha256('\n'.join(t for ss, _, t in rows if int(ss) == s_).encode()).hexdigest()
+def _cache_valid(s_):
+    if not os.path.exists(_cache_path(s_)):
+        return False
+    pack = _pickle.loads(_gzip.decompress(open(_cache_path(s_), 'rb').read()))
+    ok = pack.get('deps') == DEPS and pack.get('text') == _surah_text_fp(s_)
+    if not ok:
+        C['cache_invalidated'] += 1
+        fail['cache_invalidated'].append(f'سورة {s_}: تغيّرت اعتماديات تحليلها أو نصّها، فأُعيد تحليلها')
+    return ok
+frozen = {s_ for s_ in APPROVED if not args.all and _cache_valid(s_)}
 loaded, fresh = set(), collections.defaultdict(list)
 verses = []
 cross, checked_ends, prev = [], set(), None
@@ -218,7 +248,8 @@ for n, (s, v, text) in enumerate(rows):
 # خبيئة كل سورةٍ حُلِّلت الآن، لتُحمَّل إن أُجيزت
 os.makedirs(CACHE, exist_ok=True)
 for s_, recs in fresh.items():
-    pack = dict(verses=[{k_: r_[k_] for k_ in ('C', 'close_route', 'unit_reason', 'fail', 'item', 'sample')} for r_ in recs],
+    pack = dict(deps=DEPS, text=_surah_text_fp(s_),
+                verses=[{k_: r_[k_] for k_ in ('C', 'close_route', 'unit_reason', 'fail', 'item', 'sample')} for r_ in recs],
                 cross=[c for r_ in recs for c in r_['cross']], checked_ends=[e for r_ in recs for e in r_['checked_ends']])
     open(_cache_path(s_), 'wb').write(_gzip.compress(_pickle.dumps(pack, protocol=5)))
 
@@ -237,8 +268,8 @@ C['checker_closed'], C['checker_rejected'] = chk_n, chk_bad
 # ملف الجمل لكل سورة (reports/sentences/surah_NNN.csv)، ومقارنة المجازة بملفها المجاز
 words_of = {(s_, v_): [g['word'] for g in a_['segments']] for s_, v_, a_, _, _ in items}
 os.makedirs(H + 'reports/sentences/drift', exist_ok=True)
-COLS = ['الجملة', 'من', 'إلى', 'النص', 'الحالة', 'سبب الحدّ', 'الخلوّ من التعلّق الخارجي', 'النوى', 'النوى المرتبطة',
-        'كلمات بلا موضع', 'الالتزامات المفتوحة']
+COLS = ['الوحدة', 'من', 'إلى', 'النص', 'الحالة', 'سبب الحدّ', 'الخلوّ من التعلّق الخارجي', 'النوى', 'النوى المرتبطة',
+        'وقوعات بلا موضع (الموضع [الوحدة] «النص»: الناقص)', 'الالتزامات المفتوحة']
 for SP in LT:
     s_ = int(SP.id.lstrip('L')) if SP.id.lstrip('L').isdigit() else None
     if s_ is None:
@@ -252,9 +283,13 @@ for SP in LT:
             rec_ = D.O.get('boundary') or {}
             out_rows.append([J.id, '%d:%d:%d' % loc[0], '%d:%d:%d' % loc[-1],
                              ' '.join(words_of[(x[0], x[1])][x[2]] for x in loc),
-                             'مستوفاة محلياً' if J.closed else 'مؤجَّلة', rec_.get('J_why', ''),
+                             # الوحدة المؤجَّلة لم يثبت أنها جملة واحدة: محفوظةٌ لم يثبت تقسيمها الداخلي
+                             'مستوفاة محلياً وفق القواعد المنفَّذة' if J.closed else
+                             'وحدة تحليلٍ مؤجَّلة: لم يثبت تقسيمها الداخلي ولا أنها جملة واحدة',
+                             'آخر السورة: نهاية نطاق القراءة، لا حدّ جملةٍ مثبت' if rec_.get('J_why') == 'آخر السورة'
+                             else rec_.get('J_why', ''),
                              (J.O.get('closure') or {}).get('external', ''), '، '.join(J.O.get('nuclei', [])),
-                             '، '.join(f'{a_} ← {b_}' for a_, b_ in J.O.get('bound', [])), '، '.join(J.O.get('unplaced', [])),
+                             '، '.join(f'{a_} ← {b_}' for a_, b_ in J.O.get('bound', [])), ' | '.join(J.O.get('unplaced', [])),
                              '؛ '.join(f'{o.name}: {o.reason}' for o in J.Omega if o.required and not o.met)])
     import io as _io
     buf = _io.StringIO(); w_ = _csv.writer(buf); w_.writerow(COLS); w_.writerows(out_rows)
@@ -264,8 +299,10 @@ for SP in LT:
         if APPROVED[s_].get('sha256') == sha:
             C['approved_same'] += 1
         else:
-            C['approved_drift'] += 1
-            fail['approved_drift'].append(f'سورة {s_}: جملها تخالف الملف المجاز (انظر reports/sentences/drift/surah_{s_:03d}.csv)')
+            # تغيّرٌ يحتاج مراجعة: قد يكون إصلاحاً، أو تراجعاً، أو تغيّراً في المصدر؛ لا خطأً تلقائياً
+            C['approved_changed'] += 1
+            fail['approved_changed'].append(f'سورة {s_}: تغيّرٌ يحتاج مراجعة: جملها تخالف الملف المجاز '
+                                            f'(الجديد في reports/sentences/drift/surah_{s_:03d}.csv)')
             open(H + f'reports/sentences/drift/surah_{s_:03d}.csv', 'wb').write(data)
         continue                                         # لا يُكتب فوق الملف المجاز
     open(H + f'reports/sentences/surah_{s_:03d}.csv', 'wb').write(data)

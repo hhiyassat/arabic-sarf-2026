@@ -351,7 +351,7 @@ def unit_geo(a, wi, ui, base_id, T, governed_info=None):
         bounds.append((acc, acc + n, sl['type']))
         acc += n
     for c in cells:
-        j = c.O['tok'][-1]
+        j = c.O['tok'][-1] if c.O['tok'] else 0          # همزة الابتداء بلا موضع رسم: خانة أول الوحدة
         c.O['slot'] = next((t for a0, a1, t in bounds if a0 <= j < a1), slots[-1]['type'])
     lexical = u['kind'] != 'cut'
     G = Geo(base_id, (UNIT, 'معجمية' if lexical else 'مقطَّعة'),
@@ -493,8 +493,15 @@ def unit_geo(a, wi, ui, base_id, T, governed_info=None):
     wm = wazn_meaning(m['form_class'])
     if wm:
         G.Theta['wazn_meaning'] = dict(wazn=wm[0], meaning=wm[1], sources=wm[2], status=wm[3])
-    ev = Evidence(f'Realize({" ".join(root)}, {m["form_class"]}, {kind})',
-                  [f'α = ⟨{", ".join(x or "?" for x in alpha)}⟩', 'Flatten(β) = الخلايا نفسها'] + ops,
+    sel = m.get('selection') or {}
+    ranked = m.get('level') == 'ranked'
+    if ranked:
+        # مرجَّحٌ لا مثبت: الإغلاق بالقراءة المرجَّحة، والبدائل محفوظة في Θ وفي الشهادة
+        G.Theta['ranking'] = dict(status='مرجَّح لا مثبت', decision=sel.get('decision'), alternatives=sel.get('alternatives', []))
+    ev = Evidence(f'Realize({" ".join(root)}, {m["form_class"]}, {kind})' + (' — مرجَّح لا مثبت' if ranked else ''),
+                  [f'α = ⟨{", ".join(x or "?" for x in alpha)}⟩', 'Flatten(β) = الخلايا نفسها'] + ops +
+                  ([f'الترجيح: {sel.get("decision")}', 'البدائل المحفوظة: ' + '، '.join(sel.get('alternatives', []))]
+                   if ranked else []),
                   [('خلية زائدة داخل الهيكل', 'كل خلية بين السابقة واللاحقة مقابَلة')])
     G.Omega[0].met, G.Omega[0].ev = True, ev
     close(G, ev, Evidence('حدّ الخانة', ['من المقشِّر: جذع']), T)
@@ -2040,6 +2047,39 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
                 if ay_end[p_]:
                     return p_ + 1
             return n
+        def _b_stop(j):
+            # نطاق المعطوف B: لا يُقطع قبل اكتماله؛ فالضمير أو اسم الإشارة بعد شبه جملةٍ في أوله مبتدؤه، والنواة بعده خبره
+            # (وَبِٱلۡأٓخِرَةِ هُمۡ يُوقِنُونَ). ويقف عند عاطفٍ آخر، أو ما له الصدارة، أو آخر الآية، أو رأس جملةٍ بعد نواته
+            subj = nuc_seen = False
+            for p_ in range(j + 1, n):
+                f_ = feats[p_]
+                if f_['conj'] or starts[p_]:
+                    return p_
+                if (f_.get('demo') or f_.get('head') == 'pron') and not f_['conj']:
+                    if subj or nuc_seen:
+                        return p_
+                    subj = True
+                elif p_ in nset or f_['verb']:
+                    if nuc_seen:
+                        return p_
+                    nuc_seen = True
+                if ay_end[p_]:
+                    return p_ + 1
+            return n
+        def _b_relations(b0, stop_):
+            """علاقات المعطوف الجملة الداخلية: شبه جملة متقدّمة متعلّقة بالفعل، ومبتدأ ضمير، وخبر جملة فعلية"""
+            rel_ = []
+            ws = list(range(b0, stop_))
+            pr = next((p_ for p_ in ws if (feats[p_].get('head') == 'pron' or feats[p_].get('demo')) and p_ != b0), None)
+            vb = next((p_ for p_ in ws if (p_ in nset or feats[p_]['verb']) and p_ != b0), None)
+            ppb = feats[b0].get('head') == 'pp' or is_form(feats[b0]['text'], JARR_V)
+            if pr is not None and vb is not None and pr < vb:
+                rel_.append(f'مبتدأ «{wtext[pr]}»، وخبره جملة فعلية رأسها «{wtext[vb]}»')
+                if ppb:
+                    rel_.append(f'«{wtext[b0]}» شبه جملة مقدَّمة، متعلّقة بـ«{wtext[vb]}»')
+            elif vb is not None and ppb:
+                rel_.append(f'«{wtext[b0]}» شبه جملة متعلّقة بـ«{wtext[vb]}»')
+            return rel_
         for c_ in coords:
             k0 = c_['pos']
             host = next((r for r in sorted(rels, key=lambda r: -r['head']) if r['head'] < k0 <= eff_end[r['head']] and
@@ -2115,16 +2155,21 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
             # الطرف B بهويته ونوعه ونطاقه ورأسه وحاويه (مراجعة التقرير الرابعة ٣)، وحالة المعطوف عليه في المفرد
             if c_['level'] == 'جملة':
                 b0 = c_['B']
-                stop_ = _next_stop(b0)
+                stop_ = _b_stop(b0)
                 bh = next((j for j in range(b0, stop_) if j in nset or feats[j]['verb']), b0)
                 fb = feats[bh]
                 c_['B_full'] = dict(id=words_text(words, k0), span=(k0, stop_ - 1), text=' '.join(wtext[k0:stop_]),
-                                    head=wtext[bh],
+                                    head=wtext[bh], relations=_b_relations(b0, stop_),
                                     type='جملة فعلية' if bh in nset or fb['verb'] else
                                          'جملة اسمية' if fb.get('demo') or fb.get('head') in ('pron', 'pp') or
                                          is_form(fb['text'], JARR_V) or _pp_clause(feats, b0, nset) else 'جملة',
                                     container=(c_.get('B_scope') or {}).get('container'),
                                     evidence='من العاطف إلى أول عاطفٍ آخر أو ما له الصدارة أو رأس جملةٍ جديدة أو آخر الآية')
+                if any(r_.startswith('مبتدأ') for r_ in c_['B_full']['relations']):
+                    c_['B_full']['type'] = 'جملة اسمية (مبتدأ وخبرٌ جملي)'
+                # لا حدّ داخل المعطوف الجملة قبل اكتماله (وَبِٱلۡأٓخِرَةِ ‖ هُمۡ ‖ يُوقِنُونَ)
+                for k_ in range(k0, stop_ - 1):
+                    inner.setdefault(k_, ('inner', 'داخل المعطوف الجملة'))
                 c_['A_status'] = 'معيَّن' if len(c_['A']) == 1 else 'بدائل معلَّقة' if c_['A'] else 'غير معيَّن'
             else:
                 c_['B_full'] = dict(id=words_text(words, c_['B']), span=(c_['B'], c_['B']), text=wtext[c_['B']],
@@ -2254,11 +2299,13 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
                     any(G.Theta.get('lex') == 'حروف مقطّعة' for G in wunits[p]) or \
                     (feats[p].get('neg') or feats[p].get('qad')) and p + 1 < n and (feats[p + 1]['verb'] or p + 1 in nset)
                 if not ok_p:
-                    unplaced.append(wtext[p])
+                    # الوقوع بهويته لا بصيغته (تساوي المحتوى لا يعني تساوي الوقوع): الموضع، والوحدة، والنص، والناقص
+                    unplaced.append(f'{words_text(words, p)} [{"، ".join(sorted(ids_p))}] «{wtext[p]}»: '
+                                    'لا طرفَ رابطٍ ولا دورَ في بنية')
             J.O['unplaced'] = unplaced
             if unplaced:
-                J.Omega.append(Obligation('موضع كل كلمة', reason=f'{len(unplaced)} كلمة بلا موضعٍ مرخَّص في البناء '
-                                          f'(التتابع وحده لا يكفي): ' + '، '.join(unplaced[:4])))
+                J.Omega.append(Obligation('موضع كل كلمة', reason=f'{len(unplaced)} وقوعاً بلا موضعٍ مرخَّص في البناء '
+                                          '(التتابع وحده لا يكفي)؛ وهي بهوياتها في عمود «وقوعات بلا موضع»'))
                 st['J_unplaced'] += 1
                 for w_ in unplaced:
                     st['unplaced_words'] += 1

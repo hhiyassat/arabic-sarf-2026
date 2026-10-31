@@ -73,5 +73,11 @@ else:
     m = morph('قُلْ')
     check('الشاهد: الحدث ومصدره', m['licensed'] and m['licensed'][0]['verb'] == 'قَالَ' and
           m['licensed'][0]['event_id'].startswith('HFN-E-'), m['licensed'][:1])
+    # مراجعة التقرير الخامسة (٣): القوة الأرجح تُنتج ترجيحاً لا إثباتاً، والمنافس محفوظ بسببه
+    m = morph('وَلَسْتُمْ')
+    check('وَلَسۡتُمۡ: «ولس» مرجَّحٌ بالمطابقة لا مثبت، و«ليس» محفوظٌ بين البدائل',
+          m['status'] == 'accepted' and m['level'] == 'ranked' and 'ليس/I' in m['selection'].get('alternatives', []), m)
+    m = morph('فَجَعَلْتُمْ')
+    check('فَجَعَلۡتُمۡ: لا منافس، فالجذر مثبت (لا مرجَّح)', m['status'] == 'accepted' and m['level'] == 'event', m)
 print('ALL OK' if not bad else f'FAILED {bad}')
 sys.exit(1 if bad else 0)
