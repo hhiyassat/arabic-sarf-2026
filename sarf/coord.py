@@ -459,6 +459,7 @@ def site_record(c_, X):
             elif lam_v:
                 coord_checks(c, False, None, (False, '—'), (False, 'لا طرف سابق مكتوب'), (True, '—'))
                 c['level'] = 'جملة'
+                c['B'] = _member(X, list(range(k, X.b_stop(h))), h, 'جملة', ['لام التعليل والمضارع إلى حدّه المشتقّ'])
                 c['rules'].append('CO-LAM')
                 c['deferrals'].append(('D6', 'لامُ التعليل والمضارع بعد الواو: المعطوف عليه تعليلٌ مقدَّر، ولا يُنشأ '
                                              'المقدَّر كلمةً مكتوبة بلا قاعدة حذفٍ منفَّذة', DEFER['D6'][1]))
@@ -776,7 +777,7 @@ def extra_sites(X, done):
             letter = 'بل' if t == 'بل' else 'حتى' if t.startswith('حت') else 'لكن'
             nx = f[k + 1]
             clause = clause_word(f, k + 1, X.nset) or nx['verb'] or k + 1 in X.nset
-            B = _member(X, list(range(k + 1, X.b_stop(k + 1))) if clause else [k + 1], k + 1,
+            B = _member(X, list(range(k + 1, X.b_stop(k + 1))) if clause else extent_single(X, k + 1, n)[0], k + 1,
                         'جملة' if clause else 'مفرد', ['إلى حدّه المشتقّ' if clause else 'الرأس'])
             fn = {'بل': 'حرف ابتداءٍ وإضراب', 'لكن': 'حرف ابتداءٍ واستدراك', 'حتى': 'حرف ابتداءٍ أو جرٍّ أو نصب'}[letter]
             c = _cand('C1', fn, B['type'], None, B, letter, ['FN-BAL'])
@@ -924,8 +925,10 @@ def check_coord(rec, X):
                         is_form(g['text'], PRON_FREE_V)
                     if not (hid(fa_) or hid(fb_) or _ma_silah(X, A['head_pos'], k) or _ma_silah(X, B['head_pos'], len(f))):
                         P.append(f'{c["id"]}: دعوى خفاء الحالة لا تطابق الطرفين')
-            if c['level'] == 'مفرد' and A['head_pos'] < k and any(X.starts[j] for j in range(A['head_pos'] + 1, k)) and \
-                    not (fa_.get('rel') or fa_.get('an') or fa_.get('maqsur')):
+            # نطاق البحث المعلن: لا يُعبر ما له الصدارة (سوى الكلمة قبل الحرف) إلا لمعطوفٍ لا تظهر حالته
+            any_b = fb_.get('maqsur') or fb_.get('rel') or fb_.get('an')
+            if c['level'] == 'مفرد' and A['head_pos'] < k and any(X.starts[j] for j in range(A['head_pos'] + 1, k - 1)) and \
+                    not any_b:
                 P.append(f'{c["id"]}.A: بين الرأس السابق والحرف ما له الصدارة (خارج نطاق البحث المعلن)')
             if a4[0] and a4[1].startswith('توافق الحالة'):
                 fa, fb = f[A['head_pos']]['case'], f[B['head_pos']]['case']
