@@ -8,7 +8,7 @@ cd "$(dirname "$0")/.."
 LOG=${1:-/tmp/sarf_full}
 mkdir -p "$LOG"
 t0=$(date +%s)
-python3 tools/algebra_quran.py --jobs "${SARF_JOBS:-$(nproc)}" > "$LOG/algebra.log" 2>&1
+python3 tools/algebra_quran.py --jobs "${SARF_JOBS:-$(python3 -c "import os; print(os.cpu_count() or 1)")}" > "$LOG/algebra.log" 2>&1
 t1=$(date +%s)
 python3 tools/eval_algebra.py > "$LOG/eval_algebra.log" 2>&1 &
 python3 tools/eval_case.py > "$LOG/eval_case.log" 2>&1 &
