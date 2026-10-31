@@ -1,59 +1,2083 @@
 {
  "counts": {
-  "لم يتغيّر": 16640,
-  "من التأجيل إلى القبول: صحيح": 78,
-  "من التأجيل إلى القبول: مخالف لـQAC": 9
+  "لم يتغيّر": 15443,
+  "غير مقابَل": 3187,
+  "إلى فئةٍ مؤجَّلة (محمي مرشّح): كان deferred": 493,
+  "إلى الحماية الدستورية: كان deferred": 164,
+  "إلى فئةٍ مؤجَّلة (محمي مرشّح): كان مقبولاً": 287,
+  "إلى الحماية الدستورية: كان مقبولاً": 177,
+  "إلى «مرجَّح» (لا يُقبل): كان مقبولاً، والقراءة المرجَّحة صحيحة": 129,
+  "إلى «مرجَّح» (لا يُقبل): كان مقبولاً، والقراءة المرجَّحة مخالفة لـQAC": 7
  },
  "rows": {
-  "من التأجيل إلى القبول: صحيح": [
+  "إلى فئةٍ مؤجَّلة (محمي مرشّح): كان deferred": [
    {
-    "loc": "10:28:10",
-    "text": "زَيَّلْنَا",
-    "gold": "زيل/II",
+    "loc": "100:9:1",
+    "text": "يَعْلَمُ",
+    "gold": "None/None",
     "before": {
      "status": "deferred",
      "root": null,
      "form": null,
      "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: زيل (II)، زول (II)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها B، ومنافسها B؛ فلا تُقدَّم بالمطابقة وحدها",
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "104:3:0",
+    "text": "يَحْسَبُ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «حَسِبَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "107:1:0",
+    "text": "أَرَءَيْتَ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: رءي (IV)، رءي (I)",
+     "decision": null,
      "candidates": [
-      "زيل/II (B، مطابق)",
-      "زول/II (B)"
+      "رءي/IV (B)",
+      "رءي/I (C)"
      ]
     },
     "after": {
-     "status": "accepted",
-     "root": "زيل",
-     "form": "II",
-     "level": "ranked",
-     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته B)",
-     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته B)؛ والمنافس محفوظ",
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «رَأَى») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا ",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "10:18:19",
+    "text": "يَعْلَمُ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "10:22:25",
+    "text": "ظَنُّوا",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لا رخصة: لم يرد أيٌّ من المرشَّحات في HFN",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «ظَنَّ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا ",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "10:24:22",
+    "text": "ظَنَّ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «ظَنَّ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا ",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "10:50:1",
+    "text": "أَرَءَيْتُمْ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: رءي (IV)، رءي (I)",
+     "decision": null,
      "candidates": [
-      "زيل/II (B، مطابق)",
-      "زول/II (B)"
+      "رءي/IV (B)",
+      "رءي/I (C)"
      ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «رَأَى») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا ",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "10:54:13",
+    "text": "رَأَوُا",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «رَأَى») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا ",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "10:59:1",
+    "text": "أَرَءَيْتُمْ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: رءي (IV)، رءي (I)",
+     "decision": null,
+     "candidates": [
+      "رءي/IV (B)",
+      "رءي/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «رَأَى») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا ",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "10:88:26",
+    "text": "يَرَوُا",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «رَأَى») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا ",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "10:97:5",
+    "text": "يَرَوُا",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «رَأَى») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا ",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "11:27:12",
+    "text": "نَرَى",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «رَأَى») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا ",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "11:27:21",
+    "text": "نَرَى",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «رَأَى») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا ",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "11:27:27",
+    "text": "نَظُنُّ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لا رخصة: لم يرد أيٌّ من المرشَّحات في HFN",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «ظَنَّ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا ",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "11:27:7",
+    "text": "نَرَى",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «رَأَى») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا ",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "11:28:2",
+    "text": "أَرَءَيْتُمْ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: رءي (IV)، رءي (I)",
+     "decision": null,
+     "candidates": [
+      "رءي/IV (B)",
+      "رءي/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «رَأَى») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا ",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "11:29:19",
+    "text": "أَرَى",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": "lemma",
+     "reason": "يطابق فعل HFN «أَرَى» حرفاً وحركة، ولم يثبت بالكتابة أنه فعل",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (لا منافس)",
+     "candidates": [
+      "ءري/I (C، مطابق)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «رَأَى») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا ",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "11:31:7",
+    "text": "أَعْلَمُ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "11:49:8",
+    "text": "تَعْلَمُ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "11:5:10",
+    "text": "يَعْلَمُ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "11:63:2",
+    "text": "أَرَءَيْتُمْ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: رءي (IV)، رءي (I)",
+     "decision": null,
+     "candidates": [
+      "رءي/IV (B)",
+      "رءي/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «رَأَى») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا ",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "11:6:9",
+    "text": "يَعْلَمُ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "11:79:10",
+    "text": "تَعْلَمُ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "11:84:18",
+    "text": "أَرَى",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": "lemma",
+     "reason": "يطابق فعل HFN «أَرَى» حرفاً وحركة، ولم يثبت بالكتابة أنه فعل",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (لا منافس)",
+     "candidates": [
+      "ءري/I (C، مطابق)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «رَأَى») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا ",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "11:88:2",
+    "text": "أَرَءَيْتُمْ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: رءي (IV)، رءي (I)",
+     "decision": null,
+     "candidates": [
+      "رءي/IV (B)",
+      "رءي/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «رَأَى») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا ",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "11:91:8",
+    "text": "نَرَى",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «رَأَى») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا ",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "12:110:4",
+    "text": "ظَنُّوا",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لا رخصة: لم يرد أيٌّ من المرشَّحات في HFN",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «ظَنَّ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا ",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "12:30:14",
+    "text": "نَرَى",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «رَأَى») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا ",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "12:31:17",
+    "text": "رَأَيْنَ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «رَأَى») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا ",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "12:35:6",
+    "text": "رَأَوُا",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «رَأَى») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا ",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "12:36:13",
+    "text": "أَرَى",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": "lemma",
+     "reason": "يطابق فعل HFN «أَرَى» حرفاً وحركة، ولم يثبت بالكتابة أنه فعل",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (لا منافس)",
+     "candidates": [
+      "ءري/I (C، مطابق)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «رَأَى») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا ",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "12:36:24",
+    "text": "نَرَى",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «رَأَى») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا ",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "12:36:7",
+    "text": "أَرَى",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": "lemma",
+     "reason": "يطابق فعل HFN «أَرَى» حرفاً وحركة، ولم يثبت بالكتابة أنه فعل",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (لا منافس)",
+     "candidates": [
+      "ءري/I (C، مطابق)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «رَأَى») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا ",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "12:42:2",
+    "text": "ظَنَّ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «ظَنَّ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا ",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "12:43:3",
+    "text": "أَرَى",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": "lemma",
+     "reason": "يطابق فعل HFN «أَرَى» حرفاً وحركة، ولم يثبت بالكتابة أنه فعل",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (لا منافس)",
+     "candidates": [
+      "ءري/I (C، مطابق)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «رَأَى») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا ",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "12:52:1",
+    "text": "يَعْلَمَ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "12:59:10",
+    "text": "تَرَوْنَ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «رَأَى») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا ",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "12:78:12",
+    "text": "نَرَى",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «رَأَى») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا ",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "12:86:7",
+    "text": "أَعْلَمُ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "12:94:6",
+    "text": "أَجِدُ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «وَجَدَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   }
+  ],
+  "إلى الحماية الدستورية: كان deferred": [
+   {
+    "loc": "101:4:1",
+    "text": "يَكُونُ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "101:5:0",
+    "text": "تَكُونُ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "10:104:23",
+    "text": "أَكُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "10:15:18",
+    "text": "يَكُونُ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "10:18:26",
+    "text": "تَعَٰلَى",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "10:2:0",
+    "text": "أَكَانَ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "10:61:1",
+    "text": "تَكُونُ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "10:72:13",
+    "text": "أَكُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "10:99:3",
+    "text": "لَامَنَ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "11:107:3",
+    "text": "دَامَتِ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "11:108:8",
+    "text": "دَامَتِ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "11:118:8",
+    "text": "يَزَالُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: زول (I)، زيل (I)",
+     "decision": null,
+     "candidates": [
+      "زول/I (C)",
+      "زيل/I (C)"
+     ]
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "11:47:16",
+    "text": "أَكُنْ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر مسجَّل في HFN، ولا حدث بالوزن: كون (I)، كون (IV)، كين (IV)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "11:78:22",
+    "text": "أَلَيْسَ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "11:81:26",
+    "text": "أَلَيْسَ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "12:33:14",
+    "text": "أَكُنْ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر مسجَّل في HFN، ولا حدث بالوزن: كون (I)، كون (IV)، كين (IV)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "12:80:24",
+    "text": "أَبْرَحَ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": "lemma",
+     "reason": "يطابق فعل HFN «أَبْرَحَ» حرفاً وحركة، ولم يثبت بالكتابة أنه فعل",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (لا منافس)",
+     "candidates": [
+      "برح/IV (B، مطابق)"
+     ]
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "12:85:2",
+    "text": "تَفْتَؤُ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "13:31:30",
+    "text": "يَزَالُ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "13:43:3",
+    "text": "لَسْتَ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "14:17:2",
+    "text": "يَكَادُ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "15:33:2",
+    "text": "أَكُنْ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر مسجَّل في HFN، ولا حدث بالوزن: كون (I)، كون (IV)، كين (IV)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "16:1:6",
+    "text": "تَعَٰلَى",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "16:29:5",
+    "text": "بِئْسَ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "16:30:17",
+    "text": "لَنِعْمَ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "16:3:4",
+    "text": "تَعَٰلَى",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "17:43:1",
+    "text": "تَعَٰلَى",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "18:41:1",
+    "text": "يُصْبِحَ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "18:60:5",
+    "text": "أَبْرَحُ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "18:77:3",
+    "text": "أَتَيَا",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "18:93:10",
+    "text": "يَكَادُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: كود (I)، كيد (I)",
+     "decision": null,
+     "candidates": [
+      "كود/I (A)",
+      "كيد/I (A)"
+     ]
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "19:20:2",
+    "text": "يَكُونُ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "19:48:10",
+    "text": "أَكُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "19:4:10",
+    "text": "أَكُنْ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر مسجَّل في HFN، ولا حدث بالوزن: كون (I)، كون (IV)، كين (IV)",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "19:8:3",
+    "text": "يَكُونُ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "19:90:0",
+    "text": "تَكَادُ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "20:114:0",
+    "text": "تَعَٰلَى",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "20:121:0",
+    "text": "أَكَلَا",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "20:15:3",
+    "text": "أَكَادُ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "20:40:22",
+    "text": "فَتَنَّٰ",
+    "gold": "None/None",
+    "before": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   }
+  ],
+  "إلى فئةٍ مؤجَّلة (محمي مرشّح): كان مقبولاً": [
+   {
+    "loc": "102:3:2",
+    "text": "تَعْلَمُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "علم",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": [
+      "علم/I (C)",
+      "علم/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "102:4:3",
+    "text": "تَعْلَمُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "علم",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": [
+      "علم/I (C)",
+      "علم/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "102:5:2",
+    "text": "تَعْلَمُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "علم",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": [
+      "علم/I (C)",
+      "علم/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "10:55:15",
+    "text": "يَعْلَمُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "علم",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": [
+      "علم/I (C)",
+      "علم/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "10:5:22",
+    "text": "يَعْلَمُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "علم",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": [
+      "علم/I (C)",
+      "علم/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "10:5:9",
+    "text": "تَعْلَمُوا",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "علم",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": [
+      "علم/I (C)",
+      "علم/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "10:68:24",
+    "text": "تَعْلَمُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "علم",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": [
+      "علم/I (C)",
+      "علم/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
     }
    },
    {
     "loc": "10:78:4",
     "text": "وَجَدْنَا",
-    "gold": "وجد/I",
+    "gold": "None/None",
     "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: وجد (I)، جود (I)، جيد (I)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها C؛ فلا تُقدَّم بالمطابقة وحدها",
-     "candidates": [
-      "وجد/I (C، مطابق)",
-      "وجد/I (C)",
-      "جود/I (C)",
-      "جيد/I (C)"
-     ]
-    },
-    "after": {
      "status": "accepted",
      "root": "وجد",
      "form": "I",
@@ -66,6 +2090,2017 @@
       "جود/I (C)",
       "جيد/I (C)"
      ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «وَجَدَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "10:89:10",
+    "text": "يَعْلَمُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "علم",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": [
+      "علم/I (C)",
+      "علم/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "110:2:0",
+    "text": "رَأَيْتَ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "رءي",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": [
+      "رءي/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «رَأَى») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا ",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "11:14:3",
+    "text": "اعْلَمُوا",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "علم",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": [
+      "علم/I (C)",
+      "علم/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "11:39:1",
+    "text": "تَعْلَمُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "علم",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": [
+      "علم/I (C)",
+      "علم/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "11:79:2",
+    "text": "عَلِمْتَ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "علم",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (لا منافس)",
+     "candidates": [
+      "علم/I (C، مطابق)",
+      "علم/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "11:93:7",
+    "text": "تَعْلَمُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "علم",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": [
+      "علم/I (C)",
+      "علم/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "12:21:31",
+    "text": "يَعْلَمُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "علم",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": [
+      "علم/I (C)",
+      "علم/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "12:40:31",
+    "text": "يَعْلَمُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "علم",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": [
+      "علم/I (C)",
+      "علم/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "12:46:21",
+    "text": "يَعْلَمُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "علم",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": [
+      "علم/I (C)",
+      "علم/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "12:51:12",
+    "text": "عَلِمْنَا",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "علم",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (لا منافس)",
+     "candidates": [
+      "علم/I (C، مطابق)",
+      "علم/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "12:68:29",
+    "text": "يَعْلَمُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "علم",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": [
+      "علم/I (C)",
+      "علم/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "12:73:3",
+    "text": "عَلِمْتُمْ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "علم",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (لا منافس)",
+     "candidates": [
+      "علم/I (C، مطابق)",
+      "علم/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "12:79:7",
+    "text": "وَجَدْنَا",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "وجد",
+     "form": "I",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
+     "candidates": [
+      "وجد/I (C، مطابق)",
+      "وجد/I (C)",
+      "جود/I (C)",
+      "جيد/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «وَجَدَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "12:80:8",
+    "text": "تَعْلَمُوا",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "علم",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": [
+      "علم/I (C)",
+      "علم/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "12:81:12",
+    "text": "عَلِمْنَا",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "علم",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (لا منافس)",
+     "candidates": [
+      "علم/I (C، مطابق)",
+      "علم/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "12:86:12",
+    "text": "تَعْلَمُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "علم",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": [
+      "علم/I (C)",
+      "علم/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "12:89:2",
+    "text": "عَلِمْتُمْ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "علم",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (لا منافس)",
+     "candidates": [
+      "علم/I (C، مطابق)",
+      "علم/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "12:96:19",
+    "text": "تَعْلَمُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "علم",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": [
+      "علم/I (C)",
+      "علم/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "14:42:1",
+    "text": "تَحْسَبَنَّ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "حسب",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": [
+      "حسب/I (C)",
+      "حسب/I (C)",
+      "حسب/I (C)",
+      "حسب/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «حَسِبَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "14:47:1",
+    "text": "تَحْسَبَنَّ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "حسب",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": [
+      "حسب/I (C)",
+      "حسب/I (C)",
+      "حسب/I (C)",
+      "حسب/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «حَسِبَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "15:24:1",
+    "text": "عَلِمْنَا",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "علم",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (لا منافس)",
+     "candidates": [
+      "علم/I (C، مطابق)",
+      "علم/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "15:24:5",
+    "text": "عَلِمْنَا",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "علم",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": "قراءة النص كله المطابقة لفعل HFN (لا منافس)",
+     "candidates": [
+      "علم/I (C، مطابق)",
+      "علم/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "15:3:6",
+    "text": "يَعْلَمُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "علم",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": [
+      "علم/I (C)",
+      "علم/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "15:96:7",
+    "text": "يَعْلَمُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "علم",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": [
+      "علم/I (C)",
+      "علم/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "16:101:16",
+    "text": "يَعْلَمُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "علم",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": [
+      "علم/I (C)",
+      "علم/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "16:38:17",
+    "text": "يَعْلَمُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "علم",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": [
+      "علم/I (C)",
+      "علم/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "16:41:17",
+    "text": "يَعْلَمُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "علم",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": [
+      "علم/I (C)",
+      "علم/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "16:43:14",
+    "text": "تَعْلَمُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "علم",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": [
+      "علم/I (C)",
+      "علم/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "16:55:5",
+    "text": "تَعْلَمُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "علم",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": [
+      "علم/I (C)",
+      "علم/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "16:56:3",
+    "text": "يَعْلَمُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "علم",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": [
+      "علم/I (C)",
+      "علم/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "16:74:9",
+    "text": "تَعْلَمُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "علم",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": [
+      "علم/I (C)",
+      "علم/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "16:75:26",
+    "text": "يَعْلَمُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "علم",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": [
+      "علم/I (C)",
+      "علم/I (C)"
+     ]
+    },
+    "after": {
+     "status": "class_deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة (عامل من العوامل المائة «عَلِمَ») أو فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا",
+     "decision": null,
+     "candidates": []
+    }
+   }
+  ],
+  "إلى الحماية الدستورية: كان مقبولاً": [
+   {
+    "loc": "10:105:6",
+    "text": "تَكُونَنَّ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "كون",
+     "form": "I",
+     "level": "root",
+     "reason": "الجذر مسجَّل في HFN، والوزن بالقالب؛ ولا حدث مسجَّل بهذا الوزن، فالحدث ومعناه مؤجَّلان",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "10:22:38",
+    "text": "نَكُونَنَّ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "كون",
+     "form": "I",
+     "level": "root",
+     "reason": "الجذر مسجَّل في HFN، والوزن بالقالب؛ ولا حدث مسجَّل بهذا الوزن، فالحدث ومعناه مؤجَّلان",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "10:71:24",
+    "text": "يَكُنْ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "كون",
+     "form": "I",
+     "level": "root",
+     "reason": "الجذر مسجَّل في HFN، والوزن بالقالب؛ ولا حدث مسجَّل بهذا الوزن، فالحدث ومعناه مؤجَّلان",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "10:78:7",
+    "text": "تَكُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "كون",
+     "form": "I",
+     "level": "root",
+     "reason": "الجذر مسجَّل في HFN، والوزن بالقالب؛ ولا حدث مسجَّل بهذا الوزن، فالحدث ومعناه مؤجَّلان",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "10:92:3",
+    "text": "تَكُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "كون",
+     "form": "I",
+     "level": "root",
+     "reason": "الجذر مسجَّل في HFN، والوزن بالقالب؛ ولا حدث مسجَّل بهذا الوزن، فالحدث ومعناه مؤجَّلان",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "10:94:19",
+    "text": "تَكُونَنَّ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "كون",
+     "form": "I",
+     "level": "root",
+     "reason": "الجذر مسجَّل في HFN، والوزن بالقالب؛ ولا حدث مسجَّل بهذا الوزن، فالحدث ومعناه مؤجَّلان",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "10:95:1",
+    "text": "تَكُونَنَّ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "كون",
+     "form": "I",
+     "level": "root",
+     "reason": "الجذر مسجَّل في HFN، والوزن بالقالب؛ ولا حدث مسجَّل بهذا الوزن، فالحدث ومعناه مؤجَّلان",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "10:99:13",
+    "text": "يَكُونُوا",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "كون",
+     "form": "I",
+     "level": "root",
+     "reason": "الجذر مسجَّل في HFN، والوزن بالقالب؛ ولا حدث مسجَّل بهذا الوزن، فالحدث ومعناه مؤجَّلان",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "112:4:1",
+    "text": "يَكُنْ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "كون",
+     "form": "I",
+     "level": "root",
+     "reason": "الجذر مسجَّل في HFN، والوزن بالقالب؛ ولا حدث مسجَّل بهذا الوزن، فالحدث ومعناه مؤجَّلان",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "11:20:2",
+    "text": "يَكُونُوا",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "كون",
+     "form": "I",
+     "level": "root",
+     "reason": "الجذر مسجَّل في HFN، والوزن بالقالب؛ ولا حدث مسجَّل بهذا الوزن، فالحدث ومعناه مؤجَّلان",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "11:42:16",
+    "text": "تَكُنْ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "كون",
+     "form": "I",
+     "level": "root",
+     "reason": "الجذر مسجَّل في HFN، والوزن بالقالب؛ ولا حدث مسجَّل بهذا الوزن، فالحدث ومعناه مؤجَّلان",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "11:46:20",
+    "text": "تَكُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "كون",
+     "form": "I",
+     "level": "root",
+     "reason": "الجذر مسجَّل في HFN، والوزن بالقالب؛ ولا حدث مسجَّل بهذا الوزن، فالحدث ومعناه مؤجَّلان",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "12:85:6",
+    "text": "تَكُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "كون",
+     "form": "I",
+     "level": "root",
+     "reason": "الجذر مسجَّل في HFN، والوزن بالقالب؛ ولا حدث مسجَّل بهذا الوزن، فالحدث ومعناه مؤجَّلان",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "12:85:9",
+    "text": "تَكُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "كون",
+     "form": "I",
+     "level": "root",
+     "reason": "الجذر مسجَّل في HFN، والوزن بالقالب؛ ولا حدث مسجَّل بهذا الوزن، فالحدث ومعناه مؤجَّلان",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "12:9:9",
+    "text": "تَكُونُوا",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "كون",
+     "form": "I",
+     "level": "root",
+     "reason": "الجذر مسجَّل في HFN، والوزن بالقالب؛ ولا حدث مسجَّل بهذا الوزن، فالحدث ومعناه مؤجَّلان",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "14:44:18",
+    "text": "تَكُونُوا",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "كون",
+     "form": "I",
+     "level": "root",
+     "reason": "الجذر مسجَّل في HFN، والوزن بالقالب؛ ولا حدث مسجَّل بهذا الوزن، فالحدث ومعناه مؤجَّلان",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "15:31:4",
+    "text": "يَكُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "كون",
+     "form": "I",
+     "level": "root",
+     "reason": "الجذر مسجَّل في HFN، والوزن بالقالب؛ ولا حدث مسجَّل بهذا الوزن، فالحدث ومعناه مؤجَّلان",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "15:32:5",
+    "text": "تَكُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "كون",
+     "form": "I",
+     "level": "root",
+     "reason": "الجذر مسجَّل في HFN، والوزن بالقالب؛ ولا حدث مسجَّل بهذا الوزن، فالحدث ومعناه مؤجَّلان",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "15:55:4",
+    "text": "تَكُنْ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "كون",
+     "form": "I",
+     "level": "root",
+     "reason": "الجذر مسجَّل في HFN، والوزن بالقالب؛ ولا حدث مسجَّل بهذا الوزن، فالحدث ومعناه مؤجَّلان",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "15:98:3",
+    "text": "كُنْ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "كون",
+     "form": "I",
+     "level": "root",
+     "reason": "الجذر مسجَّل في HFN، والوزن بالقالب؛ ولا حدث مسجَّل بهذا الوزن، فالحدث ومعناه مؤجَّلان",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "16:40:8",
+    "text": "كُنْ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "كون",
+     "form": "I",
+     "level": "root",
+     "reason": "الجذر مسجَّل في HFN، والوزن بالقالب؛ ولا حدث مسجَّل بهذا الوزن، فالحدث ومعناه مؤجَّلان",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "16:7:5",
+    "text": "تَكُونُوا",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "كون",
+     "form": "I",
+     "level": "root",
+     "reason": "الجذر مسجَّل في HFN، والوزن بالقالب؛ ولا حدث مسجَّل بهذا الوزن، فالحدث ومعناه مؤجَّلان",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "16:92:1",
+    "text": "تَكُونُوا",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "كون",
+     "form": "I",
+     "level": "root",
+     "reason": "الجذر مسجَّل في HFN، والوزن بالقالب؛ ولا حدث مسجَّل بهذا الوزن، فالحدث ومعناه مؤجَّلان",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "16:92:14",
+    "text": "تَكُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "كون",
+     "form": "I",
+     "level": "root",
+     "reason": "الجذر مسجَّل في HFN، والوزن بالقالب؛ ولا حدث مسجَّل بهذا الوزن، فالحدث ومعناه مؤجَّلان",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "17:111:14",
+    "text": "يَكُنْ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "كون",
+     "form": "I",
+     "level": "root",
+     "reason": "الجذر مسجَّل في HFN، والوزن بالقالب؛ ولا حدث مسجَّل بهذا الوزن، فالحدث ومعناه مؤجَّلان",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "17:111:8",
+    "text": "يَكُنْ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "كون",
+     "form": "I",
+     "level": "root",
+     "reason": "الجذر مسجَّل في HFN، والوزن بالقالب؛ ولا حدث مسجَّل بهذا الوزن، فالحدث ومعناه مؤجَّلان",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "17:25:6",
+    "text": "تَكُونُوا",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "كون",
+     "form": "I",
+     "level": "root",
+     "reason": "الجذر مسجَّل في HFN، والوزن بالقالب؛ ولا حدث مسجَّل بهذا الوزن، فالحدث ومعناه مؤجَّلان",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "17:50:1",
+    "text": "كُونُوا",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "كون",
+     "form": "I",
+     "level": "root",
+     "reason": "الجذر مسجَّل في HFN، والوزن بالقالب؛ ولا حدث مسجَّل بهذا الوزن، فالحدث ومعناه مؤجَّلان",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "17:51:23",
+    "text": "يَكُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "كون",
+     "form": "I",
+     "level": "root",
+     "reason": "الجذر مسجَّل في HFN، والوزن بالقالب؛ ولا حدث مسجَّل بهذا الوزن، فالحدث ومعناه مؤجَّلان",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "17:91:1",
+    "text": "تَكُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "كون",
+     "form": "I",
+     "level": "root",
+     "reason": "الجذر مسجَّل في HFN، والوزن بالقالب؛ ولا حدث مسجَّل بهذا الوزن، فالحدث ومعناه مؤجَّلان",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "17:93:1",
+    "text": "يَكُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "كون",
+     "form": "I",
+     "level": "root",
+     "reason": "الجذر مسجَّل في HFN، والوزن بالقالب؛ ولا حدث مسجَّل بهذا الوزن، فالحدث ومعناه مؤجَّلان",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "18:43:1",
+    "text": "تَكُنْ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "كون",
+     "form": "I",
+     "level": "root",
+     "reason": "الجذر مسجَّل في HFN، والوزن بالقالب؛ ولا حدث مسجَّل بهذا الوزن، فالحدث ومعناه مؤجَّلان",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "19:14:3",
+    "text": "يَكُنْ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "كون",
+     "form": "I",
+     "level": "root",
+     "reason": "الجذر مسجَّل في HFN، والوزن بالقالب؛ ولا حدث مسجَّل بهذا الوزن، فالحدث ومعناه مؤجَّلان",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "19:35:14",
+    "text": "كُنْ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "كون",
+     "form": "I",
+     "level": "root",
+     "reason": "الجذر مسجَّل في HFN، والوزن بالقالب؛ ولا حدث مسجَّل بهذا الوزن، فالحدث ومعناه مؤجَّلان",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "19:81:5",
+    "text": "يَكُونُوا",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "كون",
+     "form": "I",
+     "level": "root",
+     "reason": "الجذر مسجَّل في HFN، والوزن بالقالب؛ ولا حدث مسجَّل بهذا الوزن، فالحدث ومعناه مؤجَّلان",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "19:82:3",
+    "text": "يَكُونُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "كون",
+     "form": "I",
+     "level": "root",
+     "reason": "الجذر مسجَّل في HFN، والوزن بالقالب؛ ولا حدث مسجَّل بهذا الوزن، فالحدث ومعناه مؤجَّلان",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "21:15:1",
+    "text": "زَالَتْ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "زول",
+     "form": "I",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
+     "candidates": [
+      "زول/I (C، مطابق)",
+      "زيل/I (C)"
+     ]
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "22:78:24",
+    "text": "يَكُونَ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "كون",
+     "form": "I",
+     "level": "root",
+     "reason": "الجذر مسجَّل في HFN، والوزن بالقالب؛ ولا حدث مسجَّل بهذا الوزن، فالحدث ومعناه مؤجَّلان",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "22:78:28",
+    "text": "تَكُونُوا",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "كون",
+     "form": "I",
+     "level": "root",
+     "reason": "الجذر مسجَّل في HFN، والوزن بالقالب؛ ولا حدث مسجَّل بهذا الوزن، فالحدث ومعناه مؤجَّلان",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   },
+   {
+    "loc": "23:105:1",
+    "text": "تَكُنْ",
+    "gold": "None/None",
+    "before": {
+     "status": "accepted",
+     "root": "كون",
+     "form": "I",
+     "level": "root",
+     "reason": "الجذر مسجَّل في HFN، والوزن بالقالب؛ ولا حدث مسجَّل بهذا الوزن، فالحدث ومعناه مؤجَّلان",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "not_applicable",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "CONSTITUTIONAL_PROTECTED_CLASS",
+     "decision": null,
+     "candidates": []
+    }
+   }
+  ],
+  "إلى «مرجَّح» (لا يُقبل): كان مقبولاً، والقراءة المرجَّحة صحيحة": [
+   {
+    "loc": "10:22:15",
+    "text": "فَرِحُوا",
+    "gold": "فرح/I",
+    "before": {
+     "status": "accepted",
+     "root": "فرح",
+     "form": "I",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها A)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها A)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
+     "candidates": [
+      "فرح/I (A، مطابق)",
+      "رحو/I (E)",
+      "رحي/I (C)"
+     ]
+    },
+    "after": {
+     "status": "ranked",
+     "root": "فرح",
+     "form": "I",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها A)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها A)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
+     "candidates": [
+      "فرح/I (A، مطابق)",
+      "رحو/I (E)",
+      "رحي/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "10:26:1",
+    "text": "أَحْسَنُوا",
+    "gold": "حسن/IV",
+    "before": {
+     "status": "accepted",
+     "root": "حسن",
+     "form": "IV",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
+     "candidates": [
+      "حسن/IV (B، مطابق)",
+      "حسن/I (C)",
+      "حسن/I (C)"
+     ]
+    },
+    "after": {
+     "status": "ranked",
+     "root": "حسن",
+     "form": "IV",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
+     "candidates": [
+      "حسن/IV (B، مطابق)",
+      "حسن/I (C)",
+      "حسن/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "10:28:10",
+    "text": "زَيَّلْنَا",
+    "gold": "زيل/II",
+    "before": {
+     "status": "accepted",
+     "root": "زيل",
+     "form": "II",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته B)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته B)؛ والمنافس محفوظ",
+     "candidates": [
+      "زيل/II (B، مطابق)",
+      "زول/II (B)"
+     ]
+    },
+    "after": {
+     "status": "ranked",
+     "root": "زيل",
+     "form": "II",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته B)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته B)؛ والمنافس محفوظ",
+     "candidates": [
+      "زيل/II (B، مطابق)",
+      "زول/II (B)"
+     ]
+    }
+   },
+   {
+    "loc": "10:28:6",
+    "text": "أَشْرَكُوا",
+    "gold": "شرك/IV",
+    "before": {
+     "status": "accepted",
+     "root": "شرك",
+     "form": "IV",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
+     "candidates": [
+      "شرك/IV (B، مطابق)",
+      "شرك/I (C)"
+     ]
+    },
+    "after": {
+     "status": "ranked",
+     "root": "شرك",
+     "form": "IV",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
+     "candidates": [
+      "شرك/IV (B، مطابق)",
+      "شرك/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "10:33:6",
+    "text": "فَسَقُوا",
+    "gold": "فسق/I",
+    "before": {
+     "status": "accepted",
+     "root": "فسق",
+     "form": "I",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها A)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها A)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
+     "candidates": [
+      "فسق/I (A، مطابق)",
+      "سقي/I (C)",
+      "وسق/I (C)"
+     ]
+    },
+    "after": {
+     "status": "ranked",
+     "root": "فسق",
+     "form": "I",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها A)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها A)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
+     "candidates": [
+      "فسق/I (A، مطابق)",
+      "سقي/I (C)",
+      "وسق/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "11:23:5",
+    "text": "أَخْبَتُوا",
+    "gold": "خبت/IV",
+    "before": {
+     "status": "accepted",
+     "root": "خبت",
+     "form": "IV",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
+     "candidates": [
+      "خبت/IV (B، مطابق)",
+      "خبت/I (C)"
+     ]
+    },
+    "after": {
+     "status": "ranked",
+     "root": "خبت",
+     "form": "IV",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
+     "candidates": [
+      "خبت/IV (B، مطابق)",
+      "خبت/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "12:102:10",
+    "text": "أَجْمَعُوا",
+    "gold": "جمع/IV",
+    "before": {
+     "status": "accepted",
+     "root": "جمع",
+     "form": "IV",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
+     "candidates": [
+      "جمع/IV (B، مطابق)",
+      "جمع/I (C)"
+     ]
+    },
+    "after": {
+     "status": "ranked",
+     "root": "جمع",
+     "form": "IV",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
+     "candidates": [
+      "جمع/IV (B، مطابق)",
+      "جمع/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "12:15:3",
+    "text": "أَجْمَعُوا",
+    "gold": "جمع/IV",
+    "before": {
+     "status": "accepted",
+     "root": "جمع",
+     "form": "IV",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
+     "candidates": [
+      "جمع/IV (B، مطابق)",
+      "جمع/I (C)"
+     ]
+    },
+    "after": {
+     "status": "ranked",
+     "root": "جمع",
+     "form": "IV",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
+     "candidates": [
+      "جمع/IV (B، مطابق)",
+      "جمع/I (C)"
+     ]
     }
    },
    {
@@ -73,19 +4108,19 @@
     "text": "سَوَّلَتْ",
     "gold": "سول/II",
     "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: سول (II)، سيل (II)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها B، ومنافسها B؛ فلا تُقدَّم بالمطابقة وحدها",
+     "status": "accepted",
+     "root": "سول",
+     "form": "II",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته B)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته B)؛ والمنافس محفوظ",
      "candidates": [
       "سول/II (B، مطابق)",
       "سيل/II (B)"
      ]
     },
     "after": {
-     "status": "accepted",
+     "status": "ranked",
      "root": "سول",
      "form": "II",
      "level": "ranked",
@@ -98,16 +4133,45 @@
     }
    },
    {
+    "loc": "12:19:2",
+    "text": "أَرْسَلُوا",
+    "gold": "رسل/IV",
+    "before": {
+     "status": "accepted",
+     "root": "رسل",
+     "form": "IV",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
+     "candidates": [
+      "رسل/IV (B، مطابق)",
+      "رسل/I (C)"
+     ]
+    },
+    "after": {
+     "status": "ranked",
+     "root": "رسل",
+     "form": "IV",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
+     "candidates": [
+      "رسل/IV (B، مطابق)",
+      "رسل/I (C)"
+     ]
+    }
+   },
+   {
     "loc": "12:71:1",
     "text": "أَقْبَلُوا",
     "gold": "قبل/IV",
     "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: قبل (IV)، قبل (I)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها B، ومنافسها A؛ فلا تُقدَّم بالمطابقة وحدها",
+     "status": "accepted",
+     "root": "قبل",
+     "form": "IV",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته A)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته A)؛ والمنافس محفوظ",
      "candidates": [
       "قبل/IV (B، مطابق)",
       "قبل/I (A)",
@@ -117,7 +4181,7 @@
      ]
     },
     "after": {
-     "status": "accepted",
+     "status": "ranked",
      "root": "قبل",
      "form": "IV",
      "level": "ranked",
@@ -133,56 +4197,23 @@
     }
    },
    {
-    "loc": "12:79:7",
-    "text": "وَجَدْنَا",
-    "gold": "وجد/I",
-    "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: وجد (I)، جود (I)، جيد (I)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها C؛ فلا تُقدَّم بالمطابقة وحدها",
-     "candidates": [
-      "وجد/I (C، مطابق)",
-      "وجد/I (C)",
-      "جود/I (C)",
-      "جيد/I (C)"
-     ]
-    },
-    "after": {
-     "status": "accepted",
-     "root": "وجد",
-     "form": "I",
-     "level": "ranked",
-     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته C)",
-     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
-     "candidates": [
-      "وجد/I (C، مطابق)",
-      "وجد/I (C)",
-      "جود/I (C)",
-      "جيد/I (C)"
-     ]
-    }
-   },
-   {
     "loc": "12:83:2",
     "text": "سَوَّلَتْ",
     "gold": "سول/II",
     "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: سول (II)، سيل (II)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها B، ومنافسها B؛ فلا تُقدَّم بالمطابقة وحدها",
+     "status": "accepted",
+     "root": "سول",
+     "form": "II",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته B)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته B)؛ والمنافس محفوظ",
      "candidates": [
       "سول/II (B، مطابق)",
       "سيل/II (B)"
      ]
     },
     "after": {
-     "status": "accepted",
+     "status": "ranked",
      "root": "سول",
      "form": "II",
      "level": "ranked",
@@ -199,19 +4230,19 @@
     "text": "سَالَتْ",
     "gold": "سيل/I",
     "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: سول (I)، سيل (I)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها C؛ فلا تُقدَّم بالمطابقة وحدها",
+     "status": "accepted",
+     "root": "سيل",
+     "form": "I",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
      "candidates": [
       "سول/I (C)",
       "سيل/I (C، مطابق)"
      ]
     },
     "after": {
-     "status": "accepted",
+     "status": "ranked",
      "root": "سيل",
      "form": "I",
      "level": "ranked",
@@ -228,19 +4259,19 @@
     "text": "أَقَامُوا",
     "gold": "قوم/IV",
     "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: قوم (IV)، قوم (I)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها B، ومنافسها A؛ فلا تُقدَّم بالمطابقة وحدها",
+     "status": "accepted",
+     "root": "قوم",
+     "form": "IV",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته A)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته A)؛ والمنافس محفوظ",
      "candidates": [
       "قوم/IV (B، مطابق)",
       "قوم/I (A)"
      ]
     },
     "after": {
-     "status": "accepted",
+     "status": "ranked",
      "root": "قوم",
      "form": "IV",
      "level": "ranked",
@@ -253,25 +4284,41 @@
     }
    },
    {
+    "loc": "13:26:6",
+    "text": "فَرِحُوا",
+    "gold": "فرح/I",
+    "before": {
+     "status": "accepted",
+     "root": "فرح",
+     "form": "I",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها A)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها A)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
+     "candidates": [
+      "فرح/I (A، مطابق)",
+      "رحو/I (E)",
+      "رحي/I (C)"
+     ]
+    },
+    "after": {
+     "status": "ranked",
+     "root": "فرح",
+     "form": "I",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها A)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها A)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
+     "candidates": [
+      "فرح/I (A، مطابق)",
+      "رحو/I (E)",
+      "رحي/I (C)"
+     ]
+    }
+   },
+   {
     "loc": "15:73:0",
     "text": "أَخَذَتْ",
     "gold": "ءخذ/I",
     "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: خذو (IV)، ءخذ (I)، خذو (I)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها A؛ فلا تُقدَّم بالمطابقة وحدها",
-     "candidates": [
-      "خذو/IV (B)",
-      "ءخذ/I (C، مطابق)",
-      "ءخذ/I (C)",
-      "ءخذ/I (C)",
-      "خذو/I (A)"
-     ]
-    },
-    "after": {
      "status": "accepted",
      "root": "ءخذ",
      "form": "I",
@@ -283,6 +4330,21 @@
       "ءخذ/I (C)",
       "ءخذ/I (C)",
       "خذو/IV (B)",
+      "خذو/I (A)"
+     ]
+    },
+    "after": {
+     "status": "ranked",
+     "root": "ءخذ",
+     "form": "I",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته A)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته A)؛ والمنافس محفوظ",
+     "candidates": [
+      "خذو/IV (B)",
+      "ءخذ/I (C، مطابق)",
+      "ءخذ/I (C)",
+      "ءخذ/I (C)",
       "خذو/I (A)"
      ]
     }
@@ -292,21 +4354,6 @@
     "text": "أَخَذَتْ",
     "gold": "ءخذ/I",
     "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: خذو (IV)، ءخذ (I)، خذو (I)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها A؛ فلا تُقدَّم بالمطابقة وحدها",
-     "candidates": [
-      "خذو/IV (B)",
-      "ءخذ/I (C، مطابق)",
-      "ءخذ/I (C)",
-      "ءخذ/I (C)",
-      "خذو/I (A)"
-     ]
-    },
-    "after": {
      "status": "accepted",
      "root": "ءخذ",
      "form": "I",
@@ -320,6 +4367,81 @@
       "خذو/IV (B)",
       "خذو/I (A)"
      ]
+    },
+    "after": {
+     "status": "ranked",
+     "root": "ءخذ",
+     "form": "I",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته A)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته A)؛ والمنافس محفوظ",
+     "candidates": [
+      "خذو/IV (B)",
+      "ءخذ/I (C، مطابق)",
+      "ءخذ/I (C)",
+      "ءخذ/I (C)",
+      "خذو/I (A)"
+     ]
+    }
+   },
+   {
+    "loc": "16:30:9",
+    "text": "أَحْسَنُوا",
+    "gold": "حسن/IV",
+    "before": {
+     "status": "accepted",
+     "root": "حسن",
+     "form": "IV",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
+     "candidates": [
+      "حسن/IV (B، مطابق)",
+      "حسن/I (C)",
+      "حسن/I (C)"
+     ]
+    },
+    "after": {
+     "status": "ranked",
+     "root": "حسن",
+     "form": "IV",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
+     "candidates": [
+      "حسن/IV (B، مطابق)",
+      "حسن/I (C)",
+      "حسن/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "16:35:2",
+    "text": "أَشْرَكُوا",
+    "gold": "شرك/IV",
+    "before": {
+     "status": "accepted",
+     "root": "شرك",
+     "form": "IV",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
+     "candidates": [
+      "شرك/IV (B، مطابق)",
+      "شرك/I (C)"
+     ]
+    },
+    "after": {
+     "status": "ranked",
+     "root": "شرك",
+     "form": "IV",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
+     "candidates": [
+      "شرك/IV (B، مطابق)",
+      "شرك/I (C)"
+     ]
     }
    },
    {
@@ -327,19 +4449,19 @@
     "text": "أَقْسَمُوا",
     "gold": "قسم/IV",
     "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: قسم (IV)، قسم (I)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها B، ومنافسها A؛ فلا تُقدَّم بالمطابقة وحدها",
+     "status": "accepted",
+     "root": "قسم",
+     "form": "IV",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته A)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته A)؛ والمنافس محفوظ",
      "candidates": [
       "قسم/IV (B، مطابق)",
       "قسم/I (A)"
      ]
     },
     "after": {
-     "status": "accepted",
+     "status": "ranked",
      "root": "قسم",
      "form": "IV",
      "level": "ranked",
@@ -352,26 +4474,39 @@
     }
    },
    {
+    "loc": "16:86:3",
+    "text": "أَشْرَكُوا",
+    "gold": "شرك/IV",
+    "before": {
+     "status": "accepted",
+     "root": "شرك",
+     "form": "IV",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
+     "candidates": [
+      "شرك/IV (B، مطابق)",
+      "شرك/I (C)"
+     ]
+    },
+    "after": {
+     "status": "ranked",
+     "root": "شرك",
+     "form": "IV",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
+     "candidates": [
+      "شرك/IV (B، مطابق)",
+      "شرك/I (C)"
+     ]
+    }
+   },
+   {
     "loc": "17:16:5",
     "text": "أَمَرْنَا",
     "gold": "ءمر/I",
     "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: مور (IV)، ءمر (I)، مور (I)، مير (I)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها B؛ فلا تُقدَّم بالمطابقة وحدها",
-     "candidates": [
-      "مور/IV (B)",
-      "ءمر/I (C، مطابق)",
-      "ءمر/I (C)",
-      "ءمر/I (C)",
-      "مور/I (C)",
-      "مير/I (C)"
-     ]
-    },
-    "after": {
      "status": "accepted",
      "root": "ءمر",
      "form": "I",
@@ -386,6 +4521,53 @@
       "مور/I (C)",
       "مير/I (C)"
      ]
+    },
+    "after": {
+     "status": "ranked",
+     "root": "ءمر",
+     "form": "I",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته B)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته B)؛ والمنافس محفوظ",
+     "candidates": [
+      "مور/IV (B)",
+      "ءمر/I (C، مطابق)",
+      "ءمر/I (C)",
+      "ءمر/I (C)",
+      "مور/I (C)",
+      "مير/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "17:16:7",
+    "text": "فَسَقُوا",
+    "gold": "فسق/I",
+    "before": {
+     "status": "accepted",
+     "root": "فسق",
+     "form": "I",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها A)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها A)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
+     "candidates": [
+      "فسق/I (A، مطابق)",
+      "سقي/I (C)",
+      "وسق/I (C)"
+     ]
+    },
+    "after": {
+     "status": "ranked",
+     "root": "فسق",
+     "form": "I",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها A)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها A)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
+     "candidates": [
+      "فسق/I (A، مطابق)",
+      "سقي/I (C)",
+      "وسق/I (C)"
+     ]
     }
    },
    {
@@ -393,12 +4575,12 @@
     "text": "أَمِنْتُمْ",
     "gold": "ءمن/I",
     "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: ءمن (I)، مون (I)، مين (I)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها C؛ فلا تُقدَّم بالمطابقة وحدها",
+     "status": "accepted",
+     "root": "ءمن",
+     "form": "I",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
      "candidates": [
       "ءمن/I (C، مطابق)",
       "ءمن/I (C)",
@@ -407,7 +4589,7 @@
      ]
     },
     "after": {
-     "status": "accepted",
+     "status": "ranked",
      "root": "ءمن",
      "form": "I",
      "level": "ranked",
@@ -422,23 +4604,83 @@
     }
    },
    {
+    "loc": "19:29:0",
+    "text": "أَشَارَتْ",
+    "gold": "شور/IV",
+    "before": {
+     "status": "accepted",
+     "root": "شور",
+     "form": "IV",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
+     "candidates": [
+      "شور/IV (B، مطابق)",
+      "شور/I (C)"
+     ]
+    },
+    "after": {
+     "status": "ranked",
+     "root": "شور",
+     "form": "IV",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
+     "candidates": [
+      "شور/IV (B، مطابق)",
+      "شور/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "19:59:4",
+    "text": "أَضَاعُوا",
+    "gold": "ضيع/IV",
+    "before": {
+     "status": "accepted",
+     "root": "ضيع",
+     "form": "IV",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
+     "candidates": [
+      "ضيع/IV (B، مطابق)",
+      "ضوع/I (C)",
+      "ضيع/I (C)"
+     ]
+    },
+    "after": {
+     "status": "ranked",
+     "root": "ضيع",
+     "form": "IV",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
+     "candidates": [
+      "ضيع/IV (B، مطابق)",
+      "ضوع/I (C)",
+      "ضيع/I (C)"
+     ]
+    }
+   },
+   {
     "loc": "20:96:13",
     "text": "سَوَّلَتْ",
     "gold": "سول/II",
     "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: سول (II)، سيل (II)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها B، ومنافسها B؛ فلا تُقدَّم بالمطابقة وحدها",
+     "status": "accepted",
+     "root": "سول",
+     "form": "II",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته B)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته B)؛ والمنافس محفوظ",
      "candidates": [
       "سول/II (B، مطابق)",
       "سيل/II (B)"
      ]
     },
     "after": {
-     "status": "accepted",
+     "status": "ranked",
      "root": "سول",
      "form": "II",
      "level": "ranked",
@@ -451,35 +4693,89 @@
     }
    },
    {
-    "loc": "21:53:1",
-    "text": "وَجَدْنَا",
-    "gold": "وجد/I",
+    "loc": "21:70:0",
+    "text": "أَرَادُوا",
+    "gold": "رود/IV",
     "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: وجد (I)، جود (I)، جيد (I)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها C؛ فلا تُقدَّم بالمطابقة وحدها",
+     "status": "accepted",
+     "root": "رود",
+     "form": "IV",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
      "candidates": [
-      "وجد/I (C، مطابق)",
-      "وجد/I (C)",
-      "جود/I (C)",
-      "جيد/I (C)"
+      "رود/IV (B، مطابق)",
+      "رود/I (C)"
      ]
     },
     "after": {
-     "status": "accepted",
-     "root": "وجد",
-     "form": "I",
+     "status": "ranked",
+     "root": "رود",
+     "form": "IV",
      "level": "ranked",
-     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته C)",
-     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
      "candidates": [
-      "وجد/I (C، مطابق)",
-      "وجد/I (C)",
-      "جود/I (C)",
-      "جيد/I (C)"
+      "رود/IV (B، مطابق)",
+      "رود/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "22:17:9",
+    "text": "أَشْرَكُوا",
+    "gold": "شرك/IV",
+    "before": {
+     "status": "accepted",
+     "root": "شرك",
+     "form": "IV",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
+     "candidates": [
+      "شرك/IV (B، مطابق)",
+      "شرك/I (C)"
+     ]
+    },
+    "after": {
+     "status": "ranked",
+     "root": "شرك",
+     "form": "IV",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
+     "candidates": [
+      "شرك/IV (B، مطابق)",
+      "شرك/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "22:22:1",
+    "text": "أَرَادُوا",
+    "gold": "رود/IV",
+    "before": {
+     "status": "accepted",
+     "root": "رود",
+     "form": "IV",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
+     "candidates": [
+      "رود/IV (B، مطابق)",
+      "رود/I (C)"
+     ]
+    },
+    "after": {
+     "status": "ranked",
+     "root": "رود",
+     "form": "IV",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
+     "candidates": [
+      "رود/IV (B، مطابق)",
+      "رود/I (C)"
      ]
     }
    },
@@ -488,19 +4784,19 @@
     "text": "وَجِلَتْ",
     "gold": "وجل/I",
     "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: وجل (I)، جلو (I)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها C؛ فلا تُقدَّم بالمطابقة وحدها",
+     "status": "accepted",
+     "root": "وجل",
+     "form": "I",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
      "candidates": [
       "وجل/I (C، مطابق)",
       "جلو/I (C)"
      ]
     },
     "after": {
-     "status": "accepted",
+     "status": "ranked",
      "root": "وجل",
      "form": "I",
      "level": "ranked",
@@ -513,23 +4809,54 @@
     }
    },
    {
+    "loc": "22:36:15",
+    "text": "وَجَبَتْ",
+    "gold": "وجب/I",
+    "before": {
+     "status": "accepted",
+     "root": "وجب",
+     "form": "I",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته E)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته E)؛ والمنافس محفوظ",
+     "candidates": [
+      "وجب/I (C، مطابق)",
+      "وجب/I (C)",
+      "جبو/I (E)"
+     ]
+    },
+    "after": {
+     "status": "ranked",
+     "root": "وجب",
+     "form": "I",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته E)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته E)؛ والمنافس محفوظ",
+     "candidates": [
+      "وجب/I (C، مطابق)",
+      "وجب/I (C)",
+      "جبو/I (E)"
+     ]
+    }
+   },
+   {
     "loc": "22:41:5",
     "text": "أَقَامُوا",
     "gold": "قوم/IV",
     "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: قوم (IV)، قوم (I)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها B، ومنافسها A؛ فلا تُقدَّم بالمطابقة وحدها",
+     "status": "accepted",
+     "root": "قوم",
+     "form": "IV",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته A)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته A)؛ والمنافس محفوظ",
      "candidates": [
       "قوم/IV (B، مطابق)",
       "قوم/I (A)"
      ]
     },
     "after": {
-     "status": "accepted",
+     "status": "ranked",
      "root": "قوم",
      "form": "IV",
      "level": "ranked",
@@ -546,21 +4873,6 @@
     "text": "أَخَذَتْ",
     "gold": "ءخذ/I",
     "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: خذو (IV)، ءخذ (I)، خذو (I)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها A؛ فلا تُقدَّم بالمطابقة وحدها",
-     "candidates": [
-      "خذو/IV (B)",
-      "ءخذ/I (C، مطابق)",
-      "ءخذ/I (C)",
-      "ءخذ/I (C)",
-      "خذو/I (A)"
-     ]
-    },
-    "after": {
      "status": "accepted",
      "root": "ءخذ",
      "form": "I",
@@ -574,6 +4886,21 @@
       "خذو/IV (B)",
       "خذو/I (A)"
      ]
+    },
+    "after": {
+     "status": "ranked",
+     "root": "ءخذ",
+     "form": "I",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته A)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته A)؛ والمنافس محفوظ",
+     "candidates": [
+      "خذو/IV (B)",
+      "ءخذ/I (C، مطابق)",
+      "ءخذ/I (C)",
+      "ءخذ/I (C)",
+      "خذو/I (A)"
+     ]
     }
    },
    {
@@ -581,19 +4908,19 @@
     "text": "أَقْسَمُوا",
     "gold": "قسم/IV",
     "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: قسم (IV)، قسم (I)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها B، ومنافسها A؛ فلا تُقدَّم بالمطابقة وحدها",
+     "status": "accepted",
+     "root": "قسم",
+     "form": "IV",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته A)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته A)؛ والمنافس محفوظ",
      "candidates": [
       "قسم/IV (B، مطابق)",
       "قسم/I (A)"
      ]
     },
     "after": {
-     "status": "accepted",
+     "status": "ranked",
      "root": "قسم",
      "form": "IV",
      "level": "ranked",
@@ -610,20 +4937,6 @@
     "text": "أَمَرْتَ",
     "gold": "ءمر/I",
     "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: مور (IV)، ءمر (I)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها B؛ فلا تُقدَّم بالمطابقة وحدها",
-     "candidates": [
-      "مور/IV (B)",
-      "ءمر/I (C، مطابق)",
-      "ءمر/I (C)",
-      "ءمر/I (C)"
-     ]
-    },
-    "after": {
      "status": "accepted",
      "root": "ءمر",
      "form": "I",
@@ -636,38 +4949,83 @@
       "ءمر/I (C)",
       "مور/IV (B)"
      ]
+    },
+    "after": {
+     "status": "ranked",
+     "root": "ءمر",
+     "form": "I",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته B)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته B)؛ والمنافس محفوظ",
+     "candidates": [
+      "مور/IV (B)",
+      "ءمر/I (C، مطابق)",
+      "ءمر/I (C)",
+      "ءمر/I (C)"
+     ]
     }
    },
    {
-    "loc": "26:74:2",
-    "text": "وَجَدْنَا",
-    "gold": "وجد/I",
+    "loc": "26:29:5",
+    "text": "أَجْعَلَنَّ",
+    "gold": "جعل/I",
     "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: وجد (I)، جود (I)، جيد (I)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها C؛ فلا تُقدَّم بالمطابقة وحدها",
+     "status": "accepted",
+     "root": "جعل",
+     "form": "IV",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
      "candidates": [
-      "وجد/I (C، مطابق)",
-      "وجد/I (C)",
-      "جود/I (C)",
-      "جيد/I (C)"
+      "جعل/I (C)",
+      "جعل/I (C)",
+      "جعل/IV (B، مطابق)"
      ]
     },
     "after": {
-     "status": "accepted",
-     "root": "وجد",
-     "form": "I",
+     "status": "ranked",
+     "root": "جعل",
+     "form": "IV",
      "level": "ranked",
-     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته C)",
-     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
      "candidates": [
-      "وجد/I (C، مطابق)",
-      "وجد/I (C)",
-      "جود/I (C)",
-      "جيد/I (C)"
+      "جعل/I (C)",
+      "جعل/I (C)",
+      "جعل/IV (B، مطابق)"
+     ]
+    }
+   },
+   {
+    "loc": "28:55:3",
+    "text": "أَعْرَضُوا",
+    "gold": "عرض/IV",
+    "before": {
+     "status": "accepted",
+     "root": "عرض",
+     "form": "IV",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
+     "candidates": [
+      "عرض/IV (B، مطابق)",
+      "عرض/I (C)",
+      "عرض/I (C)",
+      "عرض/I (C)"
+     ]
+    },
+    "after": {
+     "status": "ranked",
+     "root": "عرض",
+     "form": "IV",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
+     "candidates": [
+      "عرض/IV (B، مطابق)",
+      "عرض/I (C)",
+      "عرض/I (C)",
+      "عرض/I (C)"
      ]
     }
    },
@@ -676,12 +5034,12 @@
     "text": "يَئِسُوا",
     "gold": "يءس/I",
     "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: يءس (I)، ءسو (I)، ءسي (I)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها C؛ فلا تُقدَّم بالمطابقة وحدها",
+     "status": "accepted",
+     "root": "يءس",
+     "form": "I",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
      "candidates": [
       "يءس/I (C، مطابق)",
       "يءس/I (C، مطابق)",
@@ -691,7 +5049,7 @@
      ]
     },
     "after": {
-     "status": "accepted",
+     "status": "ranked",
      "root": "يءس",
      "form": "I",
      "level": "ranked",
@@ -711,21 +5069,6 @@
     "text": "أَخَذَتْ",
     "gold": "ءخذ/I",
     "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: خذو (IV)، ءخذ (I)، خذو (I)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها A؛ فلا تُقدَّم بالمطابقة وحدها",
-     "candidates": [
-      "خذو/IV (B)",
-      "ءخذ/I (C، مطابق)",
-      "ءخذ/I (C)",
-      "ءخذ/I (C)",
-      "خذو/I (A)"
-     ]
-    },
-    "after": {
      "status": "accepted",
      "root": "ءخذ",
      "form": "I",
@@ -739,556 +5082,36 @@
       "خذو/IV (B)",
       "خذو/I (A)"
      ]
-    }
-   },
-   {
-    "loc": "29:40:10",
-    "text": "أَخَذَتْ",
-    "gold": "ءخذ/I",
-    "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: خذو (IV)، ءخذ (I)، خذو (I)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها A؛ فلا تُقدَّم بالمطابقة وحدها",
-     "candidates": [
-      "خذو/IV (B)",
-      "ءخذ/I (C، مطابق)",
-      "ءخذ/I (C)",
-      "ءخذ/I (C)",
-      "خذو/I (A)"
-     ]
     },
     "after": {
-     "status": "accepted",
+     "status": "ranked",
      "root": "ءخذ",
      "form": "I",
      "level": "ranked",
      "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته A)",
      "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته A)؛ والمنافس محفوظ",
      "candidates": [
-      "ءخذ/I (C، مطابق)",
-      "ءخذ/I (C)",
-      "ءخذ/I (C)",
-      "خذو/IV (B)",
-      "خذو/I (A)"
-     ]
-    }
-   },
-   {
-    "loc": "2:145:8",
-    "text": "تَبِعُوا",
-    "gold": "تبع/I",
-    "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: تبع (I)، بعو (I)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها C؛ فلا تُقدَّم بالمطابقة وحدها",
-     "candidates": [
-      "تبع/I (C، مطابق)",
-      "بعو/I (C)"
-     ]
-    },
-    "after": {
-     "status": "accepted",
-     "root": "تبع",
-     "form": "I",
-     "level": "ranked",
-     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته C)",
-     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
-     "candidates": [
-      "تبع/I (C، مطابق)",
-      "بعو/I (C)"
-     ]
-    }
-   },
-   {
-    "loc": "2:196:34",
-    "text": "أَمِنْتُمْ",
-    "gold": "ءمن/I",
-    "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: ءمن (I)، مون (I)، مين (I)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها C؛ فلا تُقدَّم بالمطابقة وحدها",
-     "candidates": [
-      "ءمن/I (C، مطابق)",
-      "ءمن/I (C)",
-      "مون/I (C)",
-      "مين/I (C)"
-     ]
-    },
-    "after": {
-     "status": "accepted",
-     "root": "ءمن",
-     "form": "I",
-     "level": "ranked",
-     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته C)",
-     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
-     "candidates": [
-      "ءمن/I (C، مطابق)",
-      "ءمن/I (C)",
-      "مون/I (C)",
-      "مين/I (C)"
-     ]
-    }
-   },
-   {
-    "loc": "2:197:21",
-    "text": "تَزَوَّدُوا",
-    "gold": "زود/V",
-    "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: زود (V)، زيد (V)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها B، ومنافسها B؛ فلا تُقدَّم بالمطابقة وحدها",
-     "candidates": [
-      "زود/V (B، مطابق)",
-      "زيد/V (B)"
-     ]
-    },
-    "after": {
-     "status": "accepted",
-     "root": "زود",
-     "form": "V",
-     "level": "ranked",
-     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته B)",
-     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته B)؛ والمنافس محفوظ",
-     "candidates": [
-      "زود/V (B، مطابق)",
-      "زيد/V (B)"
-     ]
-    }
-   },
-   {
-    "loc": "2:206:5",
-    "text": "أَخَذَتْ",
-    "gold": "ءخذ/I",
-    "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: خذو (IV)، ءخذ (I)، خذو (I)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها A؛ فلا تُقدَّم بالمطابقة وحدها",
-     "candidates": [
       "خذو/IV (B)",
       "ءخذ/I (C، مطابق)",
       "ءخذ/I (C)",
       "ءخذ/I (C)",
-      "خذو/I (A)"
-     ]
-    },
-    "after": {
-     "status": "accepted",
-     "root": "ءخذ",
-     "form": "I",
-     "level": "ranked",
-     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته A)",
-     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته A)؛ والمنافس محفوظ",
-     "candidates": [
-      "ءخذ/I (C، مطابق)",
-      "ءخذ/I (C)",
-      "ءخذ/I (C)",
-      "خذو/IV (B)",
-      "خذو/I (A)"
-     ]
-    }
-   },
-   {
-    "loc": "2:239:6",
-    "text": "أَمِنْتُمْ",
-    "gold": "ءمن/I",
-    "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: ءمن (I)، مون (I)، مين (I)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها C؛ فلا تُقدَّم بالمطابقة وحدها",
-     "candidates": [
-      "ءمن/I (C، مطابق)",
-      "ءمن/I (C)",
-      "مون/I (C)",
-      "مين/I (C)"
-     ]
-    },
-    "after": {
-     "status": "accepted",
-     "root": "ءمن",
-     "form": "I",
-     "level": "ranked",
-     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته C)",
-     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
-     "candidates": [
-      "ءمن/I (C، مطابق)",
-      "ءمن/I (C)",
-      "مون/I (C)",
-      "مين/I (C)"
-     ]
-    }
-   },
-   {
-    "loc": "2:277:5",
-    "text": "أَقَامُوا",
-    "gold": "قوم/IV",
-    "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: قوم (IV)، قوم (I)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها B، ومنافسها A؛ فلا تُقدَّم بالمطابقة وحدها",
-     "candidates": [
-      "قوم/IV (B، مطابق)",
-      "قوم/I (A)"
-     ]
-    },
-    "after": {
-     "status": "accepted",
-     "root": "قوم",
-     "form": "IV",
-     "level": "ranked",
-     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته A)",
-     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته A)؛ والمنافس محفوظ",
-     "candidates": [
-      "قوم/IV (B، مطابق)",
-      "قوم/I (A)"
-     ]
-    }
-   },
-   {
-    "loc": "2:55:10",
-    "text": "أَخَذَتْ",
-    "gold": "ءخذ/I",
-    "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: خذو (IV)، ءخذ (I)، خذو (I)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها A؛ فلا تُقدَّم بالمطابقة وحدها",
-     "candidates": [
-      "خذو/IV (B)",
-      "ءخذ/I (C، مطابق)",
-      "ءخذ/I (C)",
-      "ءخذ/I (C)",
-      "خذو/I (A)"
-     ]
-    },
-    "after": {
-     "status": "accepted",
-     "root": "ءخذ",
-     "form": "I",
-     "level": "ranked",
-     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته A)",
-     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته A)؛ والمنافس محفوظ",
-     "candidates": [
-      "ءخذ/I (C، مطابق)",
-      "ءخذ/I (C)",
-      "ءخذ/I (C)",
-      "خذو/IV (B)",
-      "خذو/I (A)"
-     ]
-    }
-   },
-   {
-    "loc": "31:21:11",
-    "text": "وَجَدْنَا",
-    "gold": "وجد/I",
-    "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: وجد (I)، جود (I)، جيد (I)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها C؛ فلا تُقدَّم بالمطابقة وحدها",
-     "candidates": [
-      "وجد/I (C، مطابق)",
-      "وجد/I (C)",
-      "جود/I (C)",
-      "جيد/I (C)"
-     ]
-    },
-    "after": {
-     "status": "accepted",
-     "root": "وجد",
-     "form": "I",
-     "level": "ranked",
-     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته C)",
-     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
-     "candidates": [
-      "وجد/I (C، مطابق)",
-      "وجد/I (C)",
-      "جود/I (C)",
-      "جيد/I (C)"
-     ]
-    }
-   },
-   {
-    "loc": "35:18:24",
-    "text": "أَقَامُوا",
-    "gold": "قوم/IV",
-    "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: قوم (IV)، قوم (I)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها B، ومنافسها A؛ فلا تُقدَّم بالمطابقة وحدها",
-     "candidates": [
-      "قوم/IV (B، مطابق)",
-      "قوم/I (A)"
-     ]
-    },
-    "after": {
-     "status": "accepted",
-     "root": "قوم",
-     "form": "IV",
-     "level": "ranked",
-     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته A)",
-     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته A)؛ والمنافس محفوظ",
-     "candidates": [
-      "قوم/IV (B، مطابق)",
-      "قوم/I (A)"
-     ]
-    }
-   },
-   {
-    "loc": "35:29:5",
-    "text": "أَقَامُوا",
-    "gold": "قوم/IV",
-    "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: قوم (IV)، قوم (I)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها B، ومنافسها A؛ فلا تُقدَّم بالمطابقة وحدها",
-     "candidates": [
-      "قوم/IV (B، مطابق)",
-      "قوم/I (A)"
-     ]
-    },
-    "after": {
-     "status": "accepted",
-     "root": "قوم",
-     "form": "IV",
-     "level": "ranked",
-     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته A)",
-     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته A)؛ والمنافس محفوظ",
-     "candidates": [
-      "قوم/IV (B، مطابق)",
-      "قوم/I (A)"
-     ]
-    }
-   },
-   {
-    "loc": "35:42:0",
-    "text": "أَقْسَمُوا",
-    "gold": "قسم/IV",
-    "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: قسم (IV)، قسم (I)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها B، ومنافسها A؛ فلا تُقدَّم بالمطابقة وحدها",
-     "candidates": [
-      "قسم/IV (B، مطابق)",
-      "قسم/I (A)"
-     ]
-    },
-    "after": {
-     "status": "accepted",
-     "root": "قسم",
-     "form": "IV",
-     "level": "ranked",
-     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته A)",
-     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته A)؛ والمنافس محفوظ",
-     "candidates": [
-      "قسم/IV (B، مطابق)",
-      "قسم/I (A)"
-     ]
-    }
-   },
-   {
-    "loc": "36:66:5",
-    "text": "اسْتَبَقُوا",
-    "gold": "سبق/VIII",
-    "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: سبق (VIII)، بقي (X)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها B، ومنافسها B؛ فلا تُقدَّم بالمطابقة وحدها",
-     "candidates": [
-      "سبق/VIII (B، مطابق)",
-      "بقي/X (B)"
-     ]
-    },
-    "after": {
-     "status": "accepted",
-     "root": "سبق",
-     "form": "VIII",
-     "level": "ranked",
-     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته B)",
-     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته B)؛ والمنافس محفوظ",
-     "candidates": [
-      "بقي/X (B)",
-      "سبق/VIII (B، مطابق)"
-     ]
-    }
-   },
-   {
-    "loc": "37:94:0",
-    "text": "أَقْبَلُوا",
-    "gold": "قبل/IV",
-    "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: قبل (IV)، قبل (I)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها B، ومنافسها A؛ فلا تُقدَّم بالمطابقة وحدها",
-     "candidates": [
-      "قبل/IV (B، مطابق)",
-      "قبل/I (A)",
-      "قبل/I (A)",
-      "قبل/I (A)",
-      "قبل/I (A)"
-     ]
-    },
-    "after": {
-     "status": "accepted",
-     "root": "قبل",
-     "form": "IV",
-     "level": "ranked",
-     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته A)",
-     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته A)؛ والمنافس محفوظ",
-     "candidates": [
-      "قبل/IV (B، مطابق)",
-      "قبل/I (A)",
-      "قبل/I (A)",
-      "قبل/I (A)",
-      "قبل/I (A)"
-     ]
-    }
-   },
-   {
-    "loc": "38:21:5",
-    "text": "تَسَوَّرُوا",
-    "gold": "سور/V",
-    "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: سور (V)، سير (V)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها B، ومنافسها B؛ فلا تُقدَّم بالمطابقة وحدها",
-     "candidates": [
-      "سور/V (B، مطابق)",
-      "سير/V (B)"
-     ]
-    },
-    "after": {
-     "status": "accepted",
-     "root": "سور",
-     "form": "V",
-     "level": "ranked",
-     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته B)",
-     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته B)؛ والمنافس محفوظ",
-     "candidates": [
-      "سور/V (B، مطابق)",
-      "سير/V (B)"
-     ]
-    }
-   },
-   {
-    "loc": "39:17:5",
-    "text": "أَنَابُوا",
-    "gold": "نوب/IV",
-    "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: نوب (IV)، نوب (I)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها B، ومنافسها A؛ فلا تُقدَّم بالمطابقة وحدها",
-     "candidates": [
-      "نوب/IV (B، مطابق)",
-      "نوب/I (A)"
-     ]
-    },
-    "after": {
-     "status": "accepted",
-     "root": "نوب",
-     "form": "IV",
-     "level": "ranked",
-     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته A)",
-     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها B)، ومنافسها لا يطابق (شهادته A)؛ والمنافس محفوظ",
-     "candidates": [
-      "نوب/IV (B، مطابق)",
-      "نوب/I (A)"
-     ]
-    }
-   },
-   {
-    "loc": "41:17:7",
-    "text": "أَخَذَتْ",
-    "gold": "ءخذ/I",
-    "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: خذو (IV)، ءخذ (I)، خذو (I)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها A؛ فلا تُقدَّم بالمطابقة وحدها",
-     "candidates": [
-      "خذو/IV (B)",
-      "ءخذ/I (C، مطابق)",
-      "ءخذ/I (C)",
-      "ءخذ/I (C)",
-      "خذو/I (A)"
-     ]
-    },
-    "after": {
-     "status": "accepted",
-     "root": "ءخذ",
-     "form": "I",
-     "level": "ranked",
-     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته A)",
-     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته A)؛ والمنافس محفوظ",
-     "candidates": [
-      "ءخذ/I (C، مطابق)",
-      "ءخذ/I (C)",
-      "ءخذ/I (C)",
-      "خذو/IV (B)",
       "خذو/I (A)"
      ]
     }
    }
   ],
-  "من التأجيل إلى القبول: مخالف لـQAC": [
+  "إلى «مرجَّح» (لا يُقبل): كان مقبولاً، والقراءة المرجَّحة مخالفة لـQAC": [
    {
     "loc": "15:29:6",
     "text": "فَقَعُوا",
     "gold": "وقع/I",
     "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: فقع (I)، قعو (I)، وقع (I)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها A، ومنافسها A؛ فلا تُقدَّم بالمطابقة وحدها",
+     "status": "accepted",
+     "root": "فقع",
+     "form": "I",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها A)، ومنافسها لا يطابق (شهادته A)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها A)، ومنافسها لا يطابق (شهادته A)؛ والمنافس محفوظ",
      "candidates": [
       "فقع/I (A، مطابق)",
       "فقع/I (A)",
@@ -1298,7 +5121,7 @@
      ]
     },
     "after": {
-     "status": "accepted",
+     "status": "ranked",
      "root": "فقع",
      "form": "I",
      "level": "ranked",
@@ -1314,76 +5137,16 @@
     }
    },
    {
-    "loc": "21:15:1",
-    "text": "زَالَتْ",
-    "gold": "زيل/I",
-    "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: زول (I)، زيل (I)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها C؛ فلا تُقدَّم بالمطابقة وحدها",
-     "candidates": [
-      "زول/I (C، مطابق)",
-      "زيل/I (C)"
-     ]
-    },
-    "after": {
-     "status": "accepted",
-     "root": "زول",
-     "form": "I",
-     "level": "ranked",
-     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته C)",
-     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
-     "candidates": [
-      "زول/I (C، مطابق)",
-      "زيل/I (C)"
-     ]
-    }
-   },
-   {
-    "loc": "2:267:18",
-    "text": "وَلَسْتُمْ",
-    "gold": "ليس/I",
-    "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: ولس (I)، لوس (I)، ليس (I)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها C؛ فلا تُقدَّم بالمطابقة وحدها",
-     "candidates": [
-      "ولس/I (C، مطابق)",
-      "لوس/I (C)",
-      "ليس/I (C)"
-     ]
-    },
-    "after": {
-     "status": "accepted",
-     "root": "ولس",
-     "form": "I",
-     "level": "ranked",
-     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته C)",
-     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها C)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
-     "candidates": [
-      "ولس/I (C، مطابق)",
-      "لوس/I (C)",
-      "ليس/I (C)"
-     ]
-    }
-   },
-   {
     "loc": "38:72:6",
     "text": "فَقَعُوا",
     "gold": "وقع/I",
     "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: فقع (I)، قعو (I)، وقع (I)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها A، ومنافسها A؛ فلا تُقدَّم بالمطابقة وحدها",
+     "status": "accepted",
+     "root": "فقع",
+     "form": "I",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها A)، ومنافسها لا يطابق (شهادته A)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها A)، ومنافسها لا يطابق (شهادته A)؛ والمنافس محفوظ",
      "candidates": [
       "فقع/I (A، مطابق)",
       "فقع/I (A)",
@@ -1393,7 +5156,7 @@
      ]
     },
     "after": {
-     "status": "accepted",
+     "status": "ranked",
      "root": "فقع",
      "form": "I",
      "level": "ranked",
@@ -1413,12 +5176,12 @@
     "text": "تَهِنُوا",
     "gold": "وهن/I",
     "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: تهن (I)، هنو (I)، وهن (I)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها E، ومنافسها C؛ فلا تُقدَّم بالمطابقة وحدها",
+     "status": "accepted",
+     "root": "تهن",
+     "form": "I",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها E)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها E)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
      "candidates": [
       "تهن/I (E، مطابق)",
       "هنو/I (E)",
@@ -1427,7 +5190,7 @@
      ]
     },
     "after": {
-     "status": "accepted",
+     "status": "ranked",
      "root": "تهن",
      "form": "I",
      "level": "ranked",
@@ -1446,12 +5209,12 @@
     "text": "تَهِنُوا",
     "gold": "وهن/I",
     "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: تهن (I)، هنو (I)، وهن (I)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها E، ومنافسها C؛ فلا تُقدَّم بالمطابقة وحدها",
+     "status": "accepted",
+     "root": "تهن",
+     "form": "I",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها E)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها E)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
      "candidates": [
       "تهن/I (E، مطابق)",
       "هنو/I (E)",
@@ -1460,7 +5223,7 @@
      ]
     },
     "after": {
-     "status": "accepted",
+     "status": "ranked",
      "root": "تهن",
      "form": "I",
      "level": "ranked",
@@ -1479,12 +5242,12 @@
     "text": "تَهِنُوا",
     "gold": "وهن/I",
     "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: تهن (I)، هنو (I)، وهن (I)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها E، ومنافسها C؛ فلا تُقدَّم بالمطابقة وحدها",
+     "status": "accepted",
+     "root": "تهن",
+     "form": "I",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها E)، ومنافسها لا يطابق (شهادته C)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها E)، ومنافسها لا يطابق (شهادته C)؛ والمنافس محفوظ",
      "candidates": [
       "تهن/I (E، مطابق)",
       "هنو/I (E)",
@@ -1493,7 +5256,7 @@
      ]
     },
     "after": {
-     "status": "accepted",
+     "status": "ranked",
      "root": "تهن",
      "form": "I",
      "level": "ranked",
@@ -1512,12 +5275,12 @@
     "text": "فَقَسَتْ",
     "gold": "قسو/I",
     "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: فقس (I)، قسو (I)، قسي (I)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها E، ومنافسها E؛ فلا تُقدَّم بالمطابقة وحدها",
+     "status": "accepted",
+     "root": "فقس",
+     "form": "I",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها E)، ومنافسها لا يطابق (شهادته E)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها E)، ومنافسها لا يطابق (شهادته E)؛ والمنافس محفوظ",
      "candidates": [
       "فقس/I (E، مطابق)",
       "قسو/I (E)",
@@ -1525,7 +5288,7 @@
      ]
     },
     "after": {
-     "status": "accepted",
+     "status": "ranked",
      "root": "فقس",
      "form": "I",
      "level": "ranked",
@@ -1543,19 +5306,19 @@
     "text": "فَنَسُوا",
     "gold": "نسي/I",
     "before": {
-     "status": "deferred",
-     "root": null,
-     "form": null,
-     "level": null,
-     "reason": "أكثر من جذر أو وزن مرخَّص: فنس (I)، نسو (I)",
-     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها E، ومنافسها E؛ فلا تُقدَّم بالمطابقة وحدها",
+     "status": "accepted",
+     "root": "فنس",
+     "form": "I",
+     "level": "ranked",
+     "reason": "مرجَّح لا مثبت: ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها E)، ومنافسها لا يطابق (شهادته E)",
+     "decision": "ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها E)، ومنافسها لا يطابق (شهادته E)؛ والمنافس محفوظ",
      "candidates": [
       "فنس/I (E، مطابق)",
       "نسو/I (E)"
      ]
     },
     "after": {
-     "status": "accepted",
+     "status": "ranked",
      "root": "فنس",
      "form": "I",
      "level": "ranked",
@@ -1570,7 +5333,11 @@
   ]
  },
  "totals": {
-  "من التأجيل إلى القبول: صحيح": 78,
-  "من التأجيل إلى القبول: مخالف لـQAC": 9
+  "إلى فئةٍ مؤجَّلة (محمي مرشّح): كان deferred": 493,
+  "إلى الحماية الدستورية: كان deferred": 164,
+  "إلى فئةٍ مؤجَّلة (محمي مرشّح): كان مقبولاً": 287,
+  "إلى الحماية الدستورية: كان مقبولاً": 177,
+  "إلى «مرجَّح» (لا يُقبل): كان مقبولاً، والقراءة المرجَّحة صحيحة": 129,
+  "إلى «مرجَّح» (لا يُقبل): كان مقبولاً، والقراءة المرجَّحة مخالفة لـQAC": 7
  }
 }

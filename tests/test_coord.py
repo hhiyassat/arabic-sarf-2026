@@ -182,6 +182,23 @@ R, Js = units_J([(8, 20)])
 r = R.get('8:20:10:1')
 check('8:20 «وأنتم تسمعون»: الحال مرشّحٌ مستوفٍ (الطرف السابق «لا تولّوا» فعلٌ بصورته)',
       r and any(x['function'].startswith('حال') and x['status'] == 'مستوفٍ' for x in r['candidates']))
+# مراجعة التقرير السابعة: الترخيص بدليلٍ إيجابي لا بالافتراض
+R, Js = units_J([(7, 202), (7, 203)])
+binds = [b for J in Js for b in (J.O.get('bound') or [])]
+check('7:203 «ورحمةٌ لقوم يؤمنون»: لا تُربط «يؤمنون» (في داخل المعطوف) معطوفةً، والمستوى مؤجَّل (D4)',
+      not any('يُؤْمِنُونَ' in b[0] and b[1].startswith('معطوف') for b in binds) and
+      'D4' in R.get('7:203:21:1', {}).get('decision_codes', []), [b for b in binds if 'يُؤْمِنُونَ' in b[0]])
+check('لا علاقة «مرخّصة» معطوفها عليه مؤجَّلٌ بين بدائل', not any(b[2] == 'مرخّصة' and 'مؤجَّل' in b[1] for b in binds))
+R, Js = units_J([(12, 12), (12, 13)])
+binds = [b for J in Js for b in (J.O.get('bound') or [])]
+r = R.get('12:13:7:1')
+check('12:13 «وأخاف أن يأكله»: رأس المعطوف «أخاف» (مضارعٌ بصورته)، ولا تُربط «يأكل» (في المصدر المؤوَّل) معطوفة',
+      r and all(x['B']['head'] == 'وَأَخَافُ' for x in r['candidates'] if x['B']) and
+      not any('يَأْكُلَ' in b[0] and b[1].startswith('معطوف') for b in binds), binds)
+R, Js = units_J([(12, v) for v in range(15, 18)])
+binds = {b[0]: b for J in Js for b in (J.O.get('bound') or [])}
+check('12:15–17 جوابٌ بالموضع وحده («قالوا» جواب «لمّا») مرشَّحٌ لا مرخَّص', any('قَالُوا' in k and v[1].startswith('جواب')
+                                                                         and v[2] == 'مرشّحة' for k, v in binds.items()), binds)
 # الفاحص والاختبارات المضادة
 check('الفاحص: كل السجلات سليمة', not st.get('coordcheck:مرفوض'), st.get('coordcheck:مرفوض'))
 check('الاختبارات المضادة: كُشف أكثرها', st.get('coordmut:كُشف', 0) >= 0.9 * st.get('coordmut:حالات', 1),

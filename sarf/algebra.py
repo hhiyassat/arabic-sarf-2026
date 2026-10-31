@@ -2105,17 +2105,26 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
         # حالة كل علاقةٍ تربط نواةً (مراجعة ملفات الجمل ٦): مرخّصة بقاعدةٍ ودليل، أو مرجّحة، أو مرشّحة؛
         # والنواة المربوطة بعلاقةٍ غير مرخّصة لا تُعدّ مرتبطة في إغلاق الجملة
         bound_status = {}
+        # الترخيص بدليلٍ إيجابي لا بالافتراض (مراجعة التقرير السابعة): كل علاقةٍ «مرشّحة» حتى تمنحها قاعدتها
+        # «مرخّصة» بدليلها المسمّى؛ فالصلة بالتزام الصلة المستوفى، والخبر برابط العامل المقبول، والمقول بفعل القول
         for r in rels:
+            silah_ok = any(o_[0] == 'صلة' and o_[1] for o_ in r.get('obligations', []))
             for k in range(r['head'] + 1, r['end']):
                 if k in nset:
                     bound.setdefault(k, f'صلة «{wtext[r["head"]]}»')
+                    if silah_ok and bound[k].startswith('صلة «'):
+                        bound_status[k] = 'مرخّصة'
         for b in bonds:
             if b[0].startswith('خبر «') and b[2] in pos_of:
                 bound.setdefault(pos_of[b[2]], b[0])
+                if bound[pos_of[b[2]]] == b[0]:
+                    bound_status[pos_of[b[2]]] = 'مرخّصة'          # رابطٌ ثابت من عاملٍ مقبول ومعموله
         for qp in qawl_pos:
             k = next((k for k in range(qp + 1, min(n, qp + 6)) if k in nset), None)
             if k is not None and not any(starts[j] and starts[j][0] != 'نداء' for j in range(qp + 1, k)):
                 bound.setdefault(k, f'مقول «{wtext[qp]}»')
+                if bound[k].startswith('مقول'):
+                    bound_status[k] = 'مرخّصة'
         not_conj, not_conj_why, cond_spans = set(), {}, []
         for c_ in cond_structs(feats, set(nuc_pos), starts, ay_end):
             st['cond'] += 1
@@ -2147,10 +2156,14 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
                     kk = next((j for j in range(k, min(n, k + 4)) if j in nset), None)
                     if kk is not None:
                         bound.setdefault(kk, f'{why} «{c_["tool"]}»')
-                        cand_ = c_['amb'] or any(not o_[1] or 'مرشَّح' in str(o_[2]) or 'محتمل' in str(o_[2])
-                                                 for o_ in c_['obligations'])
-                        if cand_ and bound[kk].startswith(why):
-                            bound_status[kk] = 'مرشّحة'
+                        # الجواب مرخَّصٌ بدليل ربطٍ مكتوب (فاءٌ رابطة، أو لام جواب «لو»، أو جزمٌ بالجازمة)، لا بالموضع
+                        # وحده (ماضٍ بعد جملة الشرط)؛ وفعل الشرط مرخَّصٌ إن ثبتت فعليته والأداة غير ملتبسة
+                        q_ev = str(c_.get('q_kind') or '')
+                        licensed_ = not c_['amb'] and all(o_[1] and 'مرشَّح' not in str(o_[2]) and 'محتمل' not in str(o_[2])
+                                                          for o_ in c_['obligations']) and \
+                            (why == 'فعل الشرط' or any(x in q_ev for x in ('فاءٌ رابطة', 'لامٌ مفتوحة', 'مجزوم')))
+                        if bound[kk].startswith(why):
+                            bound_status[kk] = 'مرخّصة' if licensed_ else 'مرشّحة'
             if len(cond_samples) < 40:
                 cond_samples.append(dict(location=words_text(words, c_['head']),
                                          text=' '.join(wtext[c_['head']:(c_['q_pos'] or c_['head']) + 4]),
@@ -2229,6 +2242,15 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
                  rel_khabar=lambda h_: relative_khabar(feats, set(nuc_pos), starts, rel_at[h_]))
         crecs = []
 
+        def _mudari_shape(f_):
+            # المضارع بصورته المكتوبة (أَخَافُ، يَقُولُ): حرف مضارعةٍ مفتوحٌ أو مضموم، ولا تنوين ولا «أل» ولا دليل اسمية
+            st_ = letters(f_['text'])
+            if st_ and st_[0][0] in 'وف' and st_[0][1] == {FATHA} and f_['conj']:
+                st_ = st_[1:]
+            return 3 <= len(st_) <= 6 and st_[0][0] in 'أتين' and st_[0][1] & {FATHA, DAMMA} and \
+                not any(m & {FATHATAN, DAMMATAN, KASRATAN} for _, m in st_) and not f_.get('noun') and \
+                not f_.get('al') and st_[-1][1] & {DAMMA, FATHA, SUKUN}
+
         def _b_verb_head(k0):
             # أول فعلٍ بصورته من أول المعطوف (بعد «أو» و«ثم» و«أم» ونفيٍ أو «قد»)، قبل أي اسمٍ مرفوع أو ضمير
             for j in range(k0, min(n, k0 + 3)):
@@ -2236,7 +2258,7 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
                 if j > k0 and (f_['conj'] or starts[j]):
                     return None
                 verbish = j in nset or bool(f_['verb']) or not f_.get('noun') and (
-                    _madi_like(f_['text']) or _hollow_madi(f_['text'])) or _verb_enclitic(f_)
+                    _madi_like(f_['text']) or _hollow_madi(f_['text'])) or _verb_enclitic(f_) or _mudari_shape(f_)
                 if verbish and not (j == k0 and f_['conj_letter'] in ('أو', 'ثم', 'أم') and not f_['verb']):
                     return j
                 if not (f_.get('neg') or f_.get('qad') or j == k0 and f_['conj_letter'] in ('أو', 'ثم', 'أم')):
@@ -2301,9 +2323,19 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
                     b_n = hb if hb in nset else None
                     c_['b_head'] = hb
                 else:
-                    b_n = next((j for j in range(k0, min(n, k0 + 4)) if j in nset), None)
-                    if b_n is None and _head(k0):
-                        b_n = k0
+                    # بلا فعلٍ في أوله: لا تُربط نواةٌ داخلية (نعتٌ أو صلةٌ أو مصدرٌ مؤوَّل) إلا إن كان ما قبلها
+                    # شبهَ جملةٍ أو ضميراً أو إشارة تتقدّم المسند (وَبِٱلۡأٓخِرَةِ هُمۡ يُوقِنُونَ)؛ فـ«وَرَحۡمَةٌ لِّقَوۡمٍ يُؤۡمِنُونَ»
+                    # لا تُربط «يؤمنون» فيها بالعطف
+                    b_n = None
+                    for j in range(k0, min(n, k0 + 4)):
+                        f_ = feats[j]
+                        if j in nset:
+                            b_n = j
+                            break
+                        lead_ok = f_.get('head') in ('pron', 'pp') or f_.get('demo') or is_form(f_['text'], JARR_V) or \
+                            j > k0 and feats[j - 1].get('head') == 'pp' and f_['case'] in ('جر', 'جر أو نصب')
+                        if not lead_ok:
+                            break
                 c_['b_n'] = b_n
                 if a_n is not None:
                     fa = feats[head0]
@@ -2390,13 +2422,16 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
                                                      bound[b_n].startswith('صلةٌ معطوفة')):
                 # مرخّصة: العطف وحده مستوفٍ (ثابتٌ ضمن النطاق، أو مرخَّصٌ ومنافسه مؤجَّلٌ بلا قاعدةٍ إيجابية)؛
                 # ومرجّحة أو مرشّحة: أكثر من وجهٍ مستوفٍ (عطفٌ وحال، أو مفردٌ وجملة، أو رؤوسٌ متعدّدة)
+                # مرخّصة إن كان المستوفي واحداً: عطفاً بطرفين معيَّنين (تثبيتٌ ضمن النطاق، أو ترخيصٌ ومنافسه مؤجَّل)؛
+                # وتعدّد المستوفي في المعطوف عليه أو الوظيفة أو المستوى يُبقيها مرشّحة (أو مرجّحة)، ولا يُسجَّل
+                # طرفٌ معيَّن ثم يُلحق به «مؤجَّل بين بدائل»
                 ok_ = [x for x in rec['candidates'] if x['status'] == 'مستوفٍ']
-                fn_ = {x['function'] for x in ok_}
-                lv_ = {x['level'] for x in ok_}
-                lic = bool(ok_) and all(f_.startswith('عطف') for f_ in fn_) and lv_ == {'جملة'}
-                if lic and rec['decision'] == DECISIONS_[1]:
-                    # الربط عطفاً ثابتٌ في كل الأوجه المستوفاة، والخلاف في المعطوف عليه وحده (D2): يُحفظ مؤجَّلاً
-                    bound[b_n] += ' (والمعطوف عليه مؤجَّلٌ بين ' + '، '.join(f'«{x["A"]["head"]}»' for x in ok_ if x['A']) + ')'
+                lic = rec['decision'] in (DECISIONS_[0], DECISIONS_[2]) and len(ok_) == 1 and \
+                    ok_[0]['function'].startswith('عطف') and ok_[0]['A'] is not None and \
+                    ok_[0]['B'] is not None and ok_[0]['B']['head_pos'] == b_n
+                if not lic and len({(x['A'] or {}).get('head_id') for x in ok_}) > 1:
+                    bound[b_n] = 'معطوفٌ مرشَّح: المعطوف عليه غير معيَّن (' + '، '.join(
+                        f'«{x["A"]["head"]}»' for x in ok_ if x['A']) + ')'
                 bound_status[b_n] = ('مرخّصة' if lic else 'مرجّحة' if rec['preferred'] else 'مرشّحة')
             if not rec['UniqueWithin']:
                 for p_ in (k0, c_['B']):
@@ -2572,7 +2607,7 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
                 pass
             else:
                 free = [x for x in my_nuc if pos_of.get(x[0]) not in bound]
-                J.O['bound'] = [(x[1], bound[pos_of[x[0]]], bound_status.get(pos_of[x[0]], 'مرخّصة'))
+                J.O['bound'] = [(x[1], bound[pos_of[x[0]]], bound_status.get(pos_of[x[0]], 'مرشّحة'))
                                 for x in my_nuc if pos_of.get(x[0]) in bound]
                 undecided = [b_ for b_ in J.O['bound'] if b_[2] != 'مرخّصة']
                 if undecided:

@@ -85,10 +85,24 @@ def check_verse(s, v, a, S, units, T):
                     fail['beta'].append(f'{s}:{v} {G.O["text"]} الجبر={G.Theta.get("beta")} المقطِّع={[x["cv"] for x in a["segments"][G.O["word_index"]]["units"][G.O["unit"]]["syllables"]]}')
         if G.closed:
             alpha = G.Theta.get('alpha') or []
+            if G.Theta.get('protected'):
+                # الوحدة المحمية دستورياً لا خريطة جذرية لها (لا يُطالَب بما منعه الدستور): تُفحص خلاياها وتقطيعها ورسمها
+                C['T2_na_protected'] += 1
+                if flat == G.O['cells']:
+                    C['T2_na_protected_cells_ok'] += 1
+                else:
+                    t2 = False
+                    fail['T2'].append(f'{s}:{v} {G.O["text"]}: وحدة محمية لم تُحفظ خلاياها')
+                continue
+            C['T2_applicable'] += 1
             good = flat == G.O['cells'] and len(alpha) == len(flat) and None not in alpha
             if not good:
                 t2 = False
-                fail['T2'].append(f'{s}:{v} {G.O["text"]}')
+                C['T2_applicable_fail'] += 1
+                fail['T2'].append(f'{s}:{v} {G.O["text"]}: ' + ('الخلايا لا تطابق التقطيع' if flat != G.O['cells'] else
+                                                             'الخريطة الجذرية الوزنية ناقصة'))
+            else:
+                C['T2_applicable_pass'] += 1
     ok['T2'] = t2
     # المبرهنة الثالثة والرابعة: كل مغلقٍ بشهادتين صالحتين ولا التزام لازم مفتوح فيه
     t34 = True
@@ -272,6 +286,7 @@ os.makedirs(H + 'reports/sentences/drift', exist_ok=True)
 COLS = ['الوحدة', 'من', 'إلى', 'النص', 'الحالة', 'سبب الحدّ', 'الخلوّ من التعلّق الخارجي', 'النوى',
         'العلاقات (النواة ← العلاقة [حالتها: مرخّصة، مرجّحة، مرشّحة])', 'علاقات غير محسومة',
         'وقوعات بلا موضع (الموضع [الوحدة] «النص»: الناقص)', 'الالتزامات المفتوحة']
+SENT_BASE = os.environ.get('SARF_SENTENCES_BASE', '')   # الإصدار المرجعي لبيان التغيّر
 CHANGES = []                                       # بيان التغيّر عن الملف السابق لكل صف (مراجعة ملفات الجمل ٤)
 for SP in LT:
     s_ = int(SP.id.lstrip('L')) if SP.id.lstrip('L').isdigit() else None
@@ -311,8 +326,11 @@ for SP in LT:
             open(H + f'reports/sentences/drift/surah_{s_:03d}.csv', 'wb').write(data)
         continue                                         # لا يُكتب فوق الملف المجاز
     old_p = H + f'reports/sentences/surah_{s_:03d}.csv'
-    if os.path.exists(old_p):
-        old = list(_csv.reader(open(old_p, encoding='utf-8')))
+    # بيان التغيّر مقابل إصدارٍ مرجعي معلَن (SARF_SENTENCES_BASE: الإصدار المدقَّق)، لا مقابل آخر تشغيلٍ على القرص
+    _old_txt = subprocess.run(['git', '-C', H, 'show', f'{SENT_BASE}:reports/sentences/surah_{s_:03d}.csv'],
+                              capture_output=True, text=True).stdout if SENT_BASE else ''
+    if _old_txt or os.path.exists(old_p):
+        old = list(_csv.reader(_io.StringIO(_old_txt) if _old_txt else open(old_p, encoding='utf-8')))
         oh = old[0] if old else []
         idx = {k: oh.index(k) for k in ('من', 'إلى', 'النص', 'الحالة') if k in oh}
         if len(idx) == 4:
@@ -341,6 +359,7 @@ json.dump(dict(code_version=subprocess.run(['git', '-C', H, 'rev-parse', '--shor
                                            text=True).stdout.strip(),
                text=dict(file='data/quran_hafs.tsv', sha256=_hashlib.sha256(open(H + 'data/quran_hafs.tsv', 'rb').read()).hexdigest()),
                reading='حفص عن عاصم (مصحف المجمّع)', coord_rules=_GAMMA, dependencies_fingerprint=DEPS,
+               changes_base=SENT_BASE or 'آخر ملفات الجمل على القرص',
                protected_inventory=dict(file='sarf/protected.py', sha256=_hashlib.sha256(open(H + 'sarf/protected.py', 'rb').read()).hexdigest()),
                columns=COLS, note='سجلٌّ تجريبي للمراجعة؛ لا إجازة إلا بقرار صاحب النظرية'),
           open(H + 'reports/sentences/MANIFEST.json', 'w', encoding='utf-8'), ensure_ascii=False, indent=1)

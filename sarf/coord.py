@@ -26,7 +26,7 @@ ACCEPT = {
     'A5': 'تعيين امتداد الطرفين بلا قطع تابعٍ ثبت دخوله ولا إدخال ما ثبت خروجه',
     'A6': 'اتساق العلاقة مع التركيب الحاوي',
     'A7': 'إسناد كل حذفٍ أو مشاركةٍ في عامل إلى قاعدة موثقة',
-    'A8': 'خلوّ المرشّح من مانع مثبت',
+    'A8': 'إثبات انتفاء الموانع التي توجب القاعدة فحصها (تُسمّى في سجل كل مرشّح)، لا مجرّد غياب مانعٍ مكتشف',
 }
 REJECT = {
     'R1': 'الحرف يؤدي وظيفةً غير العطف في هذا الوجه',
@@ -434,7 +434,7 @@ def _has_taswiya(X, a0):
 
 def site_record(c_, X):
     """سجلّ الموضع لمرشّحات العطف من بنية coord_structs بعد تعيين طرفيها في الطبقة اللغوية"""
-    from .algebra import (is_form, PRON_FREE_V, CASE_COMPAT, clause_word, _madi_like, _hollow_madi)
+    from .algebra import (is_form, PRON_FREE_V, CASE_COMPAT, _madi_like, _hollow_madi)
     f, w = X.feats, X.wtext
     k, letter, level = c_['pos'], c_['letter'], c_['level']
     standalone = letter in ('أو', 'ثم', 'أم')
@@ -581,8 +581,14 @@ def site_record(c_, X):
         sp = bf.get('span') or (k, k)
         b_pos = list(range(sp[0], sp[1] + 1))
         # رأس اللاحق: أول فعلٍ من أوله (c_['b_head'] من الطبقة)، لا أول نواةٍ فيه (يَبۡكُونَ حالٌ داخل «وَجَآءُوٓ»)
-        bh = c_['b_head'] if c_.get('b_head') is not None and c_['b_head'] in b_pos else \
-            next((p for p in b_pos if p in X.nset or f[p]['verb']), b_pos[0] if not standalone else min(k + 1, n - 1))
+        # رأس اللاحق: أول فعلٍ من أوله، أو النواة التي تتقدّمها شبه جملةٍ أو ضمير (c_['b_n'])؛ وإلا فلا رأس جمليّ مثبت
+        # (وَرَحۡمَةٌ لِّقَوۡمٍ يُؤۡمِنُونَ: «يؤمنون» في داخله لا رأسه)، فيُعرض أول المعطوف ويُؤجَّل المستوى
+        if c_.get('b_head') is not None and c_['b_head'] in b_pos:
+            bh, level_ok = c_['b_head'], True
+        elif c_.get('b_n') is not None and c_['b_n'] in b_pos:
+            bh, level_ok = c_['b_n'], True
+        else:
+            bh, level_ok = (b_pos[0] if not standalone else min(k + 1, n - 1)), False
         B = _member(X, b_pos, bh, bf.get('type') or 'جملة', [bf.get('evidence', '')] + list(bf.get('relations') or []))
         alts = [a for a in c_['A'] if isinstance(a, dict)]
         cont_c, cont_ev = X.container_evidence(k, b_pos[-1])
@@ -597,7 +603,12 @@ def site_record(c_, X):
             floor = vs[1] + 1 if len(vs) > 1 else 0
             extra = []
             for j in range(a_first - 1, max(floor - 1, a_first - 16), -1):
-                if hd(j) and j not in [a['span'][0] for a in alts]:
+                # الرأس الأبعد فعلٌ بصورته أو نواة أو ضميرٌ أو إشارة يبدأ جملةً اسمية؛ لا شبه جملةٍ وحده
+                fj_ = f[j]
+                verbish_ = j in X.nset or fj_['verb'] or not fj_.get('noun') and (_madi_like(fj_['text']) or
+                                                                                  _hollow_madi(fj_['text']))
+                if hd(j) and (verbish_ or fj_.get('demo') or fj_.get('head') == 'pron') and \
+                        j not in [a['span'][0] for a in alts]:
                     if cont_ev and X.container(j) != X.container(k):
                         break
                     extra.append(dict(span=(j, lim - 1), head=w[j], type='جملة سابقة أبعد',
@@ -623,12 +634,15 @@ def site_record(c_, X):
                     else:
                         c['evidence'].append('دليل بقاء الحاوي مفتوحاً: ' + cont_ev)
                 avk = f[ah]['verb'] or f[ah].get('vshape')
-                rule = 'جملةٌ على جملة' if clause_word(f, k if not standalone else k + 1, X.nset) or bh in X.nset or \
-                    f[bh]['verb'] or (bf.get('type') or '').startswith('جملة') else None
+                # A3 يفحص المستوى لا الشكل: عطف الجملة يتطلب رأساً جمليّاً معيَّناً في اللاحق
+                rule = 'جملةٌ على جملة: رأس اللاحق «' + w[bh] + '»' if level_ok else None
                 coord_checks(c, True, rule, (True, 'عطف الجمل لا يُشترط فيه توافق الإعراب' +
                                              ('؛ واختلاف زمن الفعلين ليس مانعاً' if avk and bvk and avk != bvk else '')),
                              (True, 'الطرف السابق من رأسه إلى الحرف، واللاحق إلى أول حدٍّ يبدأ بعد اكتماله'),
                              (True, f'الطرفان في {c["container"]}' if c['container'] else 'جملتان في مستوى واحد'))
+                if not level_ok:
+                    c['deferrals'].append(('D4', 'مستوى المعطوف غير مثبت: لا فعلَ في أوله ولا نواةَ يتقدّمها شبهُ جملةٍ أو ضمير',
+                                           DEFER['D4'][1]))
                 if 'بديل' in a['type']:
                     c['evidence'].append('بديلٌ محفوظ: الموصول حجّةٌ في جملةٍ أوسع')
                 c['tense'] = (avk, bvk)
@@ -649,6 +663,26 @@ def site_record(c_, X):
             cands.append(_finish(c))
         # «وَمَنۡ خَلَقۡتُ»، «وَمَا تُعۡلِنُونَ»: «مَن» و«ما» بعد الواو قد تكونان موصولتين معطوفتين على مفرد (على ياء
         # «ذَرۡنِي»، أو على «ما» قبلها)، فيُولَّد مرشّحٌ مفردٌ منافسٌ للجملة، ولا يُحسم المستوى بلا دليل (D4)
+        # المعطوف اسمٌ ظاهر الحالة بلا رأسٍ جمليّ (وَرَحۡمَةٌ لِّقَوۡمٍ يُؤۡمِنُونَ): مرشّحٌ مفردٌ منافسٌ للجملة على
+        # اسمٍ قبله يوافقه في الحالة في الجملة الجارية (هَٰذَا بَصَآئِرُ … وَهُدࣰى وَرَحۡمَةٌ)
+        lead0 = f[b_pos[0] if not standalone else min(k + 1, n - 1)]
+        if not level_ok and lead0.get('noun') and lead0['case'] in CASE_COMPAT:
+            h0 = b_pos[0] if not standalone else min(k + 1, n - 1)
+            bp, bw = extent_single(X, h0, n)
+            bm = _member(X, bp, h0, 'مفرد', bw)
+            for j in range(k - 1, max(-1, k - 12), -1):
+                fj = f[j]
+                if X.starts[j] and j < k - 1 or fj['verb'] or j in X.nset:
+                    break
+                if fj.get('noun') and not fj.get('rel') and fj['case'] in CASE_COMPAT[lead0['case']]:
+                    c = _cand(f'C{len(cands) + 1}', 'عطف', 'مفرد', None, bm, letter, ['CO-SINGLE'])
+                    ap, aw = extent_single(X, j, k)
+                    c['A'] = _member(X, ap, j, 'مفرد', aw, skip_jarr=True)
+                    coord_checks(c, True, 'اسمٌ على اسم', (True, f'توافق الحالة المكتوبة ({fj["case"]}): قرينةٌ لا دليلٌ كافٍ وحدها'),
+                                 (True, 'كلٌّ من الطرفين بامتداده'), (True, '—'))
+                    c['evidence'].append('المعطوف اسمٌ بلا رأسٍ جمليّ: المفرد منافسٌ لعطف الجملة')
+                    c['shared'] = _shared_single(X, c, letter)
+                    cands.append(_finish(c))
         if letter == 'و' and is_form(f[k]['text'], ('وَمَنْ', 'وَمَا')) and _ma_silah(X, k, n):
             e = _ma_silah(X, k, n)
             bm = _member(X, list(range(k, e)), k, 'مفرد', ['«مَن» أو «ما» موصولةٌ وصلتها داخلة في الطرف'])
