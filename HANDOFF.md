@@ -193,7 +193,11 @@ python3 corpus_audit.py
   - وبطارية التزييف تجري في كل تشغيل، وتُعرض في التقرير.
 - **التشغيل:**
   ```bash
-  python3 tools/algebra_quran.py   # يكتب reports/algebra_metrics.json (نحو 40 دقيقة)
+  tools/run_full.sh [مجلد السجلات]  # التشغيل الكامل كله في نحو 10 دقائق على 4 أنوية: التحليل والطبقة اللغوية متوازيان
+                                    # على السور، وأدوات القياس متوازيةٌ تقرأ خبيئة التحليل (sarf/analyze_cache.py)؛
+                                    # SARF_SENTENCES_BASE=<إصدار> لبيان التغيّر مقابل إصدارٍ مدقَّق، وPYTHONHASHSEED=0 للحتمية
+  # أو خطوةً خطوة:
+  python3 tools/algebra_quran.py --jobs 4   # يكتب reports/algebra_metrics.json
   python3 tools/eval_algebra.py    # صحة الجذور المغلقة مقارنةً بـQAC، وأصناف الخلاف
   python3 tools/eval_case.py       # صحة قراءة الحالة
   python3 tools/algebra_report.py  # يكتب reports/algebra_report.html
