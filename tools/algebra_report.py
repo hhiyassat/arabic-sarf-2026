@@ -314,6 +314,94 @@ if C.get('rel') or C.get('cond') or C.get('coord'):
              f'⟩\n      «{x["B_full"]["text"]}»\n      الدليل: {x["B_full"]["evidence"]}' if x.get('B_full') else '')
             for x in [y for y in SS.get('coord', []) if y['location'] in ('2:3:3', '2:4:9') and y.get('A_full')])) + '</pre>',
     ]
+if C.get('coordrec'):
+    from sarf.coord import RULES, REJECT, DEFER, ACCEPT, DECISIONS
+    SS = M.get('structures', {})
+    RR = SS.get('coord_records', [])
+    def cc(prefix):
+        return sorted(((k[len(prefix):], v) for k, v in C.items() if k.startswith(prefix)), key=lambda x: -x[1])
+
+    def mem(m):
+        if not m:
+            return '—'
+        return (f'«{m["text"]}» — الرأس «{m["head"]}» ({m["head_id"]})، العضوية {len(m["positions"])} كلمة '
+                f'[{m["envelope"][0]}…{m["envelope"][1]}]، الوحدات الصرفية: {" ".join(m["units"])}')
+
+    def show(r):
+        lines = [f'h = «{r["letter"]}» في الوحدة {r["letter_unit"]} (الكلمة الحاملة {r["carrier_word"]} «{r["carrier_text"]}»؛ '
+                 f'الخلايا: {", ".join(c["id"] + "=" + c["letter"] for c in r["letter_cells"]) or "—"})',
+                 f'   الحاوي P: {r["container"] or "—"}؛ التغطية: {r["coverage"]}؛ Γ = {r["gamma"]}']
+        for c in r['candidates']:
+            lines.append(f'  {c["id"]} [{c["status"]}] f = {c["function"]}، k = {c["level"]}، القواعد: {", ".join(c["rules"])}'
+                         + (f'، P = {c["container"]}' if c['container'] else '')
+                         + f'، LinkLicensed={"✓" if c.get("LinkLicensed") else "✗"}، ExtentCertified={"✓" if c.get("ExtentCertified") else "✗"}')
+            if c['A']:
+                lines.append(f'      A: {mem(c["A"])}')
+            if c['B']:
+                lines.append(f'      B: {mem(c["B"])}')
+            for b in c['barriers']:
+                lines.append(f'      مانع {b[0]}: {b[1]}')
+            for d in c['deferrals']:
+                lines.append(f'      تأجيل {d[0]}: {d[1]} ← يلزم: {d[2]}')
+            for x in c['shared']:
+                lines.append(f'      S: {x["element"]} — {x["status"]} ({x["evidence"]})')
+            if c.get('evidence'):
+                lines.append(f'      E: {"؛ ".join(c["evidence"])}')
+        lines.append(f'  القرار: {r["decision"]}' + (f' [{", ".join(r["decision_codes"])}]' if r['decision_codes'] else '') +
+                     f' — {r["reason"]}')
+        if r.get('preferred'):
+            lines.append(f'  الترجيح (لا يُبطل المنافس): {r["preferred"][0]} — {r["preferred"][1]}')
+        if r.get('inside'):
+            lines.append(f'  التداخل: داخل الطرف {r["inside"]["side"]} لعطف {r["inside"]["of"]} ({r["inside"]["note"]})')
+        if r.get('chain'):
+            lines.append(f'  السلسلة: {" ، ".join(r["chain"]["group"])} — السابق المباشر {r["chain"]["local_previous"]}')
+        if r.get('omega'):
+            lines.append('  Ω: ' + ' | '.join(r['omega']))
+        lines.append(f'  الإغلاق: Complete(A)={r["closure"]["Complete_A"]}، Complete(C)={r["closure"]["Complete_C"]}، '
+                     f'Close(P): {r["closure"]["Close_P"]}')
+        return '\n'.join(lines)
+    WANT = [('55:5', '55:5:2:1'), ('80:32', '80:32:3:1'), ('80:21', '80:21:3:1'), ('2:4', '2:4:6:1'), ('2:4', '2:4:10:1'),
+            ('2:25', '2:25:4:1'), ('2:6', '2:6:7:1'), ('2:259', '2:259:6:1'), ('91:1', '91:1:1:1'), ('91:2', '91:2:1:1'),
+            ('12:16', '12:16:1:1')]
+    byu = {r['letter_unit']: r for r in RR}
+    parts += [
+        '<h2>٨ب. حدود العطف: مرشّحاتٌ كاملة وقرار الموضع</h2>',
+        '<div class="muted"><b>القاعدة الحاكمة:</b> لا يُثبَّت طرفا العطف وحدودهما إلا بدليلٍ إيجابي، ولا يُرفض مرشّحٌ إلا بمانعٍ '
+        'مثبت؛ وما نقص دليله يُؤجَّل، وما تعدّدت أوجهه المرخَّصة يُحفظ ويُؤجَّل حسم انفراده. وحدة التحليل مرشّحُ علاقةٍ كامل '
+        'a = ⟨h, f, A, B, k, P, S, M, E, Ω⟩، لا كلمتان متجاورتان ولا حرفٌ موسومٌ بالعطف. ويُفصل ثلاثة أسئلة: وظيفة الحرف، '
+        'والطرفان المرتبطان، ومعنى العلاقة (فثبوت الربط لا يثبت ترتيباً ولا سببيةً ولا تخييراً). ولا تُعدّ موانع بمفردها: '
+        'بُعد الطرف، واختلاف زمن الفعلين أو الجنس أو العدد، ونهاية الآية، وخفاء العلامة. والقرب يولّد مرشّحاً ولا يثبته. '
+        'ووسم QAC لم يُستعمل مدخلاً؛ وكل ما هنا مستنتجٌ بقواعد النظام Γ ومعلَّمٌ بذلك.</div>',
+        table(['المقياس', 'العدد'], [
+            ('مواضع الحروف المفحوصة (و، ف، ثم، أو، أم، وبل ولكن وحتى، وفاء الجواب، والحرف أول النص)', f'{C.get("coordrec", 0):,}'),
+            ('المرشّحات المولَّدة', f'{C.get("coordrec:مرشّحات", 0):,}'),
+            ('مرشّحٌ مستوفٍ / مؤجَّل / مرفوض', f'{C.get("coordrec:مرشّح:مستوفٍ", 0):,} / {C.get("coordrec:مرشّح:مؤجَّل", 0):,} / '
+                                              f'{C.get("coordrec:مرشّح:مرفوض", 0):,}'),
+            ('موضعٌ داخل طرفٍ لعطفٍ أكبر (تداخل) / في سلسلةٍ على مستوى واحد', f'{C.get("coordrec:داخل طرف", 0):,} / '
+                                                                            f'{C.get("coordrec:سلسلة", 0):,}'),
+            ('فاحص الشهادة: سجلٌّ سليم / مرفوض', f'{C.get("coordcheck:سليم", 0):,} / {C.get("coordcheck:مرفوض", 0):,}'),
+            ('اختبارات مضادة (تغيير الرأس أو العضوية أو الحدّ أو الرابط أو الدليل): كُشف / فات',
+             f'{C.get("coordmut:كُشف", 0):,} / {C.get("coordmut:فات", 0):,} من {C.get("coordmut:حالات", 0):,}')]),
+        table(['قرار الموضع (الجدول ١٥)', 'العدد'], [(esc(d), f'{C.get("coordrec:قرار:" + d, 0):,}') for d in DECISIONS]),
+        table(['سبب التأجيل', 'المعنى', 'ما يلزم للحسم', 'المواضع'],
+              [(k, esc(DEFER[k][0]), esc(DEFER[k][1]), f'{v:,}') for k, v in cc('coordrec:تأجيل:') if k in DEFER]),
+        table(['المانع المثبت', 'المعنى', 'المرشّحات المرفوضة به'],
+              [(k, esc(REJECT[k]), f'{v:,}') for k, v in cc('coordrec:مانع:') if k in REJECT]),
+        table(['الوظيفة المثبتة ضمن النطاق', 'المواضع'], [(esc(k), f'{v:,}') for k, v in cc('coordrec:مقبول:')]),
+        table(['شرط القبول', 'المعنى'], [(k, esc(v)) for k, v in ACCEPT.items()]),
+        '<div class="muted">سجلّ القواعد Γ (البند ٦): لكل قاعدةٍ معرّفٌ ونسخة، ونطاقها وشروطها وموانعها، وشاهدها والحالة '
+        'المقابلة التي تمنع تعميمها، وحدود تغطيتها.</div>',
+        table(['القاعدة', 'النطاق', 'الشروط', 'الموانع', 'الشاهد', 'الحالة المقابلة', 'التغطية'],
+              [(f'{r["id"]} v{r["version"]}', esc(r['scope']), esc('؛ '.join(r['conditions'])), esc('؛ '.join(r['barriers'])),
+                esc(r['witness']), esc(r['counter']), esc(r['coverage'])) for r in RULES.values()]),
+        '<div class="muted">سجلات شواهد المواصفة كما أخرجها التشغيل (المرشّحات كلها بحالاتها وأدلتها، والعناصر المشتركة '
+        'بقراراتها المستقلة، والقرار وما يلزم لحسمه). ترقيم الكلمات من ١ كما في Quranic Arabic Corpus، ووحدة الحرف '
+        '«الكلمة:رقم الوحدة الصرفية»، والخلايا بمعرّفاتها الداخلية:</div>',
+        '<pre class="json">' + esc('\n\n'.join(f'[{v}]\n' + show(byu[u]) for v, u in WANT if u in byu)) + '</pre>',
+        '<div class="muted">ما فات الاختبارات المضادة: تغيير رأس السابق إلى مرشّحٍ آخر جائزٍ في الموضع نفسه؛ ولا يكشفه '
+        'إلا فحصُ اكتمال التوليد بإعادة توليد المرشّحات، وهو غير منفَّذ في الفاحص بعد. أمثلة: ' +
+        esc('، '.join(SS.get('coord_failures', {}).get('coordmut', [])[:8]) or '—') + '</div>',
+    ]
 if C.get('obl_خبر'):
     names = [('معمول', 'معمول العامل المقبول'), ('فاعل', 'فاعل الفعل (T18)'), ('خبر', 'خبر الناسخ (إنّ وكان وأخواتهما)'),
              ('مفعول', 'مفعول الفعل المتعدّي (اختياري: لا يمنع الإغلاق)')]

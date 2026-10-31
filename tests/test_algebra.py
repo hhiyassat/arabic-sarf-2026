@@ -214,7 +214,8 @@ if hfn() and rows:
           not any(o.name in ('حدود الجمل', 'نوى غير مرتبطة') for o in jl.Omega), jl and (jl.O.get('bound'), [o.name for o in jl.Omega]))
     sm = structs((2, 8))
     cy = [x for x in sm['coord'] if x['B'].startswith('وَبِالْيَوْم')]
-    check('البقرة ٨: «وَبِٱلۡيَوۡمِ ٱلۡأٓخِرِ» جارٌّ ومجرور معطوفٌ مفرد (على «بِٱللَّهِ»)، لا جملة', cy and cy[0]['level'] == 'مفرد', cy)
+    check('البقرة ٨: «وَبِٱلۡيَوۡمِ ٱلۡأٓخِرِ» جارٌّ ومجرور معطوفٌ على «بِٱللَّهِ» (شبه جملة)، لا جملة',
+          cy and cy[0]['level'] == 'شبه جملة' and cy[0]['A'] == ['بِاللَّهِ'], cy)
     sm = structs((2, 3))
     cj = [x for x in sm['coord'] if x['level'] == 'جملة']
     check('البقرة ٣: عطف الجملة طرفاه معيَّنان بنواتيهما ونطاقيهما (لا «الجملة قبله»)',

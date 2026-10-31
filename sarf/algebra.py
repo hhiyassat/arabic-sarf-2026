@@ -718,8 +718,28 @@ def _madi_like(text):
         k = -2 if st[-1][0] == 'ت' or DAGGER_ALIF in st[-1][1] else -3
         if SUKUN in st[k][1]:
             return True
-    return 3 <= len(st) <= 4 and all(m & {FATHA, DAMMA, KASRA} and not m & {SUKUN} for _, m in st) and \
-        not any(L in 'اوي' and not m & {FATHA, DAMMA, KASRA} for L, m in st) and FATHA in st[-1][1]
+    if 3 <= len(st) <= 4 and all(m & {FATHA, DAMMA, KASRA} and not m & {SUKUN} for _, m in st) and \
+            not any(L in 'اوي' and not m & {FATHA, DAMMA, KASRA} for L, m in st) and FATHA in st[-1][1]:
+        return True
+    # المضعَّف (مَرَّ، رَدَّ): حرفان آخرهما مشدَّدٌ مفتوح
+    if len(st) == 2 and st[0][1] == {FATHA} and st[1][1] == {SHADDA, FATHA}:
+        return True
+    # الماضي وبعده ضمير مفعول (بَعَثَهُۥ، أَقۡبَرَهُۥ): يُفحص ما قبل الضمير
+    from .cells import ENCLITICS_V
+    for e in ENCLITICS_V:
+        el = letters(e)
+        if len(st) > len(el) + 2 and [L for L, _ in st[-len(el):]] == [L for L, _ in el] and \
+                [m for _, m in st[-len(el):]] == [m for _, m in el] and FATHA in st[-len(el) - 1][1]:
+            core = st[:-len(el)]
+            if 3 <= len(core) <= 4 and all(m & {FATHA, DAMMA, KASRA} and not m & {SUKUN} for _, m in core) and \
+                    not any(L in 'اوي' for L, _ in core):
+                return True
+            # أَفۡعَلَ: همزةٌ مفتوحة، فساكن، فمفتوحان (أَقۡبَرَهُۥ، أَنزَلَهُ)
+            if len(core) == 4 and core[0][0] == 'أ' and core[0][1] == {FATHA} and SUKUN in core[1][1] and \
+                    core[2][1] == {FATHA} and not any(L in 'اوي' for L, _ in core[1:]):
+                return True
+            break
+    return False
 
 
 def _hollow_madi(text):
@@ -728,6 +748,12 @@ def _hollow_madi(text):
     st = letters(text)
     if len(st) > 3 and st[0][0] in 'وف' and set(st[0][1]) == {FATHA}:
         st = st[1:]
+    if len(st) > 3 and st[0][0] in 'أ' and set(st[0][1]) == {FATHA} and st[2][0] == 'ا':
+        st = st[1:]                                    # أَفَالَ: الأجوف من أَفۡعَلَ (أَمَاتَهُۥ، أَقَامَ)
+    # جَآءُوٓ، قَالُوٓا: واو الجماعة بعد الضمّ
+    if len(st) >= 4 and set(st[0][1]) == {FATHA} and st[1][0] == 'ا' and not st[1][1] and DAMMA in st[2][1] and \
+            ''.join(L for L, _ in st[3:]) in ('و', 'وا'):
+        return True
     if len(st) < 3 or not (set(st[0][1]) == {FATHA} and st[1][0] == 'ا' and not st[1][1] and FATHA in st[2][1]):
         return False
     rest = ''.join(L + ''.join(sorted(m)) for L, m in st[3:])
@@ -1354,6 +1380,12 @@ def clause_start(a, wi):
     return None
 
 
+def _maqsur(st):
+    """آخره ألفٌ مقصورة (ضُحَى، وفي «ضُحَىٰهَا» آخر الجذع قبل الضمير): لا تظهر عليه حركة الإعراب"""
+    return bool(st) and (st[-1][0] == 'ى' or st[-1][0] == 'ا' and not st[-1][1] and len(st) > 2 and FATHA in st[-2][1]
+                         and not st[-2][1] & {FATHATAN})
+
+
 def word_feats(a):
     from .affix import stem_info
     """سمات الكلمة المكتوبة اللازمة لعلاقات الجملة التالية R(G, Q, c) (حكم صاحب النظرية في الصفة والحال والاستئناف):
@@ -1369,7 +1401,8 @@ def word_feats(a):
         tanwin = any(m & {FATHATAN, DAMMATAN, KASRATAN} for _, m in st)
         has_al = any(x['type'] in ('أل', 'لفظ الجلالة') for x in sl)
         g = verbs.get(wi)
-        standalone = 'أو' if is_form(w_, ('أَوْ',)) else 'ثم' if is_form(w_, ('ثُمَّ',)) else None
+        standalone = 'أو' if is_form(w_, ('أَوْ',)) else 'ثم' if is_form(w_, ('ثُمَّ',)) else \
+            'أم' if is_form(w_, ('أَمْ',)) else None
         if standalone and not conj:
             conj = True                               # «أَوۡ» و«ثُمَّ» كلمتان مستقلتان، و«ثُمَّ» كالفاء (حكم صاحب النظرية)
         # واوٌ أو فاء ملتصقة بضمير رفعٍ منفصل (فَهِيَ، وَهُمۡ): الضمير لا يبدأ بهما، فهما عاطفتان
@@ -1404,8 +1437,8 @@ def word_feats(a):
             vshape=(stem_info(next((x['text'] for x in sl if x['type'] == 'جذع'), w_).replace(DAGGER_ALIF, 'ا')).get('kind')
                     if not g else g['kind']),
             # آخره ألفٌ مقصورة: لا تظهر عليه حركة الإعراب، فيوافق كل حالة
-            maqsur=bool(st) and (st[-1][0] == 'ى' or st[-1][0] == 'ا' and not st[-1][1] and len(st) > 2 and FATHA in st[-2][1]
-                                 and not st[-2][1] & {FATHATAN}),
+            maqsur=_maqsur(st) or _maqsur(letters(next((x['text'] for x in sl if x['type'] == 'جذع'), ''))),
+            al=has_al, segs=[(x['type'], x['text']) for x in sl],
             demo=is_form(w_, ('أُولَٰئِكَ', 'أُولَئِكَ', 'أُلَٰئِكَ', 'أُلَئِكَ', 'ذَٰلِكَ', 'ذَلِكَ', 'تِلْكَ', 'هَٰذَا', 'هَذَا', 'هَٰذِهِ', 'هَٰؤُلَاءِ'), prefix=True)))
     return out
 
@@ -1635,7 +1668,10 @@ def cond_structs(feats, nuc_pos, starts, ay_end=None):
     return out
 
 
+# شواهد مواصفة حدود العطف: تُحفظ سجلاتها كاملةً في كل تشغيل
+COORD_WATCH = {'55:5', '80:32', '80:21', '2:4', '2:6', '2:259', '91:1', '91:2', '12:16', '2:25', '2:9'}
 COORD_EFFECT = {'و': 'مطلق الجمع (لا يثبت به ترتيب)', 'ف': 'الترتيب والتعقيب', 'ثم': 'الترتيب والتراخي',
+                'أم': 'المعادلة بعد همزة التسوية أو الاستفهام (أَمۡ المتصلة)',
                 'أو': 'التخيير أو الإباحة أو الشك، بحسب السياق'}
 CASE_COMPAT = {'رفع': {'رفع'}, 'نصب': {'نصب', 'جر أو نصب', 'نصب أو جر'}, 'جر': {'جر', 'جر أو نصب', 'نصب أو جر'},
                'جر أو نصب': {'جر', 'نصب', 'جر أو نصب', 'نصب أو جر'}, 'نصب أو جر': {'جر', 'نصب', 'جر أو نصب', 'نصب أو جر'}}
@@ -1648,6 +1684,15 @@ PP_WORD_V = tuple(b + p for b in ('لَ', 'لِ', 'بِ', 'عَلَيْ', 'إِ�
 ISTIDRAK_V = ('لَٰكِنْ', 'لَكِنْ', 'لَٰكِنَّ', 'لَكِنَّ', 'بَلْ')
 
 
+def _pp_like(g):
+    """شبه جملةٍ في كلمة: جارٌّ مقطَّع، أو جارٌّ وضمير، أو جذعٌ أوله لامٌ أو باءٌ مكسورة ومجرورٌ (وَلِأَنۡعَٰمِكُمۡ)"""
+    if g.get('head') == 'pp' or is_form(g['text'], PP_WORD_V, prefix=True):
+        return True
+    stem = next((x[1] for x in (g.get('segs') or []) if x[0] == 'جذع'), '')
+    st = letters(stem)
+    return g['case'] == 'جر' and len(st) > 3 and st[0][0] in 'لب' and st[0][1] == {KASRA}
+
+
 def clause_word(feats, h, nuc_pos):
     """أول المعطوف يبدأ جملةً بنفسه: فعلٌ (ثابت أو بصورته)، أو ما له الصدارة أو ناسخ، أو «أَمَّا»، أو نفيٌ أو شرطٌ
     يليه فعل، أو ضمير أو شبه جملة يليهما ما يتمّ به الكلام (وَلَهُمۡ عَذَابٌ، وَإِيَّاكَ نَسۡتَعِينُ)"""
@@ -1656,6 +1701,7 @@ def clause_word(feats, h, nuc_pos):
     nv = bool(nxt) and (nxt['verb'] or h + 1 in nuc_pos or nxt.get('vshape'))
     if g['verb'] or h in nuc_pos or g.get('vshape') and not g.get('noun') or g.get('amma') or \
             not g.get('noun') and (_madi_like(g['text']) or _hollow_madi(g['text'])) or \
+            _verb_enclitic(g) or \
             set(g.get('ops', [])) & VERBAL_OPS:
         return True
     if is_form(g['text'], ISTIDRAK_V, prefix=True):
@@ -1668,10 +1714,30 @@ def clause_word(feats, h, nuc_pos):
     return pp and _pp_clause(feats, h, nuc_pos)
 
 
+def _verb_enclitic(g):
+    """صورة الماضي قبل ضمير المفعول بعد العاطف (فَأَمَاتَهُۥ، ثُمَّ بَعَثَهُۥ): الاسم قبل الضمير لا يأتي على هذه الصورة
+    إلا منصوباً، فيُقصر على الأجوف من أَفۡعَلَ وعلى ما ليس ظرفاً"""
+    from .cells import ENCLITICS_V
+    t = g['text']
+    if g.get('zarf') or not any(x[0] == 'مبني' and is_form(x[1], ENCLITICS_V) for x in (g.get('segs') or [])[1:]):
+        return False
+    st = letters(t)
+    if st and st[0][0] in 'وف' and st[0][1] == {FATHA}:
+        st = st[1:]
+    return len(st) > 3 and st[0][0] == 'أ' and st[0][1] == {FATHA} and st[2][0] == 'ا' and _hollow_madi(t)
+
+
 def _pp_clause(feats, h, nuc_pos):
     """شبه الجملة بعد العاطف يبدأ جملةً إن تلاه ما يتمّ به الكلام: مرفوعٌ (خبرٌ مقدَّم ومبتدأ مؤخَّر: وَلَهُمۡ عَذَابٌ)،
     أو فعل، أو ضمير؛ فإن تلاه مجرورٌ أو منصوب (وَبِٱلۡيَوۡمِ ٱلۡأٓخِرِ) فهو مفردٌ معطوف"""
     nxt = feats[h + 1] if h + 1 < len(feats) else None
+    q = h + 1
+    # شبه جملةٍ ثانية قبل المرفوع (وَلَهُمۡ فِيهَآ أَزۡوَٰجٌ): تُتخطّى
+    while nxt is not None and q < h + 3 and not nxt['conj'] and (nxt.get('head') == 'pp' or
+                                                                is_form(nxt['text'], PP_WORD_V, prefix=True)) and \
+            not is_form(nxt['text'], JARR_V) and q + 1 < len(feats):
+        q += 1
+        nxt = feats[q]
     if nxt is not None and is_form(feats[h]['text'], JARR_V) and nxt['case'] in ('جر', 'جر أو نصب', 'نصب أو جر', None) \
             and h + 2 < len(feats):
         nxt = feats[h + 2]                              # فِي قُلُوبِهِم مَّرَضٌ: الجارّ كلمة، ومجروره بعده، ثم المرفوع
@@ -1680,7 +1746,7 @@ def _pp_clause(feats, h, nuc_pos):
                                               not nxt.get('noun'))
 
 
-def coord_structs(feats, nuc_pos, starts, not_conj, is_clause):
+def coord_structs(feats, nuc_pos, starts, not_conj, is_clause, ay_end=None):
     """G = Coord_h,e(A, B) لكل حرف عطف (حكم صاحب النظرية؛ الأصول من ابن عقيل):
     - الحرف عاطفٌ هنا ما لم يثبت غيره: فاء الجواب الرابطة، وفاء خبر الموصول المبتدأ ليستا عاطفتين (not_conj)
     - المستوى: جملةٌ (المعطوف فعلٌ أو ما له الصدارة أو جملة اسمية من أكثر من كلمة) أو مفرد
@@ -1695,7 +1761,7 @@ def coord_structs(feats, nuc_pos, starts, not_conj, is_clause):
         if not f['conj'] or k in not_conj:
             continue
         letter = f['conj_letter']
-        h = k + 1 if letter in ('أو', 'ثم') else k
+        h = k + 1 if letter in ('أو', 'ثم', 'أم') else k
         if h >= n:
             continue
         # «وَمَآ أُنزِلَ» بعد «بِمَآ أُنزِلَ»: «ما» موصولةٌ معطوفة على «ما» قبلها، لا نافية تبدأ جملة
@@ -1707,11 +1773,41 @@ def coord_structs(feats, nuc_pos, starts, not_conj, is_clause):
             out.append(dict(kind='عطف', pos=k, letter=letter, level='مفرد', B=h, A=[prev_ma],
                             effect=COORD_EFFECT.get(letter, ''), note=f'«{g_text}» موصولة معطوفة على نظيرتها'))
             continue
+        g = feats[h]
+        # مرفوعٌ بعد مرفوعٍ هو أول جملته (ٱلشَّمۡسُ وَٱلۡقَمَرُ بِحُسۡبَانٍ): اسمان متعاطفان، وما بعدهما مشتركٌ خارجهما
+        a_ = k - 1
+        if a_ > 0 and feats[a_]['case'] in ('جر', 'جر أو نصب') and feats[a_ - 1]['case'] == 'رفع' and feats[a_ - 1].get('noun'):
+            a_ -= 1                                     # المضاف إليه بعد الأول
+        first_of_clause = a_ >= 0 and (a_ == 0 or starts[a_] or (ay_end and ay_end[a_ - 1]) or feats[a_ - 1]['verb'] or
+                                       a_ - 1 in nuc_pos or feats[a_ - 1]['conj'])
+        if g.get('noun') and g['case'] == 'رفع' and a_ >= 0 and feats[a_].get('noun') and feats[a_]['case'] == 'رفع' and \
+                first_of_clause and letter in ('و', 'ف', 'ثم', 'أو') and not g.get('demo'):
+            out.append(dict(kind='عطف', pos=k, letter=letter, level='مفرد', B=h, A=[a_],
+                            effect=COORD_EFFECT.get(letter, ''), note='مرفوعان متعاطفان أولُهما أول جملته'))
+            continue
         if is_clause(k - 1) or clause_word(feats, h, nuc_pos):
             out.append(dict(kind='عطف', pos=k, letter=letter, level='جملة', B=h, A=['الجملة قبله'],
                             effect=COORD_EFFECT.get(letter, '')))
             continue
-        g = feats[h]
+        # شبه جملةٍ معطوفة على شبه جملة (مَتَٰعًا لَّكُمۡ وَلِأَنۡعَٰمِكُمۡ): الطرفان جارٌّ ومجرور، ويُقدَّم الجارّ نفسه
+        pp_b = _pp_like(g)
+        if pp_b:
+            def _is_pp(j):
+                return _pp_like(feats[j]) or is_form(feats[j]['text'], JARR_V)
+            def _jl(f_):
+                lb = letters(f_['text'])
+                return lb[1][0] if f_['conj'] and len(lb) > 1 else lb[0][0] if lb else ''
+            ppc = []
+            for j in range(k - 1, max(-1, k - 10), -1):
+                if starts[j] and j < k - 1 or ay_end and ay_end[j] and j < k - 1:
+                    break
+                if _is_pp(j):
+                    ppc.append(j)
+            same = [j for j in ppc if _jl(feats[j]) == _jl(g)]
+            if ppc:
+                out.append(dict(kind='عطف', pos=k, letter=letter, level='شبه جملة', B=h, A=(same or ppc)[:3],
+                                effect=COORD_EFFECT.get(letter, ''), note='جارٌّ ومجرور معطوفٌ على جارٍّ ومجرور'))
+                continue
         c = g['case']
         cands = []
         # المعطوف المفرد: اسمٌ بدليله، أو موصولٌ (وَٱلَّذِينَ ءَامَنُواْ)، أو مصدرٌ مؤوَّل بـ«أَنْ» والفعل (وَأَن تَقُولُواْ)؛
@@ -1816,6 +1912,8 @@ def _boundary_kind(p, js, spans, cspans, nuc_pos, qawl_pos, starts, feats=None):
     # أو معيّة أو استئناف، تُحفظ بدائله ولا يُختار منها اعتباطاً
     f = feats[p + 1] if feats else None
     if f and f['conj']:
+        if f['conj_letter'] == 'أم':
+            return None                                  # «أَمۡ» المتصلة تعادل همزة التسوية: لا يُبتدأ بها
         name = {'و': 'الواو', 'ف': 'الفاء', 'ثم': '«ثُمَّ»'}.get(f['conj_letter'], '«أو»')
         # فاء الجواب: «مَن» أو «ما» في J قبلها قد تكون شرطاً، فما بعد الفاء جوابه لا جملة مستقلة
         if f['conj_letter'] == 'ف' and any(feats[k].get('cond_amb') for k in range(js, p + 1)):
@@ -1823,7 +1921,7 @@ def _boundary_kind(p, js, spans, cspans, nuc_pos, qawl_pos, starts, feats=None):
         # يُقصر الحكم على الجملة (حكم صاحب النظرية): المعطوف فعلٌ، أو ما له الصدارة، أو جملةٌ اسمية أولها مرفوع
         # أو ضمير منفصل أو شبه جملة، وهي أكثر من كلمة؛ أما الاسم المعطوف على مفرد فليس جملة (عِظَٰمًا ‖ وَرُفَٰتًا)
         # «أَوۡ» و«ثُمَّ» كلمتان: المعطوف يبدأ بما بعدهما
-        h = p + 2 if f['conj_letter'] in ('أو', 'ثم') else p + 1
+        h = p + 2 if f['conj_letter'] in ('أو', 'ثم', 'أم') else p + 1
         if h >= len(feats):
             return None
         g = feats[h]
@@ -1890,7 +1988,8 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
     import collections
     st = collections.Counter()
     out, records = [], []
-    rel_samples, cond_samples, coord_samples = [], [], []
+    rel_samples, cond_samples, coord_samples, coord_records = [], [], [], []
+    failures = collections.defaultdict(list)
     sources = waqf_sources()
     by_surah = collections.OrderedDict()
     for it in items:
@@ -1995,7 +2094,7 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
             k = next((k for k in range(qp + 1, min(n, qp + 6)) if k in nset), None)
             if k is not None and not any(starts[j] and starts[j][0] != 'نداء' for j in range(qp + 1, k)):
                 bound.setdefault(k, f'مقول «{wtext[qp]}»')
-        not_conj = set()
+        not_conj, not_conj_why, cond_spans = set(), {}, []
         for c_ in cond_structs(feats, set(nuc_pos), starts, ay_end):
             st['cond'] += 1
             st['cond:ambiguous'] += c_['amb']
@@ -2015,6 +2114,9 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
                     inner.setdefault(k, ('open', f'جواب «{c_["tool"]}» غير مستوفى' + (f' ({c_["q_kind"]})' if c_['q_kind'] else '')))
             if c_['q_pos'] is not None and feats[c_['q_pos']]['conj'] and feats[c_['q_pos']]['conj_letter'] == 'ف':
                 not_conj.add(c_['q_pos'])
+                not_conj_why[c_['q_pos']] = dict(tool=c_['tool'], head=c_['head'], amb=bool(c_['amb']),
+                                                 s_deferred=any('مشروط' in str(o_[2]) for o_ in c_['obligations']))
+            cond_spans.append((c_['head'], c_['q_pos'], c_['tool']))
             roles.setdefault(c_['head'], f'أداة شرط «{c_["tool"]}»')
             for k, why in ((c_['s_pos'], 'فعل الشرط'), (c_['q_pos'], 'جواب الشرط')):
                 if k is not None:
@@ -2028,8 +2130,8 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
         def _is_clause(p_):
             d_ = _boundary_kind(p_, 0, [], [], nuc_pos, set(), starts, feats)
             return bool(d_) and d_[1].startswith('نهاية جملة قبل')
-        coords = list(coord_structs(feats, set(nuc_pos), starts, not_conj, _is_clause))
-        single_B = {c['B'] for c in coords if c['level'] == 'مفرد'} | {c['pos'] for c in coords if c['level'] == 'مفرد'}
+        coords = list(coord_structs(feats, set(nuc_pos), starts, not_conj, _is_clause, ay_end))
+        single_B = {c['B'] for c in coords if c['level'] != 'جملة'} | {c['pos'] for c in coords if c['level'] != 'جملة'}
         # نهاية الصلة الفعلية: تمتدّ بما يُعطف عليها داخلها (صلةٌ معطوفة، أو مفردٌ معطوف في الصلة: وَمَآ أُنزِلَ)
         eff_end = {r['head']: r['end'] for r in rels}
         def _next_stop(j):
@@ -2050,7 +2152,12 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
         def _b_stop(j):
             # نطاق المعطوف B: لا يُقطع قبل اكتماله؛ فالضمير أو اسم الإشارة بعد شبه جملةٍ في أوله مبتدؤه، والنواة بعده خبره
             # (وَبِٱلۡأٓخِرَةِ هُمۡ يُوقِنُونَ). ويقف عند عاطفٍ آخر، أو ما له الصدارة، أو آخر الآية، أو رأس جملةٍ بعد نواته
-            subj = nuc_seen = False
+            # والمبتدأ ضميرٌ في أول المعطوف (وَهِيَ خَاوِيَةٌ): خبره المرفوع يتمّ به، فالنواة بعده رأس جملةٍ جديدة؛
+            # والنفي بعد اكتمال النواة يبدأ جملة (أَمۡ لَمۡ تُنذِرۡهُمۡ ‖ لَا يُؤۡمِنُونَ)
+            f0 = feats[j]
+            subj = bool(f0.get('demo') or f0.get('head') == 'pron')
+            nuc_seen = bool(j in nset or f0['verb'])
+            pred = False
             for p_ in range(j + 1, n):
                 f_ = feats[p_]
                 if f_['conj'] or starts[p_]:
@@ -2059,10 +2166,16 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
                     if subj or nuc_seen:
                         return p_
                     subj = True
-                elif p_ in nset or f_['verb']:
-                    if nuc_seen:
+                elif p_ in nset or f_['verb'] or _madi_like(f_['text']) and not f_.get('noun') or \
+                        _hollow_madi(f_['text']) and not f_.get('noun'):
+                    if nuc_seen or pred:
                         return p_
                     nuc_seen = True
+                elif f_.get('neg') and nuc_seen and p_ + 1 < n and (feats[p_ + 1]['verb'] or p_ + 1 in nset or
+                                                                     feats[p_ + 1].get('vshape')):
+                    return p_
+                elif subj and not nuc_seen and f_.get('noun') and f_['case'] == 'رفع':
+                    pred = True
                 if ay_end[p_]:
                     return p_ + 1
             return n
@@ -2080,12 +2193,31 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
             elif vb is not None and ppb:
                 rel_.append(f'«{wtext[b0]}» شبه جملة متعلّقة بـ«{wtext[vb]}»')
             return rel_
+        from .coord import Ctx, site_record, extra_sites, nest
+        CX = Ctx(feats=feats, wtext=wtext, words=words, ay_end=ay_end, starts=starts, nset=nset, rel_at=rel_at,
+                 eff_end=eff_end, rels=rels, not_conj_why=not_conj_why, cond_spans=cond_spans, q=q,
+                 surah_start=bool(words) and words[0][1] == 1 and words[0][2] == 0, next_stop=_next_stop,
+                 wunits=wunits, b_stop=_b_stop)
+        crecs = []
+
+        def _clause_head(j):
+            if j in silah_pos or j in single_B or bound.get(j, '').startswith('مقول'):
+                return False
+            f_ = feats[j]
+            demo_head = bool(f_.get('demo')) and not (j > 0 and (j - 1 in nset or feats[j - 1]['verb'] or
+                                                                 feats[j - 1].get('vshape')))
+            return j in nset or bool(f_['verb']) or not f_.get('noun') and (_madi_like(f_['text']) or
+                                                                            _hollow_madi(f_['text'])) or \
+                _verb_enclitic(f_) or demo_head or f_.get('head') == 'pron' or bool(starts[j]) or j in rel_at or \
+                f_['conj'] and clause_word(feats, j, nset) or \
+                (f_.get('head') == 'pp' or is_form(f_['text'], JARR_V)) and _pp_clause(feats, j, nset)
         for c_ in coords:
             k0 = c_['pos']
             host = next((r for r in sorted(rels, key=lambda r: -r['head']) if r['head'] < k0 <= eff_end[r['head']] and
                          eff_end[r['head']] >= k0), None)
-            if c_['level'] == 'مفرد' and host is not None and eff_end[host['head']] == k0:
-                eff_end[host['head']] = _next_stop(k0)      # المفرد المعطوف داخل الصلة جزءٌ منها
+            if c_['level'] in ('مفرد', 'شبه جملة') and host is not None and eff_end[host['head']] == k0 and c_['A'] and \
+                    all(host['head'] < a_ < k0 for a_ in c_['A']):
+                eff_end[host['head']] = _next_stop(k0)      # المفرد المعطوف على ما في الصلة جزءٌ منها
             # الموصول حجّةٌ في جملةٍ أوسع (يُخَٰدِعُونَ ٱللَّهَ وَٱلَّذِينَ ءَامَنُواْ): الجملة الخارجية أولى، والصلة بديل
             def _governed(h_):
                 for j in range(h_ - 1, max(-1, h_ - 7), -1):
@@ -2110,15 +2242,7 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
                 # الطرفان بهويتيهما ونطاقيهما (مراجعة التقرير ٧): A الجملة التي تنتهي قبل العاطف (من نواتها السابقة)،
                 # وB الجملة التي تبدأ به (إلى نواتها). وبلا نواةٍ قبلها فالطرف A غير معيَّن، ولا يُعدّ العطف عطفَ جملة مثبتاً
                 k0 = c_['pos']
-                def _head(j):
-                    if j in silah_pos or j in single_B or bound.get(j, '').startswith('مقول'):
-                        return False                   # فعل الصلة رأسُ صلته، والمقول داخل القول: ليسا رأس الجملة الخارجية
-                    f_ = feats[j]
-                    return j in nset or bool(f_['verb']) or not f_.get('noun') and (_madi_like(f_['text']) or
-                                                                                    _hollow_madi(f_['text'])) or \
-                        bool(f_.get('demo')) or f_.get('head') == 'pron' or bool(starts[j]) or j in rel_at or \
-                        f_['conj'] and clause_word(feats, j, nset) or \
-                        (f_.get('head') == 'pp' or is_form(f_['text'], JARR_V)) and _pp_clause(feats, j, nset)
+                _head = _clause_head
                 # رأس الجملة السابقة: أول رأسٍ يُلقى رجوعاً من العاطف (فعلٌ، أو نواة، أو اسم إشارة أو ضمير يبدأ جملة اسمية،
                 # أو ما له الصدارة)، ولا يُعبر إلى جملةٍ قبله: «أُوْلَٰٓئِكَ عَلَىٰ هُدࣰى» لا «يُوقِنُونَ … أُوْلَٰٓئِكَ»
                 a_n = next((j for j in range(k0 - 1, max(-1, k0 - 15), -1) if _head(j)), None)
@@ -2176,9 +2300,9 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
                                     head=wtext[c_['B']], type='مفرد', container=None, evidence='كلمة المعطوف')
                 c_['A_status'] = ('معيَّن' if len(c_['A']) == 1 else
                                   'بدائل معلَّقة (لم يُعتمد أحدها)' if c_['A'] else 'غير معيَّن')
-            if c_['level'] == 'جملة' and c_['A'] or c_['level'] == 'مفرد' and len(c_['A']) == 1:
+            if c_['level'] == 'جملة' and c_['A'] or c_['level'] != 'جملة' and len(c_['A']) == 1:
                 roles.setdefault(c_['pos'], f'حرف عطف «{c_["letter"]}»')
-                if c_['level'] == 'مفرد':
+                if c_['level'] != 'جملة':
                     roles.setdefault(c_['B'], f'معطوفٌ على «{wtext[c_["A"][0]]}»')
             st['coord'] += 1
             st[f'coord:{c_["level"]}'] += 1
@@ -2187,7 +2311,7 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
                 st['coord:مفرد:' + ('معيَّن' if len(c_['A']) == 1 else 'بدائل' if c_['A'] else 'غير معيَّن')] += 1
             if len(coord_samples) < 60:
                 coord_samples.append(dict(location=words_text(words, c_['pos']), letter=c_['letter'], level=c_['level'],
-                                          B=wtext[c_['B']], A=[wtext[j] for j in c_['A']][:4] if c_['level'] == 'مفرد' else
+                                          B=wtext[c_['B']], A=[wtext[j] for j in c_['A']][:4] if c_['level'] != 'جملة' else
                                           [f'«{x["text"]}» ({x["type"]}، رأسها «{x["head"]}»' +
                                            (f'، في {x["container"]}' if x.get('container') else '') + ')' for x in c_['A']],
                                           effect=c_['effect'], A_status=c_.get('A_status'),
@@ -2195,6 +2319,53 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
                                                   for x in c_['A']] if c_['level'] == 'جملة' else [],
                                           B_full={k: (list(v) if isinstance(v, tuple) else v)
                                                   for k, v in (c_.get('B_full') or {}).items()}))
+        # سجلّ المرشّحات بعد اكتمال الامتدادات كلها (الصلة قد تمتدّ بعطفٍ لاحق)
+        CX.clause_head = _clause_head
+        for c_ in coords:
+            rec = site_record(c_, CX)
+            crecs.append(rec)
+            k0 = c_['pos']
+            # حدّ الموضع يختلف باختلاف المرشّحات الباقية (حالٌ أو صلةٌ أو مفرد، أو جملةٌ مستقلة): يبقى الحدّ محتملاً
+            live = [x for x in rec['candidates'] if x['status'] in ('مستوفٍ', 'مؤجَّل')]
+            sep = {x['level'] == 'جملة' and not x['container'] and x['function'] in ('عطف', 'استئناف') for x in live}
+            if not rec['UniqueWithin'] and len(sep) > 1 and k0 > 0:
+                inner.setdefault(k0 - 1, ('open', 'حدّ العطف مؤجَّل: ' + rec['reason']))
+            if not rec['UniqueWithin']:
+                for p_ in (k0, c_['B']):
+                    if p_ in roles and (roles[p_].startswith('حرف عطف') or roles[p_].startswith('معطوفٌ على')) and \
+                            not roles[p_].endswith(')'):
+                        roles[p_] += ' (مرشَّح، القرار مؤجَّل)'
+        crecs += extra_sites(CX, {c_['pos'] for c_ in coords})
+        nest(crecs, CX)
+        from .coord import check_coord, mutations
+        for rec in crecs:
+            pr_ = check_coord(rec, CX)
+            st['coordcheck:' + ('سليم' if not pr_ else 'مرفوض')] += 1
+            if pr_ and len(failures['coordcheck']) < 30:
+                failures['coordcheck'].append(f'{rec["letter_unit"]}: {pr_[:3]}')
+            if not pr_ and st['coordmut:حالات'] < 400:
+                for name_, r_ in mutations(rec, CX):
+                    st['coordmut:حالات'] += 1
+                    caught = bool(check_coord(r_, CX))
+                    st['coordmut:' + ('كُشف' if caught else 'فات')] += 1
+                    if not caught and len(failures['coordmut']) < 30:
+                        failures['coordmut'].append(f'{rec["letter_unit"]}: {name_}')
+            st['coordrec'] += 1
+            st[f'coordrec:قرار:{rec["decision"]}'] += 1
+            for d_ in rec['decision_codes']:
+                st[f'coordrec:تأجيل:{d_}'] += 1
+            st['coordrec:مرشّحات'] += len(rec['candidates'])
+            for x in rec['candidates']:
+                st[f'coordrec:مرشّح:{x["status"]}'] += 1
+                for b_ in x['barriers']:
+                    st[f'coordrec:مانع:{b_[0]}'] += 1
+            acc = next((x for x in rec['candidates'] if x['status'] == 'مستوفٍ'), None)
+            if rec['UniqueWithin'] and acc:
+                st[f'coordrec:مقبول:{acc["function"]}'] += 1
+            st['coordrec:داخل طرف'] += 'inside' in rec
+            st['coordrec:سلسلة'] += 'chain' in rec
+            if len(coord_records) < 60 or rec['text_id']['verse'] in COORD_WATCH:
+                coord_records.append(rec)
         pending = {}                                  # موضع الحدّ ← (inner | open، السبب) لخبر الموصول المبتدأ
         for p in range(n):
             last = p == n - 1
@@ -2221,6 +2392,8 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
                 js = p + 1
                 if dec[0] == 'proven':
                     chain = dec[1].startswith('نهاية جملة قبل')
+                elif dec[1].startswith('حدّ العطف مؤجَّل'):
+                    chain = True                      # الحدّ المؤجَّل قبل جملةٍ معطوفة أو حالية: تشارك ما قبلها التمام
             if marks[p] or ay_end[p] or last or dec:
                 rec = boundary_record(p, words, pos_of, bonds, obls, nuclei, du_start, marks[p], ay_end[p], last,
                                       sources, a_id, q, cand, checked_ends)
@@ -2369,7 +2542,8 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
             if D.O['boundary'].get('M'):
                 sp.B.append(('تعلّق معنوي عابر', D.id, None, Evidence(D.O['boundary']['M'][0], ['من سجل الوقف'])))
         out.append(sp)
-    linguistic_layer.samples = dict(rel=rel_samples, cond=cond_samples, coord=coord_samples)
+    linguistic_layer.samples = dict(rel=rel_samples, cond=cond_samples, coord=coord_samples, coord_records=coord_records,
+                                    coord_failures=dict(failures))
     return out, st, records
 
 
