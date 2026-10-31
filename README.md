@@ -25,6 +25,7 @@
 | `sarf/analyze.py` | تحليل آية بكل المراحل (يمرّ بالـ pipeline) |
 | `sarf/agreement.py` | T18: سمات الفعل بالتوافق A(m) = {Φ(p) \| R(m,p)}؛ Φ من ملف المبنيات، وR بقواعد التصريف، والتخصيص بضمير منفصل قبله؛ والمبني للمجهول من الكتابة |
 | `sarf/root.py` | T19a–T19c: الخلايا (Cva…، والشدة صامتان)، والجذر والصيغة المرخَّصان Morph(W, R, P, F; e_m): المرشَّح من قوالب الأوزان I–X بقيود الحركات والمعتل، والرخصة من HFN (شبكة حسين للإطار، CC0): حدثٌ مسجَّل بالجذر والوزن، أو الجذر وحده والوزن بالقالب. يُقرأ HFN من `SARF_HFN` أو `../husseinframenet/release/release_v18` أو `~/arabic-net/HusseinFrameNet/release/release_v18` |
+| `sarf/protected.py` | بوابة الحماية الدستورية (CLAUDE.md §١): العوامل المائة بتصريفها، والمبنيات، والأسماء الذهبية ولفظ الجلالة، بسوابقها وضمائرها؛ لا جذر لها (NOT_APPLICABLE)، والملتبس فئته مؤجَّلة |
 | `sarf/output_schema.py` | السجل الجامع: الناتج بصيغة `schema/morph_analysis.schema.json` (1.1)؛ `extract_operators.py --schema` |
 | `sarf/mood.py` | خبري/إنشائي/مؤجَّل بالعامل في بابه، بمعيار القسمة المعتمد (Q01): 18 إنشائية، و80 خبرية، ولَوْ وكَمْ مؤجَّلتان (T14a) |
 | `sarf/output_text.py`، `sarf/output_html.py` | الناتج النصي وJSON، وتقرير HTML |

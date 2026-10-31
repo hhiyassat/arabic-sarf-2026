@@ -51,6 +51,16 @@ for l in open(H + 'data/quran_hafs.tsv', encoding='utf-8'):
             if not m:
                 continue
             C['morph'] += 1
+            # الوحدات المحمية دستورياً خارج مقام دقة الجذر (تُقاس بـtools/eval_protected.py)، والفئة المؤجَّلة كذلك
+            if m['status'] in ('not_applicable', 'class_deferred'):
+                C[m['status']] += 1
+                C[m['status'] + (':QAC فعل' if qv else ':QAC غير فعل')] += 1
+                if DUMP is not None:
+                    DUMP.write(json.dumps(dict(loc=f'{s}:{v}:{wi}', text=sl['text'], status=m['status'], root=None,
+                                               form=None, level=None, reason=m.get('reason'),
+                                               protected=(m.get('protected') or {}).get('identity')),
+                                          ensure_ascii=False) + '\n')
+                continue
             if not qv:
                 C['not_qac_verb'] += 1
                 if m['status'] == 'accepted': ex['acc_not_verb'].append(f"{s}:{v} {sl['text']} {m.get('root')}")
@@ -74,6 +84,12 @@ for l in open(H + 'data/quran_hafs.tsv', encoding='utf-8'):
                 C[f"acc_{m['level']}_root_ok"] += okr
                 if not okr or not okf:
                     ex['acc_wrong'].append(f"{s}:{v} {sl['text']} ours={m['root']}/{m['form_class']}/{m['level']} gold={groot}/{gvf}")
+            elif m['status'] == 'ranked':
+                # المرجَّح لا يُعدّ مقبولاً: يُقاس صواب قراءته المرجَّحة منفصلاً
+                C['ranked'] += 1
+                C['ranked_root_ok'] += m['root'] == groot
+                if m['root'] != groot:
+                    ex['ranked_wrong'].append(f"{s}:{v} {sl['text']} ranked={m['root']}/{m['form_class']} gold={groot}/{gvf}")
             else:
                 C['deferred'] += 1
                 ex['deferred'].append(f"{s}:{v} {sl['text']} gold={groot}/{gvf} :: {m.get('reason','')[:80]}")

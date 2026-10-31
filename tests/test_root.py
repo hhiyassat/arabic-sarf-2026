@@ -65,9 +65,9 @@ else:
     a = analyze(Catalog([H + 'operators_catalog.jsonl', H + 'operators_catalog_split_vocalized.csv']),
                 'لَن نَّبْرَحَ عَلَيْهِ عَٰكِفِينَ حَتَّىٰ يَرْجِعَ إِلَيْنَا مُوسَىٰ')
     got = {m['word_index']: (m['status'], m['root']) for m in a['morph']}
-    check('لَنۡ نَّبۡرَحَ، حَتَّىٰ يَرۡجِعَ: فعلان بالعامل، والجذر مقبول', got.get(1) == ('accepted', 'برح') and
-          got.get(5) == ('accepted', 'رجع'), got)
-    check('مُوسَىٰ: لا جذر مقبول (لم يثبت أنه فعل)', got.get(7, ('deferred',))[0] != 'accepted', got)
+    check('لَنۡ نَّبۡرَحَ، حَتَّىٰ يَرۡجِعَ: «نبرح» عاملٌ محمي (برح من أخوات كان) لا جذر له، و«يرجع» جذره مقبول',
+          got.get(1) == ('not_applicable', None) and got.get(5) == ('accepted', 'رجع'), got)
+    check('مُوسَىٰ: اسمٌ ذهبي لا جذر له', got.get(7, ('not_applicable',))[0] in ('not_applicable',), got)
     agr = {g['word_index']: g['pronouns'] for g in a['agreement']}
     check('الفاعل بالعامل: نَحۡنُ، هُوَ', agr.get(1) == ['نَحْنُ'] and agr.get(5) == ['هُوَ'], agr)
     m = morph('قُلْ')
@@ -75,8 +75,15 @@ else:
           m['licensed'][0]['event_id'].startswith('HFN-E-'), m['licensed'][:1])
     # مراجعة التقرير الخامسة (٣): القوة الأرجح تُنتج ترجيحاً لا إثباتاً، والمنافس محفوظ بسببه
     m = morph('وَلَسْتُمْ')
-    check('وَلَسۡتُمۡ: «ولس» مرجَّحٌ بالمطابقة لا مثبت، و«ليس» محفوظٌ بين البدائل',
-          m['status'] == 'accepted' and m['level'] == 'ranked' and 'ليس/I' in m['selection'].get('alternatives', []), m)
+    check('وَلَسۡتُمۡ: «ليس» عاملٌ محمي دستورياً، فلا يدخل مسار الجذر (NOT_APPLICABLE)',
+          m['status'] == 'not_applicable' and m['root_status'] == 'NOT_APPLICABLE' and
+          m['reason'] == 'CONSTITUTIONAL_PROTECTED_CLASS' and not m['candidates'] and m['protected']['identity'] == 'لَيْسَ', m)
+    m = morph('تَهِنُوا')
+    check('تَهِنُواْ: الترجيح بالمطابقة «مرجَّح» لا مقبول، والمنافس «وهن» محفوظ', m['status'] == 'ranked' and
+          'وهن/I' in m['selection'].get('alternatives', []), m.get('status'))
+    m = morph('عَلِمَ')
+    check('عَلِمَ: فعلٌ قلبيّ محمي مرشّح أو فعلٌ تامّ: الفئة مؤجَّلة، والحماية باقية، والبديل محفوظ',
+          m['status'] == 'class_deferred' and m['protected']['identity'] == 'عَلِمَ' and m['alternative'], m.get('status'))
     m = morph('فَجَعَلْتُمْ')
     check('فَجَعَلۡتُمۡ: لا منافس، فالجذر مثبت (لا مرجَّح)', m['status'] == 'accepted' and m['level'] == 'event', m)
 print('ALL OK' if not bad else f'FAILED {bad}')
