@@ -231,10 +231,18 @@ if hfn() and rows:
     import copy
     from sarf.checker import check_sentence
     T_ = Trace(); items_ = []; an_ = {}
-    for v_ in range(55, 57):
+    # كما في التشغيل الكامل: يُفحص حدّ كل آيةٍ مع التي تليها لفظاً (cross_ayah_links)، فلا يبقى «استقلال الحدّ» مفتوحاً
+    from sarf.algebra import cross_ayah_links
+    cross_, ends_, prev_ = [], set(), None
+    for v_ in range(55, 58):
         a_ = analyze(cat, rows[(2, v_)]); S_, u_ = sentence_geo(a_, f'Q2:{v_}', T_)
         items_.append((2, v_, a_, u_, S_)); an_[(2, v_)] = a_
-    LT_ = linguistic_layer(items_, T_, 't')[0]
+        cur_ = dict(s=2, v=v_, text=rows[(2, v_)], a=a_, units=u_, S=S_)
+        if prev_ is not None:
+            cross_ += cross_ayah_links(lambda t: analyze(cat, t), prev_, cur_)
+            ends_.add((2, prev_['v']))
+        prev_ = cur_
+    LT_ = linguistic_layer(items_, T_, 't', cross=cross_, checked_ends=frozenset(ends_))[0]
     Jc = next((J for D in LT_[0].A for J in D.A if J.closed and any(o.name.startswith('معمول') for o in J.Omega)), None)
     check('الفاحص يقبل جملةً مغلقة بشهادتين صحيحتين (البقرة ٥٦: لَعَلَّكُمۡ تَشۡكُرُونَ)',
           Jc is not None and check_sentence(Jc, an_) == [], Jc and check_sentence(Jc, an_))
