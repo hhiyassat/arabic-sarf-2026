@@ -459,7 +459,8 @@ if RC:
                             for r in rs[:12]]))
 PE = json.load(open(H + 'reports/protected_eval.json', encoding='utf-8')) if os.path.exists(H + 'reports/protected_eval.json') else None
 PA = json.load(open(H + 'reports/protected_audit.json', encoding='utf-8')) if os.path.exists(H + 'reports/protected_audit.json') else None
-RT = M.get('root', {})
+RT = (json.load(open(H + 'reports/quran_metrics.json', encoding='utf-8')).get('root', {})
+      if os.path.exists(H + 'reports/quran_metrics.json') else {})
 parts += [
     '<h2>٩ج. الحماية الدستورية: لا جذر للعوامل المائة ولا للمبنيات ولا للأسماء الذهبية</h2>',
     '<div class="muted"><b>القاعدة (CLAUDE.md §١):</b> لا يُستخرج جذرٌ للعوامل المائة، ولا للمبنيات، ولا للأسماء الذهبية (ومنها لفظ الجلالة '
