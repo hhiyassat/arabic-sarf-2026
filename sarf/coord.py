@@ -1072,7 +1072,8 @@ def check_coord(rec, X):
                 from .algebra import PRON_FREE_V, is_form
                 def nom(g):
                     return g.get('noun') or g.get('rel') or g.get('an') or g.get('maqsur') or is_form(g['text'], PRON_FREE_V)
-                if not (nom(fa_) or _ma_silah(X, A['head_pos'], k)) and not any(d[0] == 'D8' for d in c['deferrals']):
+                enc_ = any('الضمير' in e for e in A.get('extent_evidence', []))   # ضمير نصبٍ متصلٌ بفعله (ذَرۡنِي)
+                if not (nom(fa_) or enc_ or _ma_silah(X, A['head_pos'], k)) and not any(d[0] == 'D8' for d in c['deferrals']):
                     P.append(f'{c["id"]}.A: الرأس السابق بلا دليل اسمية ولا تأجيلٍ لها')
                 if a4[0] and a4[1].startswith('الحالة لا تظهر'):
                     hid = lambda g: g.get('maqsur') or g.get('rel') or g.get('an') or not g['case'] or \
