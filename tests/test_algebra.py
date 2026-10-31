@@ -231,12 +231,12 @@ if hfn() and rows:
     import copy
     from sarf.checker import check_sentence
     T_ = Trace(); items_ = []; an_ = {}
-    for v_ in range(50, 55):
+    for v_ in range(55, 57):
         a_ = analyze(cat, rows[(2, v_)]); S_, u_ = sentence_geo(a_, f'Q2:{v_}', T_)
         items_.append((2, v_, a_, u_, S_)); an_[(2, v_)] = a_
     LT_ = linguistic_layer(items_, T_, 't')[0]
     Jc = next((J for D in LT_[0].A for J in D.A if J.closed and any(o.name.startswith('معمول') for o in J.Omega)), None)
-    check('الفاحص يقبل جملةً مغلقة بشهادتين صحيحتين (البقرة ٥٤: فَتُوبُوٓاْ إِلَىٰ بَارِئِكُمۡ)',
+    check('الفاحص يقبل جملةً مغلقة بشهادتين صحيحتين (البقرة ٥٦: لَعَلَّكُمۡ تَشۡكُرُونَ)',
           Jc is not None and check_sentence(Jc, an_) == [], Jc and check_sentence(Jc, an_))
     if Jc is not None:
         J1 = copy.deepcopy(Jc); J1.Omega = [o for o in J1.Omega if not o.name.startswith('معمول')]
