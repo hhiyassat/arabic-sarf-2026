@@ -12,6 +12,7 @@ import sys, os, json, collections
 H = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/'
 sys.path.insert(0, H)
 from sarf.analyze import analyze
+from sarf.analyze_cache import analyze_cached
 from sarf.catalog import Catalog
 from sarf.protected import protected_slot
 from sarf.root import _morph
@@ -26,7 +27,7 @@ for l in open(H + 'data/quran_hafs.tsv', encoding='utf-8'):
     s, v = int(s), int(v)
     if not lo <= s <= hi:
         continue
-    a = analyze(cat, text)
+    a = analyze_cached(cat, text)
     for seg in a['segments']:
         stems = [x for x in seg['slots'] if x['type'] == 'جذع']
         if not stems:

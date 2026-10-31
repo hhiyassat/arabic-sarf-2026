@@ -7,6 +7,7 @@ import os, json
 H = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/'
 sys.path.insert(0, H)
 from sarf.analyze import analyze
+from sarf.analyze_cache import analyze_cached
 from sarf.catalog import Catalog
 from sarf.root import morph
 from sarf.affix import stem_info
@@ -30,7 +31,7 @@ for l in open(H + 'data/quran_hafs.tsv', encoding='utf-8'):
     s, v, text = l.rstrip('\n').split('\t'); s, v = int(s), int(v)
     if not lo <= s <= hi:
         continue
-    a = analyze(cat, text)
+    a = analyze_cached(cat, text)
     qws = sorted(k[2] for k in Q if k[0] == s and k[1] == v)
     qtext = [skel(''.join(f for f, _, _ in Q[(s, v, w)])) for w in qws]
     otext = [skel(seg['word']) for seg in a['segments']]

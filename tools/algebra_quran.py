@@ -22,7 +22,21 @@ ap.add_argument('--limit', type=int, default=0)
 ap.add_argument('--no-cross', action='store_true', help='بلا فحص الروابط عبر حدّ الآية (أسرع)')
 ap.add_argument('--reanalyze-every', type=int, default=20, help='كل كم آية يُفحص Analyze(Render(a)) ∋ a')
 ap.add_argument('--all', action='store_true', help='يُعاد تحليل السور المجازة أيضاً (حين يُكتشف خطأٌ يمسّ السابق)')
+ap.add_argument('--jobs', type=int, default=os.cpu_count() or 1, help='عدد العمليات المتوازية على السور')
 args = ap.parse_args()
+
+import time as _time
+_T0 = [_time.time()]
+TIMING = {}
+
+
+def _phase(name):
+    # زمن كل مرحلة (لتقصير التشغيل الكامل): يُطبع ويُحفظ في المقاييس
+    t = _time.time()
+    TIMING[name] = round(t - _T0[0], 1)
+    _T0[0] = t
+    print(f'⏱ {name}: {TIMING[name]}ث', file=sys.stderr)
+
 
 cat = Catalog([H + 'operators_catalog.jsonl', H + 'operators_catalog_split_vocalized.csv'])
 rows = [l.rstrip('\n').split('\t') for l in open(H + 'data/quran_hafs.tsv', encoding='utf-8')]
@@ -140,22 +154,7 @@ def _cache_path(s_):
     return f'{CACHE}surah_{s_:03d}.pkl.gz'
 # بصمة الاعتماديات (مراجعة التقرير الخامسة ٤): صلاح الخبيئة مربوطٌ بالنص وبكل ما أنتج التحليل — الكود، وفهرس العوامل،
 # وملف المبنيات، وملفات HFN، وأبنية سيبويه. فإن تغيّر شيءٌ منها بطلت الخبيئة: يُعاد التحليل، ويُقارن بالمجاز دون مساسه
-def dependency_files():
-    from sarf.root import hfn
-    import glob
-    fs = sorted(glob.glob(H + 'sarf/*.py')) + [H + 'operators_catalog.jsonl', H + 'operators_catalog_split_vocalized.csv',
-                                               H + 'lexicon/mabniyat_lexicon.jsonl']
-    fs += sorted(glob.glob(H + 'data/patterns/*.csv'))
-    hp = hfn().path
-    if hp:
-        fs += [os.path.join(hp, x) for x in ('events.csv', 'lexical_units.csv', 'form_meanings.csv')]
-    return [f for f in fs if os.path.exists(f)]
-def fingerprint(files, extra=b''):
-    h = _hashlib.sha256(extra)
-    for f in files:
-        h.update(os.path.relpath(f, H).encode() if f.startswith(H) else os.path.basename(f).encode())
-        h.update(open(f, 'rb').read())
-    return h.hexdigest()
+from sarf.analyze_cache import dependency_files, fingerprint
 DEPS = fingerprint(dependency_files(), os.environ.get('SARF_DEP_SALT', '').encode())
 def _surah_text_fp(s_):
     return _hashlib.sha256('\n'.join(t for ss, _, t in rows if int(ss) == s_).encode()).hexdigest()
@@ -172,112 +171,211 @@ frozen = {s_ for s_ in APPROVED if not args.all and _cache_valid(s_)}
 loaded, fresh = set(), collections.defaultdict(list)
 verses = []
 cross, checked_ends, prev = [], set(), None
+ANALYSES = {}                                      # خبيئة التحليل للأدوات التالية (sarf/analyze_cache.py)
+
+
+def _merge_pack(s, pack):
+    global cross, checked_ends
+    for r_ in pack['verses']:
+        C.update(r_['C']); close_route.update(r_['close_route']); unit_reason.update(r_['unit_reason'])
+        for k_, xs in r_['fail'].items():
+            fail[k_] += xs
+        by_surah[s].append(r_['item'])
+        if r_.get('sample'):
+            samples[(r_['item'][0], r_['item'][1])] = r_['sample']
+    cross += pack['cross']
+    checked_ends |= set(pack['checked_ends'])
+
+
+def _surah_pack(job):
+    """تحليل سورةٍ واحدة في عمليةٍ مستقلة (التوازي على السور): تُصفَّر العدّادات، ويُعاد سجلّ السورة بالبنية نفسها
+    التي تُحفظ في الخبيئة، فيُدمج في العملية الأم كما يُدمج المحمَّل منها"""
+    global C, close_route, unit_reason, fail, by_surah, samples, cross, checked_ends, prev, fresh
+    s_job, rows_job = job
+    C, close_route, unit_reason = collections.Counter(), collections.Counter(), collections.Counter()
+    fail, by_surah, samples, fresh = collections.defaultdict(list), collections.defaultdict(list), {}, collections.defaultdict(list)
+    cross, checked_ends, prev = [], set(), None
+    an = {}
+    for n, (s, v, text) in rows_job:
+        s, v = int(s), int(v)
+        snap = (C.copy(), close_route.copy(), unit_reason.copy(), {k_: len(x) for k_, x in fail.items()}, len(cross),
+                set(checked_ends))
+        a = analyze(cat, text)
+        T = Trace()
+        S, units = sentence_geo(a, f'Q{s}:{v}', T)
+        # الروابط عبر حدّ الآية: الآية السابقة من السورة نفسها مع هذه
+        cur = dict(s=s, v=v, text=text, a=a, units=units, S=S)
+        if not args.no_cross and prev is not None and prev['s'] == s:
+            cross += cross_ayah_links(lambda t: analyze(cat, t), prev, cur)
+            checked_ends.add((prev['s'], prev['v']))
+        prev = cur
+        ok, rendered = check_verse(s, v, a, S, units, T)
+        for k, x in ok.items():
+            C[f'{k}_pass'] += x
+        C['verses'] += 1
+        for G in units.values():
+            C['units'] += 1
+            C['cells'] += len(G.O['cells'])
+            C['syllables'] += sum(1 for X in G.A if isinstance(X, Geo))
+            C['syllables_closed'] += sum(1 for X in G.A if isinstance(X, Geo) and X.closed)
+            if G.closed:
+                C['units_closed'] += 1
+                route = ('حماية دستورية: ' + G.Theta['protected']['cls'] if G.Theta.get('protected') else
+                         'Lex' if not G.Theta.get('R') else
+                         'Realize: فعل' if (G.Theta.get('F') or {}).get('kind') != 'اسم' else
+                         'Realize: اسم فاعل/مفعول' if 'اسم' in str(G.Theta.get('P', ''))[:4] else
+                         'Realize: بناء سيبويه' if str(G.Theta.get('P', '')).startswith('بناء سيبويه') else 'بناء معجمي: مصدر وغيره')
+                close_route[route] += 1
+            else:
+                unit_reason[G.O.get('deferred', '').split(':')[0]] += 1
+        # Analyze(Render(a)) ∋ a على عيّنة: إعادة التحليل من النص المستخرَج تعطي الخلايا والإغلاق أنفسهما
+        if args.reanalyze_every and n % args.reanalyze_every == 0:
+            a2 = analyze(cat, rendered)
+            S2, units2 = sentence_geo(a2, f'Q{s}:{v}', Trace())
+            same = ({k: ([c.key() for c in G.O['cells']], G.closed) for k, G in units.items()} ==
+                    {k: ([c.key() for c in G.O['cells']], G.closed) for k, G in units2.items()})
+            # تكافؤ البنية لا الخلايا وحدها (مراجعة التقرير ٩): الجذر والوزن وα لكل وحدة، والروابط والتزامات الجملة
+            def struct(units_, S_):
+                return ({k: (str(G.Theta.get('R')), str(G.Theta.get('P')), tuple(G.Theta.get('alpha') or ()), G.closed)
+                         for k, G in units_.items()},
+                        sorted((b[0], str(b[1]), str(b[2])) for b in S_.B),
+                        sorted((o.name, o.met) for o in S_.Omega))
+            same_struct = struct(units, S) == struct(units2, S2)
+            C['reanalyze'] += 1
+            C['reanalyze_same'] += same
+            C['reanalyze_same_structure'] += same and same_struct
+            if not same:
+                fail['T5b'].append(f'{s}:{v}')
+        for o in S.Omega:
+            k = o.name.split(' ')[0]
+            if k in ('خبر', 'مفعول', 'معمول', 'فاعل'):
+                C[f'obl_{k}'] += 1
+                C[f'obl_{k}_met'] += bool(o.met)
+                if k == 'خبر' and o.met and o.ev:
+                    C['khabar_kind:' + o.ev.cause.split(' ', 2)[-1]] += 1
+        lite = dict(verse=a['verse'], normalized=a['normalized'], segments=[dict(word=g['word'], units=g['units']) for g in a['segments']],
+                    starts=[clause_start(a, wi) for wi in range(len(a['segments']))], feats=word_feats(a),
+                    operators=[dict(word_index=f['word_index'], operator=f['operator'], group=f['group'], status=f.get('status'))
+                               for f in a['operators']],
+                    relations=[dict(word_index=r['word_index'], operator=r['operator'], group=r['group'],
+                                    target=bool(r.get('target'))) for r in a.get('relations', [])])
+        by_surah[s].append((s, v, lite, units, S))
+        if (s, v) in SAMPLE_REFS:
+            samples[(s, v)] = dict(text=a['normalized'], units={G.id: unit_expr(G) for G in units.values()})
+        fresh[s].append(dict(C=C - snap[0], close_route=close_route - snap[1], unit_reason=unit_reason - snap[2],
+                             fail={k_: x[snap[3].get(k_, 0):] for k_, x in fail.items() if len(x) > snap[3].get(k_, 0)},
+                             item=by_surah[s][-1], sample=samples.get((s, v)), cross=cross[snap[4]:],
+                             checked_ends=sorted(checked_ends - snap[5])))
+        if n % 500 == 0:
+            print(n, dict(C), file=sys.stderr)
+
+        an[text] = a
+    recs = fresh[s_job]
+    return s_job, dict(deps=DEPS, text=_surah_text_fp(s_job),
+                       verses=[{k_: r_[k_] for k_ in ('C', 'close_route', 'unit_reason', 'fail', 'item', 'sample')} for r_ in recs],
+                       cross=[c for r_ in recs for c in r_['cross']], checked_ends=[e for r_ in recs for e in r_['checked_ends']]), an
+
+
+jobs = []
+by_s = collections.OrderedDict()
 for n, (s, v, text) in enumerate(rows):
-    s, v = int(s), int(v)
-    if s in frozen:
-        if s not in loaded:
-            loaded.add(s)
-            pack = _pickle.loads(_gzip.decompress(open(_cache_path(s), 'rb').read()))
-            for r_ in pack['verses']:
-                C.update(r_['C']); close_route.update(r_['close_route']); unit_reason.update(r_['unit_reason'])
-                for k_, xs in r_['fail'].items():
-                    fail[k_] += xs
-                by_surah[s].append(r_['item'])
-                if r_.get('sample'):
-                    samples[(r_['item'][0], r_['item'][1])] = r_['sample']
-            cross += pack['cross']
-            checked_ends |= set(pack['checked_ends'])
-            C['surahs_from_cache'] += 1
-            prev = None
-        continue
-    snap = (C.copy(), close_route.copy(), unit_reason.copy(), {k_: len(x) for k_, x in fail.items()}, len(cross),
-            set(checked_ends))
-    a = analyze(cat, text)
-    T = Trace()
-    S, units = sentence_geo(a, f'Q{s}:{v}', T)
-    # الروابط عبر حدّ الآية: الآية السابقة من السورة نفسها مع هذه
-    cur = dict(s=s, v=v, text=text, a=a, units=units, S=S)
-    if not args.no_cross and prev is not None and prev['s'] == s:
-        cross += cross_ayah_links(lambda t: analyze(cat, t), prev, cur)
-        checked_ends.add((prev['s'], prev['v']))
-    prev = cur
-    ok, rendered = check_verse(s, v, a, S, units, T)
-    for k, x in ok.items():
-        C[f'{k}_pass'] += x
-    C['verses'] += 1
-    for G in units.values():
-        C['units'] += 1
-        C['cells'] += len(G.O['cells'])
-        C['syllables'] += sum(1 for X in G.A if isinstance(X, Geo))
-        C['syllables_closed'] += sum(1 for X in G.A if isinstance(X, Geo) and X.closed)
-        if G.closed:
-            C['units_closed'] += 1
-            route = ('حماية دستورية: ' + G.Theta['protected']['cls'] if G.Theta.get('protected') else
-                     'Lex' if not G.Theta.get('R') else
-                     'Realize: فعل' if (G.Theta.get('F') or {}).get('kind') != 'اسم' else
-                     'Realize: اسم فاعل/مفعول' if 'اسم' in str(G.Theta.get('P', ''))[:4] else
-                     'Realize: بناء سيبويه' if str(G.Theta.get('P', '')).startswith('بناء سيبويه') else 'بناء معجمي: مصدر وغيره')
-            close_route[route] += 1
-        else:
-            unit_reason[G.O.get('deferred', '').split(':')[0]] += 1
-    # Analyze(Render(a)) ∋ a على عيّنة: إعادة التحليل من النص المستخرَج تعطي الخلايا والإغلاق أنفسهما
-    if args.reanalyze_every and n % args.reanalyze_every == 0:
-        a2 = analyze(cat, rendered)
-        S2, units2 = sentence_geo(a2, f'Q{s}:{v}', Trace())
-        same = ({k: ([c.key() for c in G.O['cells']], G.closed) for k, G in units.items()} ==
-                {k: ([c.key() for c in G.O['cells']], G.closed) for k, G in units2.items()})
-        # تكافؤ البنية لا الخلايا وحدها (مراجعة التقرير ٩): الجذر والوزن وα لكل وحدة، والروابط والتزامات الجملة
-        def struct(units_, S_):
-            return ({k: (str(G.Theta.get('R')), str(G.Theta.get('P')), tuple(G.Theta.get('alpha') or ()), G.closed)
-                     for k, G in units_.items()},
-                    sorted((b[0], str(b[1]), str(b[2])) for b in S_.B),
-                    sorted((o.name, o.met) for o in S_.Omega))
-        same_struct = struct(units, S) == struct(units2, S2)
-        C['reanalyze'] += 1
-        C['reanalyze_same'] += same
-        C['reanalyze_same_structure'] += same and same_struct
-        if not same:
-            fail['T5b'].append(f'{s}:{v}')
-    for o in S.Omega:
-        k = o.name.split(' ')[0]
-        if k in ('خبر', 'مفعول', 'معمول', 'فاعل'):
-            C[f'obl_{k}'] += 1
-            C[f'obl_{k}_met'] += bool(o.met)
-            if k == 'خبر' and o.met and o.ev:
-                C['khabar_kind:' + o.ev.cause.split(' ', 2)[-1]] += 1
-    lite = dict(verse=a['verse'], normalized=a['normalized'], segments=[dict(word=g['word'], units=g['units']) for g in a['segments']],
-                starts=[clause_start(a, wi) for wi in range(len(a['segments']))], feats=word_feats(a),
-                operators=[dict(word_index=f['word_index'], operator=f['operator'], group=f['group'], status=f.get('status'))
-                           for f in a['operators']],
-                relations=[dict(word_index=r['word_index'], operator=r['operator'], group=r['group'],
-                                target=bool(r.get('target'))) for r in a.get('relations', [])])
-    by_surah[s].append((s, v, lite, units, S))
-    if (s, v) in SAMPLE_REFS:
-        samples[(s, v)] = dict(text=a['normalized'], units={G.id: unit_expr(G) for G in units.values()})
-    fresh[s].append(dict(C=C - snap[0], close_route=close_route - snap[1], unit_reason=unit_reason - snap[2],
-                         fail={k_: x[snap[3].get(k_, 0):] for k_, x in fail.items() if len(x) > snap[3].get(k_, 0)},
-                         item=by_surah[s][-1], sample=samples.get((s, v)), cross=cross[snap[4]:],
-                         checked_ends=sorted(checked_ends - snap[5])))
-    if n % 500 == 0:
-        print(n, dict(C), file=sys.stderr)
+    by_s.setdefault(int(s), []).append((n, (s, v, text)))
+for s_, rs_ in by_s.items():
+    if s_ not in frozen:
+        jobs.append((s_, rs_))
+packs = {}
+if jobs:
+    import multiprocessing as _mp
+    nj = max(1, min(args.jobs, len(jobs)))
+    if nj > 1:
+        with _mp.get_context('fork').Pool(nj) as pool:
+            for s_, pack, an in pool.imap_unordered(_surah_pack, sorted(jobs, key=lambda j: -len(j[1])), chunksize=1):
+                packs[s_] = pack
+                ANALYSES.update(an)
+                print('سورة', s_, file=sys.stderr)
+    else:
+        for job in jobs:
+            s_, pack, an = _surah_pack(job)
+            packs[s_] = pack
+            ANALYSES.update(an)
+    C, close_route, unit_reason = collections.Counter(), collections.Counter(), collections.Counter()
+    fail, by_surah, samples = collections.defaultdict(list), collections.defaultdict(list), {}
+    cross, checked_ends = [], set()
+fresh_packs = {}
+for s_ in by_s:
+    if s_ in frozen:
+        pack = _pickle.loads(_gzip.decompress(open(_cache_path(s_), 'rb').read()))
+        C['surahs_from_cache'] += 1
+    else:
+        pack = packs[s_]
+        fresh_packs[s_] = pack
+    _merge_pack(s_, pack)
 # خبيئة كل سورةٍ حُلِّلت الآن، لتُحمَّل إن أُجيزت
 os.makedirs(CACHE, exist_ok=True)
-for s_, recs in fresh.items():
-    pack = dict(deps=DEPS, text=_surah_text_fp(s_),
-                verses=[{k_: r_[k_] for k_ in ('C', 'close_route', 'unit_reason', 'fail', 'item', 'sample')} for r_ in recs],
-                cross=[c for r_ in recs for c in r_['cross']], checked_ends=[e for r_ in recs for e in r_['checked_ends']])
+for s_, pack in fresh_packs.items():
     open(_cache_path(s_), 'wb').write(_gzip.compress(_pickle.dumps(pack, protocol=5)))
+# خبيئة التحليل الصرفي للأدوات التالية (eval_case، eval_root، eval_protected، audit_protected): بصمة الاعتماديات نفسها
+if ANALYSES and not args.limit:
+    from sarf.analyze_cache import save as _save_an
+    _save_an(ANALYSES, DEPS)
 
 # الطبقتان على النص كله: المصحفية (كلمة ← آية ← سورة ← مصحف) واللغوية (جملة ← وحدة خطابية ← خطاب السورة)
 T = Trace()
 items = [x for s in sorted(by_surah) for x in by_surah[s]]
+_phase('التحليل')
 MU = mushaf_layer([(s, v, a, units) for s, v, a, units, S in items], T)
 import subprocess
 a_id = subprocess.run(['git', '-C', H, 'rev-parse', '--short', 'HEAD'], capture_output=True, text=True).stdout.strip()
-LT, st, brecs = linguistic_layer(items, T, a_id=f'experiment@{a_id}', cross=cross, checked_ends=frozenset(checked_ends))
+_phase('الطبقة المصحفية')
+def _group(s_):
+    return 2 if s_ <= 2 else s_                    # الفاتحة والبقرة معاً: ميزانية الاختبارات المضادة كالتشغيل التتابعي
+
+
+def _layer_job(g_):
+    # الطبقة اللغوية لسورةٍ أو أكثر (السور مستقلةٌ فيها): تُعاد أشجارها وعدّاداتها وسجلات حدودها وعيّناتها
+    its = [x for x in items if _group(x[0]) == g_]
+    ss = {x[0] for x in its}
+    cr = [c for c in cross if any(str(c.get('src', '')).startswith(f'Q{x}:') for x in ss)]
+    out_ = linguistic_layer(its, Trace(), a_id=f'experiment@{a_id}', cross=cr,
+                            checked_ends=frozenset(e for e in checked_ends if e[0] in ss), mut_budget=400 if g_ == 2 else 0)
+    return g_, out_, getattr(linguistic_layer, 'samples', {})
+
+
+surahs_ = sorted({_group(x[0]) for x in items})
+if args.jobs > 1 and len(surahs_) > 1:
+    import multiprocessing as _mp
+    res_ = {}
+    with _mp.get_context('fork').Pool(min(args.jobs, len(surahs_))) as pool:
+        for s_, out_, smp in pool.imap_unordered(_layer_job, sorted(surahs_, key=lambda x: -sum(1 for y in items if _group(y[0]) == x)),
+                                                  chunksize=1):
+            res_[s_] = (out_, smp)
+    LT, st, brecs = [], collections.Counter(), []
+    SMP = collections.defaultdict(list)
+    FAILS = collections.defaultdict(list)
+    for s_ in surahs_:
+        (lt_, st_, br_), smp = res_[s_]
+        LT += lt_; st.update(st_); brecs += br_
+        for k_, v_ in smp.items():
+            if k_ == 'coord_failures':
+                for kk, vv in v_.items():
+                    FAILS[kk] += vv
+            else:
+                SMP[k_] += v_
+    # العيّنات مقصورةٌ كما في التشغيل التتابعي: أول ما يُجمع بترتيب السور، وسجلات العطف المرصودة كلها
+    from sarf.algebra import COORD_WATCH as _CW
+    caps = dict(rel=40, cond=40, coord=60)
+    smp_all = {k_: v_[:caps[k_]] if k_ in caps else v_ for k_, v_ in SMP.items()}
+    if 'coord_records' in smp_all:
+        cr_ = SMP['coord_records']
+        smp_all['coord_records'] = cr_[:60] + [r for r in cr_[60:] if r['text_id']['verse'] in _CW]
+    smp_all['coord_failures'] = {k_: v_[:30] if k_ != 'coordmut_examples' else v_[:24] for k_, v_ in FAILS.items()}
+    linguistic_layer.samples = smp_all
+else:
+    LT, st, brecs = linguistic_layer(items, T, a_id=f'experiment@{a_id}', cross=cross, checked_ends=frozenset(checked_ends))
 C['ayah_ends_checked'] = len(checked_ends)
 # الفاحص المستقل: يعيد اشتقاق الالتزامات من سجلّ التحليل، ولا يثق بشهادة الإغلاق
 from sarf.checker import check_layer
+_phase('الطبقة اللغوية')
 chk_n, chk_bad, chk_list = check_layer(LT, {(s_, v_): a_ for s_, v_, a_, _, _ in items})
 C['checker_closed'], C['checker_rejected'] = chk_n, chk_bad
 # ملف الجمل لكل سورة (reports/sentences/surah_NNN.csv)، ومقارنة المجازة بملفها المجاز
@@ -288,6 +386,7 @@ COLS = ['الوحدة', 'من', 'إلى', 'النص', 'الحالة', 'سبب ا
         'وقوعات بلا موضع (الموضع [الوحدة] «النص»: الناقص)', 'الالتزامات المفتوحة']
 SENT_BASE = os.environ.get('SARF_SENTENCES_BASE', '')   # الإصدار المرجعي لبيان التغيّر
 CHANGES = []                                       # بيان التغيّر عن الملف السابق لكل صف (مراجعة ملفات الجمل ٤)
+_phase('الفاحص المستقل')
 for SP in LT:
     s_ = int(SP.id.lstrip('L')) if SP.id.lstrip('L').isdigit() else None
     if s_ is None:
@@ -371,6 +470,7 @@ import copy as _copy
 from sarf.checker import check_sentence, relation_problems
 from sarf.algebra import Evidence as _Ev
 an_all = {(s_, v_): a_ for s_, v_, a_, _, _ in items}
+_phase('ملفات الجمل')
 closed_J = [J for SP in LT for D in SP.A for J in D.A if J.closed]
 checker_tests, closed_evidence = [], []
 def _forge(J, name, fn):
@@ -493,12 +593,13 @@ for x in LT:
                 boundary=(D.eb.text() if D.eb else ''), units=[ex.get(u.id, u.O['text']) for u in units],
                 bonds=[f'{b[1]} →[{b[0]}] {b[2]}' for b in J.B],
                 open=[o.name + (f' ({o.reason})' if o.reason else '') for o in J.open_required()]))
-M = dict(checker_tests=checker_tests, closed_evidence=closed_evidence, counts=dict(C), unit_deferred=dict(unit_reason.most_common()), sentence_open=dict(open_kind.most_common()),
+M = dict(timing=TIMING, checker_tests=checker_tests, closed_evidence=closed_evidence, counts=dict(C), unit_deferred=dict(unit_reason.most_common()), sentence_open=dict(open_kind.most_common()),
          unit_closed_by=dict(close_route.most_common()), failures={k: v[:40] for k, v in fail.items()},
          samples=samples.get('du', []),
          cross=dict(cross_samples),
          boundaries=dict(xtab={k: dict(v) for k, v in xtab.items()}, scholars=scholar_cmp, samples=brec_samples),
          structures=getattr(linguistic_layer, 'samples', {}))
+_phase('البطارية والمقاييس')
 json.dump(M, open(os.environ.get('SARF_ALG_METRICS', H + 'reports/algebra_metrics.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 print(json.dumps(M['counts'], ensure_ascii=False, indent=1))
 print('unit_deferred', M['unit_deferred'])

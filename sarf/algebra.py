@@ -1996,7 +1996,7 @@ def words_text(words, p):
     return f'{words[p][0]}:{words[p][1]}:{words[p][2]}'
 
 
-def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف المجمّع)', cross=(), checked_ends=frozenset()):
+def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف المجمّع)', cross=(), checked_ends=frozenset(), mut_budget=400):
     """الطبقة اللغوية على تيار الوحدات المتصل عبر حدود الآيات.
     - عند كل حدٍّ محتمل (علامة وقف، أو رأس آية، أو آخر سورة) يُسجَّل B(b | a, q, c) = ⟨F, L, M, W, I, E⟩
     - الوحدة الخطابية: ما بين حدّين أجاز الوقفَ عندهما دليلٌ (م، قلى، ج، صلى) أو آخرُ السورة؛ ورأس الآية وحده ليس حدّاً
@@ -2446,7 +2446,7 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
             st['coordcheck:' + ('سليم' if not pr_ else 'مرفوض')] += 1
             if pr_ and len(failures['coordcheck']) < 30:
                 failures['coordcheck'].append(f'{rec["letter_unit"]}: {pr_[:3]}')
-            if not pr_ and st['coordmut:حالات'] < 400:
+            if not pr_ and st['coordmut:حالات'] < mut_budget:
                 for name_, r_ in mutations(rec, CX):
                     st['coordmut:حالات'] += 1
                     pr2 = check_coord(r_, CX)

@@ -8,6 +8,7 @@ import os, sys, json, re, difflib, collections
 H = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/'
 sys.path.insert(0, H)
 from sarf.analyze import analyze
+from sarf.analyze_cache import analyze_cached
 from sarf.catalog import Catalog
 from sarf.algebra import sentence_geo, Trace
 
@@ -24,10 +25,21 @@ HZ = str.maketrans('أإؤئآ', 'ءءءءء')
 C = collections.Counter(); bad = collections.defaultdict(list); excluded = []
 WEAK = set('ويءا')
 ROMAN = {str(i): r for i, r in enumerate(['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'])}
+# وحدات كل آية من خبائث السور التي كتبها tools/algebra_quran.py بالبصمة نفسها (لا يُعاد البناء الجبري)
+import gzip as _gz, pickle as _pk, glob as _glob
+from sarf.analyze_cache import fingerprint as _fp
+_UNITS, _DEPS = {}, _fp()
+for _f in sorted(_glob.glob(H + 'data/cache/surah_*.pkl.gz')):
+    _pack = _pk.loads(_gz.decompress(open(_f, 'rb').read()))
+    if _pack.get('deps') == _DEPS:
+        for _r in _pack['verses']:
+            _UNITS[(_r['item'][0], _r['item'][1])] = _r['item'][3]
 for l in open(H + 'data/quran_hafs.tsv', encoding='utf-8'):
     s, v, text = l.rstrip('\n').split('\t'); s, v = int(s), int(v)
-    a = analyze(cat, text)
-    S, units = sentence_geo(a, 'x', Trace())
+    a = analyze_cached(cat, text)
+    units = _UNITS.get((s, v))
+    if units is None:
+        S, units = sentence_geo(a, 'x', Trace())
     qws = sorted(k[2] for k in Q if k[0] == s and k[1] == v)
     qtext = [skel(''.join(f for f, _, _ in Q[(s, v, w)])) for w in qws]
     otext = [skel(seg['word']) for seg in a['segments']]
