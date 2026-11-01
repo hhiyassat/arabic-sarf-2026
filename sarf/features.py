@@ -191,6 +191,11 @@ def verb_features(G, agr, morph, obj_pron, governor=None):
     vo = agr.get('voice')
     out['voice'] = feat({'active': 'معلوم', 'passive': 'مجهول'}.get(vo), PROVEN if vo in ('active', 'passive') else DEFER,
                         'حركات الفعل المكتوبة' if vo else 'لم تعيّنه الحركات المكتوبة', alt=None if vo else ['معلوم', 'مجهول'])
+    if vo == 'active' and out['tense']['st'] != PROVEN and tl and DAMMA in tl[0][1] and tl[0][0] not in 'يتنأ':
+        # ضمّ أوله بلا حرف مضارعة، والزمن غير مثبت: أمرُ الأجوف (قُولُوا، تُوبُوا) معلوم، أو ماضٍ مبني للمجهول
+        # (دُعُوا، قُتِلُوا)؛ فالبناء يتبع الزمن ولا يثبت قبله
+        out['voice'] = feat('معلوم', CAND, 'أوله مضموم بلا حرف مضارعة، والزمن غير مثبت: قد يكون ماضياً مبنياً للمجهول',
+                            alt=['معلوم', 'مجهول'])
     fs = agr.get('features') or []
     if len(fs) == 1 and out['tense']['st'] != PROVEN:
         p, n, g = fs[0]
@@ -365,7 +370,10 @@ def noun_features(G, seg, stem_slot, has_al, enclitic):
         out['definiteness'] = feat(None, DEFER, 'لا أل ولا تنوين ولا ضمير: قد يكون مضافاً إلى ظاهر أو ممنوعاً من الصرف',
                                    alt=['معرفة', 'نكرة'])
     if out['pos']['st'] != PROVEN:
-        # الصنف غير مثبت: لا تثبت سمةٌ للاسم
+        # الصنف غير مثبت: لا تثبت سمةٌ للاسم؛ والتعريف بالضمير المتصل لا يُرشَّح أصلاً (قد يكون فعلاً ومفعوله: عَلَّمَهُ)
+        if enclitic and out.get('definiteness', {}).get('ev', '').startswith('مضافٌ إلى الضمير'):
+            out['definiteness'] = feat(None, DEFER, f'بعده الضمير المتصل «{enclitic}»، والاسمية غير مثبتة: قد يكون فعلاً ومفعوله',
+                                       alt=['معرفة', 'نكرة'])
         for k, r in out.items():
             if k != 'pos' and r['st'] == PROVEN:
                 r['st'], r['ev'] = CAND, r['ev'] + '؛ والاسمية غير مثبتة'
