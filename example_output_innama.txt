@@ -29,6 +29,7 @@ EVENTS:
   HAMZAT_WASL=1
   HAMZAT_WASL_REALIZED_a=1
   HAMZA_UNIFIED=2
+  IBTIDA_HAMZA_ADDED=0
   MADD_WAW_YA=1
   TANWIN=1
 ```
@@ -79,6 +80,7 @@ EVENTS:
   HAMZAT_WASL=1
   HAMZAT_WASL_REALIZED_a=1
   HAMZA_UNIFIED=1
+  IBTIDA_HAMZA_ADDED=0
   MADD_ALIF=2
 ```
 
@@ -140,6 +142,7 @@ EVENTS:
   DAGGER_ALIF=3
   DIVINE_NAME=0
   HAMZA_UNIFIED=2
+  IBTIDA_HAMZA_ADDED=0
   INITIAL_SHADDA_IGNORED=1
   MADD_ALIF=1
   MADD_WAW_YA=1
@@ -152,7 +155,7 @@ EVENTS:
 بَشَرٌ           بَ . شَ . رٌ                                 CV CV CV
 مِّثْلُكُمْ      مِثْ . لُ | [كُمْ: مبني]                     CVC CV
 يُوحَى           يُو . حَا                                    CVV CVV
-إِلَىَّ          [إِلَيْ: عامل] | [يَ: مبني]                  
+إِلَىَّ          [إِلَىَّ: عامل+مبني]                         
 أَنَّمَا         [أَنَّ: عامل] | [مَا: مبني]                  
 إِلَٰهُكُمْ      ءِ . لَا . هُ | [كُمْ: مبني]                 CV CVV CV
 إِلَٰهٌ          ءِ . لَا . هٌ                                CV CVV CV
@@ -161,6 +164,8 @@ EVENTS:
 الإعراب:
   قُلْ             قُلْ: فعل أمر مبني على السكون، والفاعل ضمير مستتر تقديره «أَنْتَ»  [بنية]
   قُلْ             قُلْ: الجذر «ق و ل»، والوزن فَعَلَ؛ شاهده في HFN: قَالَ ← قَوْل  [T19c]
+  يُوحَى           يُوحَى: مبني للمجهول، ونائب الفاعل للغائب: ضمير مستتر تقديره «هُوَ»، أو اسم ظاهر بعده  [T18]
+  يُوحَى           يُوحَى: الجذر «و ح ي»، والوزن فَعَلَ؛ شاهده في HFN: وَحَى ← وَحْي  [T19c]
   إِلَىَّ          يَ: في محلّ جر بـ«إِلَى»  [مقبول]
 
 ################################################################################
@@ -210,6 +215,7 @@ EVENTS:
   DIVINE_NAME=0
   HAMZAT_WASL=1
   HAMZAT_WASL_REALIZED_a=1
+  IBTIDA_HAMZA_ADDED=0
 ```
 
 فَإِنَّمَا       [فَ: مبني] | [إِنَّ: عامل] | [مَا: مبني]     
@@ -259,6 +265,7 @@ EVENTS:
   DIVINE_NAME=0
   HAMZAT_WASL=1
   HAMZAT_WASL_REALIZED_a=1
+  IBTIDA_HAMZA_ADDED=0
   MADD_ALIF=1
   MADD_WAW_YA=1
 ```
@@ -348,6 +355,7 @@ OTHER=0
 POISON=0
 EVENTS:
   DIVINE_NAME=1
+  IBTIDA_HAMZA_ADDED=0
   INITIAL_SHADDA_IGNORED=1
   MADD_WAW_YA=2
   TANWIN=2

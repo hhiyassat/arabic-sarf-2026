@@ -29,12 +29,13 @@ EVENTS:
   DIVINE_NAME=1
   HAMZAT_WASL=2
   HAMZAT_WASL_REALIZED_a=2
+  IBTIDA_HAMZA_ADDED=0
   MADD_WAW_YA=1
   SHADDA_SPLIT=1
 ```
 
 الْحَمْدُ        ءَلْ . حَمْ . دُ                             CVC CVC CV
-لِلَّهِ          [لِ: عامل] | [لَّهِ: لفظ الجلالة]            
+لِلَّهِ          [لِلَّهِ: عامل+لفظ الجلالة]                  
 رَبِّ            رَبْ . بِ                                    CVC CV
 الْعَٰلَمِينَ    ءَلْ . عَا . لَ . مِي . نَ                   CVC CVV CV CVV CV
 
@@ -91,6 +92,7 @@ EVENTS:
   DAGGER_ALIF=1
   DIVINE_NAME=1
   HAMZA_UNIFIED=2
+  IBTIDA_HAMZA_ADDED=0
   MADD_WAW_YA=1
   SHADDA_SPLIT=1
 ```
@@ -129,6 +131,7 @@ EVENTS:
   DIVINE_NAME=1
   HAMZAT_WASL=1
   HAMZAT_WASL_REALIZED_a=1
+  IBTIDA_HAMZA_ADDED=0
 ```
 
 قُلِ             قُ . لِ                                      CV CV
@@ -171,6 +174,7 @@ POISON=0
 EVENTS:
   DIVINE_NAME=1
   HAMZA_UNIFIED=1
+  IBTIDA_HAMZA_ADDED=0
 ```
 
 ءَاللَّهُ        [ءَاللَّهُ: لفظ الجلالة]                     
@@ -213,11 +217,12 @@ EVENTS:
   DIVINE_NAME=1
   HAMZAT_WASL=2
   HAMZAT_WASL_REALIZED_a=2
+  IBTIDA_HAMZA_ADDED=0
   SHADDA_SPLIT=2
   SOLAR_LAM_DELETED=1
 ```
 
-فَلِلَّهِ        [فَ: مبني] | [لِ: عامل] | [لَّهِ: لفظ الجلالة] 
+فَلِلَّهِ        [فَ: مبني] | [لِلَّهِ: عامل+لفظ الجلالة]     
 الْحَمْدُ        ءَلْ . حَمْ . دُ                             CVC CVC CV
 رَبِّ            رَبْ . بِ                                    CVC CV
 السَّمَٰوَٰتِ    ءَسْ . سَ . مَا . وَا . تِ                   CVC CV CVV CVV CV
@@ -275,6 +280,7 @@ EVENTS:
   DIVINE_NAME=1
   HAMZAT_WASL=1
   HAMZAT_WASL_REALIZED_a=1
+  IBTIDA_HAMZA_ADDED=0
   SHADDA_SPLIT=1
   SOLAR_LAM_DELETED=1
   TANWIN=1

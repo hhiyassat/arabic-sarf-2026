@@ -1,22 +1,22 @@
 {
  "case": {
-  "ambiguous": 4417,
-  "n": 28458,
-  "no_gold": 6510,
-  "ok": 28070
+  "ambiguous": 4416,
+  "n": 28456,
+  "no_gold": 4990,
+  "ok": 28068
  },
  "qac": {
-  "agr": 9642,
-  "agr_hit": 9309,
-  "agr_single": 9157,
-  "agr_single_hit": 8827,
-  "ours_verb": 9696,
-  "ours_verb_ok": 9661,
-  "qac_verb_missed": 9692,
+  "agr": 11645,
+  "agr_hit": 11265,
+  "agr_single": 10877,
+  "agr_single_hit": 10517,
+  "ours_verb": 11703,
+  "ours_verb_ok": 11664,
+  "qac_verb_missed": 7689,
   "qac_verbs": 19353,
-  "unaligned": 180,
-  "voice": 9627,
-  "voice_hit": 9537
+  "unaligned": 11,
+  "voice": 11620,
+  "voice_hit": 11486
  },
  "root": {
   "acc": 6939,
