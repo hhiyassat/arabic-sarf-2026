@@ -158,6 +158,13 @@ def _lexical_verbs(ctx, governed):
             info = stem_info(s['text'])
             if info['pos'] is not None:
                 continue
+            if info['kind'] == 'mudari':
+                from .protected import protected as _prot
+                pr = _prot(s['text'])
+                if pr and not pr['ambiguous'] and 'VERBAL' in (pr.get('source') or ''):
+                    # تصريفٌ مسجَّل في جرد العوامل الفعلية المعتمد (يَكُونَ، تَكُونَ، أَكُونَ): فعلٌ بالجرد، ولا جذر له بحكم الدستور
+                    out[key] = f'تصريفٌ من تصاريف العامل الفعلي «{pr["identity"]}» في الجرد المعتمد (sarf/protected.py VERBAL)'
+                    continue
             if info['kind'] == 'mudari' and info['prefix'] == 'أ' and key not in verb_only:
                 continue                     # «أ» في أوله: همزةٌ أصلية (أَمۡر، أَهۡل) أو أَفۡعُل وأَفۡعَل (أَنۡفُس، أَشَدّ، أَقۡوَمُ)
             if info['kind'] == 'mudari' and key not in verb_only and _noun_licence(s['text']):

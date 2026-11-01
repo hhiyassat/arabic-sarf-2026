@@ -69,6 +69,15 @@ def noun_suffix(stem):
     return None
 
 
+def _tanwin(t):
+    """التنوين على الآخر، أو على ما قبل ألفٍ أو ياءٍ (ألف المقصور) لا حركة لها: شَيۡـًٔا، هُدًى"""
+    if not t:
+        return False
+    if t[-1][1] & TANWIN:
+        return True
+    return len(t) > 1 and t[-1][0] in ('ا', 'ى') and not (t[-1][1] - {SUKUN}) and bool(t[-2][1] & TANWIN)
+
+
 def _alif_hamza_start(stem):
     """أوله همزةٌ بعدها ألف (ءَا، آ): قالب فَاعِل يلتبس بأَفْعِلَة وأَفْعَال بعد اجتماع الهمزتين (ءَالِهَة)"""
     t = letters(stem)
@@ -313,7 +322,7 @@ def noun_features(G, seg, stem_slot, has_al, enclitic):
         marks.append('قالب الاسم: ' + (G.Theta.get('P') or ''))
     if has_al:
         marks.append('«أل»')
-    if tl and tl[-1][1] & TANWIN:
+    if _tanwin(tl):
         marks.append('التنوين')
     if sfx0 and sfx0[3] == 'ـَة':
         marks.append('التاء المربوطة')
@@ -333,7 +342,12 @@ def noun_features(G, seg, stem_slot, has_al, enclitic):
     P = G.Theta.get('P') or ''
     pos = (G.Theta.get('F') or {}).get('pos')
     if pos:
-        out['derivation'] = feat(pos, PROVEN, f'القالب: {P}')
+        if pos == 'بناء':
+            # البناء اسمُ قالبٍ من أبنية سيبويه، لا نوعُ اشتقاق: يُعرض القالب، والجمود والاشتقاق غير محسومين به
+            out['pattern'] = feat(P.replace('بناء سيبويه: ', ''), PROVEN, 'أبنية الأسماء عند سيبويه (data/patterns)')
+            out['derivation'] = feat(None, DEFER, 'القالب وحده لا يعيّن الجمود والاشتقاق', alt=['جامد', 'مشتق'])
+        else:
+            out['derivation'] = feat(pos, PROVEN, f'القالب: {P}')
     sfx = noun_suffix(stem)
     t = letters(stem)
     if sfx:
@@ -413,7 +427,7 @@ def noun_features(G, seg, stem_slot, has_al, enclitic):
         out['definiteness'] = feat('معرفة', PROVEN, '«أل» مكتوبة')
     elif enclitic:
         out['definiteness'] = feat('معرفة', PROVEN, f'مضافٌ إلى الضمير المتصل «{enclitic}»')
-    elif last[1] & TANWIN:
+    elif _tanwin(t):
         out['definiteness'] = feat('نكرة', PROVEN, 'التنوين مكتوب')
     else:
         out['definiteness'] = feat(None, DEFER, 'لا أل ولا تنوين ولا ضمير: قد يكون مضافاً إلى ظاهر أو ممنوعاً من الصرف',

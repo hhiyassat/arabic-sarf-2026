@@ -32,7 +32,7 @@ from .chars import (FATHA, DAMMA, KASRA, SUKUN, SHADDA, FATHATAN, DAMMATAN, KASR
 from .divine import divine_name
 from .match import PRON_SUFFIXES, match_letters, vocal_compatible, vform_match
 from . import syllabify as cv
-from .affix import stem_info, radical_nun, short_host, ha_kasra_ok
+from .affix import stem_info, radical_nun, short_host, ha_kasra_ok, hollow_radical_nun
 from .status import BLOCKED
 
 AMIL, MABNI, ARTICLE, STEM, DIVINE = 'عامل', 'مبني', 'أل', 'جذع', 'لفظ الجلالة'
@@ -152,6 +152,7 @@ def _host(word, toks, offs, a, b, lex, at_word_start):
         if suf == 'نَا' and b - k - 1 >= a and SUKUN in toks[b - k - 1][1]:
             continue                                # «نَا» بعد ساكن ضمير الفاعل في الماضي (جَعَلۡنَا) لا يُفصل كالتاء
         if (b - k - a < MIN_STEM and not short_host(toks[a:b - k])) or radical_nun(toks[a:b], suf) or \
+                hollow_radical_nun(toks[a:b], suf) or \
                 toks[b - k][0] == 'ة' or not ha_kasra_ok(toks[a:b], suf):   # التاء المربوطة ليست هاء الضمير (ٱلۡجِنَّةِ)
             continue
         cand = [(L, frozenset(m)) for L, m in toks[b - k:b]]

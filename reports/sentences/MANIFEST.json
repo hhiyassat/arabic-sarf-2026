@@ -1,12 +1,12 @@
 {
- "code_version": "aa9bb6d",
+ "code_version": "c90ff71",
  "text": {
   "file": "data/quran_hafs.tsv",
   "sha256": "d37c6b2cf81d31acb627ef9ff97aab8bd524bb5193787c9bd388b2ff8aa7a4f5"
  },
  "reading": "حفص عن عاصم (مصحف المجمّع)",
  "coord_rules": "coord-rules v1",
- "dependencies_fingerprint": "848c6e79a25ebb37cfac36514fdb06b5e1175ecaddeff457cffe9905db403066",
+ "dependencies_fingerprint": "77611fd1270f86e9ad9a63c19ca902a785673cbd16934d3a8faefd75b72c769e",
  "changes_base": "c75a399",
  "protected_inventory": {
   "file": "sarf/protected.py",

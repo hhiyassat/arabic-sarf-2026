@@ -117,29 +117,100 @@ for pv in per_verse:
     tl.append(f"{pv['s']}:{pv['v']}  {pv['text']}")
 section(1, 'المدخل', 'النص كما ورد، بحركاته ورسمه (data/quran_hafs.tsv أو --text)', rows, ['الموضع', 'النص', 'الكلمات', 'البصمة'], tl)
 
-# ٢ التطبيع
-rows, tl = [], []
-for pv in per_verse:
-    raw, nor = pv['text'].split(), pv['a']['normalized'].split()
-    for i, (r_, n_) in enumerate(zip(raw, nor)):
-        rows.append([loc(pv, i), f"<span class='ar'>{h(r_)}</span>", f"<span class='ar'>{h(n_)}</span>", '' if r_ == n_ else 'تغيّر'])
-        if i < N:
-            tl.append(f"{loc(pv, i):<10} {r_:<20} → {n_}")
-section(2, 'التطبيع', 'العثماني إلى إملائيٍّ مشكول بحركاته (sarf.normalize): علامات الوقف تُحذف، وصور الرسم تُوحَّد، ولا تُجرَّد الحركات',
-        rows, ['الموضع', 'المدخل', 'بعد التطبيع', ''], tl)
+# ٢ التطبيع: محاذاةٌ بمجالات محارف المصدر، لا بترتيب القائمتين
+from sarf.normalize import uthmani_normalize
+from sarf.pipeline import UTHMANI
 
-# ٣ الترقيم
+
+def _sk(t):
+    """حروف الكلمة بلا حركاتها، للمحاذاة في العرض وحده (لا للتحليل): صور الهمزة والألف واحدة"""
+    import re as _re, unicodedata as _ud
+    t = _ud.normalize('NFC', t)                    # ا + ٔ ← أ: الهمزة على كرسيها حرفٌ واحد
+    t = _re.sub('\u0640?[\u08f0-\u08ff\u064b-\u0652]*\u0654', 'ء', t)       # الهمزة فوق الكرسي أو التطويل: ء
+    t = _re.sub('[\u064b-\u065f\u0670\u06d6-\u06ed\u0640\u08f0-\u08ff\u200e\u200f]', '', t)
+    return t.translate(str.maketrans('ٱأإآؤئى', 'ااااءءي'))
+
+
+def source_map(text, normalized):
+    """→ [(رقم الكلمة المطبَّعة، [(بداية، نهاية)…]، أجزاء المصدر، مطابق؟)]: تُجمع أجزاء المصدر المتتالية (المفصولة بمسافةٍ داخل
+    الكلمة: «مُّسَمّٗ ى») حتى تطابق حروفُها حروفَ الكلمة المطبَّعة؛ وما لا يطابق يُعلَن غير مقابَل ولا يُستهلك ما بعده"""
+    toks, pos = [], 0
+    for t in text.split():
+        i = text.index(t, pos)
+        toks.append((t, i, i + len(t)))
+        pos = i + len(t)
+    out, j = [], 0
+    for wi, w in enumerate(normalized.split()):
+        target, acc, ok = _sk(w), [], False
+        for skip in range(0, 3):                   # فإن لم يطابق في موضعه يُبحث بعده قليلاً، ويُعلَن ما تُخطّي
+            for k in range(1, 4):
+                if j + skip + k > len(toks):
+                    break
+                if _sk(''.join(x[0] for x in toks[j + skip:j + skip + k])) == target:
+                    acc, ok = toks[j + skip:j + skip + k], True
+                    break
+            if ok:
+                j += skip + len(acc)
+                break
+        if not ok and j < len(toks):
+            import difflib as _d
+            src_sk = _sk(toks[j][0])
+            if _d.SequenceMatcher(None, src_sk, target).ratio() >= 0.75:
+                # التطبيع غيّر حروفاً (الواو الزائدة في «أُوْلَٰٓئِكَ»): يُقابَل الجزء ويُعلَن الفرق
+                dif = ''.join(f'−{src_sk[i1:i2]}' if op in ('delete', 'replace') else '' for op, i1, i2, _, _ in
+                              _d.SequenceMatcher(None, src_sk, target).get_opcodes()) + \
+                    ''.join(f'+{target[j1:j2]}' if op in ('insert', 'replace') else '' for op, _, _, j1, j2 in
+                            _d.SequenceMatcher(None, src_sk, target).get_opcodes())
+                acc, ok = [toks[j]], 'changed:' + dif
+                j += 1
+        out.append((wi, [(x[1], x[2]) for x in acc], [x[0] for x in acc], ok))
+    return out
+
+
 rows, tl = [], []
 for pv in per_verse:
+    nor = pv['a']['normalized'].split()
+    pv['srcmap'] = source_map(pv['text'], pv['a']['normalized'])
+    for wi, spans, parts, ok in pv['srcmap']:
+        src = ' + '.join(parts)
+        sp = '، '.join(f'{a}–{b}' for a, b in spans)
+        note = ('' if ok else 'غير مقابَل') + ('؛ جزآن في المصدر يُجمعان' if len(parts) > 1 else '') + \
+            (f'؛ التطبيع غيّر الحروف ({ok[8:]})' if isinstance(ok, str) else '')
+        rows.append([loc(pv, wi), f"<span class='ar'>{h(src)}</span>", f'<code>{sp}</code>', f"<span class='ar'>{h(nor[wi])}</span>", esc(note.strip('؛ '))])
+        if wi < N or len(parts) > 1 or not ok:
+            tl.append(f"{loc(pv, wi):<10} [{sp}] {src:<22} → {nor[wi]}  {note}")
+section(2, 'التطبيع', 'العثماني إلى إملائيٍّ مشكول (sarf.normalize). المحاذاة بمجالات محارف المصدر: كل كلمةٍ مطبَّعة تُربط بالجزء أو الأجزاء '
+        'التي أنتجتها؛ فإن فُصلت الكلمة في المصدر بمسافة (مُّسَمّٗ ى، شَيۡـٔٗ اۚ) جُمع جزآها، ولا تُقابل القائمتان بترتيبهما',
+        rows, ['الموضع', 'المصدر', 'مجال المحارف', 'بعد التطبيع', 'ملاحظة'], tl)
+
+# ٣ الترقيم: خلايا المكتوب
+rows, tl = [], []
+for pv in per_verse:
+    pv['codes'] = {}
     for i, w in enumerate(pv['a']['normalized'].split()):
         c = code(w)
+        pv['codes'][i] = c.split()
         rows.append([loc(pv, i), f"<span class='ar'>{h(w)}</span>", f'<code>{h(c)}</code>'])
         if i < N:
             tl.append(f"{loc(pv, i):<10} {w:<20} {c}")
-section(3, 'الترقيم', 'كل خلية ⟨حرف، حالة⟩ رقمٌ: Code = 4(i−1) + j + 1 (sarf.numbering)؛ المشدَّد خليتان، والتنوين حالةٌ موسومة بـ«ن»',
-        rows, ['الموضع', 'الكلمة', 'الأرقام'], tl)
+section(3, 'الترقيم: خلايا المكتوب', 'كل خلية ⟨حرف، حالة⟩ من الكلمة المكتوبة رقمٌ: Code = 4(i−1) + j + 1 (sarf.numbering)؛ المشدَّد خليتان، '
+        'والتنوين حالةٌ موسومة بـ«ن». هذه خلايا المصدر، لا خلايا التحقيق', rows, ['الموضع', 'الكلمة', 'الأرقام'], tl)
 
-# ٤ التقطيع المقطعي للكلمة كاملة
+# ٤ التقطيع المقطعي للكلمة: خلايا التحقيق في الدرج، وخريطة الفرق
+import difflib as _dl
+
+
+def cell_diff(src, real):
+    """→ قائمة الفروق بين خلايا المكتوب وخلايا التحقيق: (+رقم) مضاف، (−رقم) محذوف"""
+    out = []
+    for op, i1, i2, j1, j2 in _dl.SequenceMatcher(None, src, real, autojunk=False).get_opcodes():
+        if op in ('delete', 'replace'):
+            out += [f'−{x}' for x in src[i1:i2]]
+        if op in ('insert', 'replace'):
+            out += [f'+{x}' for x in real[j1:j2]]
+    return out
+
+
 rows, tl = [], []
 for pv in per_verse:
     res = cvmod.run(pv['a']['normalized'])
@@ -148,35 +219,41 @@ for pv in per_verse:
         by_w[ws[0] if ws else -1].append((rend, pat, verdict))
     for i, w in enumerate(res['raw_words']):
         if i in res.get('divine_words', ()):
-            sy, pats, nums = 'لفظ الجلالة (لا يُقطَّع)', '', ''
+            sy, pats, nums, dif = 'لفظ الجلالة (لا يُقطَّع)', '', '', ''
         else:
             it = by_w.get(i, [])
             sy = ' . '.join(r for r, _, _ in it)
             pats = ' '.join(p for _, p, _ in it)
             nums = ' . '.join(code(r) for r, _, _ in it)
-        rows.append([loc(pv, i), f"<span class='ar'>{h(w)}</span>", f"<span class='ar'>{h(sy)}</span>", h(pats), f'<code>{h(nums)}</code>'])
+            dif = ' '.join(cell_diff(pv['codes'].get(i, []), ' '.join(code(r) for r, _, _ in it).split()))
+        rows.append([loc(pv, i), f"<span class='ar'>{h(w)}</span>", f"<span class='ar'>{h(sy)}</span>", h(pats), f'<code>{h(nums)}</code>',
+                     f'<code>{h(dif) or "—"}</code>'])
         if i < N:
-            tl.append(f"{loc(pv, i):<10} {w:<20} {sy:<30} {pats}")
-section(4, 'التقطيع المقطعي للكلمة', 'مقاطع الكلمة كاملةً قبل التقشير (sarf.syllabify)، بأنماطها وأرقامها؛ والمقاطع التي تستعملها المراحل بعدُ مقاطعُ الوحدات (١٠)',
-        rows, ['الموضع', 'الكلمة', 'المقاطع', 'النمط', 'الأرقام'], tl)
+            tl.append(f"{loc(pv, i):<10} {w:<20} {sy:<30} {pats}  فرق: {dif or '—'}")
+section(4, 'التقطيع المقطعي: خلايا التحقيق في الدرج', 'مقاطع النص متصلاً (sarf.syllabify) بأنماطها وأرقامها، وعمود «الفرق» يقابل خلايا التحقيق بخلايا المكتوب (٣): '
+        '«−» محذوفٌ في التحقيق، و«+» مضاف. وقواعد التحقيق المطبَّقة هنا: همزة الوصل تسقط في الدرج (فَكْ تُ بُو هُ)، ولام أل الشمسية '
+        'تُدغم فيما بعدها، والمشدَّد خليتان، وألف تنوين النصب وألف الوصل لا تُنطقان، وتُقدَّم همزة الابتداء لأل في أول الكلام. '
+        'وهذا تحقيقٌ صوتيٌّ معلَن، لا تبديلٌ للمكتوب: التحليل الصرفي يجري على خلايا المكتوب، والفرق يُحفظ هنا ولا يُحسب تساوياً',
+        rows, ['الموضع', 'الكلمة', 'المقاطع', 'النمط', 'أرقام التحقيق', 'الفرق عن المكتوب'], tl)
 
 # ٥ مطابقة العوامل ونفيها بالكتابة
 rows, tl = [], []
 for pv in per_verse:
     for c in pv['snaps'].get('evidence', []):
         st = ar(c.get('status') or 'مرشّح')
-        rows.append([loc(pv, c['word_index']), f"<span class='ar'>{h(pv['a']['normalized'].split()[c['word_index']])}</span>",
-                     f"<span class='ar'>{h(c['operator'])}</span>", esc(c.get('group')), esc(st), esc((c.get('reason') or c.get('note') or '')[:90])])
+        rows.append([loc(pv, c['word_index']), f"<span class='ar'>{h(c['word'])}</span>", f"<span class='ar'>{h(c['operator'])}</span>",
+                     esc(c.get('group')), esc(st), esc(c.get('note') or '—'), esc(c.get('reject_reason') or '—'),
+                     esc('، '.join(c.get('checked') or []) or '—')])
         if len(tl) < N:
-            tl.append(f"{loc(pv, c['word_index']):<10} {c['operator']:<10} مجموعة {c.get('group')} {st}")
-section(5, 'مطابقة العوامل ونفيها بالكتابة', 'مرشّحو العوامل المائة من الفهرس (sarf.match)، ثم نفي ما تمنعه الكتابة (sarf.evidence). في الكود تسبق هذه المرحلة التقشيرَ لأنه يبني خانات العوامل منها',
-        rows, ['الموضع', 'الكلمة', 'العامل', 'المجموعة', 'الحالة', 'السبب'], tl)
+            tl.append(f"{loc(pv, c['word_index']):<10} {c['operator']:<8} مجموعة {c.get('group')} {st}  {c.get('reject_reason') or ''}")
+section(5, 'مطابقة العوامل ونفيها بالكتابة', 'مرشّحو العوامل المائة من الفهرس (sarf.match)، ثم النفي بمانعٍ مكتوب (sarf.evidence). عمود «احتمال» '
+        'تنبيهٌ لا دليل؛ والنفي بعمود «المانع»، والموانع المفحوصة بعده. في الكود تسبق هذه المرحلة التقشيرَ لأنه يبني خانات العوامل منها',
+        rows, ['الموضع', 'الكلمة', 'العامل', 'المجموعة', 'الحالة', 'احتمال (لا دليل)', 'المانع', 'الموانع المفحوصة'], tl)
 
 # ٦ التقشير
 rows, tl = [], []
 for pv in per_verse:
     for seg in pv['a']['segments']:
-        sl = ' + '.join(f"{x['text']}<sub>{x['type']}</sub>" for x in seg['slots'])
         rows.append([loc(pv, seg['word_index']), f"<span class='ar'>{h(seg['word'])}</span>",
                      f"<span class='ar'>{' + '.join(h(x['text']) + '<sub>' + h(x['type']) + '</sub>' for x in seg['slots'])}</span>",
                      esc(len(seg['units']))])
@@ -189,27 +266,38 @@ section(6, 'التقشير', 'الخانات: عامل، مبني، أل، جذ�
 rows, tl = [], []
 for pv in per_verse:
     for c in pv['snaps'].get('judge', []):
+        j = c.get('judgement') or {}
+        proof = '؛ '.join(j.get('proof') or []) or ('المانع: ' + c['reject_reason'] if c.get('reject_reason') else '—')
+        why = '؛ '.join(j.get('deferred_because') or []) or '—'
+        lic = c.get('licence') or {}
+        lic_s = f"البقية: {lic.get('rest_strength', '—')}" if lic else '—'
         rows.append([loc(pv, c['word_index']), f"<span class='ar'>{h(c['operator'])}</span>", esc(c.get('group')), esc(c.get('status')),
-                     esc((c.get('reason') or c.get('note') or '')[:100])])
+                     esc(proof), esc(why), esc(lic_s)])
         if len(tl) < N:
-            tl.append(f"{loc(pv, c['word_index']):<10} {c['operator']:<10} {ar(c.get('status'))}")
-    for r in pv['a']['relations']:
-        t_ = r.get('target') or {}
-        rows.append([loc(pv, r['word_index']), f"<span class='ar'>{h(r['operator'])}</span> ← <span class='ar'>{h(t_.get('text', '—'))}</span>",
-                     esc(r.get('group')), 'علاقة', esc(f"المتوقَّع {r.get('expected') or '—'}، المكتوب {r.get('observed') or '—'}، متّسق: {r.get('consistent')}")])
-section(7, 'الحكم على العوامل وعلاقاتها', 'القبول بدليلٍ إيجابي، وإلا التأجيل أو المنع (sarf.judge)؛ والعامل ← المعمول بالمتوقَّع والمكتوب', rows,
-        ['الموضع', 'العامل', 'المجموعة', 'الحكم', 'الدليل'], tl)
+            tl.append(f"{loc(pv, c['word_index']):<10} {c['operator']:<8} {ar(c.get('status')):<8} {proof[:80]}")
+section(7, 'الحكم على العوامل', 'القبول بدليلٍ إيجابي: السبب والشرط والموانع المفحوصة (judgement.proof)؛ والتأجيل بسببه؛ والمنع بمانعه؛ '
+        'ورخصة بقية الكلمة بعد فصل العامل (licence) قوةً عددية', rows,
+        ['الموضع', 'العامل', 'المجموعة', 'الحكم', 'دليل القبول أو المنع', 'سبب التأجيل', 'رخصة البقية'], tl)
 
-# ٨ الإسناد والتوافق
+# ٨ الإسناد: سمات الصيغة، لا تعيين الفاعل
 rows, tl = [], []
 for pv in per_verse:
     for g in pv['a'].get('agreement', []):
         txt = pv['a']['segments'][g['word_index']]['slots'][g['slot']]['text']
-        rows.append([loc(pv, g['word_index']), f"<span class='ar'>{h(txt)}</span>", esc(g.get('kind')), esc(g.get('voice')),
-                     f"<span class='ar'>{h(' أو '.join(g.get('pronouns') or []))}</span>", esc(g.get('rule'))])
-        tl.append(f"{loc(pv, g['word_index']):<10} {txt:<16} {ar(g.get('kind'))} الفاعل: {' أو '.join(g.get('pronouns') or [])}")
-section(8, 'الإسناد والتوافق', 'الفعل بصيغته وضمير فاعله من لاحقته وحرف مضارعته (sarf.agreement، T18)', rows,
-        ['الموضع', 'الفعل', 'الصيغة', 'البناء', 'الفاعل', 'القاعدة'], tl[:N])
+        ui = pv['a']['segments'][g['word_index']]['slots'][g['slot']].get('unit', 0)
+        fr = pv['F'].get((g['word_index'], ui), {})
+        tst = fr.get('tense', {}).get('st', '—')
+        sst = fr.get('subject', {}).get('st', '—')
+        vst = fr.get('voice', {}).get('st', '—')
+        rows.append([loc(pv, g['word_index']), f"<span class='ar'>{h(txt)}</span>", f"{esc(g.get('kind'))} <span class='mut'>({tst})</span>",
+                     f"{esc(g.get('voice'))} <span class='mut'>({vst})</span>",
+                     f"<span class='ar'>{h(' أو '.join(g.get('pronouns') or []))}</span> <span class='mut'>({sst})</span>",
+                     esc(g.get('rule')), esc(g.get('verb_by_lexicon') or g.get('verb_by_operator') or '—')])
+        tl.append(f"{loc(pv, g['word_index']):<10} {txt:<16} {ar(g.get('kind'))}({tst}) ضمير الصيغة: {' أو '.join(g.get('pronouns') or [])}({sst})")
+section(8, 'الإسناد: سمات الصيغة', 'الصيغة وضمير الإسناد الذي تدلّ عليه لاحقتها وحرف مضارعتها (sarf.agreement، T18). «ضمير الصيغة» سمةٌ في الفعل، '
+        'لا تعيينٌ للفاعل في الجملة: «وَلۡيَكۡتُبۡ بَيۡنَكُمۡ كَاتِبٌ» صيغتها للغائب، وفاعلها الظاهر «كَاتِبٌ» يُعيَّن في طبقة الجملة. '
+        'وبين القوسين حالة السمة في المرحلة ١٣ (مثبت أو مرشّح)، فما كان مرشّحاً هنا لا يُبنى عليه', rows,
+        ['الموضع', 'الفعل', 'الصيغة', 'البناء', 'ضمير الصيغة', 'القاعدة', 'دليل الفعلية إن لم تكفِ الكتابة'], tl[:N])
 
 # ٩ الجذر والوزن
 rows, tl = [], []
@@ -240,12 +328,24 @@ section(10, 'مقاطع الوحدات وأرقامها', 'تقطيع ما لي�
 # ١١ ربط العامل بمعموله
 rows, tl = [], []
 for pv in per_verse:
+    segs_ = pv['a']['segments']
     for o in pv['a'].get('operators', []):
-        rows.append([loc(pv, o.get('word_index', 0)), f"<span class='ar'>{h(str(o.get('operator', '')))}</span>",
-                     esc(o.get('status')), esc(str({k: o[k] for k in o if k in ('slot', 'target', 'effect', 'expected')})[:120])])
+        r = o.get('relation') or {}
+        t_ = r.get('target') or {}
+        tgt = f"{t_.get('text', '—')} ({pv['s']}:{pv['v']}:{t_['word_index'] + 1}، خانة {t_.get('slot')})" if t_ else '—'
+        j = o.get('judgement') or {}
+        ev = '؛ '.join(j.get('proof') or []) or (o.get('reject_reason') or '—')
+        alts = len(o.get('meanings') or [])
+        rid = f"R{pv['s']}:{pv['v']}:{o.get('word_index', 0) + 1}/{(o.get('slot') or {}).get('index', '—')}→{t_.get('word_index', -1) + 1 if t_ else '—'}"
+        rows.append([loc(pv, o.get('word_index', 0)), f"<span class='ar'>{h(str(o.get('operator', '')))}</span>", esc(o.get('status')),
+                     f'<code>{h(rid)}</code>', f"<span class='ar'>{h(tgt)}</span>", esc(r.get('role') or '—'),
+                     esc(f"المتوقَّع {r.get('expected') or '—'}، المكتوب {r.get('observed') or '—'}، متّسق: {ar(r.get('consistent'))}" if r else '—'),
+                     esc(ev), esc(f'{alts} معنىً محتمل' if alts else '—')])
         if len(tl) < N:
-            tl.append(f"{loc(pv, o.get('word_index', 0)):<10} {o.get('operator')} {ar(o.get('status'))}")
-section(11, 'ربط العامل بمعموله', 'العامل بخانته وعلاقته (sarf.align)', rows, ['الموضع', 'العامل', 'الحالة', 'الربط'], tl)
+            tl.append(f"{loc(pv, o.get('word_index', 0)):<10} {o.get('operator')} {ar(o.get('status')):<8} ← {tgt}  {r.get('role') or ''}")
+section(11, 'ربط العامل بمعموله', 'لكل عاملٍ معرّف علاقته، ومعموله بموضعه وخانته، ودوره، والمتوقَّع والمكتوب، ودليل الحكم، وعدد معانيه المحتملة '
+        '(البدائل لا تُحسم هنا). والنطاق: معمولٌ واحد مباشر في الآية؛ وما يتجاوزه في طبقة الجملة (١٤)', rows,
+        ['الموضع', 'العامل', 'الحكم', 'معرّف العلاقة', 'المعمول', 'الدور', 'العلامة', 'الدليل', 'البدائل'], tl)
 
 # ١٢ الوحدات اللفظية وإغلاقها
 rows, tl = [], []
@@ -262,9 +362,9 @@ section(12, 'الوحدات اللفظية وإغلاقها', 'كل وحدةٍ �
         rows, ['الموضع', 'الوحدة', 'الحالة', 'الإغلاق', 'الجذر والوزن', 'سبب التعليق'], tl)
 
 # ١٣ السمات الصرفية
-LBL = dict(pos='الصنف', tense='الزمن', voice='البناء', subject='الفاعل', augmentation='التجرّد والزيادة', transitivity='التعدّي',
-           bab='الباب', signified='المدلول', number='العدد', gender='الجنس', plural_type='نوع الجمع', fem_marker='علامة التأنيث',
-           definiteness='التعريف', derivation='الاشتقاق', person='الشخص')
+LBL = dict(pos='الصنف', tense='الزمن', voice='البناء', subject='ضمير الصيغة', augmentation='التجرّد والزيادة', transitivity='التعدّي',
+           bab='الباب', signified='المدلول (مدخل HFN)', number='العدد', gender='الجنس', plural_type='نوع الجمع', fem_marker='علامة التأنيث',
+           definiteness='التعريف', derivation='الاشتقاق', pattern='البناء الصرفي', person='الشخص')
 
 
 PER = {1: 'المتكلم', 2: 'المخاطب', 3: 'الغائب'}
@@ -279,7 +379,7 @@ def fv(v):
         if v.get('type') == 'مزيد':
             return f"مزيد على {v.get('wazn')}"
         if 'verb' in v:
-            return f"«{v['verb']}»"
+            return f"«{v['verb']}» [{v.get('event')}]"
         return '، '.join(ar(x) for k, x in v.items() if k not in ('event',))
     return ar(v)
 
@@ -293,7 +393,9 @@ for pv in per_verse:
         if len(tl) < N:
             tl.append(f"{loc(pv, wi):<10} {pv['units'][(wi, ui)].O['text']:<16} " +
                       '؛ '.join(f"{n}={fv(r['v'])}({r['st'][0]})" for n, r in shown if n != 'الصنف' or True)[:150])
-section(13, 'السمات الصرفية', 'لكل سمةٍ حالتها: مثبت أو مرشّح (يُعرضان هنا)، والمؤجَّل وغير المنطبق في tools/features_verse.py (sarf.features)', rows,
+section(13, 'السمات الصرفية', 'لكل سمةٍ حالتها: مثبت أو مرشّح (يُعرضان هنا)، والمؤجَّل وغير المنطبق في tools/features_verse.py (sarf.features). '
+        '«ضمير الصيغة» سمة الفعل لا فاعل الجملة؛ و«البناء الصرفي» قالبٌ من أبنية سيبويه لا نوع اشتقاق؛ و«المدلول» مدخلٌ معجميٌّ بمعرّفه في HFN '
+        'تطابقه الكلمة، لا اختيارٌ لمعناه السياقي', rows,
         ['الموضع', 'الوحدة', 'السمات'], tl)
 
 # ١٤ الجملة و١٥ الوحدة الخطابية
@@ -314,13 +416,18 @@ for SP in LT:
                 if pv:
                     words.append(pv['a']['segments'][w_]['word'])
             opn = [o.name for o in J.Omega if o.required and not o.met]
+            bnd = J.O.get('boundary') or {}
+            bonds = '<br>'.join(h(f'{b[0]}: {b[1]} → {b[2]}') for b in (J.O.get('bound') or [])) or '—'
             rows_j.append([esc(J.id), f'{frm} – {to}', f"<span class='ar'>{h(' '.join(words))}</span>", 'مغلقة' if J.closed else 'مفتوحة',
-                           esc(len(J.O.get('bound') or [])), esc(len(J.O.get('unplaced') or [])), esc('، '.join(opn[:6]) + (' …' if len(opn) > 6 else ''))])
+                           esc(bnd.get('F') or '—'), bonds, esc(len(J.O.get('unplaced') or [])), esc('، '.join(opn) or '—')])
             tl_j.append(f"{J.id:<14} {frm}–{to}  {'مغلقة' if J.closed else 'مفتوحة'}  روابط {len(J.O.get('bound') or [])}  "
                         f"بلا موضع {len(J.O.get('unplaced') or [])}  {' '.join(words)[:70]}")
-section(14, 'الجملة', 'حدّ الجملة = اكتمال ∧ امتناع الامتداد (الطبقة اللغوية في sarf.algebra)؛ والآية لا تُغلق الجملة؛ ولكل جملةٍ روابطها المرخَّصة والتزاماتها المفتوحة',
-        rows_j, ['الجملة', 'من – إلى', 'النص', 'الحالة', 'روابط', 'كلمات بلا موضع', 'التزامات مفتوحة'], tl_j)
-section(15, 'الوحدة الخطابية', 'الجمل المتصلة بحدودها وتعلّقها؛ والإغلاق الخارجي لا يثبت إلا في آخر السورة', rows_d,
+section(14, 'الجملة', 'جهتان مختلفتان: «التمام» (F) أن في المدى نواةً ولا التزامَ نحويٍّ لازمٍ مفتوحاً (معمول، خبر، فاعل)؛ و«الإغلاق» أن تُستوفى '
+        'الالتزامات كلها: إغلاق كل وحدة، وموضع كل كلمة، وحسم كل علاقة. فالجملة قد تكون تامّةً في التحليل مفتوحةً غير مغلقة. والآية لا تُغلق الجملة. '
+        'والروابط معروضةٌ بأطرافها، والالتزامات المفتوحة كاملةً بلا اختصار',
+        rows_j, ['الجملة', 'من – إلى', 'النص', 'الإغلاق', 'التمام (F)', 'الروابط', 'كلمات بلا موضع', 'التزامات مفتوحة'], tl_j)
+section(15, 'الوحدة الخطابية', 'الجمل المتصلة بحدودها وتعلّقها. ونهاية السورة تحدّ نطاق المصدر ولا تثبت وحدها اكتمال البنية: '
+        'الإغلاق الخارجي لا يُحكم به إلا باستيفاء التزامات الوحدة', rows_d,
         ['الوحدة', 'المدى', 'الجمل', 'الحالة', 'الحدّ'], tl_d)
 section(16, 'الفقرة', 'غير منفَّذة بعد: لا قاعدة مكتوبة لحدّ الفقرة في المشروع. والمدخل ينتهي هنا', [['—', 'غير منفَّذة']], ['', ''], ['غير منفَّذة بعد'])
 
