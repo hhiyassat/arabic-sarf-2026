@@ -130,5 +130,23 @@ check('تَقَبَّلَ: ماضٍ (التاء من قالب تَفَعَّلَ
 W, F, U = feats((2, 48))
 r = W.get('تَجْزِي')
 check('تَجْزِي: الياء لام الجذر، فالفاعل لا يثبت «أنتِ»', r is not None and r['subject']['st'] != PROVEN, r and r.get('subject'))
+
+# ٩. تدقيق آية الدَّين الثاني: «لا» الناهية بالجزم المكتوب، والجذع مع ضميره المفصول، والعوامل الفعلية أفعالاً
+from sarf.pipeline import Pipeline as _P
+_ctx = _P(cat).run(ROWS[(2, 282)])
+_c = {(c['word_index'] + 1, c['operator'], c['group']): c['status'] for c in _ctx.candidates}
+check('وَلَا يَبۡخَسۡ: «لا» الناهية مقبولة (الجزم المكتوب ينفي النافية)', _c.get((31, 'لَا', '6')) == 'accepted', _c.get((31, 'لَا', '6')))
+check('أَنۡ تَكۡتُبُوهُ: «أن» مقبولة (حذف النون مع الضمير المفصول)', _c.get((80, 'أَنْ', '5')) == 'accepted', _c.get((80, 'أَنْ', '5')))
+_g = {g['word_index'] + 1: g for g in _ctx.agreement}
+for w in (81, 107):
+    check(f'2:282:{w}: «تَكۡتُبُو» مع ضميره فعلٌ فاعله «أنتم»', w in _g and _g[w]['pronouns'] == ['أَنْتُمْ'], _g.get(w))
+W, F, U = feats((2, 282))
+for w in ('كَانَ', 'لَيْسَ'):
+    r = W.get(w)
+    check(f'{w}: فعلٌ ماضٍ مثبت بالجرد، بلا جذر', r is not None and st(r, 'pos') == (PROVEN, 'فعل') and st(r, 'tense') == (PROVEN, 'ماضٍ')
+          and r['augmentation']['st'] == 'غير منطبق', r)
+from sarf.affix import plural_waw_host
+check('يَدۡعُو: الناقص لا يُعدّ واو جماعة', not plural_waw_host('يَدْعُو'))
+check('تَرُدُّو: المضعَّف بحرفين ثانيهما مشدَّد', plural_waw_host('تَرُدُّو'))
 print('ALL OK' if not bad else f'FAILED {bad}')
 sys.exit(1 if bad else 0)

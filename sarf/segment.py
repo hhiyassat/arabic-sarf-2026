@@ -32,7 +32,7 @@ from .chars import (FATHA, DAMMA, KASRA, SUKUN, SHADDA, FATHATAN, DAMMATAN, KASR
 from .divine import divine_name
 from .match import PRON_SUFFIXES, match_letters, vocal_compatible, vform_match
 from . import syllabify as cv
-from .affix import stem_info, radical_nun, short_host, ha_kasra_ok, hollow_radical_nun
+from .affix import stem_info, radical_nun, short_host, ha_kasra_ok, hollow_radical_nun, plural_waw_host
 from .status import BLOCKED
 
 AMIL, MABNI, ARTICLE, STEM, DIVINE = 'عامل', 'مبني', 'أل', 'جذع', 'لفظ الجلالة'
@@ -438,6 +438,11 @@ def relate(segs, cands):
                     ((m := stem_info(ts['text']))['pos'] == 'verb' or
                      (m['kind'] == 'mudari' and (c['group'] in ('5', '6', '7') or
                                                  vform_match(c['operator'], ('حَتَّى', 'لِ'))))):   # حتى ولام التعليل قبل المضارع
+                if m['kind'] == 'mudari' and m['mood'] is None and plural_waw_host(ts['text']):
+                    # الجذع وضميره المفصول معاً (تَكۡتُبُو | هُ): واو الجماعة وحذف النون مكتوبان في الكلمة
+                    nxt = [x for x in segs[tg[0]]['slots'] if x['index'] > ts['index']]
+                    if nxt and nxt[0]['type'] == 'مبني' and nxt[0].get('role') == 'enclitic':
+                        m = stem_info(ts['text'] + nxt[0]['text'])
                 r['target'].update(pos='verb', kind=m['kind'])
                 if c['group'] == '1':
                     r.update(expected='نصب', note='الجار قبل المضارع: النصب بأن مضمرة')

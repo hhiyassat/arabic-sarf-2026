@@ -443,6 +443,63 @@ def noun_features(G, seg, stem_slot, has_al, enclitic):
     return out
 
 
+# ---------- العوامل الفعلية (كان وأخواتها، وكاد، وليس…) ----------
+SUBJ_PRON = ('تُمْ', 'تُمَا', 'تُنَّ', 'تُ', 'تَ', 'تِ', 'نَا', 'وا', 'نَ', 'ا', 'تْ', 'تَا')
+
+
+def _with_subject(text, su, ui, seg):
+    """الوحدة وما يليها من ضمير رفعٍ متصل فصله التقشير (كُنۡ + تُمۡ)، إن كان التالي ضميراً من صور ضمائر الرفع"""
+    if ui + 1 < len(su):
+        ns = [seg['slots'][i] for i in su[ui + 1].get('slots', [])]
+        if ns and all(x['type'] == 'مبني' for x in ns):
+            nxt = ''.join(x['text'] for x in ns)
+            if nxt in SUBJ_PRON:
+                return text + nxt
+    return text
+
+def _verbal_operator(text):
+    """→ هوية العامل الفعلي إن كان المكتوب صيغةً من صيغه في الجرد المعتمد (sarf/protected.py VERBAL)، أو None"""
+    from .protected import VERBAL
+    from .chars import letters as _l
+    key = [(L, frozenset(m)) for L, m in _l(text)]
+    t = _l(text)
+    if len(t) >= 3 and t[0][0] == 'أ' and FATHA in t[0][1] and SUKUN in t[1][1] and FATHA in t[2][1]:
+        return None                       # أَفۡعَلُ: مضارع المتكلم أو اسم التفضيل (أَعۡلَمُ)
+    for ident, (forms, amb) in VERBAL.items():
+        if amb:
+            continue                      # الملتبس بفعلٍ تامّ أو باسمٍ (ظَنَّ، عَلِمَ): لا يثبت بالجرد وحده
+        for f in forms:
+            if [(L, frozenset(m)) for L, m in _l(f)] == key:
+                return ident
+    return None
+
+
+def _verbal_operator_features(text, agr=None):
+    """العامل الفعلي فعلٌ بالجرد المعتمد، ولا جذر له ولا وزن بحكم الدستور؛ وزمنه من صيغته المكتوبة"""
+    from .affix import stem_info
+    from .agreement import agreement
+    ident = _verbal_operator(text)
+    src = f'صيغةٌ من صيغ العامل الفعلي «{ident}» في الجرد المعتمد (sarf/protected.py VERBAL)'
+    out = {'pos': feat('فعل', PROVEN, src), 'operator': feat('ناسخٌ أو عاملٌ فعلي', PROVEN, src),
+           'augmentation': feat(None, NA, 'وحدة محمية: لا جذر ولا وزن'), 'transitivity': feat(None, NA, 'عاملٌ ناسخ')}
+    info = stem_info(text)
+    kind = info['kind']
+    if kind is None and text == ident:
+        kind = 'madi'                                    # الصيغة نفسها مدخلُ الجرد: الماضي (كَانَ، لَيْسَ)
+    if kind in TENSE:
+        out['tense'] = feat(TENSE[kind], PROVEN, src + '، وصيغته المكتوبة')
+    else:
+        out['tense'] = feat(None, DEFER, 'لم تعيّن الصيغة المكتوبة زمنه', alt=list(TENSE.values()))
+    g = agr or (agreement(text, dict(info, pos='verb', kind=kind)) if kind else None)
+    fs = (g or {}).get('features') or []
+    if len(fs) == 1:
+        p_, n_, gg = fs[0]
+        out['subject'] = feat(dict(person=p_, number=n_, gender=gg), PROVEN, (g or {}).get('rule') or '')
+    elif fs:
+        out['subject'] = feat(None, DEFER, (g or {}).get('rule') or '', alt=[dict(person=a, number=b, gender=c) for a, b, c in fs])
+    return out
+
+
 # ---------- الوحدات ----------
 def unit_features(a, units):
     """→ {(wi, ui): {السمة: سجل}} لكل وحدة لفظية"""
@@ -482,6 +539,10 @@ def unit_features(a, units):
                 rec = verb_features(G, agr[(wi, stem_i)], morph.get((wi, stem_i)), encl, gov.get((wi, stem_i)))
             elif stem is not None and not prot and lexk not in ('عامل', 'مبني', 'لفظ الجلالة'):
                 rec = noun_features(G, seg, stem, any(s['type'] == 'أل' for s in slots), encl)
+            elif _verbal_operator(_with_subject(G.O['text'], su, ui, seg)):
+                # الصيغة مع ضمير الرفع المتصل بها إن فصله التقشير (كُنۡ | تُمۡ ← كُنۡتُمۡ)
+                rec = _verbal_operator_features(_with_subject(G.O['text'], su, ui, seg),
+                                                agr.get((wi, stem_i)) if stem_i is not None else None)
             elif lexk in ('مبني',) or (stem is None and lexk):
                 rec = {'pos': feat(lexk, PROVEN, 'خانة ' + lexk)}
                 rec.update(mabni_features(G.O['text']))
