@@ -180,6 +180,15 @@ def radical_nun(toks, suf):
         len(toks) - k - 1 < 3 and toks[-k - 1][0] not in MADD
 
 
+def hollow_radical_nun(toks, suf):
+    """نون «نَا» جذرية لا ضمير (يَكُونَا، تَكُونَا): لو نُزعت لبقي حرف المضارعة وحرفٌ واحد ثم حرف مدّ، وليس ذلك جذعَ فعل؛
+    فالنون لامُ الأجوف، والألف بعدها ألف الاثنين"""
+    k = len(match_letters(suf))
+    host = toks[:-k]
+    return suf == 'نَا' and len(host) == 3 and host[0][0] in MUDARI and set(host[0][1]) & {FATHA, DAMMA} and \
+        host[2][0] in ('و', 'ي', 'ا') and not host[2][1]
+
+
 def stem_info(text):
     """→ dict(pos, kind, mood, prefix, suffix, object, evidence)
     pos: 'verb' | 'noun' | None؛ kind: 'mudari' | 'amr' | 'madi' | None
@@ -221,7 +230,7 @@ def stem_info(text):
         k = len(stoks)
         if len(toks) - k < MIN_STEM and not short_host(toks[:-k]):
             continue
-        if radical_nun(toks, suf) or not ha_kasra_ok(toks, suf):
+        if radical_nun(toks, suf) or not ha_kasra_ok(toks, suf) or hollow_radical_nun(toks, suf):
             continue
         cand = [(L, frozenset(m)) for L, m in toks[-k:]]
         if plain(cand, True) == plain(stoks, True) and vocal_compatible(cand, stoks)[0]:
@@ -298,7 +307,9 @@ def stem_info(text):
             # الخفيفة تُرسم في المصحف تنويناً (لَنَسۡفَعَۢا)، فالنون الساكنة بعد فتح أصلية (تَحۡزَنۡ، يَأۡذَنۡ)
             info.update(pos='verb', suffix='نون التوكيد', mood='مبني'); ev.append('نون التوكيد')
         elif (L == 'ن' and FATHA in m and toks[-2][0] in ('و', 'ي') and not toks[-2][1] or
-              L == 'ن' and KASRA in m and toks[-2][0] == 'ا') and len(toks) > 3:
+              L == 'ن' and KASRA in m and toks[-2][0] == 'ا') and len(toks) > 4 - (toks[-2][0] == 'ا'):
+            # أربعة أحرفٍ (حرف المضارعة، وحرف، ومدّ، ونون: تَكُونَ، يَبِينَ): المدّ عين الأجوف والنون لامه، لا نون الرفع؛
+            # وواو الجماعة بعد فتحٍ ساكنةٌ (تَرَوۡنَ) فلا تدخل هنا
             # نون الرفع؛ ومع غير الياء تلتبس بجمع الاسم (نَبِيُّونَ، تَابِعُونَ) فلا يُحكم بالفعل
             info.update(suffix='نون الرفع', mood='رفع'); ev.append('نون الرفع')
             # ومع التاء يُشترط شكل المضارع (تُحِبُّونَ، تَعۡلَمُونَ) فلا يلتبس بالاسم (تَابِعُونَ)
