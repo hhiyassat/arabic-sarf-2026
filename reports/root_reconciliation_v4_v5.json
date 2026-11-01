@@ -1,0 +1,1360 @@
+{
+ "counts": {
+  "لم يتغيّر": 16640,
+  "من القبول إلى التأجيل: كان صحيحاً": 78,
+  "من القبول إلى التأجيل: كان مخالفاً لـQAC": 9
+ },
+ "rows": {
+  "من القبول إلى التأجيل: كان صحيحاً": [
+   {
+    "loc": "10:28:10",
+    "text": "زَيَّلْنَا",
+    "gold": "زيل/II",
+    "before": {
+     "status": "accepted",
+     "root": "زيل",
+     "form": "II",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: زيل (II)، زول (II)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها B، ومنافسها B؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "زيل/II (B، مطابق)",
+      "زول/II (B)"
+     ]
+    }
+   },
+   {
+    "loc": "10:78:4",
+    "text": "وَجَدْنَا",
+    "gold": "وجد/I",
+    "before": {
+     "status": "accepted",
+     "root": "وجد",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: وجد (I)، جود (I)، جيد (I)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها C؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "وجد/I (C، مطابق)",
+      "وجد/I (C)",
+      "جود/I (C)",
+      "جيد/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "12:18:7",
+    "text": "سَوَّلَتْ",
+    "gold": "سول/II",
+    "before": {
+     "status": "accepted",
+     "root": "سول",
+     "form": "II",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: سول (II)، سيل (II)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها B، ومنافسها B؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "سول/II (B، مطابق)",
+      "سيل/II (B)"
+     ]
+    }
+   },
+   {
+    "loc": "12:71:1",
+    "text": "أَقْبَلُوا",
+    "gold": "قبل/IV",
+    "before": {
+     "status": "accepted",
+     "root": "قبل",
+     "form": "IV",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: قبل (IV)، قبل (I)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها B، ومنافسها A؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "قبل/IV (B، مطابق)",
+      "قبل/I (A)",
+      "قبل/I (A)",
+      "قبل/I (A)",
+      "قبل/I (A)"
+     ]
+    }
+   },
+   {
+    "loc": "12:79:7",
+    "text": "وَجَدْنَا",
+    "gold": "وجد/I",
+    "before": {
+     "status": "accepted",
+     "root": "وجد",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: وجد (I)، جود (I)، جيد (I)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها C؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "وجد/I (C، مطابق)",
+      "وجد/I (C)",
+      "جود/I (C)",
+      "جيد/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "12:83:2",
+    "text": "سَوَّلَتْ",
+    "gold": "سول/II",
+    "before": {
+     "status": "accepted",
+     "root": "سول",
+     "form": "II",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: سول (II)، سيل (II)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها B، ومنافسها B؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "سول/II (B، مطابق)",
+      "سيل/II (B)"
+     ]
+    }
+   },
+   {
+    "loc": "13:17:4",
+    "text": "سَالَتْ",
+    "gold": "سيل/I",
+    "before": {
+     "status": "accepted",
+     "root": "سيل",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: سول (I)، سيل (I)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها C؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "سول/I (C)",
+      "سيل/I (C، مطابق)"
+     ]
+    }
+   },
+   {
+    "loc": "13:22:5",
+    "text": "أَقَامُوا",
+    "gold": "قوم/IV",
+    "before": {
+     "status": "accepted",
+     "root": "قوم",
+     "form": "IV",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: قوم (IV)، قوم (I)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها B، ومنافسها A؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "قوم/IV (B، مطابق)",
+      "قوم/I (A)"
+     ]
+    }
+   },
+   {
+    "loc": "15:73:0",
+    "text": "أَخَذَتْ",
+    "gold": "ءخذ/I",
+    "before": {
+     "status": "accepted",
+     "root": "ءخذ",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: خذو (IV)، ءخذ (I)، خذو (I)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها A؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "خذو/IV (B)",
+      "ءخذ/I (C، مطابق)",
+      "ءخذ/I (C)",
+      "ءخذ/I (C)",
+      "خذو/I (A)"
+     ]
+    }
+   },
+   {
+    "loc": "15:83:0",
+    "text": "أَخَذَتْ",
+    "gold": "ءخذ/I",
+    "before": {
+     "status": "accepted",
+     "root": "ءخذ",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: خذو (IV)، ءخذ (I)، خذو (I)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها A؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "خذو/IV (B)",
+      "ءخذ/I (C، مطابق)",
+      "ءخذ/I (C)",
+      "ءخذ/I (C)",
+      "خذو/I (A)"
+     ]
+    }
+   },
+   {
+    "loc": "16:38:0",
+    "text": "أَقْسَمُوا",
+    "gold": "قسم/IV",
+    "before": {
+     "status": "accepted",
+     "root": "قسم",
+     "form": "IV",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: قسم (IV)، قسم (I)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها B، ومنافسها A؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "قسم/IV (B، مطابق)",
+      "قسم/I (A)"
+     ]
+    }
+   },
+   {
+    "loc": "17:16:5",
+    "text": "أَمَرْنَا",
+    "gold": "ءمر/I",
+    "before": {
+     "status": "accepted",
+     "root": "ءمر",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: مور (IV)، ءمر (I)، مور (I)، مير (I)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها B؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "مور/IV (B)",
+      "ءمر/I (C، مطابق)",
+      "ءمر/I (C)",
+      "ءمر/I (C)",
+      "مور/I (C)",
+      "مير/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "17:69:1",
+    "text": "أَمِنْتُمْ",
+    "gold": "ءمن/I",
+    "before": {
+     "status": "accepted",
+     "root": "ءمن",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: ءمن (I)، مون (I)، مين (I)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها C؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "ءمن/I (C، مطابق)",
+      "ءمن/I (C)",
+      "مون/I (C)",
+      "مين/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "20:96:13",
+    "text": "سَوَّلَتْ",
+    "gold": "سول/II",
+    "before": {
+     "status": "accepted",
+     "root": "سول",
+     "form": "II",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: سول (II)، سيل (II)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها B، ومنافسها B؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "سول/II (B، مطابق)",
+      "سيل/II (B)"
+     ]
+    }
+   },
+   {
+    "loc": "21:53:1",
+    "text": "وَجَدْنَا",
+    "gold": "وجد/I",
+    "before": {
+     "status": "accepted",
+     "root": "وجد",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: وجد (I)، جود (I)، جيد (I)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها C؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "وجد/I (C، مطابق)",
+      "وجد/I (C)",
+      "جود/I (C)",
+      "جيد/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "22:35:4",
+    "text": "وَجِلَتْ",
+    "gold": "وجل/I",
+    "before": {
+     "status": "accepted",
+     "root": "وجل",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: وجل (I)، جلو (I)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها C؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "وجل/I (C، مطابق)",
+      "جلو/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "22:41:5",
+    "text": "أَقَامُوا",
+    "gold": "قوم/IV",
+    "before": {
+     "status": "accepted",
+     "root": "قوم",
+     "form": "IV",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: قوم (IV)، قوم (I)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها B، ومنافسها A؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "قوم/IV (B، مطابق)",
+      "قوم/I (A)"
+     ]
+    }
+   },
+   {
+    "loc": "23:41:0",
+    "text": "أَخَذَتْ",
+    "gold": "ءخذ/I",
+    "before": {
+     "status": "accepted",
+     "root": "ءخذ",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: خذو (IV)، ءخذ (I)، خذو (I)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها A؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "خذو/IV (B)",
+      "ءخذ/I (C، مطابق)",
+      "ءخذ/I (C)",
+      "ءخذ/I (C)",
+      "خذو/I (A)"
+     ]
+    }
+   },
+   {
+    "loc": "24:53:0",
+    "text": "أَقْسَمُوا",
+    "gold": "قسم/IV",
+    "before": {
+     "status": "accepted",
+     "root": "قسم",
+     "form": "IV",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: قسم (IV)، قسم (I)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها B، ومنافسها A؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "قسم/IV (B، مطابق)",
+      "قسم/I (A)"
+     ]
+    }
+   },
+   {
+    "loc": "24:53:5",
+    "text": "أَمَرْتَ",
+    "gold": "ءمر/I",
+    "before": {
+     "status": "accepted",
+     "root": "ءمر",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: مور (IV)، ءمر (I)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها B؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "مور/IV (B)",
+      "ءمر/I (C، مطابق)",
+      "ءمر/I (C)",
+      "ءمر/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "26:74:2",
+    "text": "وَجَدْنَا",
+    "gold": "وجد/I",
+    "before": {
+     "status": "accepted",
+     "root": "وجد",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: وجد (I)، جود (I)، جيد (I)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها C؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "وجد/I (C، مطابق)",
+      "وجد/I (C)",
+      "جود/I (C)",
+      "جيد/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "29:23:6",
+    "text": "يَئِسُوا",
+    "gold": "يءس/I",
+    "before": {
+     "status": "accepted",
+     "root": "يءس",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: يءس (I)، ءسو (I)، ءسي (I)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها C؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "يءس/I (C، مطابق)",
+      "يءس/I (C، مطابق)",
+      "ءسو/I (E)",
+      "ءسو/I (E)",
+      "ءسي/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "29:37:1",
+    "text": "أَخَذَتْ",
+    "gold": "ءخذ/I",
+    "before": {
+     "status": "accepted",
+     "root": "ءخذ",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: خذو (IV)، ءخذ (I)، خذو (I)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها A؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "خذو/IV (B)",
+      "ءخذ/I (C، مطابق)",
+      "ءخذ/I (C)",
+      "ءخذ/I (C)",
+      "خذو/I (A)"
+     ]
+    }
+   },
+   {
+    "loc": "29:40:10",
+    "text": "أَخَذَتْ",
+    "gold": "ءخذ/I",
+    "before": {
+     "status": "accepted",
+     "root": "ءخذ",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: خذو (IV)، ءخذ (I)، خذو (I)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها A؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "خذو/IV (B)",
+      "ءخذ/I (C، مطابق)",
+      "ءخذ/I (C)",
+      "ءخذ/I (C)",
+      "خذو/I (A)"
+     ]
+    }
+   },
+   {
+    "loc": "2:145:8",
+    "text": "تَبِعُوا",
+    "gold": "تبع/I",
+    "before": {
+     "status": "accepted",
+     "root": "تبع",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: تبع (I)، بعو (I)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها C؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "تبع/I (C، مطابق)",
+      "بعو/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "2:196:34",
+    "text": "أَمِنْتُمْ",
+    "gold": "ءمن/I",
+    "before": {
+     "status": "accepted",
+     "root": "ءمن",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: ءمن (I)، مون (I)، مين (I)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها C؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "ءمن/I (C، مطابق)",
+      "ءمن/I (C)",
+      "مون/I (C)",
+      "مين/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "2:197:21",
+    "text": "تَزَوَّدُوا",
+    "gold": "زود/V",
+    "before": {
+     "status": "accepted",
+     "root": "زود",
+     "form": "V",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: زود (V)، زيد (V)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها B، ومنافسها B؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "زود/V (B، مطابق)",
+      "زيد/V (B)"
+     ]
+    }
+   },
+   {
+    "loc": "2:206:5",
+    "text": "أَخَذَتْ",
+    "gold": "ءخذ/I",
+    "before": {
+     "status": "accepted",
+     "root": "ءخذ",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: خذو (IV)، ءخذ (I)، خذو (I)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها A؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "خذو/IV (B)",
+      "ءخذ/I (C، مطابق)",
+      "ءخذ/I (C)",
+      "ءخذ/I (C)",
+      "خذو/I (A)"
+     ]
+    }
+   },
+   {
+    "loc": "2:239:6",
+    "text": "أَمِنْتُمْ",
+    "gold": "ءمن/I",
+    "before": {
+     "status": "accepted",
+     "root": "ءمن",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: ءمن (I)، مون (I)، مين (I)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها C؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "ءمن/I (C، مطابق)",
+      "ءمن/I (C)",
+      "مون/I (C)",
+      "مين/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "2:277:5",
+    "text": "أَقَامُوا",
+    "gold": "قوم/IV",
+    "before": {
+     "status": "accepted",
+     "root": "قوم",
+     "form": "IV",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: قوم (IV)، قوم (I)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها B، ومنافسها A؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "قوم/IV (B، مطابق)",
+      "قوم/I (A)"
+     ]
+    }
+   },
+   {
+    "loc": "2:55:10",
+    "text": "أَخَذَتْ",
+    "gold": "ءخذ/I",
+    "before": {
+     "status": "accepted",
+     "root": "ءخذ",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: خذو (IV)، ءخذ (I)، خذو (I)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها A؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "خذو/IV (B)",
+      "ءخذ/I (C، مطابق)",
+      "ءخذ/I (C)",
+      "ءخذ/I (C)",
+      "خذو/I (A)"
+     ]
+    }
+   },
+   {
+    "loc": "31:21:11",
+    "text": "وَجَدْنَا",
+    "gold": "وجد/I",
+    "before": {
+     "status": "accepted",
+     "root": "وجد",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: وجد (I)، جود (I)، جيد (I)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها C؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "وجد/I (C، مطابق)",
+      "وجد/I (C)",
+      "جود/I (C)",
+      "جيد/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "35:18:24",
+    "text": "أَقَامُوا",
+    "gold": "قوم/IV",
+    "before": {
+     "status": "accepted",
+     "root": "قوم",
+     "form": "IV",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: قوم (IV)، قوم (I)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها B، ومنافسها A؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "قوم/IV (B، مطابق)",
+      "قوم/I (A)"
+     ]
+    }
+   },
+   {
+    "loc": "35:29:5",
+    "text": "أَقَامُوا",
+    "gold": "قوم/IV",
+    "before": {
+     "status": "accepted",
+     "root": "قوم",
+     "form": "IV",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: قوم (IV)، قوم (I)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها B، ومنافسها A؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "قوم/IV (B، مطابق)",
+      "قوم/I (A)"
+     ]
+    }
+   },
+   {
+    "loc": "35:42:0",
+    "text": "أَقْسَمُوا",
+    "gold": "قسم/IV",
+    "before": {
+     "status": "accepted",
+     "root": "قسم",
+     "form": "IV",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: قسم (IV)، قسم (I)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها B، ومنافسها A؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "قسم/IV (B، مطابق)",
+      "قسم/I (A)"
+     ]
+    }
+   },
+   {
+    "loc": "36:66:5",
+    "text": "اسْتَبَقُوا",
+    "gold": "سبق/VIII",
+    "before": {
+     "status": "accepted",
+     "root": "سبق",
+     "form": "VIII",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: سبق (VIII)، بقي (X)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها B، ومنافسها B؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "سبق/VIII (B، مطابق)",
+      "بقي/X (B)"
+     ]
+    }
+   },
+   {
+    "loc": "37:94:0",
+    "text": "أَقْبَلُوا",
+    "gold": "قبل/IV",
+    "before": {
+     "status": "accepted",
+     "root": "قبل",
+     "form": "IV",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: قبل (IV)، قبل (I)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها B، ومنافسها A؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "قبل/IV (B، مطابق)",
+      "قبل/I (A)",
+      "قبل/I (A)",
+      "قبل/I (A)",
+      "قبل/I (A)"
+     ]
+    }
+   },
+   {
+    "loc": "38:21:5",
+    "text": "تَسَوَّرُوا",
+    "gold": "سور/V",
+    "before": {
+     "status": "accepted",
+     "root": "سور",
+     "form": "V",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: سور (V)، سير (V)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها B، ومنافسها B؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "سور/V (B، مطابق)",
+      "سير/V (B)"
+     ]
+    }
+   },
+   {
+    "loc": "39:17:5",
+    "text": "أَنَابُوا",
+    "gold": "نوب/IV",
+    "before": {
+     "status": "accepted",
+     "root": "نوب",
+     "form": "IV",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: نوب (IV)، نوب (I)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها B، ومنافسها A؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "نوب/IV (B، مطابق)",
+      "نوب/I (A)"
+     ]
+    }
+   },
+   {
+    "loc": "41:17:7",
+    "text": "أَخَذَتْ",
+    "gold": "ءخذ/I",
+    "before": {
+     "status": "accepted",
+     "root": "ءخذ",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: خذو (IV)، ءخذ (I)، خذو (I)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها A؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "خذو/IV (B)",
+      "ءخذ/I (C، مطابق)",
+      "ءخذ/I (C)",
+      "ءخذ/I (C)",
+      "خذو/I (A)"
+     ]
+    }
+   }
+  ],
+  "من القبول إلى التأجيل: كان مخالفاً لـQAC": [
+   {
+    "loc": "15:29:6",
+    "text": "فَقَعُوا",
+    "gold": "وقع/I",
+    "before": {
+     "status": "accepted",
+     "root": "فقع",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: فقع (I)، قعو (I)، وقع (I)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها A، ومنافسها A؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "فقع/I (A، مطابق)",
+      "فقع/I (A)",
+      "قعو/I (A)",
+      "وقع/I (C)",
+      "وقع/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "21:15:1",
+    "text": "زَالَتْ",
+    "gold": "زيل/I",
+    "before": {
+     "status": "accepted",
+     "root": "زول",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: زول (I)، زيل (I)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها C؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "زول/I (C، مطابق)",
+      "زيل/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "2:267:18",
+    "text": "وَلَسْتُمْ",
+    "gold": "ليس/I",
+    "before": {
+     "status": "accepted",
+     "root": "ولس",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: ولس (I)، لوس (I)، ليس (I)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها C، ومنافسها C؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "ولس/I (C، مطابق)",
+      "لوس/I (C)",
+      "ليس/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "38:72:6",
+    "text": "فَقَعُوا",
+    "gold": "وقع/I",
+    "before": {
+     "status": "accepted",
+     "root": "فقع",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: فقع (I)، قعو (I)، وقع (I)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها A، ومنافسها A؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "فقع/I (A، مطابق)",
+      "فقع/I (A)",
+      "قعو/I (A)",
+      "وقع/I (C)",
+      "وقع/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "3:139:1",
+    "text": "تَهِنُوا",
+    "gold": "وهن/I",
+    "before": {
+     "status": "accepted",
+     "root": "تهن",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: تهن (I)، هنو (I)، وهن (I)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها E، ومنافسها C؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "تهن/I (E، مطابق)",
+      "هنو/I (E)",
+      "وهن/I (C)",
+      "وهن/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "47:35:1",
+    "text": "تَهِنُوا",
+    "gold": "وهن/I",
+    "before": {
+     "status": "accepted",
+     "root": "تهن",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: تهن (I)، هنو (I)، وهن (I)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها E، ومنافسها C؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "تهن/I (E، مطابق)",
+      "هنو/I (E)",
+      "وهن/I (C)",
+      "وهن/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "4:104:1",
+    "text": "تَهِنُوا",
+    "gold": "وهن/I",
+    "before": {
+     "status": "accepted",
+     "root": "تهن",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: تهن (I)، هنو (I)، وهن (I)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها E، ومنافسها C؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "تهن/I (E، مطابق)",
+      "هنو/I (E)",
+      "وهن/I (C)",
+      "وهن/I (C)"
+     ]
+    }
+   },
+   {
+    "loc": "57:16:23",
+    "text": "فَقَسَتْ",
+    "gold": "قسو/I",
+    "before": {
+     "status": "accepted",
+     "root": "فقس",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: فقس (I)، قسو (I)، قسي (I)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها E، ومنافسها E؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "فقس/I (E، مطابق)",
+      "قسو/I (E)",
+      "قسي/I (E)"
+     ]
+    }
+   },
+   {
+    "loc": "5:14:7",
+    "text": "فَنَسُوا",
+    "gold": "نسي/I",
+    "before": {
+     "status": "accepted",
+     "root": "فنس",
+     "form": "I",
+     "level": "event",
+     "reason": "",
+     "decision": null,
+     "candidates": []
+    },
+    "after": {
+     "status": "deferred",
+     "root": null,
+     "form": null,
+     "level": null,
+     "reason": "أكثر من جذر أو وزن مرخَّص: فنس (I)، نسو (I)",
+     "decision": "تعارضٌ مؤجَّل: المطابقة شهادتها E، ومنافسها E؛ فلا تُقدَّم بالمطابقة وحدها",
+     "candidates": [
+      "فنس/I (E، مطابق)",
+      "نسو/I (E)"
+     ]
+    }
+   }
+  ]
+ },
+ "totals": {
+  "من القبول إلى التأجيل: كان صحيحاً": 78,
+  "من القبول إلى التأجيل: كان مخالفاً لـQAC": 9
+ }
+}
