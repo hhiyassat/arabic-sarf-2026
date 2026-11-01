@@ -37,7 +37,7 @@ PROVEN = 'مثبت'
 
 def git(root, *a):
     try:
-        return subprocess.run(['git', '-C', root, *a], capture_output=True, text=True, timeout=30).stdout.strip()
+        return subprocess.run(['git', '-C', root, *a], capture_output=True, text=True, timeout=30).stdout.rstrip('\n')
     except Exception:
         return ''
 

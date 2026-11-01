@@ -24,7 +24,7 @@ def _sha(paths):
 
 def _git(*a):
     try:
-        return subprocess.run(['git', '-C', H, *a], capture_output=True, text=True, timeout=20).stdout.strip()
+        return subprocess.run(['git', '-C', H, *a], capture_output=True, text=True, timeout=20).stdout.rstrip('\n')
     except Exception:
         return ''
 

@@ -28,7 +28,7 @@ os.makedirs(args.out, exist_ok=True)
 
 
 def sh(*a):
-    return subprocess.run(['git', '-C', H, *a], capture_output=True, text=True).stdout.strip()
+    return subprocess.run(['git', '-C', H, *a], capture_output=True, text=True).stdout.rstrip('\n')
 
 
 def sha_file(p):
@@ -252,7 +252,8 @@ ar = f"""# إصلاح التطبيع: تقرير صاحب المشروع
 {md_table([o for o in occ if o['loc'] == '2:282' and o['source'] in ('تَدَايَنتُم', 'أَن', 'مِن', 'مِمَّن')][:6])}
 
 **٥. جمع الأجزاء** (N-JOIN-LONE-ALIF): ألفٌ مفردة بعد كلمةٍ في آخرها تنوينٌ مفتوح تُجمع إليها، وهو عيبٌ في النسخة الرقمية: \
-«مُّسَمࣰّ ى» و«شَيۡـࣰٔ اۚ» في آية الدين. لا يُجمع غير ذلك. عدد مرات الجمع: {rule_a.get('N-JOIN-LONE-ALIF', 0)}.
+ومثالاه في آية الدين «مُّسَمࣰّ ى» و«شَيۡـࣰٔ اۚ». ولا تُجمع كلمتان لمجرد التجاور: الشرط ألفٌ أو ألفٌ مقصورة وحدها، \
+وقبلها تنوينٌ مفتوح. عدد مرات الجمع في القرآن كله: {rule_a.get('N-JOIN-LONE-ALIF', 0)}.
 
 ## ما بقي غير محسوم ({counts['words_unresolved']} كلمة)
 
