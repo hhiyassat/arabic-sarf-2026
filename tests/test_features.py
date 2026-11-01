@@ -105,5 +105,30 @@ check('لا سمة مثبتة لاسمٍ لم تثبت اسميته', not bad_, 
 # ٧. كل سمة بحالةٍ من الأربع، ولكل مرشّحٍ أو مؤجَّلٍ دليلٌ أو بدائل
 allst = {x['st'] for v in F.values() for x in v.values()}
 check('الحالات من الأربع وحدها', allst <= {PROVEN, CAND, DEFER, 'غير منطبق'}, allst)
+
+# ٨. الفعلية بشهادة HFN حيث لا تكفي الكتابة وحدها (sarf/pipeline.py _lexical_verbs)، وحالاتها المضادة
+W, F, U = feats((2, 282))
+for w in ('يَسْتَطِيعُ', 'تُذَكِّرَ', 'يُعَلِّمُ', 'عَلَّمَ', 'يَأْبَ', 'يُمْلِلِ', 'يَتَّقِ', 'تَرْضَوْنَ'):
+    check(f'{w}: فعلٌ مثبت (آية الدَّين)', st(W[w], 'pos') == (PROVEN, 'فعل'), W[w].get('pos'))
+for w in ('أَقْسَطُ', 'أَقْوَمُ'):
+    check(f'{w}: اسم التفضيل لا يثبت فعلاً (أَفۡعَلُ)', W[w]['pos']['v'] != 'فعل', W[w]['pos'])
+check('يُمِلَّ: معلوم (حركة العين المنقولة إلى الفاء في المضعَّف)', st(W['يُمِلَّ'], 'voice') == (PROVEN, 'معلوم'), W['يُمِلَّ']['voice'])
+for w in ('رَجُلَيْنِ', 'شَهِيدَيْنِ', 'امْرَأَتَانِ'):
+    check(f'{w}: اسمٌ مثنى مثبت', st(W[w], 'pos') == (PROVEN, 'اسم') and st(W[w], 'number') == (PROVEN, 'dual'),
+          (W[w].get('pos'), W[w].get('number')))
+check('امْرَأَتَانِ: مؤنث مثبت بتاء التأنيث قبل لاحقة التثنية', st(W['امْرَأَتَانِ'], 'gender') == (PROVEN, 'fem'))
+check('رَجُلَيْنِ: الجنس بلا علامة مكتوبة لا يثبت (سماعي)', W['رَجُلَيْنِ']['gender']['st'] != PROVEN, W['رَجُلَيْنِ']['gender'])
+W, F, U = feats((2, 9))
+r = next((v for k, v in W.items() if k.startswith('أَنْفُس')), None)
+check('أَنْفُسَ: «أ» في أوله لا تثبت المضارع (أَفۡعُل)', r is not None and r['pos']['v'] != 'فعل', r and r['pos'])
+W, F, U = feats((2, 130))
+r = next((v for k, v in W.items() if k.startswith('نَفْس')), None)
+check('نَفْسَ: لها رخصة اسم، فلا تثبت فعلاً', r is not None and r['pos']['v'] != 'فعل', r and r['pos'])
+W, F, U = feats((3, 37))
+r = next((v for k, v in W.items() if k.startswith('تَقَبَّلَ')), None)
+check('تَقَبَّلَ: ماضٍ (التاء من قالب تَفَعَّلَ)، لا مضارع', r is not None and r['tense']['v'] == 'ماضٍ', r and r.get('tense'))
+W, F, U = feats((2, 48))
+r = W.get('تَجْزِي')
+check('تَجْزِي: الياء لام الجذر، فالفاعل لا يثبت «أنتِ»', r is not None and r['subject']['st'] != PROVEN, r and r.get('subject'))
 print('ALL OK' if not bad else f'FAILED {bad}')
 sys.exit(1 if bad else 0)

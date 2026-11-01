@@ -123,6 +123,24 @@ def mabni_features(text):
 
 
 # ---------- الفعل ----------
+def _radical_vowel(word, R, k):
+    """حركة الحرف الأصلي رقم k (0، 1، 2) في المكتوب: يُطلب الحرف الأول ثم ما بعده بالترتيب (الهمزة بصورها واحدة)"""
+    norm = lambda c: 'ء' if c in 'ءأإآؤئ' else c
+    t = letters(word)
+    i = 0
+    for r in range(k + 1):
+        while i < len(t) and norm(t[i][0]) != norm(R[r]):
+            i += 1
+        if i >= len(t):
+            return None
+        if r < k:
+            i += 1
+    if k == 1 and len(R) == 3 and R[1] == R[2] and SHADDA in t[i][1] and i > 0:
+        i -= 1                    # المضعَّف المدغم: حركة العين نُقلت إلى الفاء (يُمِلُّ ← يُمۡلِلُ)، والتي على اللام علامة إعراب
+    v = t[i][1] & {FATHA, DAMMA, KASRA}
+    return {FATHA: 'a', DAMMA: 'u', KASRA: 'i'}.get(next(iter(v))) if len(v) == 1 else None
+
+
 def _bab(R, written, kind, past_verb):
     """باب الثلاثي المجرد: حركة عين الماضي (من فعل HFN المطابق) وحركة عين المضارع (من النص المكتوب)"""
     if not R or len(R) != 3 or set(R) & set('ويءأؤئى') or R[1] == R[2]:
@@ -196,7 +214,24 @@ def verb_features(G, agr, morph, obj_pron, governor=None):
         # (دُعُوا، قُتِلُوا)؛ فالبناء يتبع الزمن ولا يثبت قبله
         out['voice'] = feat('معلوم', CAND, 'أوله مضموم بلا حرف مضارعة، والزمن غير مثبت: قد يكون ماضياً مبنياً للمجهول',
                             alt=['معلوم', 'مجهول'])
+    R1, P1 = G.Theta.get('R'), G.Theta.get('P')
+    if vo in ('active', 'passive') and kind == 'mudari' and G.closed and R1 and P1 in ('II', 'III', 'IV') and tl and DAMMA in tl[0][1]:
+        # يُفَعِّلُ ويُفَاعِلُ ويُفۡعِلُ: ضمّ حرف المضارعة للمعلوم والمجهول معاً؛ والفارق حركة العين: الكسر للمعلوم والفتح للمجهول
+        v_ = _radical_vowel(G.O['text'], R1, 1)
+        if v_ in ('i', 'a'):
+            out['voice'] = feat('معلوم' if v_ == 'i' else 'مجهول', PROVEN,
+                                f'حركة العين في قالب {P1}: {"الكسر (معلوم)" if v_ == "i" else "الفتح (مجهول)"}')
     fs = agr.get('features') or []
+    if kind == 'mudari' and sig == 'ين' and not written_nun and R1 and R1[-1] in 'يو' and tl and tl[-1][0] == 'ي':
+        # الناقص اليائي: الياء لامُ الفعل لا ياء المخاطبة (تَجۡزِي، تَأۡتِي): فالفاعل «هي» أو «أنتَ»
+        fs = []
+        out['subject'] = feat(None, DEFER, f'الياء في آخره لامُ الجذر «{R1}» لا ياء المخاطبة', alt=[
+            dict(person=3, number='singular', gender='fem'), dict(person=2, number='singular', gender='masc')])
+    elif not sig and len(tl) > 2 and tl[-1][0] == 'و' and not tl[-1][1] and DAMMA in tl[-2][1]:
+        # واو الجماعة قبل ضمير المفعول بلا ألفٍ فارقة (يَأۡتُوكُم): الصنف لم يُعرف، والجمع ظاهر
+        fs = []
+        out['subject'] = feat(None, DEFER, 'واو الجماعة في آخره قبل ضمير المفعول، ولم يعيّنها صنف الإسناد',
+                              alt=[dict(person=q, number='plural', gender='masc') for q in (2, 3)])
     if len(fs) == 1 and out['tense']['st'] != PROVEN:
         p, n, g = fs[0]
         out['subject'] = feat(dict(person=p, number=n, gender=g), CAND, (agr.get('rule') or '') + '؛ والزمن غير مثبت، فالشخص يتبعه',
@@ -282,6 +317,10 @@ def noun_features(G, seg, stem_slot, has_al, enclitic):
         marks.append('التنوين')
     if sfx0 and sfx0[3] == 'ـَة':
         marks.append('التاء المربوطة')
+    elif sfx0 and sfx0[0] == 'dual' and len(letters(_rest(stem, 2))) >= 3 and \
+            (sfx0[3] == 'ـَيْنِ' or not (tl[0][0] in 'يتنأ' and tl[0][1] & {FATHA, DAMMA})):
+        # «ـَيۡنِ» لا يُختم به فعل؛ و«ـَانِ» لا يُختم به إلا مضارعٌ بحرف مضارعة (يَفۡعَلَانِ): فهما علامة اسم بعد ثلاثة أحرف
+        marks.append(f'لاحقة التثنية «{sfx0[3]}» بعد ثلاثة أحرفٍ فأكثر')
     elif sfx0 and sfx0[3] in ('ـَات', 'ـَٰت'):
         from .cells import stem_licence, licence_strength
         r_ = _rest(stem, sfx0[4])
@@ -322,6 +361,11 @@ def noun_features(G, seg, stem_slot, has_al, enclitic):
         from .cells import stem_licence, licence_strength
         lic = licence_strength(list(stem_licence(rest))) if rest else 0
         proven = (G.closed and pos in ('اسم فاعل', 'اسم مفعول', 'مصدر') and num != 'singular') or lic >= 2
+        rl_ = letters(rest)
+        if num == 'dual' and len(rl_) >= 3 and (shape == 'ـَيْنِ' or (rl_ and rl_[-1][0] == 'ت')):
+            # «ـَيۡنِ» بعد ثلاثة أحرف (رَجُلَيۡنِ، شَهِيدَيۡنِ)، و«ـَتَانِ» تثنية المختوم بالتاء (امۡرَأَتَانِ): التثنية مكتوبة؛
+            # لا «ـَانِ» وحدها (إِنۡسَان، سُلۡطَان مفردان)، ولا ما قبله أقلّ من ثلاثة (عَيۡن، دَيۡن)
+            proven = True
         why = f'اللاحقة «{shape}»' + ('' if num == 'singular' else
                                      ('، والوحدة مغلقةٌ بقالب ' + P if G.closed and pos else f'، ورخصة البقية «{rest}» = {lic}'))
         st = PROVEN if proven else CAND
@@ -336,7 +380,12 @@ def noun_features(G, seg, stem_slot, has_al, enclitic):
                 out['gender'] = feat(None, DEFER, why + '؛ وقبل لاحقة التثنية ياءٌ أو واوٌ مفتوحة (ألفٌ قد تكون للتأنيث: حُسْنَيَيْنِ)',
                                      alt=['fem', 'masc'])
             else:
-                out['gender'] = feat('masc', st, why + '؛ ولا علامة تأنيث قبل لاحقة التثنية')
+                # لا علامة تأنيثٍ مكتوبة: والجنس سماعيٌّ لا يُعرف بالكتابة (عَيۡنَانِ مؤنثة)، إلا على قالب اسم الفاعل أو المفعول
+                if G.closed and pos in ('اسم فاعل', 'اسم مفعول'):
+                    out['gender'] = feat('masc', st, why + f'؛ وقالب {pos} بلا تاء التأنيث')
+                else:
+                    out['gender'] = feat(None, DEFER, why + '؛ ولا علامة تأنيث مكتوبة، وجنس المسمّى سماعي (عَيۡنَانِ مؤنثة)',
+                                         alt=['masc', 'fem'])
     elif G.closed and pos in ('اسم فاعل', 'اسم مفعول'):
         if t and t[-1][1] & CASE_V and not _alif_hamza_start(stem):
             out['number'] = feat('singular', PROVEN, f'قالب {pos} المفرد ({P}) بلا لاحقة تثنيةٍ أو جمع، وحركة إعرابه مكتوبة')

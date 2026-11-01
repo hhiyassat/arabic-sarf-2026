@@ -105,10 +105,107 @@ def _governed_nouns(ctx):
             if r.get('target') and r.get('expected') == 'جر' and r['target']['type'] == 'جذع' and
             status.get((r['word_index'], r['operator'], r['group'])) == ACCEPTED}
 
+LEX_MADI_FORMS = ('II', 'V', 'VI', 'VII', 'VIII', 'IX', 'X')       # لا فَاعَلَ (خَاتَم، عَالَم)
+# عواملُ لا يليها إلا المضارع بصورتها المكتوبة: لَمْ، لَنْ، كَيْ، ولام الأمر والتعليل
+VERB_ONLY_OPS = {'لَمْ', 'لَنْ', 'كَيْ', 'لِكَيْ', 'لْ'}      # لا «لِ»: لام الجر مكسورةٌ مثلها (لِنُورِهِ)
+
+
+def _noun_licence(text):
+    """رخصةُ اسمٍ للكلمة كلّها (مدخلٌ أو بناءٌ اسمي في HFN)، دون رخص الفعل"""
+    from .cells import stem_licence, licence_strength
+    lic = list(stem_licence(text, verbs=False))
+    return bool(lic) and licence_strength(lic) >= 1
+
+
+def _elative_shape(text):
+    """أَفۡعَلُ: همزةٌ مفتوحة، فساكن، فمفتوح (أَقۡسَطُ، أَقۡوَمُ، أَدۡنَىٰ): يلتبس فيه مضارع المتكلم باسم التفضيل"""
+    from .chars import letters, FATHA, SUKUN
+    t = letters(text)
+    return len(t) >= 3 and t[0][0] == 'أ' and FATHA in t[0][1] and SUKUN in t[1][1] and FATHA in t[2][1]
+
+
+def _lexical_verbs(ctx, governed):
+    """الفعلية بشهادة HFN حيث لا تثبتها الكتابة وحدها ولا عامل (يَسۡتَطِيعُ، تُذَكِّرَ، عَلَّمَ):
+      - صورة المضارع (حرف مضارعةٍ في أوله) يقبل قالبُها جذراً ووزناً بحدثٍ في HFN (مستوى الحدث)، بلا منافس؛
+      - أو ماضٍ يطابق فعل HFN حرفاً وحركة في وزنٍ لا يكون للاسم (II، III، V–X)؛ لا فَعَلَ (مَالَ اسمٌ وفعل)
+        ولا أَفۡعَلَ (أَكۡبَرَ اسم تفضيلٍ وفعل).
+    والكلمة بعد «أل» أو المنوَّنة أو المجرورة بحرفٍ مقبول اسمٌ، فلا تدخل. → {(رقم الكلمة، رقم الخانة): الدليل}"""
+    from .affix import stem_info
+    from .root import morph
+    from .chars import FATHATAN, DAMMATAN, KASRATAN
+    from .root import _plain_vowels
+    nouns = _governed_nouns(ctx)
+    ctx.lexical_madi = set()
+    verb_only = {}
+    for r in ctx.relations:
+        t = r.get('target') or {}
+        try:
+            w = ctx.segments[r['word_index']]['slots'][r['slot']]['text']
+        except (IndexError, KeyError, TypeError):
+            continue
+        if t.get('type') == 'جذع' and w in VERB_ONLY_OPS:
+            verb_only[(t['word_index'], t['slot'])] = w
+    out = {}
+    for seg in ctx.segments:
+        for s in seg['slots']:
+            key = (seg['word_index'], s['index'])
+            if s['type'] != 'جذع' or key in governed or key in nouns:
+                continue
+            if s['index'] > 0 and seg['slots'][s['index'] - 1]['type'] == 'أل':
+                continue
+            if set(s['text']) & {FATHATAN, DAMMATAN, KASRATAN}:
+                continue
+            info = stem_info(s['text'])
+            if info['pos'] is not None:
+                continue
+            if info['kind'] == 'mudari' and info['prefix'] == 'أ' and key not in verb_only:
+                continue                     # «أ» في أوله: همزةٌ أصلية (أَمۡر، أَهۡل) أو أَفۡعُل وأَفۡعَل (أَنۡفُس، أَشَدّ، أَقۡوَمُ)
+            if info['kind'] == 'mudari' and key not in verb_only and _noun_licence(s['text']):
+                continue                     # للكلمة كلّها رخصةُ اسم (نَفۡس، يَد، تَقَلُّب): فقد يكون حرفها الأول أصلياً
+            if info['kind'] == 'mudari':
+                m = morph(s['text'], dict(info, pos='verb'))
+                if m and m['licensed'] and any(x['root'][:1] in (info['prefix'], 'ء' if info['prefix'] == 'أ' else '')
+                                               for x in m['licensed']):
+                    continue                 # جذرٌ أوله حرف المضارعة نفسه (نُور، نَار): فالحرف قد يكون أصلياً
+                if m and m['licensed'] and m['status'] in ('accepted', 'deferred'):
+                    # كل قراءةٍ مرخَّصة حدثٌ في HFN (فعل)، وإن تعدّد جذرها (يَأۡبَ: أبو أو أبي): فالفعلية ثابتة والجذر مؤجَّل
+                    vs = sorted({x['verb'] for x in m['licensed']})
+                    out[key] = f'صورة المضارع (حرف المضارعة «{info["prefix"]}») تطابق حدث HFN ' + ' أو '.join(f'«{v}»' for v in vs)
+                    # تَفَعَّلَ وتَفَاعَلَ: التاء من قالب الماضي؛ فإن طابق الماضيَ حرفاً وحركة وختم بالفتح فهو ماضٍ (تَقَبَّلَ)،
+                    # والمضموم آخره أو الساكن مضارعٌ حُذفت إحدى تاءيه (تَنَزَّلُ)
+                    if info['prefix'] == 'ت' and any(x['form_class'] in ('V', 'VI') and _plain_vowels(x['verb']) == _plain_vowels(s['text'])
+                                                     for x in m['licensed']):
+                        ctx.lexical_madi.add(key)
+                        out[key] += '؛ ويطابق ماضيه حرفاً وحركة (التاء من قالب تَفَعَّلَ أو تَفَاعَلَ)'
+                elif m and m['status'] == 'accepted' and m.get('level') == 'root' and key in verb_only:
+                    out[key] = f'العامل «{verb_only[key]}» لا يدخل إلا على المضارع، وقالب المضارع يقبل الجذر {m["root"]} ' \
+                               f'(الوزن {m["form_class"]}) المسجَّل في HFN'
+            else:
+                m = morph(s['text'], info)
+                if m and m.get('level') == 'lemma' and m['licensed'] and not s['text'].rstrip('ًٌٍَُِّْٰ').endswith('ى') and \
+                        {x['form_class'] for x in m['licensed']} <= set(LEX_MADI_FORMS):
+                    x = m['licensed'][0]
+                    out[key] = f'يطابق فعل HFN «{x["verb"]}» حرفاً وحركة في وزنٍ لا يكون للاسم ({x["form_class"]})'
+                    ctx.lexical_madi.add(key)            # ماضٍ: يُحسب إسناده بصيغة الماضي
+    return out
+
+
 def _agree(ctx, res):
     ctx.governed = _governed_verbs(ctx)
-    ctx.agreement = [dict(word_index=wi, slot=si, **{k: v for k, v in agr.items()})
-                     for (wi, si), agr in sorted(verse_agreement(ctx.segments, ctx.governed).items())]
+    ctx.lexical_verbs = _lexical_verbs(ctx, ctx.governed)
+    ctx.governed = {**ctx.governed, **{k: 'HFN' for k in ctx.lexical_verbs}}
+    va = verse_agreement(ctx.segments, ctx.governed)
+    from .affix import stem_info
+    from .agreement import agreement as _agr
+    for key in getattr(ctx, 'lexical_madi', ()):
+        txt = ctx.segments[key[0]]['slots'][key[1]]['text']
+        g = _agr(txt, dict(stem_info(txt), pos='verb', kind='madi', prefix=None))
+        if g:
+            va[key] = dict(g, verb_by_lexicon=ctx.lexical_verbs.get(key))
+    for key, ev in getattr(ctx, 'lexical_verbs', {}).items():
+        if key in va:
+            va[key] = dict(va[key], verb_by_lexicon=ev)
+    ctx.agreement = [dict(word_index=wi, slot=si, **{k: v for k, v in agr.items()}) for (wi, si), agr in sorted(va.items())]
     return f"{len(ctx.agreement)} فعلاً بسمات التوافق"
 
 def _root(ctx, res):
