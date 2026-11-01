@@ -12,6 +12,7 @@ sarf.judge — الحكم بالقبول (T07، T09): لا يُقبل مرشَّ
 وإلا بقي مؤجَّلاً، ويُسجَّل سبب التأجيل. والإقصاء وحده لا يكفي للقبول (T19i).
 """
 from .status import DEFERRED, BLOCKED, ACCEPTED
+from .chars import FATHA, FATHATAN, DAMMATAN, KASRATAN, letters
 
 
 def _kaf_certain(seg, slot, r):
@@ -41,6 +42,24 @@ def _prior_governor(rels, wi, effect):
     return any(x['word_index'] in (wi - 1,) and x.get('expected') == effect for x in rels)
 
 
+def _written_case(r):
+    """العلامة المكتوبة على المعمول علامةُ إعرابٍ لا تلتبس، فتصلح مانعاً مثبتاً:
+    اسمٌ (لا فعل، فصورة «أَفۡعَلَ» تلتبس بالمضارع، وفتحة الماضي بناءٌ لا نصب) في آخره تنوين، أو لاحقة المثنى «ـَتَانِ/ـَتَيۡنِ».
+    والسكون على الحرف والضمير بناءٌ لا جزم، والاسم لا يُجزم؛ و«ـَانِ» وحدها لا تثبت التثنية (إِنۡسَان، مَكَانِۭ)."""
+    t = (r or {}).get('target') or {}
+    if r is None or r.get('consistent') is not False or r.get('observed') not in ('رفع', 'نصب', 'جر'):
+        return False
+    if t.get('pos') == 'verb' or t.get('type') != 'جذع':
+        return False
+    L = letters(t.get('text') or '')
+    if not L:
+        return False
+    if set(L[-1][1]) & {FATHATAN, DAMMATAN, KASRATAN} or len(L) > 1 and L[-1][0] == 'ا' and FATHATAN in L[-2][1]:
+        return True
+    tail = [x[0] for x in L[-3:]]
+    return len(L) > 4 and tail in (['ت', 'ا', 'ن'], ['ت', 'ي', 'ن']) and FATHA in L[-3][1]
+
+
 def judge(cands, segs, rels):
     # المانع المكتوب أولاً: ما خالفت العلامةُ المكتوبة أثرَه ممنوعٌ قبل الحكم على منافسيه، فلا يُعدّ منافساً قائماً
     marked_off = set()
@@ -50,7 +69,7 @@ def judge(cands, segs, rels):
             continue
         r = next((r for r in rels if r['word_index'] == c['word_index'] and
                   r['operator'] == c['operator'] and r['group'] == c['group']), None)
-        if r is not None and r.get('consistent') is False and r.get('observed') in ('رفع', 'نصب', 'جر', 'جزم'):
+        if _written_case(r):
             marked_off.add((c['word_index'], c['operator'], c['group']))
     for c in cands:
         if c['status'] == BLOCKED:
@@ -104,7 +123,7 @@ def judge(cands, segs, rels):
         checked = c.get('checked', [])
         if checked:
             proof.append('الموانع المفحوصة: ' + '، '.join(checked))
-        if r is not None and r.get('consistent') is False and r.get('observed') in ('رفع', 'نصب', 'جر', 'جزم'):
+        if _written_case(r):
             # العلامة المكتوبة تخالف أثره (وَٱمۡرَأَتَانِ مرفوعةٌ بعد واوٍ جارّة): مانعٌ مثبت بالكتابة، لا نقصُ دليل
             c['status'] = BLOCKED
             c['reject_reason'] = f"العلامة المكتوبة على «{(r.get('target') or {}).get('text', '')}» ({r['observed']}) " \

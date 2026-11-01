@@ -118,5 +118,13 @@ for ref, w in (((3, 65), 'أُنْزِلَتِ'), ((87, 9), 'نَّفَعَتِ'
     check(f'حراسة: «{w}» تاء التأنيث مكسورة لالتقاء الساكنين، لا جزم', not any(r.get('observed') == 'جزم' for r in rs),
           [(r.get('operator'), r.get('observed'), r.get('note')) for r in rs])
 
+# حراسة: المانع المكتوب علامةُ إعرابٍ لا تلتبس على اسم؛ لا فتحة الماضي ولا سكون الحرف والضمير ولا «ـَانِ» وحدها
+for ref, w, op in (((5, 49), 'أَنْزَلَ', 'مَا'), ((13, 38), 'وَلَقَدْ', 'وَ'), ((59, 3), 'وَلَهُمْ', 'وَ'),
+                   ((27, 44), 'سَاقَيْهَا', 'عَنْ'), ((41, 44), 'مَّكَانِۭ', 'مِنْ')):
+    a = analyze(cat, rows[ref])
+    bl = [c for c in a['operators'] if c['operator'] == op and c['status'] == 'blocked' and
+          (c.get('reject_reason') or '').startswith('العلامة المكتوبة')]
+    check(f'حراسة: لا منع بعلامةٍ ملتبسة في {ref[0]}:{ref[1]} ({op})', not bl, [c.get('reject_reason') for c in bl])
+
 print('ALL OK' if not bad else f'FAILED {bad}')
 sys.exit(1 if bad else 0)

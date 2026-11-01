@@ -16,7 +16,7 @@ sarf.protected — بوابة الحماية الدستورية (حكم صاحب
 """
 import os, json
 from functools import lru_cache
-from .chars import FATHA, DAMMA, KASRA, SUKUN, SHADDA
+from .chars import FATHA, DAMMA, KASRA, SUKUN, SHADDA, letters
 from .match import match_letters
 from .divine import divine_name
 
@@ -303,7 +303,23 @@ def protected(text, iltiqa=True):
     if out['ambiguous']:
         out['alternative'] = ('فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا يُقبل حتى تُعيَّن الفئة)'
                               if out['cls'] == CLASS_OPERATOR else 'اسمٌ غير عَلَم يشترك معه لفظاً')
+        alts = [out['alternative']]
+        if out['cls'] == CLASS_OPERATOR and _elative_shape(text, pre, enc):
+            # «أَعۡلَمُ» على أَفۡعَل: مضارع المتكلم أو اسم تفضيل (أَعۡلَمُ بِمَا…)؛ والكتابة لا تفصل بينهما،
+            # فالحماية باقيةٌ على المرشّح الفعلي، والتفضيل بديلٌ محفوظ لا يُقبل حتى تُعيَّن الفئة
+            alts.append('اسم تفضيل على أَفۡعَل (يُحلَّل جذره بديلاً، ولا يُقبل حتى تُعيَّن الفئة)')
+        out['alternatives'] = alts
     return out
+
+
+def _elative_shape(text, pre, enc):
+    """الجذع بعد السوابق واللاحقة على أَفۡعَل: همزةٌ مفتوحة، فساكن، فمفتوح، ثم الآخر (بلا لاحقة إسناد)"""
+    L = letters(text)
+    L = L[len(letters(''.join(pre))):] if pre else L
+    if enc:
+        L = L[:len(L) - len(letters(enc))]
+    return len(L) == 4 and L[0][0] in ('أ', 'ا') and FATHA in L[0][1] and SUKUN in L[1][1] and FATHA in L[2][1] and \
+        not SUKUN in L[3][1]
 
 
 def _search(toks):
