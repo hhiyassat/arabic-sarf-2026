@@ -106,5 +106,17 @@ hid = [(c['word_index'], (c.get('slot') or {}).get('index'), c['operator'], c.ge
         ((c.get('relation') or {}).get('target') or {}).get('slot')) for c in A282['operators']]
 check('٦ معرّف الفرضية فريدٌ لكل علاقة', len(hid) == len(set(hid)), len(hid) - len(set(hid)))
 
+# حراسة: القاعدتان الجديدتان لا تتلفان صحيحاً (ظهر هذا في القياس الكامل ثم أُصلح)
+from sarf.affix import stem_info
+check('حراسة: «تَابَا» ماضٍ مثنى، لا مضارع محذوف النون', stem_info('تَابَا').get('mood') is None, stem_info('تَابَا'))
+check('حراسة: «تَضِلَّا» و«يَكُونَا» محذوفتا النون', stem_info('تَضِلَّا').get('mood') == 'حذف النون' and
+      stem_info('يَكُونَا').get('mood') == 'حذف النون', (stem_info('تَضِلَّا'), stem_info('يَكُونَا')))
+for ref, w in (((3, 65), 'أُنْزِلَتِ'), ((87, 9), 'نَّفَعَتِ'), ((8, 48), 'تَرَاءَتِ')):
+    a = analyze(cat, rows[ref])
+    wi = [x['word'] for x in a['segments']].index(w)
+    rs = [c.get('relation') or {} for c in a['operators'] if (c.get('relation') or {}).get('target', {}).get('word_index') == wi]
+    check(f'حراسة: «{w}» تاء التأنيث مكسورة لالتقاء الساكنين، لا جزم', not any(r.get('observed') == 'جزم' for r in rs),
+          [(r.get('operator'), r.get('observed'), r.get('note')) for r in rs])
+
 print('ALL OK' if not bad else f'FAILED {bad}')
 sys.exit(1 if bad else 0)
