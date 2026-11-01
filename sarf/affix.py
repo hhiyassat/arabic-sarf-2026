@@ -180,6 +180,18 @@ def radical_nun(toks, suf):
         len(toks) - k - 1 < 3 and toks[-k - 1][0] not in MADD
 
 
+def plural_waw_host(text):
+    """جذعُ مضارعٍ آخره واو الجماعة حُذفت نونه، فُصل عنه ضمير المفعول (تَكۡتُبُو | هُ): حرف مضارعة، ثم ثلاثة أحرفٍ فأكثر
+    (أو حرفان ثانيهما مشدَّد: تَرُدُّو)، ثم واوٌ بلا حركة بعد ضم. ولا يدخل الناقص (يَدۡعُو: حرفان، والواو لامه)"""
+    t = letters(text)
+    if len(t) < 4 or t[0][0] not in MUDARI or not (set(t[0][1]) & {FATHA, DAMMA}):
+        return False
+    if t[-1][0] != 'و' or t[-1][1] or DAMMA not in t[-2][1]:
+        return False
+    n = len(t) - 2
+    return n >= 3 or (n == 2 and SHADDA in t[-2][1])
+
+
 def hollow_radical_nun(toks, suf):
     """نون «نَا» جذرية لا ضمير (يَكُونَا، تَكُونَا): لو نُزعت لبقي حرف المضارعة وحرفٌ واحد ثم حرف مدّ، وليس ذلك جذعَ فعل؛
     فالنون لامُ الأجوف، والألف بعدها ألف الاثنين"""

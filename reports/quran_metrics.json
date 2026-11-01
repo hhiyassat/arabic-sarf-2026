@@ -6,17 +6,17 @@
   "ok": 28068
  },
  "qac": {
-  "agr": 11715,
-  "agr_hit": 11336,
-  "agr_single": 10926,
-  "agr_single_hit": 10567,
-  "ours_verb": 11772,
-  "ours_verb_ok": 11734,
-  "qac_verb_missed": 7619,
+  "agr": 11819,
+  "agr_hit": 11433,
+  "agr_single": 11031,
+  "agr_single_hit": 10664,
+  "ours_verb": 11877,
+  "ours_verb_ok": 11838,
+  "qac_verb_missed": 7515,
   "qac_verbs": 19353,
   "unaligned": 11,
-  "voice": 11690,
-  "voice_hit": 11556
+  "voice": 11791,
+  "voice_hit": 11655
  },
  "root": {
   "acc": 6939,

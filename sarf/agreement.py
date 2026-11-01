@@ -11,7 +11,7 @@ sarf.agreement — T18: سمات الفعل من توافقه مع الضمير.
           ضميرٌ منفصل للرفع قبل الفعل مباشرة (أَنْتِ تَكْتُبِينَ). وإن لم يكن Φ(ذلك الضمير) في A(m)
           سُجّلت المخالفة ولا يُخصَّص.
 """
-from .affix import stem_info
+from .affix import plural_waw_host, stem_info
 from .chars import FATHA, DAMMA, KASRA, SUKUN, SHADDA, letters
 from .lexicon import MabniLexicon
 
@@ -250,6 +250,17 @@ def verse_agreement(segs, governed=None):
                 if len(pslots) == 1 and pslots[0]['type'] == 'مبني':
                     prev = pslots[0]['text']
             agr = agreement(s['text'])
+            if agr is None and plural_waw_host(s['text']):
+                # جذعٌ آخره واو الجماعة وقد فُصل عنه ضمير المفعول (تَكۡتُبُو | هُ): يُحكم عليه مع ضميره
+                nxt = [x for x in seg['slots'] if x['index'] > s['index']]
+                if nxt and nxt[0]['type'] == 'مبني' and nxt[0].get('role') == 'enclitic':
+                    full = s['text'] + nxt[0]['text']
+                    fi = stem_info(full)
+                    if fi['kind'] == 'mudari' and fi['suffix'] == 'و':
+                        # حرف المضارعة، وثلاثة أحرف، وواو الجماعة بلا نون قبل ضمير المفعول: فعلٌ بالكتابة
+                        agr = agreement(full, dict(fi, pos='verb'))
+                        if agr is not None:
+                            agr['verb_by_writing'] = 'حرف المضارعة وواو الجماعة المحذوفة نونها قبل ضمير المفعول'
             if agr is None and (wi, s['index']) in governed:
                 agr = agreement(s['text'], dict(stem_info(s['text']), pos='verb'))
                 if agr is not None:

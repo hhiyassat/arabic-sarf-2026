@@ -22,6 +22,11 @@ def _kaf_certain(seg, slot, r):
     return bool(nxt) and nxt['type'] in ('أل', 'مبني', 'لفظ الجلالة')
 
 
+def _prior_governor(rels, wi, effect):
+    """عاملٌ في الكلمة السابقة أو في الكلمة نفسها قبلُ يقتضي الأثر نفسه (إِنۡ الشرطية قبل «لَا»)"""
+    return any(x['word_index'] in (wi - 1,) and x.get('expected') == effect for x in rels)
+
+
 def judge(cands, segs, rels):
     for c in cands:
         if c['status'] == BLOCKED:
@@ -40,6 +45,19 @@ def judge(cands, segs, rels):
         # (د) المنافسة
         rivals = [f"{o[0]} (مج {o[1]})" for o in (slot['operators'] if slot else [])
                   if (o[0], o[1]) != (c['operator'], c['group'])]
+        if rivals and r is not None and r.get('consistent') is True and r.get('expected') in ('جزم', 'نصب'):
+            # المنافس الذي لا أثر له في المعمول (لا النافية) تنفيه العلامة المكتوبة: الجزم أو النصب مكتوب، ولا يُحدثه هو؛
+            # ما لم يسبق الكلمةَ عاملٌ آخر يقتضي الأثر نفسه فيفسّره (إِنۡ لَا تَغۡفِرۡ لِي)
+            excluded = []
+            for o in (slot['operators'] if slot else []):
+                if (o[0], o[1]) == (c['operator'], c['group']):
+                    continue
+                ro = next((x for x in rels if x['word_index'] == c['word_index'] and x['operator'] == o[0] and x['group'] == o[1]), None)
+                if ro is not None and not ro.get('expected') and not _prior_governor(rels, c['word_index'], r['expected']):
+                    excluded.append(f"{o[0]} (مج {o[1]})")
+            if excluded:
+                proof.append(f"المنافس {'، '.join(excluded)} لا يُحدث {r['expected']}، و{r['expected']} مكتوبٌ في معموله ولا عامل قبله يفسّره")
+                rivals = [x for x in rivals if x not in excluded]
         if rivals:
             why.append('تحليلات منافسة على الخانة: ' + '، '.join(rivals))
         # (ب) الشرط
