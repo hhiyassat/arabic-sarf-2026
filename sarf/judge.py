@@ -51,6 +51,9 @@ def _written_case(r):
         return False
     if t.get('pos') == 'verb' or t.get('type') != 'جذع':
         return False
+    # المعمول في كلمة العامل أو تاليها مباشرة؛ وما بعُد فقد يكون مجروراً بجارٍّ بينهما (كَانَ بِكُلِّ شَيۡءٍ)
+    if t.get('word_index') is None or t['word_index'] - r.get('word_index', t['word_index']) not in (0, 1):
+        return False
     L = letters(t.get('text') or '')
     if not L:
         return False

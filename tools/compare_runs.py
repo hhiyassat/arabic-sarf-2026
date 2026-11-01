@@ -195,31 +195,33 @@ for k in sorted(set(JB) | set(JN), key=lk):
                       before=(b['state'] + ' | ' + b['rel']) if b else '—', after=(n['state'] + ' | ' + n['rel']) if n else '—',
                       gold='', ev_before=b and b['why'] or '', ev_after=n and n['why'] or ''))
 
-# ٥ العلاقة الواحدة: النواة ونوع العلاقة وأداتها، بترتيب ورودها في السورة (لا يتوقف على حدود الجمل)
+# ٥ العلاقة الواحدة: عددُ كل (سورة، نواة، نوع، أداة، حالة) قبلُ وبعدُ؛ فلا يتوقف على حدود الجمل ولا على ترتيب الورود
+# (أنواع العطف كلها «عطف»: وصفها تغيّر بذكر نوع الجملة ورأسها، والمعتبر الحالة)
 import re
 BOND = re.compile(r'([^،←\[\]]*?«[^»]*»)\s*←\s*(.*?)\s*\[(' + '|'.join(STAT) + r')\]')
 def bonds(S):
-    out, occ = {}, collections.Counter()
+    cnt, ex = collections.Counter(), collections.defaultdict(list)
     for k in sorted(S, key=lk):
         for m in BOND.finditer(S[k]['rel']):
             nuc, lab, st_ = m.group(1).strip(' ،'), m.group(2), m.group(3)
-            kind = re.split(r'[«:(]', lab)[0].strip()
-            tool = (re.findall(r'«([^»]*)»', lab) or [''])[0]
-            base = (k[0].split(':')[0], nuc, kind, tool)
-            occ[base] += 1
-            out[base + (occ[base],)] = dict(st=st_, label=lab, sent=f'{k[0]}–{k[1]}')
-    return out
-BB, BN = bonds(JB), bonds(JN)
+            kind = re.split(r'[«:(\[—]', lab)[0].strip()
+            kind = 'عطف' if kind.startswith('معطوف') or kind.startswith('صلةٌ معطوفة') else kind
+            tool = '' if kind == 'عطف' else (re.findall(r'«([^»]*)»', lab) or [''])[0]
+            key_ = (k[0].split(':')[0], nuc, kind, tool, st_)
+            cnt[key_] += 1
+            ex[key_].append(f"{k[0]}–{k[1]} {k[2][:50]} | {lab}")
+    return cnt, ex
+(BB, EB), (BN, EN) = bonds(JB), bonds(JN)
 bond_c = collections.Counter()
 for k in sorted(set(BB) | set(BN), key=lambda k: (int(k[0]), k[1:])):
-    b, n = BB.get(k), BN.get(k)
-    sb, sn = (b['st'] if b else 'لا علاقة'), (n['st'] if n else 'لا علاقة')
-    if b and n and sb == sn and b['label'] == n['label']:
+    d = BN[k] - BB[k]
+    if not d:
         continue
-    bond_c[(k[2], sb, sn)] += 1
-    items.append(dict(layer='علاقة', loc=(n or b)['sent'], unit=k[1], what=f'{k[2]} «{k[3]}» #{k[4]}',
-                      category=f'{sb} → {sn}' if sb != sn else 'تغيّر الوصف', before=f"{sb}: {b['label']}" if b else '—',
-                      after=f"{sn}: {n['label']}" if n else '—', gold='', ev_before='', ev_after=''))
+    bond_c[(k[2], k[4], 'زاد' if d > 0 else 'نقص')] += abs(d)
+    src = EN[k] if d > 0 else EB[k]
+    items.append(dict(layer='علاقة', loc=k[0], unit=k[1], what=f'{k[2]} «{k[3]}»' if k[3] else k[2],
+                      category=f'{k[4]}: {"زاد" if d > 0 else "نقص"} {abs(d)}', before=str(BB[k]), after=str(BN[k]), gold='',
+                      ev_before=' ‖ '.join(EB[k][:3]), ev_after=' ‖ '.join(EN[k][:3])))
 
 with open(os.path.join(args.out, 'items.csv'), 'w', encoding='utf-8', newline='') as f:
     w = csv.DictWriter(f, fieldnames=['layer', 'loc', 'unit', 'what', 'category', 'before', 'after', 'gold', 'ev_before', 'ev_after'])
@@ -247,8 +249,9 @@ L += ['', '## العوامل: انتقال الحكم', ''] + [f'- {a} → {b}: 
 L += ['', '## الجمل', ''] + [f'- {k}: {v}' for k, v in sorted(sent_c.items())]
 L += ['', '## العلاقات بحالتها', '', '| الحالة | الأساس | الجديد |', '|---|---|---|'] + \
      [f"| {s_} | {rel_count['base'][s_]} | {rel_count['new'][s_]} |" for s_ in STAT]
-L += ['', '## العلاقة الواحدة: نوعها وحالتها قبلُ ← بعدُ', '', '| نوع العلاقة | قبلُ | بعدُ | العدد |', '|---|---|---|---|'] + \
+L += ['', '## العلاقة الواحدة: الفرق في العدد لكل نواةٍ ونوعٍ وأداةٍ وحالة (التفاصيل في items.csv)', '', '| نوع العلاقة | قبلُ | بعدُ | العدد |', '|---|---|---|---|'] + \
      [f'| {a} | {b} | {c} | {v} |' for (a, b, c), v in sorted(bond_c.items(), key=lambda x: -x[1])]
+L[-len(bond_c) - 2] = '| نوع العلاقة | الحالة | الاتجاه | العدد |'
 L += ['', '## انتقال حالة السمات (كلها، ومنها ما لا مقابل له)', ''] + \
      [f'- {a}: {b} → {c}: {v}' for (a, b, c), v in sorted(trans.items())]
 L += ['', f'التفاصيل كلها بالموضع والسمة والدليل: `items.csv` ({len(items)} سطراً).']

@@ -128,6 +128,13 @@ def _wasl_amr_shape(toks):
     return len(t) == 4 and t[0][0] == 'ا' and not t[0][1] and SUKUN in t[1][1] and SHADDA not in t[1][1]
 
 
+def _past_v_vi(toks):
+    """تاءٌ مفتوحة بعدها مشدَّدٌ أو ألفٌ خنجرية: تَفَعَّلَ أو تَفَاعَلَ ماضياً (تَوَلَّا، تَرَٰٓءَا، تَبَوَّءَا)،
+    أو مضارعاً حُذفت إحدى تاءيه (تَظَٰهَرَا)؛ والكتابة لا تفصل بينهما، فلا يثبت حذف النون"""
+    return toks[0][0] == 'ت' and FATHA in toks[0][1] and len(toks) > 2 and \
+        (SHADDA in toks[2][1] and FATHA in toks[1][1] or '\u0670' in toks[1][1] or len(toks) >= 6 and toks[2][0] == 'ا')
+
+
 def _mudari_shape(toks):
     """شكل المضارع بعد حرفه: المفتوح يليه ساكن (يَدۡعُوا، يَسۡتَغۡفِرُوا) أو تاء مفتوحة (يَتَفَعَّلُوا)؛
     والمضموم يليه فتح أو سكون (يُعَلِّمُوا، يُخۡرِجُوا، يُقۡتَلُوا)"""
@@ -312,6 +319,7 @@ def stem_info(text):
         if info['suffix'] in ('وا', 'و'):
             info['mood'] = 'حذف النون'
         elif L == 'ا' and not m and len(toks) >= 4 and FATHA in toks[-2][1] and toks[1][0] != 'ا' and \
+                first_L in ('ي', 'ت') and not _past_v_vi(toks) and \
                 (toks[-2][0] != 'ن' or len(toks) == 5 and toks[2][0] in ('و', 'ي') and not toks[2][1]) and \
                 not any(set(x[1]) & {FATHATAN, DAMMATAN, KASRATAN} for x in toks):
             # ألف الاثنين بلا نون (لَمۡ يَكُونَا، أَن تَضِلَّا): حذف النون علامة الجزم أو النصب

@@ -119,12 +119,35 @@ for ref, w in (((3, 65), 'أُنْزِلَتِ'), ((87, 9), 'نَّفَعَتِ'
           [(r.get('operator'), r.get('observed'), r.get('note')) for r in rs])
 
 # حراسة: المانع المكتوب علامةُ إعرابٍ لا تلتبس على اسم؛ لا فتحة الماضي ولا سكون الحرف والضمير ولا «ـَانِ» وحدها
+# حراسة: ألف الاثنين بعد «أ» أو «ن» ماضٍ لا مضارع (لا مثنى للمتكلم)، وتَفَعَّلَ وتَفَاعَلَ يلتبسان بالماضي
+from sarf.affix import stem_info as _si
+for w in ('أَرَادَا', 'أَسْلَمَا', 'أَحْيَا', 'نَّسِينَا', 'تَوَلَّا', 'تَرَٰٓءَا', 'تَبَوَّءَا'):
+    check(f'حراسة: «{w}» لا يثبت فيه حذف النون', _si(w).get('mood') is None, _si(w))
+for w in ('تَقْرَبَا', 'تَخَافَا', 'يَتَمَاسَّا', 'تَتُوبَا', 'يُغْنِيَا'):
+    check(f'«{w}» محذوف النون', _si(w).get('mood') == 'حذف النون', _si(w))
 for ref, w, op in (((5, 49), 'أَنْزَلَ', 'مَا'), ((13, 38), 'وَلَقَدْ', 'وَ'), ((59, 3), 'وَلَهُمْ', 'وَ'),
-                   ((27, 44), 'سَاقَيْهَا', 'عَنْ'), ((41, 44), 'مَّكَانِۭ', 'مِنْ')):
+                   ((27, 44), 'سَاقَيْهَا', 'عَنْ'), ((41, 44), 'مَّكَانِۭ', 'مِنْ'), ((4, 32), 'كَانَ', 'كَانَ'),
+                   ((43, 40), 'كَانَ', 'كَانَ')):
     a = analyze(cat, rows[ref])
     bl = [c for c in a['operators'] if c['operator'] == op and c['status'] == 'blocked' and
           (c.get('reject_reason') or '').startswith('العلامة المكتوبة')]
     check(f'حراسة: لا منع بعلامةٍ ملتبسة في {ref[0]}:{ref[1]} ({op})', not bl, [c.get('reject_reason') for c in bl])
+
+# حراسة: الجواب أوله حرفٌ بلا نواة (لن، سوف، لا): نواته التالية، والجواب مرخَّص
+def verse_bonds(s_, v_):
+    a = analyze(cat, rows[(s_, v_)])
+    S_, u_ = sentence_geo(a, f'Q{s_}:{v_}', Trace())
+    L_, _, _ = linguistic_layer([(s_, v_, a, u_, S_)], Trace(), 'x')
+    out = []
+    for SP in L_:
+        for D in SP.A + SP.O.get('pending', []):
+            for J in D.A + D.O.get('pending', []):
+                out += list(J.O.get('bound') or [])
+    return out
+for (s_, v_), w in (((6, 150), 'تَشْهَدْ'), ((9, 80), 'يَغْفِرَ'), ((5, 42), 'يَضُرُّو'), ((9, 28), 'يُغْنِي')):
+    bb = verse_bonds(s_, v_)
+    check(f'حراسة: {s_}:{v_} «{w}» جواب الشرط مرخَّص (أول الجواب حرفٌ بلا نواة)',
+          any(f'«{w}»' in b[0] and 'جواب الشرط' in b[1] and b[2] == 'مرخّصة' for b in bb), [b for b in bb if 'الشرط' in b[1]])
 
 print('ALL OK' if not bad else f'FAILED {bad}')
 sys.exit(1 if bad else 0)
