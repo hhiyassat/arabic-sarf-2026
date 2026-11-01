@@ -22,12 +22,36 @@ def _kaf_certain(seg, slot, r):
     return bool(nxt) and nxt['type'] in ('أل', 'مبني', 'لفظ الجلالة')
 
 
+MABNI_KIND = {'relative': 'اسم موصول مبني', 'attached_pronoun': 'ضمير متصل مبني', 'separate_pronoun': 'ضمير منفصل مبني',
+              'demonstrative': 'اسم إشارة مبني', 'interrogative_noun': 'اسم استفهام مبني', 'conditional_noun': 'اسم شرط مبني'}
+
+
+def _mabni_kind(segs, r):
+    """نوع المعمول المبني من ملف المبنيات (الَّذِي: اسم موصول، هِ: ضمير متصل)، لا «ضمير» على الإطلاق"""
+    t = r.get('target') or {}
+    try:
+        sl = segs[t['word_index']]['slots'][t['slot']]
+    except (KeyError, IndexError, TypeError):
+        return 'مبنيٌّ من ملف المبنيات'
+    return MABNI_KIND.get(sl.get('note'), 'مبنيٌّ من ملف المبنيات' + (f' ({sl.get("note")})' if sl.get('note') else ''))
+
+
 def _prior_governor(rels, wi, effect):
     """عاملٌ في الكلمة السابقة أو في الكلمة نفسها قبلُ يقتضي الأثر نفسه (إِنۡ الشرطية قبل «لَا»)"""
     return any(x['word_index'] in (wi - 1,) and x.get('expected') == effect for x in rels)
 
 
 def judge(cands, segs, rels):
+    # المانع المكتوب أولاً: ما خالفت العلامةُ المكتوبة أثرَه ممنوعٌ قبل الحكم على منافسيه، فلا يُعدّ منافساً قائماً
+    marked_off = set()
+    for c in cands:
+        if c['status'] == BLOCKED:
+            marked_off.add((c['word_index'], c['operator'], c['group']))
+            continue
+        r = next((r for r in rels if r['word_index'] == c['word_index'] and
+                  r['operator'] == c['operator'] and r['group'] == c['group']), None)
+        if r is not None and r.get('consistent') is False and r.get('observed') in ('رفع', 'نصب', 'جر', 'جزم'):
+            marked_off.add((c['word_index'], c['operator'], c['group']))
     for c in cands:
         if c['status'] == BLOCKED:
             continue
@@ -44,7 +68,7 @@ def judge(cands, segs, rels):
             why.append('المطابقة رسمية بلا تشكيل')
         # (د) المنافسة
         rivals = [f"{o[0]} (مج {o[1]})" for o in (slot['operators'] if slot else [])
-                  if (o[0], o[1]) != (c['operator'], c['group'])]
+                  if (o[0], o[1]) != (c['operator'], c['group']) and (c['word_index'], o[0], o[1]) not in marked_off]
         if rivals and r is not None and r.get('consistent') is True and r.get('expected') in ('جزم', 'نصب'):
             # المنافس الذي لا أثر له في المعمول (لا النافية) تنفيه العلامة المكتوبة: الجزم أو النصب مكتوب، ولا يُحدثه هو؛
             # ما لم يسبق الكلمةَ عاملٌ آخر يقتضي الأثر نفسه فيفسّره (إِنۡ لَا تَغۡفِرۡ لِي)
@@ -68,7 +92,7 @@ def judge(cands, segs, rels):
         elif r['consistent'] is True:
             proof.append(f"الشرط: العلامة المكتوبة توافق أثره ({r['expected']})")
         elif r['observed'] == 'محلاً' and r['expected']:
-            proof.append(f"الشرط: معموله ضمير مبني في محلّ {r['expected']}")
+            proof.append(f"الشرط: معموله {_mabni_kind(segs, r)} في محلّ {r['expected']}")
         else:
             why.append('أثره في معموله لم يثبت بالكتابة' + (f" ({r['note']})" if r.get('note') else ''))
         # (د') الكاف السابقة: كلماتٌ كثيرة أولها كاف أصلية (كَرِيمٍ، كَبِدٍ)، فقراءة الكاف أصليةً منافسٌ قائم
@@ -80,6 +104,15 @@ def judge(cands, segs, rels):
         checked = c.get('checked', [])
         if checked:
             proof.append('الموانع المفحوصة: ' + '، '.join(checked))
+        if r is not None and r.get('consistent') is False and r.get('observed') in ('رفع', 'نصب', 'جر', 'جزم'):
+            # العلامة المكتوبة تخالف أثره (وَٱمۡرَأَتَانِ مرفوعةٌ بعد واوٍ جارّة): مانعٌ مثبت بالكتابة، لا نقصُ دليل
+            c['status'] = BLOCKED
+            c['reject_reason'] = f"العلامة المكتوبة على «{(r.get('target') or {}).get('text', '')}» ({r['observed']}) " \
+                                 f"تخالف أثره ({r['expected']})"
+            c['judgement'] = dict(proof=proof, deferred_because=[], blocked_by=c['reject_reason'])
+            continue
+        if r is not None and r.get('note') and 'حذف حرف العلة' in r['note'] and not r.get('consistent'):
+            why.append('نقص تغطية: حذف حرف العلة جزماً لا يُفحص بعدُ بالجذر')
         c['status'] = DEFERRED if why else ACCEPTED
         c['judgement'] = dict(proof=proof, deferred_because=why)
     return cands

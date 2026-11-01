@@ -311,6 +311,11 @@ def stem_info(text):
         L, m = toks[-1]
         if info['suffix'] in ('وا', 'و'):
             info['mood'] = 'حذف النون'
+        elif L == 'ا' and not m and len(toks) >= 4 and FATHA in toks[-2][1] and \
+                (toks[-2][0] != 'ن' or len(toks) == 5 and toks[2][0] in ('و', 'ي') and not toks[2][1]) and \
+                not any(set(x[1]) & {FATHATAN, DAMMATAN, KASRATAN} for x in toks):
+            # ألف الاثنين بلا نون (لَمۡ يَكُونَا، أَن تَضِلَّا): حذف النون علامة الجزم أو النصب
+            info.update(suffix='ا', mood='حذف النون')
         elif info['suffix'] == 'ي':
             # ياء المخاطبة بلا نون: حذف النون؛ ولا يُحكم بالفعل إلا مع تاء المضارعة (تَكْتُبِي)
             # تلتبس بياء المتكلم على اسم أوله تاء (تَوْفِيقِى): لا يُحكم بالفعل، ويشهد له العامل

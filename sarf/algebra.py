@@ -1434,6 +1434,7 @@ def word_feats(a):
             # «مَن» و«ما» تكونان شرطاً فتطلبان جواباً بالفاء (وَمَن شَآءَ فَلۡيَكۡفُرۡ)، أو موصولاً أو غيره
             cond_amb=is_form(w_, ('مَنْ', 'مَا', 'مَهْمَا'), prefix=True),
             neg=is_form(w_, ('مَا', 'لَا', 'لَمْ', 'لَنْ', 'لَمَّا'), prefix=True),
+            la=is_form(w_, ('لَا',), prefix=True),     # «لا» وحدها تحتمل النهي؛ «لن» و«لم» نفيٌ لا طلب
             ops=[f['group'] for f in a['operators'] if f['word_index'] == wi and f.get('status') != 'blocked'],
             # أول المعطوف: فعل، أو مرفوع، أو ضمير منفصل، أو شبه جملة (جارٌّ في أوله بعد العاطف): بداية جملة
             head=('pron' if is_form(w_, PRON_FREE_V, prefix=True) else
@@ -1501,8 +1502,15 @@ def relative_structs(feats, nuc_pos, starts):
         # نطاق الصلة
         first_nuc = next((k for k in range(q, n) if k in nuc_pos or feats[k]['verb']), None)
         end = q + 1
+        pp_silah = g.get('head') == 'pp' or bool(g.get('zarf'))
+        saw_raf = False
         while end < n and end - q < 12:
             f = feats[end]
+            # الصلة شبه الجملة يتمّ بها خبرٌ مقدَّم ومبتدأ مرفوع (ٱلَّذِي عَلَيۡهِ ٱلۡحَقُّ)؛ فالمنصوب بعد المرفوع خارجها
+            # (سَفِيهًا: خبر «كان»)، لا يُمدّ إليه نطاقها
+            if pp_silah and saw_raf and f.get('noun') and f['case'] == 'نصب' and not f['conj']:
+                break
+            saw_raf = saw_raf or (pp_silah and f.get('noun') and f['case'] == 'رفع')
             # الصلة تنتهي عند موصولٍ آخر، أو ما له الصدارة، أو فاء، أو عاطفٍ لا يليه اسمٌ بدليله المكتوب (المعطوف المفرد
             # داخل الصلة: بِٱلَّيۡلِ وَٱلنَّهَارِ)، أو نواةٍ ثانية بلا عاطف
             if f.get('rel_agr') or starts[end] or f['conj'] and (f['conj_letter'] != 'و' or not f.get('noun')) or \
@@ -1569,6 +1577,14 @@ def _lam_madi(word):
     return stem_info(rest).get('kind') == 'madi' or _madi_like(rest)
 
 
+def _verbal_op_word(text):
+    """الكلمة صيغةٌ من صيغ العوامل الفعلية غير الملتبسة في الجرد المعتمد (كَانَ، لَيۡسَ)، بسوابقها"""
+    from .features import _verbal_operator
+    from .protected import protected
+    p = protected(text)
+    return bool(p and not p['ambiguous'] and 'VERBAL' in (p.get('source') or '')) or bool(_verbal_operator(text))
+
+
 def cond_structs(feats, nuc_pos, starts, ay_end=None):
     """G = Cond_t,e(S, Q) لكل أداة شرط (حكم صاحب النظرية؛ الأصول من ابن عقيل):
     - الأداة: ما له صدارة الشرط (إِنْ، إِذَا، لَوْ، لَئِنْ، أَيْنَمَا…)، و«لَمَّا» يليها ماضٍ، و«مَن، ما، مهما» يليها فعل
@@ -1617,8 +1633,10 @@ def cond_structs(feats, nuc_pos, starts, ay_end=None):
         # الفعلية تثبت بدليلٍ موجب (الإسناد، أو النواة، أو صورة الفعل الصرفية)، لا بغياب دليل الاسمية: فما يلي الأداة
         # بلا دليلٍ موجب مرشَّحٌ تفتحه البيئة النحوية (الأداة تطلب فعلاً)، ونوعه غير محسوم (مراجعة التقرير الثالثة ٢)
         s_verb = s_pos is not None and bool(feats[s_pos]['verb'] or s_pos in nuc_pos or feats[s_pos].get('vshape'))
-        obl = [('فعل الشرط', bool(s_verb),
-                (f'منفيٌّ بـ«{neg_s}»: ' if neg_s else '') +
+        s_amr = s_pos is not None and feats[s_pos]['verb'] == 'amr'
+        obl = [('فعل الشرط', bool(s_verb) and not s_amr,
+                ('مرشَّح: صيغته المحلَّلة أمرٌ، والأمر لا يكون فعل شرط؛ فالقراءة التي تصحّ بها (ماضٍ أو مضارع) غير مثبتة: '
+                 if s_amr else '') + (f'منفيٌّ بـ«{neg_s}»: ' if neg_s else '') +
                 f'«{feats[s_pos]["text"]}»' + ('' if feats[s_pos]['verb'] or s_pos in nuc_pos else ' (بصورة الفعل الصرفية)' if feats[s_pos].get('vshape') else
                  ' مرشَّحٌ يلي الأداة، ولم تثبت فعليته بدليلٍ موجب')
                 if s_pos is not None else 'لم يُكشف فعل الشرط')]
@@ -1634,6 +1652,10 @@ def cond_structs(feats, nuc_pos, starts, ay_end=None):
                     break                              # شرطٌ جديد (ولو بفاء): ليس جواب هذا
                 if starts[k] and not (g['conj'] and g['conj_letter'] == 'ف'):
                     break                              # ما له الصدارة: الجواب لم يأتِ قبله
+                if s_pos is not None and k > s_pos and g['conj'] and g['conj_letter'] in ('و', 'ثم') and \
+                        (g['verb'] == 'amr' or g.get('la') and k + 1 < n and feats[k + 1]['verb'] == 'mudari' and
+                         feats[k + 1].get('mood') in ('جزم', 'حذف النون')):
+                    break                              # طلبٌ معطوف (وَلَا تَسۡـَٔمُوٓاْ): لا يدخل جملةَ الشرط، فالجواب لم يأتِ قبله
                 if tool in ('إِذَا', 'لَمَّا') and s_pos is not None and k > s_pos + 1 and not g['conj'] and \
                         (g['verb'] == 'madi' or g.get('vshape') == 'madi' and not g.get('noun') or
                          not g['verb'] and not g.get('noun') and _madi_like(g['text'])):
@@ -2126,7 +2148,11 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
                 if bound[k].startswith('مقول'):
                     bound_status[k] = 'مرخّصة'
         not_conj, not_conj_why, cond_spans = set(), {}, []
+        adjunct_cond = set()        # مواضع جملة شرطٍ بلا جوابٍ مملوك بعد جملةٍ تامّة: ظرفٌ متعلّق بما قبلها (إِذَا مَا دُعُوا)
         for c_ in cond_structs(feats, set(nuc_pos), starts, ay_end):
+            if c_['q_pos'] is None and c_['s_pos'] is not None and \
+                    any(j in nset for j in range(max(0, c_['head'] - 8), c_['head'])):
+                adjunct_cond.update(range(c_['head'], c_['s_pos'] + 1))
             st['cond'] += 1
             st['cond:ambiguous'] += c_['amb']
             for name, met, _ in c_['obligations']:
@@ -2153,9 +2179,17 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
             roles.setdefault(c_['head'], f'أداة شرط «{c_["tool"]}»')
             for k, why in ((c_['s_pos'], 'فعل الشرط'), (c_['q_pos'], 'جواب الشرط')):
                 if k is not None:
-                    kk = next((j for j in range(k, min(n, k + 4)) if j in nset), None)
+                    if why == 'جواب الشرط':
+                        # رأس الجواب هو الكلمة التي عليها دليل الربط نفسها (فَرَجُلٌ)؛ ولا يُنقل الجواب إلى نواةٍ بعدها قد تكون
+                        # في صلةٍ أو تركيبٍ داخله (مِمَّن تَرۡضَوۡنَ)
+                        kk = k if k in nset else None
+                        if kk is None:
+                            roles.setdefault(k, f'رأس جواب «{c_["tool"]}» ({c_["q_kind"]})؛ جملةٌ بلا نواةٍ محلَّلة، وبنيتها مؤجَّلة')
+                    else:
+                        kk = next((j for j in range(k, min(n, k + 4)) if j in nset), None)
                     if kk is not None:
-                        bound.setdefault(kk, f'{why} «{c_["tool"]}»')
+                        prem = next((str(o_[2]) for o_ in c_['obligations'] if o_[0] == ('الجواب' if why == 'جواب الشرط' else why)), '')
+                        bound.setdefault(kk, f'{why} «{c_["tool"]}» [{prem}]')
                         # الجواب مرخَّصٌ بدليل ربطٍ مكتوب (فاءٌ رابطة، أو لام جواب «لو»، أو جزمٌ بالجازمة)، لا بالموضع
                         # وحده (ماضٍ بعد جملة الشرط)؛ وفعل الشرط مرخَّصٌ إن ثبتت فعليته والأداة غير ملتبسة
                         q_ev = str(c_.get('q_kind') or '')
@@ -2268,6 +2302,15 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
         def _clause_head(j):
             if j in silah_pos or j in single_B or bound.get(j, '').startswith('مقول'):
                 return False
+            if j in adjunct_cond:
+                return False                       # جملة شرطٍ بلا جوابٍ مملوك بعد جملةٍ تامّة: ظرفٌ لما قبلها، لا جملةٌ مستقلة
+            is_rel = lambda p_: p_ in rel_at or bool(feats[p_].get('rel'))
+            if is_rel(j) and j > 0 and not (ay_end[j - 1] or feats[j]['conj']) and \
+                    (j - 1 in nset or feats[j - 1]['verb'] or feats[j - 1].get('head') == 'pp' or
+                     is_form(feats[j - 1]['text'], JARR_V) or _verbal_op_word(feats[j - 1]['text'])):
+                return False                       # الموصول بعد فعلٍ أو جارٍّ أو ناسخٍ معمولٌ في جملته، لا رأسُ جملة (يُمۡلِلِ ٱلَّذِي)
+            if j > 0 and is_rel(j - 1) and (feats[j].get('head') == 'pp' or is_form(feats[j]['text'], JARR_V)):
+                return False                       # شبه الجملة بعد الموصول صلتُه (ٱلَّذِي عَلَيۡهِ ٱلۡحَقُّ)
             f_ = feats[j]
             demo_head = bool(f_.get('demo')) and not (j > 0 and (j - 1 in nset or feats[j - 1]['verb'] or
                                                                  feats[j - 1].get('vshape')))
@@ -2357,7 +2400,9 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
                                         evidence='يجوز عطفه على الصلة، والموصول حجّةٌ في جملةٍ أوسع فالخارجية أولى'))
                 c_['B_scope'] = dict(nucleus=wtext[b_n] if b_n is not None else None, start=k0)
                 if a_n is not None and b_n is not None:
-                    bound.setdefault(b_n, f'معطوفٌ على جملة «{wtext[a_n]}»')
+                    a0_ = c_['A'][0] if c_['A'] else {}
+                    bound.setdefault(b_n, f'معطوفٌ على {a0_.get("type", "جملة")} رأسها «{wtext[head0]}» '
+                                          f'({words_text(words, a_n)}–{words_text(words, k0 - 1)})')
                 else:
                     st['coord:جملة:طرفٌ غير معيَّن'] += 1
             # الطرف B بهويته ونوعه ونطاقه ورأسه وحاويه (مراجعة التقرير الرابعة ٣)، وحالة المعطوف عليه في المفرد
@@ -2429,6 +2474,11 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
                 lic = rec['decision'] in (DECISIONS_[0], DECISIONS_[2]) and len(ok_) == 1 and \
                     ok_[0]['function'].startswith('عطف') and ok_[0]['A'] is not None and \
                     ok_[0]['B'] is not None and ok_[0]['B']['head_pos'] == b_n
+                if lic and c_['level'] == 'جملة' and k0 - 1 in single_B:
+                    # قبل العاطف مفردٌ معطوف (سَفِيهًا أَوۡ ضَعِيفًا): فالجملة بعده قد تُعطف عليه في موضعه (جملةٌ في محلّ المفرد)،
+                    # وهذا البديل غير مولَّد بعد؛ فلا يُرخَّص المرشّح الوحيد لغياب منافسٍ لم يُولَّد
+                    lic = False
+                    bound[b_n] += ' — مؤجَّل: قبله مفردٌ معطوف، وعطفُ الجملة عليه في موضعه بديلٌ غير مولَّد'
                 if not lic and len({(x['A'] or {}).get('head_id') for x in ok_}) > 1:
                     bound[b_n] = 'معطوفٌ مرشَّح: المعطوف عليه غير معيَّن (' + '، '.join(
                         f'«{x["A"]["head"]}»' for x in ok_ if x['A']) + ')'

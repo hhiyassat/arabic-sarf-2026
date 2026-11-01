@@ -326,7 +326,7 @@ section(10, 'مقاطع الوحدات وأرقامها', 'تقطيع ما لي�
         ['الموضع', 'الوحدة', 'المقاطع', 'النمط', 'الأرقام'], tl)
 
 # ١١ ربط العامل بمعموله
-rows, tl = [], []
+rows, tl, seen_ids = [], [], {}
 for pv in per_verse:
     segs_ = pv['a']['segments']
     for o in pv['a'].get('operators', []):
@@ -336,16 +336,27 @@ for pv in per_verse:
         j = o.get('judgement') or {}
         ev = '؛ '.join(j.get('proof') or []) or (o.get('reject_reason') or '—')
         alts = len(o.get('meanings') or [])
-        rid = f"R{pv['s']}:{pv['v']}:{o.get('word_index', 0) + 1}/{(o.get('slot') or {}).get('index', '—')}→{t_.get('word_index', -1) + 1 if t_ else '—'}"
+        # الموضع النصّي، وفرضية العلاقة (الأداة ووظيفتها ومعمولها)، وتحليل المعمول المستعمَل: ثلاثة معرّفات لا واحد
+        site = f"S{pv['s']}:{pv['v']}:{o.get('word_index', 0) + 1}/{(o.get('slot') or {}).get('index', '—')}"
+        rid = f"H{site[1:]}·{o.get('operator', '')}·مج{o.get('group', '—')}→{t_.get('word_index', -1) + 1 if t_ else '—'}" \
+              f"{'/' + str(t_.get('slot')) if t_ and t_.get('slot') is not None else ''}"
+        aid = (f"A{pv['s']}:{pv['v']}:{t_['word_index'] + 1}.{t_.get('slot', 0)}"
+               f"[{r.get('observed') or 'بلا علامة'}{'، ' + r['note'] if r.get('note') else ''}]") if t_ else '—'
+        seen_ids[rid] = seen_ids.get(rid, 0) + 1
         rows.append([loc(pv, o.get('word_index', 0)), f"<span class='ar'>{h(str(o.get('operator', '')))}</span>", esc(o.get('status')),
-                     f'<code>{h(rid)}</code>', f"<span class='ar'>{h(tgt)}</span>", esc(r.get('role') or '—'),
+                     f'<code>{h(site)}</code><br><code>{h(rid)}</code><br><code>{h(aid)}</code>',
+                     f"<span class='ar'>{h(tgt)}</span>", esc(r.get('role') or '—'),
                      esc(f"المتوقَّع {r.get('expected') or '—'}، المكتوب {r.get('observed') or '—'}، متّسق: {ar(r.get('consistent'))}" if r else '—'),
                      esc(ev), esc(f'{alts} معنىً محتمل' if alts else '—')])
         if len(tl) < N:
             tl.append(f"{loc(pv, o.get('word_index', 0)):<10} {o.get('operator')} {ar(o.get('status')):<8} ← {tgt}  {r.get('role') or ''}")
-section(11, 'ربط العامل بمعموله', 'لكل عاملٍ معرّف علاقته، ومعموله بموضعه وخانته، ودوره، والمتوقَّع والمكتوب، ودليل الحكم، وعدد معانيه المحتملة '
+dup_ids = {k: v for k, v in seen_ids.items() if v > 1}
+if dup_ids:                                   # معرّف الفرضية فريد بحكم البناء؛ فإن تكرّر فهو خللٌ يُعلَن لا يُخفى
+    print(f'تنبيه: {len(dup_ids)} معرّف فرضيةٍ مكرَّر في المرحلة ١١: {list(dup_ids)[:5]}', file=sys.stderr)
+section(11, 'ربط العامل بمعموله', 'لكل عاملٍ ثلاثة معرّفات: S الموضع النصّي، وH فرضية العلاقة (الأداة ومجموعتها ومعمولها)، '
+        'وA تحليل المعمول المستعمَل وعلامته. ' + (f'مكرَّر: {len(dup_ids)}. ' if dup_ids else 'لا معرّف فرضيةٍ مكرَّر. ') + 'لكل عاملٍ معرّف علاقته، ومعموله بموضعه وخانته، ودوره، والمتوقَّع والمكتوب، ودليل الحكم، وعدد معانيه المحتملة '
         '(البدائل لا تُحسم هنا). والنطاق: معمولٌ واحد مباشر في الآية؛ وما يتجاوزه في طبقة الجملة (١٤)', rows,
-        ['الموضع', 'العامل', 'الحكم', 'معرّف العلاقة', 'المعمول', 'الدور', 'العلامة', 'الدليل', 'البدائل'], tl)
+        ['الموضع', 'العامل', 'الحكم', 'المعرّفات (S/H/A)', 'المعمول', 'الدور', 'العلامة', 'الدليل', 'البدائل'], tl)
 
 # ١٢ الوحدات اللفظية وإغلاقها
 rows, tl = [], []
