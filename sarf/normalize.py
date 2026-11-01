@@ -140,6 +140,13 @@ def drop_zero_letters(text):
 
 
 def uthmani_normalize(text, implicit_sukun=None):
+    """التمثيل التحليلي من sarf/normalize_trace.py (عقد N1.0): كل تحويلٍ فيه مسجَّل بموضعه وقاعدته،
+    ويُستعاد المصدر منه حرفياً. والسلوك السابق محفوظ في _uthmani_normalize_legacy للمقارنة."""
+    from .normalize_trace import normalize_traced
+    return normalize_traced(text, implicit_sukun=implicit_sukun)['analysis']
+
+
+def _uthmani_normalize_legacy(text, implicit_sukun=None):
     """
     implicit_sukun: في الرسم العثماني الحرف العاري (غير المدّي) ساكن مُخفى/مدغم (تَدَايَنتُم).
     None ⇒ يُفعَّل تلقائياً إن ظهرت علامات عثمانية في النص.
