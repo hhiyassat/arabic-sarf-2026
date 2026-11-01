@@ -1645,6 +1645,7 @@ def cond_structs(feats, nuc_pos, starts, ay_end=None):
                  ' مرشَّحٌ يلي الأداة، ولم تثبت فعليته بدليلٍ موجب')
                 if s_pos is not None else 'لم يُكشف فعل الشرط')]
         q_pos, q_kind = None, None
+        f_shartable = None
         if True:
             # يُبحث عن دليل ربط الجواب ولو لم يُكشف فعل الشرط (وَلَوۡ شَآءَ ٱللَّهُ لَذَهَبَ)
             # ملكية الجواب (مراجعة التقرير الثانية ٥): لا يُستوفى الجواب بفاءٍ لاحقة إلا إن كانت لهذا الشرط: فالفاء
@@ -1666,6 +1667,16 @@ def cond_structs(feats, nuc_pos, starts, ay_end=None):
                     q_pos, q_kind = k, f'ماضٍ بعد جملة الشرط في جواب «{tool}»'
                     break                              # فَلَمَّآ أَضَآءَتۡ … ذَهَبَ: قبل أي فاءٍ بعده
                 if g['conj'] and g['conj_letter'] == 'ف':
+                    # الفاء الرابطة تدخل على ما لا يصلح شرطاً؛ فإن دخلت على ماضٍ بلا «قد» أو مضارعٍ مجزوم
+                    # (فَبَلَغۡنَ، فَيُحۡفِكُمۡ) فهي عاطفةٌ على فعل الشرط في الظاهر، أو رابطةٌ بقدٍ مقدَّرة: يُحفظ الموضع
+                    # مرشّحاً ويُتابَع البحث عن جوابٍ بدليلٍ لا يلتبس
+                    shartable = s_pos is not None and k > s_pos and not g.get('qad') and not g.get('neg') and \
+                        (g['verb'] == 'madi' or g.get('vshape') == 'madi' and not g.get('noun') or
+                         g['verb'] == 'mudari' and g.get('mood') == 'جزم')
+                    if shartable:
+                        if f_shartable is None:
+                            f_shartable = k
+                        continue
                     q_pos, q_kind = k, 'فاءٌ رابطة للجواب'
                     break
                 if amb and not strict and (ay_end and ay_end[k - 1] or
@@ -1679,6 +1690,9 @@ def cond_structs(feats, nuc_pos, starts, ay_end=None):
                     break
                 if g['conj'] and g['conj_letter'] in ('و', 'ثم', 'أو'):
                     continue                           # معطوفٌ على فعل الشرط
+            if q_pos is None and f_shartable is not None:
+                q_pos, q_kind = f_shartable, ('مرشَّح: فاءٌ على ما يصلح فعلَ شرط '
+                                              f'(«{feats[f_shartable]["text"]}»): عطفٌ عليه أو جوابٌ بقدٍ مقدَّرة')
             # جواب «إِذَا» ماضٍ بعد جملة الشرط بلا عاطف (حكم صاحب النظرية: وَإِذَا قِيلَ لَهُمۡ … قَالُوٓاْ)
             if q_pos is None and tool == 'إِذَا' and s_pos is not None:
                 k = next((k for k in range(s_pos + 1, min(n, s_pos + 30))
@@ -2192,6 +2206,11 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
                         if kk is None and k + 1 in nset and k + 1 < n and \
                                 is_form(feats[k]['text'], ANSWER_OPENERS, prefix=True):
                             kk = k + 1
+                        # أو شبهُ جملةٍ متقدّمة (فَعَلَيۡهِ تَوَكَّلُوٓاْ، فَعَلَى ٱللَّهِ تَوَكَّلۡتُ): النواة بعدها مباشرة
+                        if kk is None and feats[k].get('head') == 'pp':
+                            j_ = k + 1 if k + 1 in nset else k + 2
+                            if j_ < n and j_ in nset and feats[j_]['verb'] and not feats[j_]['conj']:
+                                kk = j_
                         if kk is None:
                             roles.setdefault(k, f'رأس جواب «{c_["tool"]}» ({c_["q_kind"]})؛ جملةٌ بلا نواةٍ محلَّلة، وبنيتها مؤجَّلة')
                     else:
