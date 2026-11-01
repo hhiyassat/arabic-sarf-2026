@@ -14,6 +14,7 @@ python3 tools/eval_algebra.py > "$LOG/eval_algebra.log" 2>&1 &
 python3 tools/eval_case.py > "$LOG/eval_case.log" 2>&1 &
 python3 tools/eval_root.py > "$LOG/eval_root.log" 2>&1 &
 python3 tools/eval_protected.py > "$LOG/eval_protected.log" 2>&1 &
+python3 tools/eval_features.py --jobs 2 > "$LOG/eval_features.log" 2>&1 &
 wait
 python3 tools/audit_protected.py > "$LOG/audit_protected.log" 2>&1
 python3 tools/algebra_report.py >> "$LOG/algebra.log" 2>&1
