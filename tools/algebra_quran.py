@@ -168,6 +168,8 @@ def _cache_valid(s_):
         fail['cache_invalidated'].append(f'سورة {s_}: تغيّرت اعتماديات تحليلها أو نصّها، فأُعيد تحليلها')
     return ok
 frozen = {s_ for s_ in APPROVED if not args.all and _cache_valid(s_)}
+# بطلان الخبيئة يُسجَّل هنا، قبل التحليل الذي يصفّر العدّادات (في العملية نفسها أو في عمليات التوازي)، فيُعاد بعده
+INVALIDATED = (C['cache_invalidated'], list(fail['cache_invalidated']))
 loaded, fresh = set(), collections.defaultdict(list)
 verses = []
 cross, checked_ends, prev = [], set(), None
@@ -301,6 +303,8 @@ if jobs:
     C, close_route, unit_reason = collections.Counter(), collections.Counter(), collections.Counter()
     fail, by_surah, samples = collections.defaultdict(list), collections.defaultdict(list), {}
     cross, checked_ends = [], set()
+    if INVALIDATED[0]:
+        C['cache_invalidated'], fail['cache_invalidated'] = INVALIDATED[0], list(INVALIDATED[1])
 fresh_packs = {}
 for s_ in by_s:
     if s_ in frozen:
