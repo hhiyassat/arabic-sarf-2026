@@ -96,15 +96,28 @@ per_feat = collections.defaultdict(collections.Counter)
 
 # ١ السمات المقابَلة بالمرجع
 def key(r):
-    return (r['loc'], r['ui'], r['txt'], r['feat'])
+    return (r['loc'], r['ui'], r['feat'])          # بالموضع لا بنص الوحدة: نص الوحدة قد يتغيّر (التطبيع)
 SB = {key(r): r for r in FB if r['kind'] == 'scored'}
 SN = {key(r): r for r in FN if r['kind'] == 'scored'}
-for k in sorted(set(SB) | set(SN), key=lambda k: ([int(x) for x in k[0].split(':')], k[1] or 0, k[3])):
+for k in sorted(set(SB) | set(SN), key=lambda k: ([int(x) for x in k[0].split(':')], k[1] or 0, k[2])):
     b, n = SB.get(k), SN.get(k)
-    def pc(r): return r is not None and r['st'] == PROVEN and r['v'] == r['gold']
-    def pw(r): return r is not None and r['st'] == PROVEN and r['v'] != r['gold']
+    k = (k[0], k[1], (n or b)['txt'], k[2])
+    def pc(r): return r is not None and r['gold'] is not None and r['st'] == PROVEN and r['v'] == r['gold']
+    def pw(r): return r is not None and r['gold'] is not None and r['st'] == PROVEN and r['v'] != r['gold']
     cat_ = None
     if pc(b) and pc(n):
+        continue
+    if (n or b)['gold'] is None:
+        # لا مرجع لهذه السمة في هذا الموضع: لا يُعدّ صحيحاً ولا خاطئاً
+        if b is not None and n is not None and (b['st'], j(b['v'])) == (n['st'], j(n['v'])):
+            continue
+        cat_ = 'بلا مرجع: تغيّر'
+        C[cat_] += 1
+        per_feat[k[3]][cat_] += 1
+        r0 = n or b
+        items.append(dict(layer='سمة مقابَلة', loc=k[0], unit=k[2], what=k[3], category=cat_,
+                          before=f"{b['st']}: {j(b['v'])}" if b else '—', after=f"{n['st']}: {j(n['v'])}" if n else '—',
+                          gold='—', ev_before=j(b and b['ev']), ev_after=j(n and n['ev'])))
         continue
     if pc(b) and pw(n):
         cat_ = 'صحيحٌ صار خاطئاً'
@@ -241,7 +254,7 @@ L = ['# مقارنة نسختين على المصحف كله', '',
      f"`{IN['analysis_code_sha']}`، بصمة فرق التحليل `{IN['analysis_diff_sha']}`", '',
      '## السمات المقابَلة بالمرجع', '', '| السمة | ' + ' | '.join(CATS := [
          'مكتسَبٌ صحيح', 'مكتسَبٌ خاطئ', 'صحيحٌ صار خاطئاً', 'صحيحٌ أُجِّل', 'صحيحٌ فُقد', 'خاطئٌ زال', 'خاطئٌ تغيّرت قيمته',
-         'تغيّرٌ في غير المثبت', 'سجلٌّ غير مثبت ظهر أو غاب']) + ' |', '|' + '---|' * (len(CATS) + 1)]
+         'تغيّرٌ في غير المثبت', 'سجلٌّ غير مثبت ظهر أو غاب', 'بلا مرجع: تغيّر']) + ' |', '|' + '---|' * (len(CATS) + 1)]
 for f_, c in sorted(per_feat.items()):
     L.append(f'| {f_} | ' + ' | '.join(str(c.get(x, 0)) for x in CATS) + ' |')
 L.append('| **المجموع** | ' + ' | '.join(f'**{C.get(x, 0)}**' for x in CATS) + ' |')

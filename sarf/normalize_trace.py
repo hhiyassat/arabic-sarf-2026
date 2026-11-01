@@ -88,6 +88,8 @@ RULES = {
                        'فالإملاء بواوٍ واحدة'),
     'I-IDGHAM-SHADDA': ('1.0', 'K/I', 'الشدّة على أول الكلمة علامة إدغام ما قبلها فيها (مُّسَمࣰّى، بَّيۡنَكُمۡ، رِّجَالِكُمۡ): '
                         'ضبطٌ أدائي يُحذف من العرض الإملائي ويُحفظ؛ ويبقى في التمثيل التحليلي كما كان'),
+    'I-ULA-WAW': ('1.0', 'I', 'واو «أولئك، أولو، أولات، أولي» تُكتب في الإملاء وإن وُسمت بالصفر (فَأُوْلَٰٓئِكَ ← فَأُولَئِكَ)؛ '
+                  'وتُحذف علامة الصفر وحدها، ويبقى حذفها في التمثيل التحليلي (D21)'),
     'I-UNRESOLVED': ('1.0', 'I', 'صورةٌ رسمية لا تحسمها قاعدةٌ مكتوبة هنا (يَٰٓأَيُّهَا: الإملاء يفصل «يا»؛ وما بقي فيه أثرٌ عثماني): '
                      'تُحفظ كما هي وتُعلَّم غير محسومة'),
 }
@@ -260,16 +262,19 @@ def _zero_drop(R):
                     k -= 1
                 prev = out[k - 1] if k else ''
                 keep = ch == 'ا' and prev == 'و' and N._jamaa_alif(words, wi, ''.join(out))
-                if keep:
+                # العرض الإملائي يكتب واو «أولئك، أولو، أولات» وإن لم تُنطق (فَأُوْلَٰٓئِكَ ← فَأُولَئِكَ)
+                ula = R.mode == 'display' and ch == 'و' and re.match('^(?:[وفبلك][\u064E\u0650])?أُ$', ''.join(out)) \
+                    and w[i + 2:i + 3] == 'ل'
+                if keep or ula:
                     out.append(ch)
-                edits.append((pos + i, pos + i + 2, ch if keep else ''))
+                edits.append((pos + i, pos + i + 2, ch if keep or ula else '', 'I-ULA-WAW' if ula else 'N-ZERO-DROP'))
                 i += 2
                 continue
             out.append(ch)
             i += 1
         pos += len(w) + 1
-    for a, b, new in reversed(edits):
-        R.replace(a, b, new, 'N-ZERO-DROP')
+    for a, b, new, rule in reversed(edits):
+        R.replace(a, b, new, rule)
 
 
 def _hamza_seat(m):
