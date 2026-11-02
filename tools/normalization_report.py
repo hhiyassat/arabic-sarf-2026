@@ -149,6 +149,18 @@ for s, v, t in ROWS:
     sw_all = t.split(' ')
     for n, ((dw, sws), (aw, sws2), lw) in enumerate(zip(Dw, Aw, L)):
         C['words'] += 1
+        if sws != sws2 and set(sws) < set(sws2):
+            # كلمة مصدرٍ حُذفت كلها من الناتج المعياري وحُفظت في السجل (ألفٌ مجموعة ثم محذوفة: خَطَـࣰٔ اۚ ← خَطَأً):
+            # تُنسب إلى كلمتها بالسجل لا بالمحارف الظاهرة
+            pres = {p['at'] for o in r['ops_display'] for p in o['preserved_information']}
+            starts_ = [0] + [i + 1 for i, ch in enumerate(t) if ch == ' ']
+            def span(w):
+                a_ = starts_[w]
+                b_ = starts_[w + 1] - 1 if w + 1 < len(starts_) else len(t)
+                return range(a_, b_)
+            if all(i in pres for w in set(sws2) - set(sws) for i in span(w)):
+                sws = sws2
+                C['words_dropped_but_preserved'] += 1
         if sws != sws2 or not sws:
             C['alignment_error_words'] += 1
             continue
@@ -206,6 +218,7 @@ counts = dict(
     restore_failures=dict(normalized_output=C['restore_fail_display'], analysis_representation=C['restore_fail_analysis']),
     unrecorded_differences=dict(normalized_output=C['unrecorded_display'], analysis_representation=C['unrecorded_analysis']),
     alignment_errors=dict(verses=C['alignment_error_verses'], words=C['alignment_error_words']),
+    source_words_dropped_but_preserved=C['words_dropped_but_preserved'],
     residual_uncovered_marks_in_output=dict(residual))
 coverage = [dict(codepoint=k, name=unicodedata.name(chr(int(k[2:], 16)), '?'), cls=char_class(chr(int(k[2:], 16))),
                  occurrences=sum(v.values()), handled_by=dict(v)) for k, v in sorted(cover.items())]
