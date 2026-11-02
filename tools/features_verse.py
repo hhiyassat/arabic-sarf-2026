@@ -64,6 +64,13 @@ LBL = dict(pos='الصنف', tense='الزمن', voice='البناء', subject='
            transitivity='اللزوم والتعدّي', bab='الباب', signified='المدلول (حدث HFN)', form_meaning='معنى الوزن',
            derivation='الاشتقاق', number='العدد', gender='الجنس', plural_type='نوع الجمع', fem_marker='علامة التأنيث',
            definiteness='التعريف والتنكير', person='الشخص')
+# السمات المضافة من سجل التغطية (sarf.features_ext)
+EXT_LBL = dict(root_class='صنف الجذر', root_arity='عدد الأصول', conjugability='التصرّف', transformations='التحويل (α)',
+               definiteness_kind='نوع المعرفة', final_form='صورة الآخر', case_marking='العلامة', diptote='الصرف',
+               derivation_candidates='الاشتقاق المحتمل', lemma='اللمّة (HFN)', elative='التفضيل', enclitic_case='محلّ الضمير',
+               construction='التركيب', stem_root_candidates='جذر الجذع (مرشّح)', nisba='النسب', diminutive='التصغير',
+               polarity='الإثبات والنفي', subject_kind='نوع الإسناد', vocative='النداء', idafa='الإضافة')
+LBL.update(EXT_LBL)
 NUM = dict(singular='مفرد', dual='مثنى', plural='جمع')
 GEN = dict(masc='مذكر', fem='مؤنث', common='مشترك')
 PER = {1: 'المتكلم', 2: 'المخاطب', 3: 'الغائب'}
@@ -85,6 +92,12 @@ def fmt(f, v):
             f"مزيد على {v['wazn']} ({v['letters']})"
     if f == 'signified' and isinstance(v, dict):
         return f"«{v['verb']}»" + (f"، مصدره «{v['masdar']}»" if v.get('masdar') else '')
+    if isinstance(v, dict) and 'kinds' in v:
+        return f"{v.get('type')}: {'، '.join(v['kinds'])}"
+    if isinstance(v, list):
+        return '، '.join(map(str, v)) if v else 'لا تحويل'
+    if isinstance(v, dict):
+        return '، '.join(f'{k}: {x}' for k, x in v.items())
     return str({'bab': BAB, 'number': NUM, 'gender': GEN, 'person': PER, 'plural_type': PT}.get(f, {}).get(v, v)) \
         if f != 'fem_marker' else ('مكتوبة' if v else '—')
 
