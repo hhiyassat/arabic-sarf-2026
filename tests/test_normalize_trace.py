@@ -99,6 +99,27 @@ case((2, 31), 'أَنۢبِـُٔونِي', 'display', 'أَنبِئُونِي',
 check('أ: التنوين المتتابع (ࣰ) صار تنويناً، وصورته الأصلية محفوظة',
       any(p['codepoint'] == 'U+08F2' for o in ops(R, 'display', 'N-KFGQPC-TANWIN') for p in o['preserved_information']))
 
+# ---------- أ٢. شكل العلامة غير وظيفتها (الجولة ٣) ----------
+for ref, w in (((96, 15), 'لَنَسۡفَعَۢا'), ((12, 32), 'وَلَيَكُونࣰ'), ((7, 113), 'لَأَجۡرًا')):
+    r = normalize_traced(TEXT[ref], f'{ref[0]}:{ref[1]}')
+    i = find(ref, w)
+    for which in ('display', 'analysis'):
+        oo = [o for o in r['ops_' + which] if i + 1 in o['words'] and o['rule_id'] == 'N-MARK-FUNCTION']
+        check(f'أ٢ «{w}» ({ref[0]}:{ref[1]}، {which}): وظيفة العلامة مؤجَّلة في سجل الوقوع نفسه، ولا نون مضافة',
+              oo and all(o['status'] == 'غير محسوم' and o['mark_function'] is None for o in oo) and
+              'ن' + chr(0x0652) not in word(r, which, i)[-3:], [(o['rule_id'], o['status']) for o in r['ops_' + which] if i + 1 in o['words']])
+r = normalize_traced(TEXT[(96, 15)], '96:15')
+o = [o for o in r['ops_analysis'] if o['rule_id'] == 'N-IQLAB-TANWIN'][0]
+check('أ٢ «لَنَسۡفَعَۢا»: عملية الإقلاب نفسها «غير محسوم»، وشكلها الحركة والميم معاً', o['status'] == 'غير محسوم' and
+      o['mark_form'] == 'U+064E U+06E2', (o['status'], o.get('mark_form')))
+check('أ٢: كل محرف تنوينٍ في الناتجين يحمل شكله في المصدر ووظيفةً غير معيَّنة',
+      all(c.get('mark', {}).get('function', 'x') is None and c['mark']['form'] for c in R['cells_display'] + R['cells_analysis']
+          if c['c'] in ('\u064B', '\u064C', '\u064D')))
+r = normalize_traced(TEXT[(2, 282)], '2:282')
+o = [o for o in r['ops_analysis'] if o['rule_id'] == 'N-IQLAB-TANWIN' and o['occurrence_id'] == 'Q2:282:14']
+check('أ٢ «كَاتِبُۢ»: الشكل مطبَّق، والوظيفة غير معيَّنة في التطبيع (لا شهادة اسمية)',
+      o and o[0]['status'] == 'مطبَّق' and o[0]['mark_function'] is None and o[0]['mark_form'] == 'U+064F U+06E2', o)
+
 # ---------- ب. العثماني ← الإملائي ----------
 for w, exp in (('إِحۡدَىٰهُمَا', 'إِحْدَاهُمَا'), ('تَسۡـَٔمُوٓاْ', 'تَسْأَمُوا'), ('تِجَٰرَةً', 'تِجَارَةً'),
                ('لِلشَّهَٰدَةِ', 'لِلشَّهَادَةِ'), ('ذَٰلِكُمۡ', 'ذَلِكُمْ'), ('شَيۡـࣰٔ', 'شَيْئًا')):

@@ -30,7 +30,7 @@ import unicodedata
 from .chars import SUKUN, SHADDA, FATHA, DAMMA, KASRA, FATHATAN, DAMMATAN, KASRATAN, letters
 from . import normalize as N
 
-NORM_CONTRACT = 'N2.0'   # N2.0: حقول السجل كما في PROMPT_NORMALIZATION_REPAIR_02، وحفظ صورة المستبدَل بموضعه
+NORM_CONTRACT = 'N3.0'   # N3.0: شكل العلامة غير وظيفتها (التنوين)؛ N2.0: حقول السجل وحفظ صورة المستبدَل
 DAGGER = 'ٰ'
 TATWEEL = 'ـ'
 
@@ -60,7 +60,7 @@ RULES = {
     'N-SMALL-YEH': ('1.0', 'K', 'الياء الصغيرة المرتفعة ۧ حرفٌ محذوف رسماً: تُكتب ي (ٱلنَّبِيِّـۧنَ)'),
     'N-SMALL-CARRIER': ('1.0', 'K', 'الحرف الصغير المرسوم بعد مطّةٍ عليها حركة (لِنُحۡـِۧيَ): الحركة له، فتُنقل بعده'),
     'N-SMALL-NOON': ('1.0', 'K', 'النون الصغيرة المرتفعة ۨ حرفٌ محذوف رسماً: تُكتب ن (نُـۨجِي، الأنبياء ٨٨)'),
-    'N-IQLAB-TANWIN': ('1.0', 'K', 'الميم الصغيرة بعد حركةٍ قصيرة علامة إقلاب التنوين ميماً قبل الباء: الحركة تنوين '
+    'N-IQLAB-TANWIN': ('1.1', 'K', 'الميم الصغيرة بعد حركةٍ قصيرة رسمُ تنوينٍ مُقلَب (شكلاً، لا وظيفةً): تُكتب الحركة بشكل التنوين '
                        '(كَاتِبُۢ ← كَاتِبٌ، أَبَدَۢا ← أَبَدًا، كَافِرِۭ ← كَافِرٍ)، والتنوين حركةٌ واحدة لا نون؛ والميم محفوظة'),
     'N-IQLAB-NOON': ('1.0', 'K', 'الميم الصغيرة على نونٍ عارية علامة إقلاب النون الساكنة (مِنۢ): النون تبقى، والميم محفوظة'),
     'N-SILAH': ('1.0', 'K', 'الواو والياء الصغيرتان بعد هاء الضمير (لَهُۥ، بِهِۦ) صلةٌ في الأداء لا حرفٌ مكتوب: '
@@ -89,6 +89,8 @@ RULES = {
     'I-TANWIN-HAMZA-ALIF': ('1.0', 'I', 'تنوين الفتح على همزةٍ فوق الألف لا تُكتب بعده ألف (خَطَأً، مَلْجَأً، مُتَّكَأً)'),
     'I-ULA-WAW': ('1.0', 'I', 'واو «أولئك، أولو، أولات، أولي» تُكتب في الإملاء وإن وُسمت بالصفر (فَأُوْلَٰٓئِكَ ← فَأُولَئِكَ)؛ '
                   'وتُحذف علامة الصفر وحدها، ويبقى حذفها في التمثيل التحليلي (D21)'),
+    'N-MARK-FUNCTION': ('1.0', 'K/O', 'شكل العلامة غير وظيفتها: علامةٌ على شكل التنوين قد تكون نون توكيدٍ خفيفة على فعل '
+                        '(لَنَسۡفَعَۢا)؛ فما احتملها في الكتابة يُؤجَّل تعيين وظيفته، ولا يُضاف نون ولا يُحسم تنويناً'),
     'I-UNRESOLVED': ('1.0', 'I', 'صورةٌ رسمية لا تحسمها قاعدةٌ مكتوبة هنا (يَٰٓأَيُّهَا: الإملاء يفصل «يا»؛ وما بقي فيه أثرٌ عثماني): '
                      'تُحفظ كما هي وتُعلَّم غير محسومة'),
 }
@@ -331,9 +333,9 @@ def _common(R, implicit_sukun):
     R.sub(N.MADD_AFTER_FATHA.pattern, r'\1ا', 'N-MADD-ALIF')
     # ٩ ميم الإقلاب (إصلاح N1.0: كانت تُحذف فيضيع التنوين)
     for m in reversed(list(IQLAB_TANWIN.finditer(R.s))):
-        # خطوتان مسجّلتان: الميم تُحذف من العرض وتُحفظ، ثم الحركة القصيرة تنويناً
-        R.replace(m.start(3), m.end(3), '', 'N-IQLAB-TANWIN', note='ميم الإقلاب محفوظة')
-        R.replace(m.start(1), m.end(1), TANWIN_OF[m.group(1)], 'N-IQLAB-TANWIN')
+        # عمليةٌ واحدة (تركيب): الحركة والميم معاً شكلُ التنوين، فمحرف التنوين الناتج مصدره الحركة والميم كلتاهما،
+        # وكلتاهما محفوظتان بموضعيهما؛ وما بينهما (الشدّة، الهمزة) يبقى بعينه
+        R.replace(m.start(), m.end(), TANWIN_OF[m.group(1)] + m.group(2), 'N-IQLAB-TANWIN')
     # ١٠ الحرف الصغير على المطّة: علامات المطّة له (لِنُحۡـِۧيَ ← حْ يِ يَ)، لا للحرف قبلها (إصلاح N1.0)
     for m in reversed(list(re.finditer(TATWEEL + '([\u064B-\u0652]+)([\u06E5-\u06E8])', R.s))):
         R.replace(m.start(), m.end(), TATWEEL + m.group(2) + m.group(1), 'N-SMALL-CARRIER', kind='نقل علامة')
@@ -612,7 +614,7 @@ def normalize_traced(text, loc='', implicit_sukun=None, strict=False):
     """→ dict(source, analysis, display, cells_analysis, cells_display, ops_analysis, ops_display)
     strict: يُرفض ما ليس بترميز المصدر (ValueError)"""
     if strict and not is_source_encoding(text):
-        raise ValueError('ليس بترميز المصدر: العقد N1.0 لا يقبل نصاً مطبَّعاً مدخلاً')
+        raise ValueError(f'ليس بترميز المصدر: العقد {NORM_CONTRACT} لا يقبل نصاً مطبَّعاً مدخلاً')
     if implicit_sukun is None:
         implicit_sukun = any(ch in N.UTHMANI_SIGNS or ord(ch) in N.KFGQPC_MAP or ch in 'ٕۡٔ' for ch in text)
     A = Run(text, loc, 'analysis')
@@ -621,17 +623,66 @@ def normalize_traced(text, loc='', implicit_sukun=None, strict=False):
     _final_maps(A)
     if implicit_sukun:
         _implicit_sukun(A)
+    _mark_function(A)
     analysis = A.finish()
     D = Run(text, loc, 'display')
     _common(D, implicit_sukun)
     _final_maps(D)
     _display_rules(D)
     _unresolved(D)
+    _mark_function(D)
     display = D.finish()
     return dict(source=text, analysis=analysis, display=display, contract=NORM_CONTRACT,
-                cells_analysis=[dict(c=t.c, src=list(t.src), derived=t.derived) for t in A.T],
-                cells_display=[dict(c=t.c, src=list(t.src), derived=t.derived) for t in D.T],
+                cells_analysis=[_cell(t, text) for t in A.T], cells_display=[_cell(t, text) for t in D.T],
                 ops_analysis=A.ops, ops_display=D.ops)
+
+
+TANWIN_MARKS = {FATHATAN, DAMMATAN, KASRATAN}
+MARK_FUNCTION_UNSET = 'غير معيَّنة في التطبيع: التطبيع يثبت شكل العلامة لا وظيفتها (تنوين اسمٍ أو نون توكيدٍ خفيفة)'
+# شكل تنوين الفتح وبعده ألف على كلمةٍ أولها لامٌ مفتوحة وحرف مضارعةٍ متحرّك: يحتمل نون التوكيد الخفيفة على فعل
+# (لَنَسۡفَعَۢا، وَلَيَكُونࣰا) كما يحتمل تنوين اسمٍ بعد لام التوكيد (لَأَجۡرًا)؛ والكتابة لا تفصل بينهما
+NUN_KHAFIFA_SHAPE = re.compile('^(?:[\u0648\u0641]\u064E)?\u0644\u064E[\u0623\u0646\u064A\u062A][\u064E\u064F].*\u064B\u0651?\u0627$')
+
+
+def _cell(t, text):
+    """المحرف الناتج: مصدره، وهل هو مشتقّ؛ وللتنوين شكله في المصدر ووظيفته غير المعيَّنة"""
+    d = dict(c=t.c, src=list(t.src), derived=t.derived)
+    if t.c in TANWIN_MARKS:
+        d['mark'] = dict(form=cp(''.join(text[i] for i in t.src)), function=None, function_status=MARK_FUNCTION_UNSET)
+    return d
+
+
+def _mark_function(R):
+    """كل عمليةٍ أنتجت شكل تنوين تحمل شكلها ووظيفتها غير المعيَّنة؛ وما احتمل نون التوكيد الخفيفة في الكتابة
+    يُؤجَّل في سجل الوقوع نفسه (غير محسوم)، ولا يُضاف حرف نون ولا يُحسم أنه تنوين اسم"""
+    for o in R.ops:
+        if o['rule_id'] in ('N-IQLAB-TANWIN', 'N-KFGQPC-TANWIN') and set(o['normalized_text']) & TANWIN_MARKS:
+            o['mark_form'] = o['source_codepoints']
+            o['mark_function'] = None
+            o['mark_function_status'] = MARK_FUNCTION_UNSET
+    s = R.s
+    for m in re.finditer(r'[^ ]+', s):
+        w = m.group()
+        if not NUN_KHAFIFA_SHAPE.match(w):
+            continue
+        ws = sorted({R.word_of[i] + 1 for t in R.T[m.start():m.end()] for i in t.src if R.word_of[i] is not None})
+        why = ('شكل تنوين الفتح وبعده ألف على كلمةٍ أولها لامٌ مفتوحة وحرف مضارعة: يحتمل نون التوكيد الخفيفة على فعل '
+               '(لَنَسۡفَعَۢا) وتنوين اسمٍ بعد لام التوكيد (لَأَجۡرًا)؛ الوظيفة مؤجَّلة إلى ما بعد التطبيع بدليلها')
+        for o in R.ops:
+            if set(o['words']) & set(ws) and o.get('mark_function_status'):
+                o['status'] = 'غير محسوم'
+                o['reason'] = why
+        k = next(i for i in range(m.start(), m.end()) if R.T[i].c == FATHATAN)
+        sp = sorted(R.T[k].src)
+        R.ops.append(dict(op_id=f'{R.loc}#{R.mode[0]}{len(R.ops)}',
+                          occurrence_id=f"Q{R.loc}:{ws[0]}" + (f"-{ws[-1]}" if len(ws) > 1 else '') if ws else R.loc,
+                          words=ws, source_spans=_spans(sp), source_text=''.join(R.source[i] for i in sp),
+                          source_codepoints=cp(''.join(R.source[i] for i in sp)), input_text=w, input_codepoints=cp(w),
+                          normalized_text=w, normalized_codepoints=cp(w), normalized_spans=[[k, k + 1]],
+                          operation='غير محسوم', rule_id='N-MARK-FUNCTION', rule_version=RULES['N-MARK-FUNCTION'][0],
+                          rule_reference=RULES['N-MARK-FUNCTION'][1], preserved_information=[], status='غير محسوم',
+                          reason=why, mark_form=cp(''.join(R.source[i] for i in sp)), mark_function=None,
+                          mark_function_status=MARK_FUNCTION_UNSET))
 
 
 def restore_source(res, which='analysis'):
