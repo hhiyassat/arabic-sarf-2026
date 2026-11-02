@@ -18,6 +18,8 @@ cor = json.load(open(J('corruption_results.json'), encoding='utf-8'))
 cmp4 = json.load(open(J('n3_vs_n4_comparison.json'), encoding='utf-8'))
 cmpb = json.load(open(J('n3_vs_baseline_rerun.json'), encoding='utf-8'))
 ctt = json.load(open(J('compare_tool_tests.json'), encoding='utf-8'))
+old_tool = json.load(open(J('previous_compare_tool_on_review_cases.json'), encoding='utf-8'))
+G_OK = all(ver['counts'].get(f'{w}:G_output_consistent:ok') == ver['verses'] for w in ('display', 'analysis'))
 CTT_MD = '\n'.join(f"| {t['no']} | {t['edit']} | {t['expected_exit']} | {t['exit_code']} | "
                     f"{', '.join(t['detected_as'] + t['count_differences'])} |" for t in ctt['tests'])
 idn, cnt = run['identity'], run['counts']
@@ -46,14 +48,24 @@ MODIFIED = [
      'وحدها source_length بقيمةٍ صحيحة، وفحص الآيات المضافة والمحذوفة والتكرار، ومقارنة كل حقلٍ لا حقولٍ مختارة'),
     ('tools/compare_tool_tests.py', 'جديد بعد المراجعة: 15 إفساداً لأداة المقارنة (ومنه إفساد المراجع في 7:1) ونسخةٌ سليمة'),
     ('tools/round4_report.py', 'مولِّد تقارير الجولة من نتائج القياس وحدها'),
+    ('tools/verify_normalization_package.py (المراجعة الثانية)', 'الفئة G: اتساق كل محرفٍ ناتج مع مسار تحويله المسجَّل (O1، O3، O4، O5)، '
+     'وتصريحٌ بحدود النجاح (scope)'),
+    ('tools/corruption_tests.py (المراجعة الثانية)', 'خمس تجارب جديدة (11–15)، منها حالة المراجع والقيمة الوسيطة في مسارٍ متعدد العمليات، '
+     'ومن طرفٍ إلى طرفٍ ثانية لحالة المراجع'),
+    ('tools/compare_normalization_packages.py (المراجعة الثانية)', 'لا يُستثنى من المقارنة العامة إلا cells_display وcells_analysis بالاسم؛ '
+     'والوجود قبل القيمة في أقسام run.json والأعداد'),
+    ('tools/compare_tool_tests.py (المراجعة الثانية)', 'خمس حالات جديدة (16–20)، منها حالتا المراجع؛ وخيار --only لتشغيل حالاتٍ مختارة على أداةٍ سابقة'),
     ('tests/test_normalize_trace.py', 'إعادة البناء دون استعارة، وإفسادٌ يُكشف برمزه'),
 ]
 CLOSE = [
     ('إعادة البناء لا تستعير قيم المحارف من المصدر', True, 'reconstruct_source والمدقّق: لا قراءة لحقل source ولا للمصحف قبل اكتمال البناء'),
     ('الاسترجاع صحيح على القرآن كاملاً', all(ver['counts'].get(f'{w}:C_match:ok') == ver['verses'] for w in ('display', 'analysis')),
      f"{ver['counts'].get('display:C_match:ok')}/{ver['verses']} و{ver['counts'].get('analysis:C_match:ok')}/{ver['verses']}"),
+    ('اتساق كل محرفٍ ناتج مع مسار تحويله المسجَّل (G)', G_OK,
+     f"{ver['counts'].get('display:G_output_consistent:ok')}/{ver['verses']} و{ver['counts'].get('analysis:G_output_consistent:ok')}/{ver['verses']}"),
     ('اختبارات الإفساد تكشف الأخطاء المستهدفة', cor['all_detected'] and cor['all_expected'],
-     f"{sum(t['detected'] for t in cor['tests'])}/{len(cor['tests'])}، ومن طرفٍ إلى طرف: {'كُشف' if not cor['end_to_end']['all_ok'] else 'لم يُكشف'}"),
+     f"{sum(t['detected'] for t in cor['tests'])}/{len(cor['tests'])}، ومن طرفٍ إلى طرف: "
+     f"{'كُشف' if not cor['end_to_end']['all_ok'] else 'لم يُكشف'} و{'كُشف' if not cor['end_to_end_2']['all_ok'] else 'لم يُكشف'}"),
     ('إصلاحات N3 محفوظة بالمقارنة الفعلية (حكمٌ صارم)', cmp4['all_protected'] and cmp4['verdict_ok'],
      f"{sum(p['ok'] for p in cmp4['protection'])}/11؛ فروقٌ غير مأذونة: {cmp4['changes'] or 'لا شيء'}"),
     ('أداة المقارنة ترفض كل فرقٍ غير مأذون', ctt['all_ok'],
@@ -70,7 +82,8 @@ out = dict(round='N04', run_id=RID, commit=idn['commit'], contract=idn['contract
            comparison_n3_baseline_rerun=dict(changes=cmpb['changes'], additive=cmpb['allowed_additions']),
            protection=cmp4['protection'], verifier=dict(all_ok=ver['all_ok'], hashes=ver['E_hashes'], counts=ver['counts'],
                                                         failure_codes=ver['failure_codes']),
-           corruption=cor, compare_tool_tests=ctt, closing_criteria=[dict(criterion=c, ok=o, evidence=str(e)) for c, o, e in CLOSE],
+           corruption=cor, compare_tool_tests=ctt, previous_compare_tool_on_review_cases=old_tool,
+           verifier_scope=ver.get('scope'), closing_criteria=[dict(criterion=c, ok=o, evidence=str(e)) for c, o, e in CLOSE],
            modified_files=[dict(path=p, reason=r) for p, r in MODIFIED],
            next_stage_commitment='المستهلك الحالي الذي يأخذ نص analysis وحده لا يحمل بالضرورة معلومات العلامات والتأجيلات. '
                                  'جولة خلايا المكتوب ستُلزم المستهلك بحملها، وألا يعدّ شكل التنوين وحده شهادةً اسمية. '
@@ -95,7 +108,33 @@ cor_md = '\n'.join(f"| {t['no']} | {t['name']} | {t['edit'][:70]} | {', '.join(t
                    f"{', '.join(t['failure_codes'])} |" for t in cor['tests'])
 rec_md = '\n'.join(f"| {k} | {v['reference']} | {v['current']} | {'=' if v['equal'] else '≠'} |" for k, v in out['count_reconciliation'].items())
 close_md = '\n'.join(f"| {c} | {'✓' if o else '✗'} | {e} |" for c, o, e in CLOSE)
-ar = f"""# الجولة N04: إصلاح التحقق من الاسترجاع وحماية إصلاحات N3
+OLD_MD = '\n'.join(f"| {t['no']} | {t['edit']} | {t['exit_code']} |" for t in old_tool['tests'])
+ar = f"""# الجولة N04 (بعد المراجعة الثانية): اتساق الناتج مع مسار التحويل، وصرامة أداة المقارنة
+
+## ما أُصلح بعد المراجعة الثانية (أدوات التحقق وحدها؛ لا تغيير في المطبّع ولا في نواتجه)
+**١. الناتج قد يفسد مع نجاح الاسترجاع:**
+- أثبت المراجع ذلك بتغيير ألف الوصل في «الرَّحْمَنِ» إلى «ب» مع تحديث العرض والبصمة: نجحت الفحوص الـ21.
+- أضفتُ فئة **G**: كل محرفٍ ناتج يوافق مسار تحويله المسجَّل.
+  - المسار: العمليات التي يقع موضعه في `normalized_spans` لها، بترتيبها.
+  - آخر العمليات هي المنشئة، وما قبلها وسيط.
+  - وخلايا كل عمليةٍ بترتيبها تتابعٌ من ناتجها.
+  - والخلية بلا مسار أصلية، قيمتها قيمة المصدر المستعاد.
+  - والمشتقّة يجب أن يكون لها مسار.
+- الرموز: O1، O3، O4، O5.
+- على البيانات السليمة: صفر خرق في الآيات كلها، للناتجين.
+- **حدود النجاح صارت مصرَّحة في المدقّق:** {ver.get('scope', '')}.
+
+**٢. أداة المقارنة:**
+- كانت تستثني كل حقلٍ يبدأ بـ`cells_`؛ وصارت لا تستثني إلا `cells_display` و`cells_analysis`.
+- كانت تساوي بين غياب القسم ووجوده بقيمة `null`؛ وصارت تفحص الوجود أولاً، في `run.json` وفي الأعداد.
+- **الأداة السابقة على حالات المراجعة** (رمز الخروج؛ والمتوقَّع 1):
+
+| رقم | التعديل | خروج الأداة السابقة |
+|---|---|---:|
+{OLD_MD}
+
+## نصّ الجولة الأولى من N04 (باقٍ كما هو)
+
 
 هوية التشغيل `{RID}` · العقد {idn['contract']} · الالتزام `{idn['commit'][:10]}` (الفرع المحلي `normalization-repair-04`) · \
 خط الأساس N3.0 `4a32367` / `19db4e258f42`
@@ -246,17 +285,19 @@ body{{background:var(--bg);color:var(--fg);font-family:system-ui,"Noto Naskh Ara
 main{{max-width:1100px;margin:auto}} table{{border-collapse:collapse;width:100%;font-size:.88rem}} td,th{{border-bottom:1px solid var(--line);padding:4px 6px;text-align:right;vertical-align:top}}
 .wrap{{overflow-x:auto}} .mut{{color:var(--mut)}} .ok{{color:var(--ok);font-weight:bold}} .bad{{color:var(--bad);font-weight:bold}} code{{font-size:.8rem}}
 </style></head><body><main>
-<h1>N04: تحقق الاسترجاع وحماية إصلاحات N3</h1>
+<h1>N04 بعد المراجعة الثانية: اتساق الناتج، وصرامة المقارنة، وحماية N3</h1>
+<p>حدود النجاح: {h(ver.get('scope', ''))}</p>
 <p class=mut>هوية التشغيل <code>{RID}</code> · <code>{idn['commit'][:10]}</code> · العقد {idn['contract']} · خط الأساس <code>4a32367</code>/<code>19db4e258f42</code></p>
 <h2>معيار الإغلاق</h2><div class=wrap><table><tr><th>المعيار</th><th></th><th>الدليل</th></tr>
 {''.join(f"<tr><td>{h(c)}</td><td class={'ok' if o else 'bad'}>{'✓' if o else '✗'}</td><td>{h(str(e))}</td></tr>" for c, o, e in CLOSE)}</table></div>
 <h2>إعادة البناء على القرآن كله (المدقّق المستقل)</h2><div class=wrap><table><tr><th>الفحص</th><th>المعياري</th><th>التحليلي</th></tr>
-{''.join(tr([n, f"{ver['counts'].get('display:'+k+':ok')}/{ver['verses']}", f"{ver['counts'].get('analysis:'+k+':ok')}/{ver['verses']}"]) for k, n in (('A_coverage', 'A تغطية المواضع'), ('B_reconstructed', 'B إعادة البناء دون استعارة'), ('C_match', 'C المطابقة'), ('text_vs_cells', 'النص = الخلايا'), ('nfc', 'NFC')))}
+{''.join(tr([n, f"{ver['counts'].get('display:'+k+':ok')}/{ver['verses']}", f"{ver['counts'].get('analysis:'+k+':ok')}/{ver['verses']}"]) for k, n in (('A_coverage', 'A تغطية المواضع'), ('B_reconstructed', 'B إعادة البناء دون استعارة'), ('C_match', 'C المطابقة'), ('G_output_consistent', 'G اتساق الناتج مع مسار التحويل'), ('text_vs_cells', 'النص = الخلايا'), ('nfc', 'NFC')))}
 {tr(['D أخطاء المحاذاة', ver['counts'].get('display:D_alignment_errors'), ver['counts'].get('analysis:D_alignment_errors')])}
 {tr(['E البصمات', ' '.join(k + ('✓' if v else '✗') for k, v in ver['E_hashes'].items()), ''])}</table></div>
 <h2>اختبارات الإفساد ({len(cor['tests'])})</h2><div class=wrap><table><tr><th>رقم</th><th>الإفساد</th><th>التعديل</th><th>المتوقَّع</th><th>ما فشل</th><th>الرموز</th><th></th></tr>
 {''.join(f"<tr><td>{h(t['no'])}</td><td>{h(t['name'])}</td><td>{h(t['edit'])}</td><td>{h(', '.join(t['expected_to_fail']))}</td><td>{h(', '.join(t['failed_checks']))}</td><td><code>{h(', '.join(t['failure_codes']))}</code></td><td class={'ok' if t['detected'] and t['expected_hit'] else 'bad'}>{'كُشف' if t['detected'] else 'لم يُكشف'}</td></tr>" for t in cor['tests'])}
-<tr><td>E2E</td><td>من طرفٍ إلى طرف</td><td>{h(cor['end_to_end']['edit'])}</td><td>بنيوي مع بصمةٍ سليمة</td><td>بصمات {'سليمة' if cor['end_to_end']['hashes_ok'] else 'فاسدة'}؛ all_ok={cor['end_to_end']['all_ok']}</td><td><code>{h(str(cor['end_to_end']['failure_codes']))}</code></td><td class={'ok' if not cor['end_to_end']['all_ok'] else 'bad'}>{'كُشف' if not cor['end_to_end']['all_ok'] else 'لم يُكشف'}</td></tr></table></div>
+<tr><td>E2E</td><td>من طرفٍ إلى طرف</td><td>{h(cor['end_to_end']['edit'])}</td><td>بنيوي مع بصمةٍ سليمة</td><td>بصمات {'سليمة' if cor['end_to_end']['hashes_ok'] else 'فاسدة'}؛ all_ok={cor['end_to_end']['all_ok']}</td><td><code>{h(str(cor['end_to_end']['failure_codes']))}</code></td><td class={'ok' if not cor['end_to_end']['all_ok'] else 'bad'}>{'كُشف' if not cor['end_to_end']['all_ok'] else 'لم يُكشف'}</td></tr>
+<tr><td>E2E2</td><td>من طرفٍ إلى طرف (المراجعة)</td><td>{h(cor['end_to_end_2']['edit'])}</td><td>G مع بصمةٍ سليمة</td><td>بصمات {'سليمة' if cor['end_to_end_2']['hashes_ok'] else 'فاسدة'}؛ all_ok={cor['end_to_end_2']['all_ok']}</td><td><code>{h(str(cor['end_to_end_2']['failure_codes']))}</code></td><td class={'ok' if not cor['end_to_end_2']['all_ok'] else 'bad'}>{'كُشف' if not cor['end_to_end_2']['all_ok'] else 'لم يُكشف'}</td></tr></table></div>
 <h2>حماية إصلاحات N3</h2><p>تغييرات النواتج عن N3: <b>{h(str(cmp4['changes'] or 'لا شيء'))}</b> · إضافات موثّقة: {h(str(cmp4['allowed_additions']))} ·
 إعادة تشغيل خط الأساس: {h(str(cmpb['changes'] or 'مطابقة'))} · حزمة N3: {'لم تُمسّ' if n3_intact else 'تغيّرت'}</p>
 <div class=wrap><table><tr><th>رقم</th><th>الإصلاح</th><th></th><th>الدليل</th></tr>

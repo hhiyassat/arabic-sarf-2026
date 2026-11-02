@@ -21,6 +21,11 @@ normalization_previous_output.json.
   D سلامة المحاذاة
   E سلامة البصمات
   F الأعداد مقابل run.json
+  G اتساق الناتج مع مسار التحويل المسجَّل (O1–O5)
+
+حدود النجاح: A–C تثبت أن المصدر يُستعاد من الناتج وسجله دون استعارة؛ وهي لا تثبت صحة الناتج. وG يثبت أن كل محرفٍ
+ناتج يوافق مسار تحويله المسجَّل (أو يساوي محرف المصدر في موضعه إن لم يُحوَّل). ولا يثبت شيءٌ من ذلك الصحة الإملائية أو
+اللغوية لقواعد التحويل نفسها.
 """
 import argparse, collections, gzip, hashlib, json, os, sys, unicodedata
 
@@ -103,6 +108,46 @@ def reconstruct(cells, ops, L):
     return (None if fails else text), fails
 
 
+def output_consistency(cells, ops, L):
+    """G: كل خليةٍ ناتجة يوافق محرفُها مسار تحويلها. مسار الخلية k: العمليات التي يقع k في normalized_spans لها،
+    بترتيب تسجيلها؛ وآخرها هي التي أنشأت المحرف بصورته الأخيرة (ما قبلها وسيط).
+      O1 خلايا العملية (التي هي آخر مسارها) بترتيبها ليست تتابعاً من normalized_text للعملية
+      O3 موضعٌ في normalized_spans خارج الناتج
+      O4 خليةٌ مُحوَّلة (موضعها محفوظ، أو مركّبة) بلا عمليةٍ في مسارها
+      O5 خليةٌ مشتقّة بلا عمليةٍ في مسارها
+    والخلية بلا مسار أصليةٌ غير محوَّلة: قيمتها هي قيمة المصدر المستعاد في موضعها، فتغييرها يُكشف في C."""
+    fails = []
+    F = lambda code, at=None, d='': fails.append(dict(code=code, at=at, detail=d))
+    n = len(cells)
+    pres = {p['at'] for o in ops for p in o.get('preserved_information') or [] if isinstance(p.get('at'), int)}
+    chain = {}
+    for idx, o in enumerate(ops):
+        for a, b in o.get('normalized_spans') or []:
+            for k in range(a, b):
+                if not 0 <= k < n:
+                    F('O3_SPAN_OUT_OF_OUTPUT', k, o.get('op_id'))
+                    continue
+                chain.setdefault(k, []).append(idx)
+    last_of = collections.defaultdict(list)
+    for k, c in enumerate(cells):
+        ch = chain.get(k)
+        if not ch:
+            if c.get('derived'):
+                F('O5_DERIVED_WITHOUT_OPERATION', k, cpstr(c.get('c', '')))
+            elif len(c.get('src') or []) != 1 or c['src'][0] in pres:
+                F('O4_TRANSFORMED_WITHOUT_OPERATION', k, cpstr(c.get('c', '')))
+            continue
+        last_of[ch[-1]].append(k)
+    for idx, ks in last_of.items():
+        text = ops[idx].get('normalized_text') or ''
+        it = iter(text)
+        got = ''.join(cells[k].get('c', '') for k in ks)
+        if not all(ch in it for ch in got):           # تتابعٌ بالترتيب
+            F('O1_OUTPUT_NOT_FROM_OPERATION', ks[0], f"{ops[idx].get('op_id')} {ops[idx].get('rule_id')}: "
+                                                    f"{cpstr(got)} ∉ {cpstr(text)}")
+    return fails
+
+
 def compare(rec, original):
     """C: المقارنة بعد البناء"""
     if rec is None:
@@ -142,8 +187,10 @@ def check_verse(R, ops_by_rep, original=None):
         rec, fails = reconstruct(cells, ops, L)
         spaces = {p['at'] for o in ops for p in o.get('preserved_information') or [] if p.get('char') == ' '} | \
                  {c['src'][0] for c in cells if c.get('c') == ' ' and len(c.get('src') or []) == 1}
+        gf = output_consistency(cells, ops, L)
         res[which] = dict(
-            A_coverage=not cov, B_reconstructed=rec is not None, fail_codes=sorted({f['code'] for f in fails}),
+            A_coverage=not cov, B_reconstructed=rec is not None,
+            G_output_consistent=not gf, fail_codes=sorted({f['code'] for f in fails + gf}),
             C_match=(compare(rec, original) is None) if original is not None else None,
             C_code=compare(rec, original) if original is not None else None,
             D_alignment_errors=alignment(cells, ops, L, spaces),
@@ -190,7 +237,7 @@ def main():
             res = check_verse(R, OPS[v], original)
             C['verses'] += 1
             for which, x in res.items():
-                for key in ('A_coverage', 'B_reconstructed', 'C_match', 'text_vs_cells', 'nfc'):
+                for key in ('A_coverage', 'B_reconstructed', 'C_match', 'G_output_consistent', 'text_vs_cells', 'nfc'):
                     C[f'{which}:{key}:{"ok" if x[key] else "fail"}'] += 1
                 C[f'{which}:D_alignment_errors'] += x['D_alignment_errors']
                 for c_ in x['fail_codes'] + ([x['C_code']] if x['C_code'] else []):
@@ -217,7 +264,8 @@ def main():
         bad += not ok
     for which in ('display', 'analysis'):
         for key, name in (('A_coverage', 'A تغطية المواضع'), ('B_reconstructed', 'B إعادة البناء دون استعارة'),
-                          ('C_match', 'C مطابقة المستعاد للمصدر'), ('text_vs_cells', 'النص يساوي الخلايا'), ('nfc', 'NFC')):
+                          ('C_match', 'C مطابقة المستعاد للمصدر'), ('G_output_consistent', 'G اتساق الناتج مع مسار التحويل'),
+                          ('text_vs_cells', 'النص يساوي الخلايا'), ('nfc', 'NFC')):
             ok = C[f'{which}:{key}:ok'] == n
             bad += not ok
             print(('OK  ' if ok else 'BAD ') + f'{name} ({which}): {C[f"{which}:{key}:ok"]}/{n}')
@@ -230,6 +278,8 @@ def main():
     if codes:
         print('رموز الإخفاق:', dict(codes), 'أمثلة:', ex)
     out['all_ok'] = bad == 0
+    out['scope'] = ('A–C: استرجاع المصدر من الناتج وسجله دون استعارة؛ G: اتساق كل محرفٍ ناتج مع مسار تحويله المسجَّل؛ '
+                    'ولا يشهد النجاح بالصحة الإملائية أو اللغوية لقواعد التحويل')
     if a.json:
         json.dump(out, open(a.json, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
     print('ALL OK' if not bad else f'FAILED {bad}')

@@ -13,6 +13,7 @@ ap.add_argument('--base', required=True)
 ap.add_argument('--pkg', required=True)
 ap.add_argument('--tool', required=True)
 ap.add_argument('--out')
+ap.add_argument('--only', help='أرقام اختباراتٍ مختارة مفصولة بفاصلة (للتحقق من أداةٍ سابقة)')
 a = ap.parse_args()
 FILES = ('normalization_cells.jsonl.gz', 'normalization_ops.jsonl.gz', 'normalization_run.json')
 
@@ -143,10 +144,43 @@ def t15(d):
     return 'حذف آخر خليةٍ في التمثيل التحليلي لـ2:282 (والنص كما هو)'
 
 
+def t16(d):
+    edit_cells(d, lambda L: in_verse(L, '2:282', lambda R: R.__setitem__('cells_unapproved', [{'c': 'X', 'src': []}])))
+    return 'مراجعة: حقلٌ غير مأذون يبدأ بـcells_ (cells_unapproved) في سجل الآية 2:282'
+
+
+def t17(d):
+    edit_run(d, lambda r: r.__setitem__('unapproved_section', None))
+    return 'مراجعة: قسمٌ مضاف في run.json بقيمة null (unapproved_section)'
+
+
+def t18(d):
+    edit_run(d, lambda r: r['counts'].__setitem__('unapproved_count', None))
+    return 'مفتاحٌ مضاف بقيمة null داخل counts'
+
+
+def t19(d):
+    edit_run(d, lambda r: r.pop('unresolved_by_reason'))
+    return 'حذف قسمٍ من run.json (unresolved_by_reason)'
+
+
+def t20(d):
+    edit_cells(d, lambda L: in_verse(L, '2:282', lambda R: R['cells_display'][3].__setitem__('mark', None)))
+    return 'مفتاح mark بقيمة null مضافٌ إلى خليةٍ بلا علامة'
+
+
+def t21(d):
+    edit_run(d, lambda r: r.pop('counts'))
+    return 'حذف قسم counts كله من run.json (يجب أن يُرفض بحكمٍ مكتوب لا بانهيار)'
+
+
 TESTS = [(0, 'النسخة السليمة', None, 0)] + [(i, f.__doc__ or '', f, 1) for i, f in enumerate(
-    (t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15), 1)]
+    (t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21), 1)]
 res = []
+ONLY = {int(x) for x in a.only.split(',')} if a.only else None
 for no, _, fn, want in TESTS:
+    if ONLY is not None and no not in ONLY:
+        continue
     d = tempfile.mkdtemp()
     for f in FILES:
         shutil.copy(os.path.join(a.pkg, f), d)
@@ -154,8 +188,11 @@ for no, _, fn, want in TESTS:
     p = subprocess.run([sys.executable, '-I', a.tool, '--a', a.base, '--b', d, '--out', os.path.join(d, 'c.json')],
                        capture_output=True, text=True)
     c = json.load(open(os.path.join(d, 'c.json'), encoding='utf-8')) if os.path.exists(os.path.join(d, 'c.json')) else {}
-    ok = p.returncode == want
-    res.append(dict(no=no, edit=edit, expected_exit=want, exit_code=p.returncode, ok=ok,
+    # الكشف حكمٌ مكتوب لا انهيار: المُفسَدة تُخرج 1 مع ملف نتائج حكمُه verdict_ok=false، والسليمة 0 مع true
+    crashed = not c
+    ok = p.returncode == want and not crashed and c.get('verdict_ok') is (want == 0)
+    res.append(dict(no=no, edit=edit, expected_exit=want, exit_code=p.returncode, ok=ok, crashed=crashed,
+                    verdict_ok=c.get('verdict_ok'), stderr_tail=p.stderr[-300:] if crashed else '',
                     detected_as=sorted((c.get('changes') or {}).keys())[:6],
                     count_differences=sorted((c.get('count_differences') or {}).keys())))
     print(('OK  ' if ok else 'BAD ') + f'{no} {edit}: خروج {p.returncode} (المتوقَّع {want}) {res[-1]["detected_as"]}')
