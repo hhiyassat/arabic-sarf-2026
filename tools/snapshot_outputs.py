@@ -113,15 +113,15 @@ if __name__ == '__main__':
         sys.exit(0)
     A, B = pickle.load(gzip.open(a.a)), pickle.load(gzip.open(a.b))
     viol, added = compare(A, B)
-    print(f'الآيات {len(A)}، المخالفات {len(viol)}')
-    for p, d in viol[:20]:
-        print('  مخالفة:', '/'.join(map(str, p)), d)
     agg = collections.Counter()
     for k, n in added.items():
         agg[k.split('/')[-1] if k.startswith('F/') else k] += n
-    for k, n in agg.most_common():
-        print('  مضاف:', k, n)
-    if a.json:
+    if a.json:      # يُكتب قبل الطباعة، فلا يضيع إن انقطع الإخراج
         json.dump(dict(verses=len(A), violations=len(viol), examples=[('/'.join(map(str, p)), d) for p, d in viol[:200]],
                        added=dict(agg)), open(a.json, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+    print(f'الآيات {len(A)}، المخالفات {len(viol)}')
+    for p, d in viol[:20]:
+        print('  مخالفة:', '/'.join(map(str, p)), d)
+    for k, n in agg.most_common():
+        print('  مضاف:', k, n)
     sys.exit(1 if viol else 0)

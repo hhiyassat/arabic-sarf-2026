@@ -37,6 +37,14 @@ check('أَصْدِقَاءَ: ألف التأنيث الممدودة بلا ت�
 check('الْمَسَاجِدَ: لا (أل)', _diptote('الْمَسَاجِدَ', True, None) is None)
 check('مَسَاجِدُهُمْ: لا (الضمير)', _diptote('مَسَاجِدَ', False, 'هُمْ') is None)
 check('رِجَالٌ: لا (التنوين)', _diptote('رِجَالٌ', False, None) is None)
+check('مَسَٰجِدَ: صيغة منتهى الجموع بالألف الخنجرية', _diptote('مَسَٰجِدَ', False, None) is not None)
+check('أَسْمَاءِ بالكسرة: لا (الكسرة لا تشهد للممنوع)', _diptote('أَسْمَاءِ', False, None) is None)
+from sarf.features_ext import nisba_tasghir
+check('الْأُمِّيُّ: ياء النسب مرشّحة', [k for k, _ in nisba_tasghir('الْأُمِّيُّ')] == ['nisba'])
+check('حُسَيْن: التصغير مرشّح (فُعَيْل)', [k for k, _ in nisba_tasghir('حُسَيْنٌ')] == ['diminutive'])
+check('كَاتِب: لا نسب ولا تصغير', nisba_tasghir('كَاتِبٌ') == [])
+from sarf.features_ext import DERIV_ALT
+check('مَفْعَل ومَفْعِل: اسم مكان أو زمان أو مصدر ميمي (بدائل)', all('مصدر ميمي' in DERIV_ALT[k] for k in ('مَفْعَل', 'مَفْعِل')))
 # ٤. أَفْعَل مرشّحاً للتفضيل
 check('أَقْسَطُ: قالب أَفْعَل', _elative('أَقْسَطُ') is not None)
 check('أَدْنَى: قالب أَفْعَل بالألف المقصورة', _elative('أَدْنَى') is not None)
@@ -71,6 +79,10 @@ if hfn():
     a2 = analyze(cat, 'فَلَيۡسَ عَلَيۡكُمۡ جُنَاحٌ')
     _, U2 = sentence_geo(a2, 't2', Trace())
     F2 = unit_features(a2, U2)
+    a3 = analyze(cat, 'وَلَا يَأۡبَ كَاتِبٌ أَن يَكۡتُبَ')
+    _, U3 = sentence_geo(a3, 't3', Trace())
+    F3 = unit_features(a3, U3)
+    check('أَنْ الناصبة المقبولة ومضارعها المنصوب: مصدر مؤوَّل', any(v.get('construction', {}).get('v') == 'مصدر مؤوَّل' for v in F3.values()))
     check('لَيْسَ: جامد مثبت', any(v.get('conjugability', {}).get('v') == 'جامد' for v in F2.values()))
     # ٥. الإضافة خالصة: بلا السمات المضافة تبقى السمات القائمة كما هي بعينها
     keep = fx.extra_features

@@ -559,4 +559,6 @@ def unit_features(a, units):
             for k_, v_ in extra_features(G, rec, any(s['type'] == 'أل' for s in slots), encl, prot, lexk, vi, host).items():
                 rec.setdefault(k_, v_)
             out[(wi, ui)] = rec
+    from .features_ext import post_features
+    post_features(a, units, out)
     return out

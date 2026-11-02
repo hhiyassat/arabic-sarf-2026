@@ -97,12 +97,14 @@ def _diptote(stem, has_al, enclitic):
     if len(t) < 4:
         return None
     lm = _marks(t[-1])
-    if lm & TANWIN or not lm & {FATHA, DAMMA, KASRA}:
+    if lm & TANWIN or not lm & {FATHA, DAMMA}:      # الممنوع لا يُجرّ بالكسرة إلا مضافاً أو معرَّفاً: فالكسرة لا تشهد له
         return None
     if len(t) >= 5 and t[-1][0] in 'ءأ' and t[-2][0] == 'ا' and not _marks(t[-2]):
         return 'ألف التأنيث الممدودة (فُعَلَاء، أَفْعِلَاء، فَعْلَاء) بلا تنوين'
     if len(t) in (5, 6) and t[2][0] == 'ا' and not _marks(t[2]) and FATHA in _marks(t[1]) and KASRA in _marks(t[3]):
         return 'صيغة منتهى الجموع (مَفَاعِل، مَفَاعِيل) بلا تنوين'
+    if len(t) in (4, 5) and DAGGER_ALIF in _marks(t[1]) and FATHA in _marks(t[1]) and KASRA in _marks(t[2]):
+        return 'صيغة منتهى الجموع بالألف الخنجرية (مَسَٰجِد، مَصَٰبِيح) بلا تنوين'
     return None
 
 
@@ -117,6 +119,36 @@ def _elative(stem):
     if len(t) == 3 and FATHA in _marks(t[1]) and SHADDA in _marks(t[2]) and not _marks(t[2]) & TANWIN:
         return t[2]
     return None
+
+
+def nisba_tasghir(stem):
+    """النسب والتصغير من الكتابة (مرشّحان): ياءٌ مشدَّدة بعد كسرٍ في الآخر (ياء النسب، وقد تكون أصلية: وَلِيّ، عَلِيّ)؛
+    وفُعَيْل وأخواته: ضمٌّ ففتحٌ فياءٌ ساكنة (التصغير، وقد يكون البناء أصلياً). → [(السمة، سجلّ)]"""
+    t = letters(stem)
+    out = []
+    if len(t) >= 3 and t[-1][0] == 'ي' and SHADDA in _marks(t[-1]) and KASRA in _marks(t[-2]):
+        out.append(('nisba', feat('منسوب', CAND, 'ياءٌ مشدَّدة بعد كسرٍ في آخره', alt=['منسوب', 'ياءٌ مشدَّدة أصلية (فَعِيل)'])))
+    core = [x for x in t if x[0] != 'ة']
+    if 4 <= len(core) <= 6 and DAMMA in _marks(t[0]) and FATHA in _marks(t[1]) and t[2][0] == 'ي' and SUKUN in _marks(t[2]):
+        out.append(('diminutive', feat('مصغَّر', CAND, 'بناء فُعَيْل (ضمٌّ ففتحٌ فياءٌ ساكنة)', alt=['مصغَّر', 'بناءٌ أصلي على فُعَيْل'])))
+    return out
+
+
+def post_features(a, units, out):
+    """سماتٌ تحتاج علاقات الآية: المصدر المؤوَّل من «أَنْ» الناصبة المقبولة ومضارعها المنصوب (يُضاف إلى وحدة الأداة)"""
+    for o in a.get('operators', []):
+        r = o.get('relation') or {}
+        t = r.get('target') or {}
+        if o.get('status') != 'accepted' or o.get('operator') != 'أَنْ' or str(o.get('group')) != '5' or not t:
+            continue
+        if r.get('expected') != 'نصب' or not r.get('consistent'):
+            continue
+        sl = o.get('slot') or {}
+        ui = sl.get('unit') if isinstance(sl, dict) else None
+        if ui is None or (o['word_index'], ui) not in out:
+            continue
+        out[(o['word_index'], ui)].setdefault('construction', feat(
+            'مصدر مؤوَّل', PROVEN, f'«أَنْ» الناصبة مقبولة، ومعمولها «{t.get("text")}» مضارعٌ منصوب كتابةً: أَنْ والفعل في تأويل مصدر'))
 
 
 def _base_pattern(P):
@@ -207,6 +239,15 @@ def extra_features(G, rec, has_al=False, enclitic=None, prot=None, lexk=None, ve
         if dp:
             out['diptote'] = feat('ممنوع من الصرف', CAND, dp + '؛ ولا يثبت بالكتابة وحدها: المضاف إلى ظاهرٍ لا يُنوَّن',
                                   alt=['ممنوع من الصرف', 'مضاف'])
+        for k_, v_ in nisba_tasghir(stem):
+            out[k_] = v_
+        st_ = [x for x in (G.O.get('slots') or []) if x[0] == 'جذع']
+        if not G.closed and len(G.O.get('slots') or []) > 1 and st_ and 'لا تحليل جذري ووزني' in str(G.O.get('deferred')):
+            from .cells import stem_licence
+            lic = [list(x) for x in stem_licence(st_[0][1])]
+            if lic:
+                out['stem_root_candidates'] = feat(None, CAND, f'رخصة الجذع «{st_[0][1]}» وحده في الوحدة المركَّبة؛ لا تدخل الإغلاق',
+                                                   alt=lic)
         bp = _base_pattern(P)
         if G.closed and bp in DERIV_ALT and (rec.get('derivation') or {}).get('st') != PROVEN:
             out['derivation_candidates'] = feat(None, DEFER, f'القالب «{bp}» يحتمل أكثر من نوع اشتقاق', alt=DERIV_ALT[bp])
