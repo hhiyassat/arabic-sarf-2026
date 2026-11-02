@@ -149,6 +149,23 @@ def enclitic_case(text, host):
     return None
 
 
+DEFINITE_BY = {'pronoun': 'معرفة: ضمير', 'demonstrative': 'معرفة: اسم إشارة', 'relative': 'معرفة: اسم موصول'}
+_MABNI = []
+
+
+def mabni_definiteness(text):
+    """نوع المعرفة للمبني من ملف المبنيات المعتمد (noun.definite_by)، إن اتفقت مداخل الصورة كلها عليه"""
+    if not _MABNI:
+        from .lexicon import MabniLexicon
+        _MABNI.append(MabniLexicon())
+    ents = _MABNI[0].lookup(text) or []
+    kinds = {(e.get('noun') or {}).get('definite_by') for e in ents}
+    if len(kinds) == 1 and None not in kinds and next(iter(kinds)) in DEFINITE_BY:
+        k = next(iter(kinds))
+        return feat(DEFINITE_BY[k], PROVEN, f'ملف المبنيات: {ents[0].get("entry_id")} (definite_by = {k})')
+    return None
+
+
 def extra_features(G, rec, has_al=False, enclitic=None, prot=None, lexk=None, verbal_ident=None, host=None):
     """→ السمات المضافة للوحدة (لا تُضاف منها إلا الأسماء الغائبة عن rec). host: سمات الوحدة قبلها إن كانت هذه ضميراً متصلاً"""
     out = {}
@@ -204,6 +221,10 @@ def extra_features(G, rec, has_al=False, enclitic=None, prot=None, lexk=None, ve
             out['elative'] = feat('اسم تفضيل', CAND, 'قالب أَفْعَل في الكتابة؛ ولم يثبت الصنف', alt=alt)
     if prot and prot.get('cls') and 'ذهبي' in str(prot.get('cls')):
         out['definiteness_kind'] = feat('علم', PROVEN, f'اسمٌ ذهبي في الجرد المعتمد: «{prot.get("identity")}»')
+    if pos == 'مبني' or lexk == 'مبني':
+        md = mabni_definiteness(text)
+        if md:
+            out['definiteness_kind'] = md
     if lexk == 'لفظ الجلالة':
         out['definiteness_kind'] = feat('علم', PROVEN, 'لفظ الجلالة (sarf/divine.py)')
     return out
