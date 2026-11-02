@@ -551,5 +551,12 @@ def unit_features(a, units):
                        'augmentation': feat(None, NA, 'وحدة محمية'), 'transitivity': feat(None, NA, 'وحدة محمية')}
             else:
                 rec = {'pos': feat(None, DEFER, 'لم يتعيّن صنف الوحدة')}
+            # سماتٌ مضافة من سجل التغطية (sarf.features_ext): لا تُضاف إلا الأسماء الغائبة، فلا تتغيّر سمةٌ قائمة
+            from .features_ext import extra_features
+            vi = _verbal_operator(_with_subject(G.O['text'], su, ui, seg)) if 'operator' in rec else None
+            host = out.get((wi, ui - 1)) if ui and slots and all(s['type'] == 'مبني' and s.get('role') == 'enclitic'
+                                                               for s in slots) else None
+            for k_, v_ in extra_features(G, rec, any(s['type'] == 'أل' for s in slots), encl, prot, lexk, vi, host).items():
+                rec.setdefault(k_, v_)
             out[(wi, ui)] = rec
     return out

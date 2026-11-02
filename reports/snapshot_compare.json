@@ -1,0 +1,20 @@
+{
+ "verses": 6236,
+ "violations": 0,
+ "examples": [],
+ "added": {
+  "a/syll/cell_events": 6236,
+  "definiteness_kind": 12763,
+  "transformations": 21853,
+  "lemma": 3741,
+  "root_class": 9001,
+  "root_arity": 9001,
+  "final_form": 879,
+  "case_marking": 470,
+  "enclitic_case": 2779,
+  "derivation_candidates": 2483,
+  "conjugability": 1177,
+  "elative": 926,
+  "diptote": 9
+ }
+}
