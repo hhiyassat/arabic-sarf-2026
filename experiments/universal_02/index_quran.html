@@ -1,0 +1,248 @@
+<!doctype html><html lang="ar"><meta charset="utf-8"><title>UNIVERSAL_SEG_02 — القرآن</title><style>body{font-family:'Segoe UI',Tahoma,sans-serif;direction:rtl;background:#faf9f7;color:#222;margin:0 auto;max-width:1280px;padding:20px}
+h1{color:#5b3a1a}h2{color:#7a4a1a;border-bottom:2px solid #d8c9b5;padding-bottom:4px;margin-top:30px}
+table{border-collapse:collapse;width:100%;margin:10px 0;font-size:12px}th,td{border:1px solid #ccc;padding:4px 6px;text-align:right}
+th{background:#ede4d3;position:sticky;top:0}code{background:#f0ece3;padding:1px 4px;border-radius:3px;font-size:11px}
+.ok{background:#d9f2d9}.bad{background:#f7d7d7}.keep{background:#ffe9cf}.unit{background:#eee;color:#666}
+.flag{display:inline-block;background:#eef;padding:4px 10px;margin:3px;border-radius:4px;font-size:14px}
+.sub{max-height:420px;overflow:auto;border:1px solid #ddd}small{color:#777}</style><body>
+<h1>التجربةُ الشاملة المضبوطة — المرحلة الثانية: القرآن كاملًا (٦٢٣٦ آية، ١١٤ سورة)</h1>
+<p><small>الزمن 253.1ث · لا COMMIT ولا PUSH</small></p>
+<h2>هويّةُ الجولة والبصمات</h2><table>
+<tr><th>sha المصحف المختوم</th><td><code>37633090743d4038</code></td></tr>
+<tr><th>sha segment.py (المفتاح)</th><td><code>d9dc7be7a6b43a9c</code></td></tr>
+<tr><th>sha EXPECTED.json</th><td><code>a0ec2b90295b4f94</code></td></tr>
+<tr><th>sha b3_decide.py</th><td><code>a44dc1587837d1df</code></td></tr>
+<tr><th>sha quran_new_splits.csv</th><td><code>432bbf527de5e74d</code></td></tr>
+<tr><th>BASELINE_A_BYTE_IDENTICAL</th><td><code>YES (A بالبايت، المفتاح لا يمسّها)</code></td></tr>
+</table>
+<h2>المجاميع — الحالاتُ السبع (كامل/قُسمت/جذع + بصمةُ الحالة)</h2><table><tr><th>الحالة</th><th>كامل</th><th>قُسمت</th><th>جذع</th><th>sha</th></tr>
+<tr class=''><td>A</td><td>17484</td><td>34422</td><td>26339</td><td><code>9a7e8af54196</code></td></tr>
+<tr class=''><td>B(مبني)</td><td>13540</td><td>36091</td><td>28614</td><td><code>d266fad7d2d6</code></td></tr>
+<tr class=''><td>B(مبني+عامل)</td><td>3354</td><td>27665</td><td>47226</td><td><code>1f9cf39ba5ef</code></td></tr>
+<tr class=''><td>B2(مبني)</td><td>12992</td><td>34603</td><td>30650</td><td><code>bf52c727d6ab</code></td></tr>
+<tr class=''><td>B2(مبني+عامل)</td><td>2803</td><td>22936</td><td>52506</td><td><code>31307c69ebd0</code></td></tr>
+<tr class='ok'><td>B3(المصحَّح)</td><td>15573</td><td>37012</td><td>25660</td><td><code>1eacbebce83d</code></td></tr>
+</table>
+<h2>الحارسان (على القرآن كلِّه)</h2><div>
+<span class="flag" style="background:#d9f2d9">LOST_WITHOUT_BARRIER = 0</span>
+<span class="flag" style="background:#d9f2d9">NEW_SPLIT_WITHOUT_EVIDENCE = 0</span>
+<h2>التوصية المسندة (§4)</h2>
+<div style='background:#f3f7f3;border:1px solid #cdd;padding:10px;border-radius:6px'># التوصيةُ المسندة (§4) — UNIVERSAL_SEGMENTATION_02، الجولة ٣<br><br>## الخلاصة: يُعتمد **B3 (المصحَّح)** سياسةً للتقطيع، لا B ولا B2.<br><br>### المسوِّغاتُ المسنَدة<br>1. **لا انحدارَ عن A:** B3 يحفظ كلَّ فصلٍ في A بالبايت — A القرآنُ كلُّه `9a7e8af54196` (stash: قبل = بعد)، والحارس `LOST_WITHOUT_BARRIER = 0` على ٦٢٣٦ آية. فما تقبله الطبعةُ الحاليّة يبقى.<br>2. **لا فصلَ بلا دليل:** الحارس `NEW_SPLIT_WITHOUT_EVIDENCE = 0`. كلُّ فصلٍ جديدٍ (٢٥٩٠) له سندٌ مسمّى:<br>   - نصُّ الفهرس (الموصولات، أسماء الإشارة…): ٢٠٠٢.<br>   - نا-الإدغام (ناسخٌ/جارٌّ مثبَتٌ بالجدول + إدغامُ سيبويه + R1): ٣٦٠.<br>   - R5 الضميرُ المنفصل بعد و/ف/أ/هل (الألفية ١٠٥، القطر ١٢٦): ٨٠.<br>   - نمط-تقدير (أَيُّهَا/ذَلِكُمْ، هاءُ التنبيه وكافُ الخطاب حرفان): ١٩٤ — تنتظر إمضاءَك لنقلها إلى «نصّ».<br>3. **B وB2 مرفوضان بالدليل:** كلاهما يغيّر فصولًا بلا سند (B بلا حاجز، B2 بالحاجزَين القديمين اللذين يُسقطان فصولَ A الصحيحة ويُبقيان فصولًا بلا دليل) — بصمتاهما تخالفان A وB3، ولا يضبطهما حارسٌ.<br><br>### ما ليس خطأً وينتظر توسعةً (لا يَقدح في B3)<br>- **DEFERRED ١٥٥٨:** نقصُ تغطيةٍ لا رفض — مرشّحاتٌ لا سندَ لها بعدُ (١٤٧٨ مضيفُها غيرُ مثبَتٍ عاملًا؛ stem_info مُسقَطٌ لأنّه غيرُ موثوق). قبولُها يحتاج نصَّ فهرسٍ أو مضيفًا مثبَتًا.<br>- **GENERATOR_GAPS ٢٥/١٥٢:** أفعالٌ وأشكالٌ مسبوقةٌ (آمَنَّا، وَإِنَّا…) لا مضيفَ لها ناسخًا/جارًّا مثبَتًا — تسجيلٌ لا بناء.<br>- **REJECTED ٤٥١:** مانعٌ ثابتٌ مسمًّى (R1: لا مضيفَ ملاصقًا — همزة/نداء/عطف).<br><br>### عيوبُ A الأساس (لا تُصلَح هذه الجولة)<br>خمسةٌ مؤكّدة (كَبِيرًا ١٧، كُلًّا ٥، سَفِيهًا، لَيًّا، فَانٍ)؛ وكاشفٌ آليٌّ **ناقصٌ معلَن** (لا يلتقط صنفَ المؤكّدَين، كلا شطرَيه «جذع»)، مرشّحاتُه ستّةٌ تحتاج مراجعة.<br></div>
+</div>
+<h2>جدولُ السور (A مقابل B3؛ Δقُسمت = قُسمت B3 − A)</h2><div class="sub"><table><tr><th>#</th><th>السورة</th><th>A كامل</th><th>A قُسمت</th><th>A جذع</th><th>B3 كامل</th><th>B3 قُسمت</th><th>B3 جذع</th><th>Δقُسمت</th></tr>
+<tr><td>1</td><td>الفاتحة</td><td>3</td><td>19</td><td>7</td><td>2</td><td class='ok'>20</td><td>7</td><td>+1</td></tr>
+<tr><td>2</td><td>البقرة</td><td>1363</td><td>2750</td><td>2031</td><td>1209</td><td class='ok'>2945</td><td>1990</td><td>+195</td></tr>
+<tr><td>3</td><td>آل-عمران</td><td>858</td><td>1538</td><td>1109</td><td>762</td><td class='ok'>1657</td><td>1086</td><td>+119</td></tr>
+<tr><td>4</td><td>النساء</td><td>893</td><td>1598</td><td>1276</td><td>796</td><td class='ok'>1719</td><td>1252</td><td>+121</td></tr>
+<tr><td>5</td><td>المائدة</td><td>660</td><td>1224</td><td>957</td><td>582</td><td class='ok'>1337</td><td>922</td><td>+113</td></tr>
+<tr><td>6</td><td>الأنعام</td><td>679</td><td>1326</td><td>1055</td><td>602</td><td class='ok'>1427</td><td>1031</td><td>+101</td></tr>
+<tr><td>7</td><td>الأعراف</td><td>696</td><td>1537</td><td>1112</td><td>623</td><td class='ok'>1636</td><td>1086</td><td>+99</td></tr>
+<tr><td>8</td><td>الأنفال</td><td>302</td><td>554</td><td>390</td><td>268</td><td class='ok'>608</td><td>370</td><td>+54</td></tr>
+<tr><td>9</td><td>التوبة</td><td>598</td><td>1113</td><td>794</td><td>542</td><td class='ok'>1187</td><td>776</td><td>+74</td></tr>
+<tr><td>10</td><td>يونس</td><td>484</td><td>789</td><td>570</td><td>434</td><td class='ok'>847</td><td>562</td><td>+58</td></tr>
+<tr><td>11</td><td>هود</td><td>437</td><td>781</td><td>732</td><td>391</td><td class='ok'>847</td><td>712</td><td>+66</td></tr>
+<tr><td>12</td><td>يوسف</td><td>391</td><td>777</td><td>631</td><td>362</td><td class='ok'>836</td><td>601</td><td>+59</td></tr>
+<tr><td>13</td><td>الرعد</td><td>182</td><td>406</td><td>269</td><td>157</td><td class='ok'>432</td><td>268</td><td>+26</td></tr>
+<tr><td>14</td><td>إبراهيم</td><td>185</td><td>399</td><td>250</td><td>164</td><td class='ok'>428</td><td>242</td><td>+29</td></tr>
+<tr><td>15</td><td>الحجر</td><td>123</td><td>316</td><td>222</td><td>111</td><td class='ok'>340</td><td>210</td><td>+24</td></tr>
+<tr><td>16</td><td>النحل</td><td>446</td><td>794</td><td>608</td><td>399</td><td class='ok'>845</td><td>604</td><td>+51</td></tr>
+<tr><td>17</td><td>الإسراء</td><td>310</td><td>697</td><td>555</td><td>277</td><td class='ok'>735</td><td>550</td><td>+38</td></tr>
+<tr><td>18</td><td>الكهف</td><td>306</td><td>685</td><td>596</td><td>275</td><td class='ok'>725</td><td>587</td><td>+40</td></tr>
+<tr><td>19</td><td>مريم</td><td>176</td><td>402</td><td>397</td><td>161</td><td class='ok'>431</td><td>383</td><td>+29</td></tr>
+<tr><td>20</td><td>طه</td><td>256</td><td>619</td><td>482</td><td>244</td><td class='ok'>641</td><td>472</td><td>+22</td></tr>
+<tr><td>21</td><td>الأنبياء</td><td>251</td><td>527</td><td>400</td><td>219</td><td class='ok'>569</td><td>390</td><td>+42</td></tr>
+<tr><td>22</td><td>الحج</td><td>331</td><td>565</td><td>387</td><td>299</td><td class='ok'>605</td><td>379</td><td>+40</td></tr>
+<tr><td>23</td><td>المؤمنون</td><td>229</td><td>450</td><td>377</td><td>205</td><td class='ok'>479</td><td>372</td><td>+29</td></tr>
+<tr><td>24</td><td>النور</td><td>333</td><td>559</td><td>431</td><td>297</td><td class='ok'>599</td><td>427</td><td>+40</td></tr>
+<tr><td>25</td><td>الفرقان</td><td>168</td><td>389</td><td>343</td><td>134</td><td class='ok'>425</td><td>341</td><td>+36</td></tr>
+<tr><td>26</td><td>الشعراء</td><td>270</td><td>579</td><td>475</td><td>245</td><td class='ok'>622</td><td>457</td><td>+43</td></tr>
+<tr><td>27</td><td>النمل</td><td>260</td><td>468</td><td>435</td><td>232</td><td class='ok'>516</td><td>415</td><td>+48</td></tr>
+<tr><td>28</td><td>القصص</td><td>319</td><td>634</td><td>489</td><td>295</td><td class='ok'>673</td><td>474</td><td>+39</td></tr>
+<tr><td>29</td><td>العنكبوت</td><td>226</td><td>476</td><td>280</td><td>203</td><td class='ok'>507</td><td>272</td><td>+31</td></tr>
+<tr><td>30</td><td>الروم</td><td>210</td><td>361</td><td>250</td><td>181</td><td class='ok'>394</td><td>246</td><td>+33</td></tr>
+<tr><td>31</td><td>لقمان</td><td>149</td><td>239</td><td>166</td><td>139</td><td class='ok'>250</td><td>165</td><td>+11</td></tr>
+<tr><td>32</td><td>السجدة</td><td>79</td><td>156</td><td>141</td><td>66</td><td class='ok'>174</td><td>136</td><td>+18</td></tr>
+<tr><td>33</td><td>الأحزاب</td><td>328</td><td>586</td><td>393</td><td>301</td><td class='ok'>633</td><td>373</td><td>+47</td></tr>
+<tr><td>34</td><td>سبأ</td><td>205</td><td>370</td><td>313</td><td>174</td><td class='ok'>406</td><td>308</td><td>+36</td></tr>
+<tr><td>35</td><td>فاطر</td><td>182</td><td>348</td><td>252</td><td>164</td><td class='ok'>373</td><td>245</td><td>+25</td></tr>
+<tr><td>36</td><td>يس</td><td>151</td><td>306</td><td>277</td><td>138</td><td class='ok'>338</td><td>258</td><td>+32</td></tr>
+<tr><td>37</td><td>الصافات</td><td>168</td><td>417</td><td>284</td><td>159</td><td class='ok'>444</td><td>266</td><td>+27</td></tr>
+<tr><td>38</td><td>ص</td><td>157</td><td>345</td><td>237</td><td>132</td><td class='ok'>377</td><td>230</td><td>+32</td></tr>
+<tr><td>39</td><td>الزمر</td><td>308</td><td>473</td><td>400</td><td>272</td><td class='ok'>517</td><td>392</td><td>+44</td></tr>
+<tr><td>40</td><td>غافر</td><td>298</td><td>521</td><td>411</td><td>263</td><td class='ok'>571</td><td>396</td><td>+50</td></tr>
+<tr><td>41</td><td>فصلت</td><td>157</td><td>372</td><td>269</td><td>131</td><td class='ok'>404</td><td>263</td><td>+32</td></tr>
+<tr><td>42</td><td>الشورى</td><td>206</td><td>400</td><td>258</td><td>185</td><td class='ok'>423</td><td>256</td><td>+23</td></tr>
+<tr><td>43</td><td>الزخرف</td><td>164</td><td>388</td><td>288</td><td>141</td><td class='ok'>420</td><td>279</td><td>+32</td></tr>
+<tr><td>44</td><td>الدخان</td><td>72</td><td>151</td><td>127</td><td>67</td><td class='ok'>166</td><td>117</td><td>+15</td></tr>
+<tr><td>45</td><td>الجاثية</td><td>114</td><td>217</td><td>161</td><td>101</td><td class='ok'>232</td><td>159</td><td>+15</td></tr>
+<tr><td>46</td><td>الأحقاف</td><td>151</td><td>264</td><td>234</td><td>128</td><td class='ok'>291</td><td>230</td><td>+27</td></tr>
+<tr><td>47</td><td>محمد</td><td>135</td><td>258</td><td>153</td><td>107</td><td class='ok'>288</td><td>151</td><td>+30</td></tr>
+<tr><td>48</td><td>الفتح</td><td>128</td><td>254</td><td>182</td><td>113</td><td class='ok'>271</td><td>180</td><td>+17</td></tr>
+<tr><td>49</td><td>الحجرات</td><td>103</td><td>134</td><td>120</td><td>90</td><td class='ok'>154</td><td>113</td><td>+20</td></tr>
+<tr><td>50</td><td>ق</td><td>77</td><td>163</td><td>137</td><td>64</td><td class='ok'>178</td><td>135</td><td>+15</td></tr>
+<tr><td>51</td><td>الذاريات</td><td>65</td><td>163</td><td>136</td><td>59</td><td class='ok'>173</td><td>132</td><td>+10</td></tr>
+<tr><td>52</td><td>الطور</td><td>66</td><td>132</td><td>118</td><td>60</td><td class='ok'>142</td><td>114</td><td>+10</td></tr>
+<tr><td>53</td><td>النجم</td><td>97</td><td>159</td><td>108</td><td>87</td><td class='ok'>171</td><td>106</td><td>+12</td></tr>
+<tr><td>54</td><td>القمر</td><td>48</td><td>152</td><td>146</td><td>46</td><td class='ok'>161</td><td>139</td><td>+9</td></tr>
+<tr><td>55</td><td>الرحمن</td><td>35</td><td>179</td><td>142</td><td>33</td><td class='ok'>182</td><td>141</td><td>+3</td></tr>
+<tr><td>56</td><td>الواقعة</td><td>82</td><td>167</td><td>134</td><td>76</td><td class='ok'>176</td><td>131</td><td>+9</td></tr>
+<tr><td>57</td><td>الحديد</td><td>117</td><td>288</td><td>174</td><td>102</td><td class='ok'>306</td><td>171</td><td>+18</td></tr>
+<tr><td>58</td><td>المجادلة</td><td>139</td><td>190</td><td>150</td><td>117</td><td class='ok'>216</td><td>146</td><td>+26</td></tr>
+<tr><td>59</td><td>الحشر</td><td>124</td><td>202</td><td>125</td><td>108</td><td class='ok'>221</td><td>122</td><td>+19</td></tr>
+<tr><td>60</td><td>الممتحنة</td><td>88</td><td>166</td><td>102</td><td>80</td><td class='ok'>180</td><td>96</td><td>+14</td></tr>
+<tr><td>61</td><td>الصف</td><td>57</td><td>83</td><td>90</td><td>49</td><td class='ok'>97</td><td>84</td><td>+14</td></tr>
+<tr><td>62</td><td>الجمعة</td><td>44</td><td>81</td><td>56</td><td>36</td><td class='ok'>92</td><td>53</td><td>+11</td></tr>
+<tr><td>63</td><td>المنافقون</td><td>49</td><td>79</td><td>57</td><td>45</td><td class='ok'>85</td><td>55</td><td>+6</td></tr>
+<tr><td>64</td><td>التغابن</td><td>47</td><td>127</td><td>72</td><td>38</td><td class='ok'>137</td><td>71</td><td>+10</td></tr>
+<tr><td>65</td><td>الطلاق</td><td>71</td><td>122</td><td>100</td><td>66</td><td class='ok'>130</td><td>97</td><td>+8</td></tr>
+<tr><td>66</td><td>التحريم</td><td>54</td><td>108</td><td>96</td><td>48</td><td class='ok'>119</td><td>91</td><td>+11</td></tr>
+<tr><td>67</td><td>الملك</td><td>88</td><td>129</td><td>120</td><td>72</td><td class='ok'>145</td><td>120</td><td>+16</td></tr>
+<tr><td>68</td><td>القلم</td><td>59</td><td>137</td><td>109</td><td>56</td><td class='ok'>147</td><td>102</td><td>+10</td></tr>
+<tr><td>69</td><td>الحاقة</td><td>41</td><td>134</td><td>89</td><td>39</td><td class='ok'>143</td><td>82</td><td>+9</td></tr>
+<tr><td>70</td><td>المعارج</td><td>48</td><td>95</td><td>78</td><td>40</td><td class='ok'>105</td><td>76</td><td>+10</td></tr>
+<tr><td>71</td><td>نوح</td><td>41</td><td>99</td><td>91</td><td>41</td><td class='ok'>104</td><td>86</td><td>+5</td></tr>
+<tr><td>72</td><td>الجن</td><td>56</td><td>117</td><td>117</td><td>52</td><td class='ok'>126</td><td>112</td><td>+9</td></tr>
+<tr><td>73</td><td>المزمل</td><td>45</td><td>78</td><td>81</td><td>43</td><td class='ok'>83</td><td>78</td><td>+5</td></tr>
+<tr><td>74</td><td>المدثر</td><td>59</td><td>105</td><td>96</td><td>53</td><td class='ok'>112</td><td>95</td><td>+7</td></tr>
+<tr><td>75</td><td>القيامة</td><td>32</td><td>86</td><td>50</td><td>31</td><td class='ok'>87</td><td>50</td><td>+1</td></tr>
+<tr><td>76</td><td>الإنسان</td><td>46</td><td>103</td><td>98</td><td>42</td><td class='ok'>112</td><td>93</td><td>+9</td></tr>
+<tr><td>77</td><td>المرسلات</td><td>19</td><td>78</td><td>88</td><td>17</td><td class='ok'>81</td><td>87</td><td>+3</td></tr>
+<tr><td>78</td><td>النبأ</td><td>25</td><td>79</td><td>74</td><td>23</td><td class='ok'>82</td><td>73</td><td>+3</td></tr>
+<tr><td>79</td><td>النازعات</td><td>37</td><td>92</td><td>54</td><td>34</td><td class='ok'>95</td><td>54</td><td>+3</td></tr>
+<tr><td>80</td><td>عبس</td><td>23</td><td>68</td><td>46</td><td>21</td><td class='ok'>72</td><td>44</td><td>+4</td></tr>
+<tr><td>81</td><td>التكوير</td><td>17</td><td>53</td><td>38</td><td>17</td><td class='ok'>53</td><td>38</td><td>+0</td></tr>
+<tr><td>82</td><td>الانفطار</td><td>19</td><td>42</td><td>24</td><td>18</td><td class='ok'>44</td><td>23</td><td>+2</td></tr>
+<tr><td>83</td><td>المطففين</td><td>39</td><td>70</td><td>64</td><td>29</td><td class='ok'>80</td><td>64</td><td>+10</td></tr>
+<tr><td>84</td><td>الانشقاق</td><td>23</td><td>54</td><td>35</td><td>21</td><td class='ok'>57</td><td>34</td><td>+3</td></tr>
+<tr><td>85</td><td>البروج</td><td>28</td><td>52</td><td>33</td><td>23</td><td class='ok'>57</td><td>33</td><td>+5</td></tr>
+<tr><td>86</td><td>الطارق</td><td>9</td><td>34</td><td>22</td><td>9</td><td class='ok'>34</td><td>22</td><td>+0</td></tr>
+<tr><td>87</td><td>الأعلى</td><td>15</td><td>37</td><td>24</td><td>12</td><td class='ok'>40</td><td>24</td><td>+3</td></tr>
+<tr><td>88</td><td>الغاشية</td><td>22</td><td>33</td><td>41</td><td>22</td><td class='ok'>33</td><td>41</td><td>+0</td></tr>
+<tr><td>89</td><td>الفجر</td><td>27</td><td>69</td><td>47</td><td>23</td><td class='ok'>73</td><td>47</td><td>+4</td></tr>
+<tr><td>90</td><td>البلد</td><td>19</td><td>33</td><td>34</td><td>17</td><td class='ok'>35</td><td>34</td><td>+2</td></tr>
+<tr><td>91</td><td>الشمس</td><td>10</td><td>40</td><td>8</td><td>10</td><td class='ok'>40</td><td>8</td><td>+0</td></tr>
+<tr><td>92</td><td>الليل</td><td>14</td><td>44</td><td>17</td><td>12</td><td class='ok'>46</td><td>17</td><td>+2</td></tr>
+<tr><td>93</td><td>الضحى</td><td>4</td><td>30</td><td>10</td><td>4</td><td class='ok'>30</td><td>10</td><td>+0</td></tr>
+<tr><td>94</td><td>الشرح</td><td>3</td><td>20</td><td>8</td><td>2</td><td class='ok'>21</td><td>8</td><td>+1</td></tr>
+<tr><td>95</td><td>التين</td><td>6</td><td>20</td><td>12</td><td>5</td><td class='ok'>21</td><td>12</td><td>+1</td></tr>
+<tr><td>96</td><td>العلق</td><td>20</td><td>29</td><td>27</td><td>17</td><td class='ok'>32</td><td>27</td><td>+3</td></tr>
+<tr><td>97</td><td>القدر</td><td>7</td><td>15</td><td>12</td><td>7</td><td class='ok'>16</td><td>11</td><td>+1</td></tr>
+<tr><td>98</td><td>البينة</td><td>26</td><td>39</td><td>33</td><td>19</td><td class='ok'>46</td><td>33</td><td>+7</td></tr>
+<tr><td>99</td><td>الزلزلة</td><td>3</td><td>20</td><td>17</td><td>3</td><td class='ok'>20</td><td>17</td><td>+0</td></tr>
+<tr><td>100</td><td>العاديات</td><td>10</td><td>24</td><td>10</td><td>9</td><td class='ok'>25</td><td>10</td><td>+1</td></tr>
+<tr><td>101</td><td>القارعة</td><td>7</td><td>22</td><td>11</td><td>7</td><td class='ok'>23</td><td>10</td><td>+1</td></tr>
+<tr><td>102</td><td>التكاثر</td><td>7</td><td>16</td><td>9</td><td>7</td><td class='ok'>16</td><td>9</td><td>+0</td></tr>
+<tr><td>103</td><td>العصر</td><td>4</td><td>12</td><td>2</td><td>3</td><td class='ok'>13</td><td>2</td><td>+1</td></tr>
+<tr><td>104</td><td>الهمزة</td><td>9</td><td>17</td><td>11</td><td>7</td><td class='ok'>19</td><td>11</td><td>+2</td></tr>
+<tr><td>105</td><td>الفيل</td><td>4</td><td>13</td><td>10</td><td>4</td><td class='ok'>13</td><td>10</td><td>+0</td></tr>
+<tr><td>106</td><td>قريش</td><td>5</td><td>11</td><td>5</td><td>3</td><td class='ok'>13</td><td>5</td><td>+2</td></tr>
+<tr><td>107</td><td>الماعون</td><td>9</td><td>12</td><td>8</td><td>5</td><td class='ok'>16</td><td>8</td><td>+4</td></tr>
+<tr><td>108</td><td>الكوثر</td><td>3</td><td>9</td><td>2</td><td>3</td><td class='ok'>10</td><td>1</td><td>+1</td></tr>
+<tr><td>109</td><td>الكافرون</td><td>10</td><td>10</td><td>11</td><td>10</td><td class='ok'>11</td><td>10</td><td>+1</td></tr>
+<tr><td>110</td><td>النصر</td><td>6</td><td>11</td><td>6</td><td>6</td><td class='ok'>11</td><td>6</td><td>+0</td></tr>
+<tr><td>111</td><td>المسد</td><td>4</td><td>10</td><td>13</td><td>4</td><td class='ok'>10</td><td>13</td><td>+0</td></tr>
+<tr><td>112</td><td>الإخلاص</td><td>5</td><td>7</td><td>7</td><td>5</td><td class='ok'>7</td><td>7</td><td>+0</td></tr>
+<tr><td>113</td><td>الفلق</td><td>6</td><td>10</td><td>11</td><td>6</td><td class='ok'>10</td><td>11</td><td>+0</td></tr>
+<tr><td>114</td><td>الناس</td><td>5</td><td>12</td><td>7</td><td>4</td><td class='ok'>13</td><td>7</td><td>+1</td></tr>
+</table></div>
+<h2>الفصولُ الجديدة في B3 ليست في A: 2590</h2>
+<p>القائمةُ كاملةً مغلقةً في <code>experiments/universal_02/quran_new_splits.csv</code> (بالأصناف: نصّ / نمط-تقدير).</p>
+<h2>REJECTED — موانعُ ثابتة مسمّاة (المجموع 451)</h2><table><tr><th>المانع</th><th>العدد</th></tr>
+<tr class='bad'><td>R1: لا مضيف ملاصق (همزة/نداء/عطف)</td><td>451</td></tr>
+</table>
+<h3>أمثلة — R1: لا مضيف ملاصق (همزة/نداء/عطف)</h3><table><tr><th>الموضع</th><th>الكلمة</th><th>المرشّح المرفوض</th><th>المضيف</th></tr>
+<tr><td>2:14</td><td>إِنَّا</td><td class='bad'>إِ+نَّا</td><td>إِ</td></tr>
+<tr><td>2:30</td><td>إِنِّي</td><td class='bad'>إِ+نِّي</td><td>إِ</td></tr>
+<tr><td>2:30</td><td>إِنِّي</td><td class='bad'>إِ+نِّي</td><td>إِ</td></tr>
+<tr><td>2:33</td><td>إِنِّي</td><td class='bad'>إِ+نِّي</td><td>إِ</td></tr>
+<tr><td>2:70</td><td>وَإِنَّا</td><td class='bad'>وَ+إِ+نَّا</td><td>إِ</td></tr>
+<tr><td>2:119</td><td>إِنَّا</td><td class='bad'>إِ+نَّا</td><td>إِ</td></tr>
+<tr><td>2:124</td><td>إِنِّي</td><td class='bad'>إِ+نِّي</td><td>إِ</td></tr>
+<tr><td>2:156</td><td>إِنَّا</td><td class='bad'>إِ+نَّا</td><td>إِ</td></tr>
+<tr><td>2:156</td><td>وَإِنَّا</td><td class='bad'>وَ+إِ+نَّا</td><td>إِ</td></tr>
+<tr><td>2:160</td><td>وَأَنَا</td><td class='bad'>وَ+أَ+نَا</td><td>أَ</td></tr>
+</table>
+<h2>DEFERRED — نقصُ تغطية (ليس رفضًا) باسم ما ينقصه (المجموع 1558؛ تغيّرت 1558 قرارًا عن رفضِ R1 القديم)</h2><table><tr><th>ما ينقصه</th><th>العدد</th></tr>
+<tr class='keep'><td>جدول العوامل (المضيفُ غيرُ مثبَت عاملًا؛ stem_info غيرُ موثوق)</td><td>1478</td></tr>
+<tr class='keep'><td>الفهرس (المضيفُ عاملٌ مثبَت بتشكيله، الفصلُ غيرُ منصوص)</td><td>60</td></tr>
+<tr class='keep'><td>الفهرس (فصلٌ غيرُ منصوص)</td><td>20</td></tr>
+</table>
+<h3>أمثلة — جدول العوامل (المضيفُ غيرُ مثبَت عاملًا؛ stem_info غيرُ موثوق)</h3><table><tr><th>الموضع</th><th>الكلمة</th><th>المرشّح المؤجَّل</th></tr>
+<tr><td>1:5</td><td>إِيَّاكَ</td><td>إِيَّا+كَ</td></tr>
+<tr><td>1:5</td><td>وَإِيَّاكَ</td><td>وَ+إِيَّا+كَ</td></tr>
+<tr><td>2:2</td><td>ذَلِكَ</td><td>ذَلِ+كَ</td></tr>
+<tr><td>2:5</td><td>أُولَئِكَ</td><td>أُولَئِ+كَ</td></tr>
+<tr><td>2:5</td><td>وَأُولَئِكَ</td><td>وَ+أُولَئِ+كَ</td></tr>
+<tr><td>2:7</td><td>وَلَهُمْ</td><td>وَ+لَ+هُمْ</td></tr>
+<tr><td>2:8</td><td>آمَنَّا</td><td>آمَ+نَّا</td></tr>
+<tr><td>2:10</td><td>وَلَهُمْ</td><td>وَ+لَ+هُمْ</td></tr>
+<tr><td>2:14</td><td>آمَنَّا</td><td>آمَ+نَّا</td></tr>
+<tr><td>2:14</td><td>مَعَكُمْ</td><td>مَعَ+كُمْ</td></tr>
+</table>
+<h3>أمثلة — الفهرس (المضيفُ عاملٌ مثبَت بتشكيله، الفصلُ غيرُ منصوص)</h3><table><tr><th>الموضع</th><th>الكلمة</th><th>المرشّح المؤجَّل</th></tr>
+<tr><td>2:78</td><td>وَمِنْهُمْ</td><td>وَ+مِنْ+هُمْ</td></tr>
+<tr><td>3:44</td><td>أَيُّهُمْ</td><td>أَيُّ+هُمْ</td></tr>
+<tr><td>3:60</td><td>تَكُن</td><td>تَ+كُن</td></tr>
+<tr><td>3:101</td><td>وَفِيكُمْ</td><td>وَ+فِي+كُمْ</td></tr>
+<tr><td>4:11</td><td>أَيُّهُمْ</td><td>أَيُّ+هُمْ</td></tr>
+<tr><td>4:52</td><td>لَعَنَهُمُ</td><td>لَ+عَنَ+هُمُ</td></tr>
+<tr><td>4:73</td><td>تَكُن</td><td>تَ+كُن</td></tr>
+<tr><td>4:105</td><td>تَكُن</td><td>تَ+كُن</td></tr>
+<tr><td>4:113</td><td>تَكُن</td><td>تَ+كُن</td></tr>
+<tr><td>4:118</td><td>لَّعَنَهُ</td><td>لَّ+عَنَ+هُ</td></tr>
+</table>
+<h3>أمثلة — الفهرس (فصلٌ غيرُ منصوص)</h3><table><tr><th>الموضع</th><th>الكلمة</th><th>المرشّح المؤجَّل</th></tr>
+<tr><td>2:187</td><td>فَالْآنَ</td><td>فَ+الْ+آنَ</td></tr>
+<tr><td>3:20</td><td>وَجْهِيَ</td><td>وَجْ+هِيَ</td></tr>
+<tr><td>4:15</td><td>وَاللَّاتِي</td><td>وَ+ال+لَّاتِي</td></tr>
+<tr><td>4:16</td><td>وَاللَّذَانِ</td><td>وَ+ال+لَّذَانِ</td></tr>
+<tr><td>4:23</td><td>اللَّاتِي</td><td>ال+لَّاتِي</td></tr>
+<tr><td>4:23</td><td>اللَّاتِي</td><td>ال+لَّاتِي</td></tr>
+<tr><td>4:23</td><td>اللَّاتِي</td><td>ال+لَّاتِي</td></tr>
+<tr><td>4:34</td><td>وَاللَّاتِي</td><td>وَ+ال+لَّاتِي</td></tr>
+<tr><td>4:127</td><td>اللَّاتِي</td><td>ال+لَّاتِي</td></tr>
+<tr><td>6:79</td><td>وَجْهِيَ</td><td>وَجْ+هِيَ</td></tr>
+</table>
+<h2>GENERATOR_GAPS — عائلةُ «+نا بإدغام النون» (تسجيلٌ لا بناء؛ 25 صنفًا)</h2><table><tr><th>السطح</th><th>العدد</th><th>فصلُ B3</th><th>أمثلة</th></tr>
+<tr><td><b>وَإِنَّا</b></td><td>33</td><td><code>وَ+إِنَّا</code></td><td><small>2:70 2:156 5:22 6:146 7:66 7:127 11:91 11:109 12:11 12:12</small></td></tr>
+<tr><td><b>آمَنَّا</b></td><td>31</td><td><code>آمَنَّا</code></td><td><small>2:8 2:14 2:76 2:136 3:7 3:16 3:52 3:53 3:84 3:119</small></td></tr>
+<tr><td><b>مِّنَّا</b></td><td>16</td><td><code>مِّنَّا</code></td><td><small>7:72 11:48 11:48 11:58 11:66 11:94 19:21 21:43 21:101 23:65</small></td></tr>
+<tr><td><b>فَإِنَّا</b></td><td>10</td><td><code>فَ+إِنَّا</code></td><td><small>5:22 11:38 20:85 22:5 23:107 41:14 43:41 43:42 43:79 48:13</small></td></tr>
+<tr><td><b>أَإِنَّا</b></td><td>9</td><td><code>أَإِنَّا</code></td><td><small>13:5 17:49 17:98 23:82 32:10 37:16 37:53 56:47 79:10</small></td></tr>
+<tr><td><b>وَأَنَّا</b></td><td>8</td><td><code>وَ+أَنَّا</code></td><td><small>72:5 72:8 72:9 72:10 72:11 72:12 72:13 72:14</small></td></tr>
+<tr><td><b>لَّدُنَّا</b></td><td>6</td><td><code>لَّ+دُنَّا</code></td><td><small>4:67 18:65 19:13 20:99 21:17 28:57</small></td></tr>
+<tr><td><b>فَتَنَّا</b></td><td>5</td><td><code>فَ+تَنَّا</code></td><td><small>6:53 20:85 29:3 38:34 44:17</small></td></tr>
+<tr><td><b>زَيَّنَّا</b></td><td>4</td><td><code>زَيَّ+نَّا</code></td><td><small>6:108 27:4 37:6 67:5</small></td></tr>
+<tr><td><b>بَيَّنَّا</b></td><td>3</td><td><code>بَيَّ+نَّا</code></td><td><small>2:118 3:118 57:17</small></td></tr>
+<tr><td><b>مَكَّنَّا</b></td><td>3</td><td><code>مَكَّ+نَّا</code></td><td><small>12:21 12:56 18:84</small></td></tr>
+<tr><td><b>وَلَكِنَّا</b></td><td>3</td><td><code>وَ+لَكِنَّا</code></td><td><small>20:87 28:45 28:45</small></td></tr>
+<tr><td><b>مَنّا</b></td><td>2</td><td><code>مَنّاً</code></td><td><small>2:262 47:4</small></td></tr>
+<tr><td><b>بِأَنَّا</b></td><td>2</td><td><code>بِ+أَنَّا</code></td><td><small>3:52 3:64</small></td></tr>
+<tr><td><b>فَامَنَّا</b></td><td>2</td><td><code>فَامَ+نَّا</code></td><td><small>3:193 72:2</small></td></tr>
+<tr><td><b>ظَنّا</b></td><td>2</td><td><code>ظَنّاً</code></td><td><small>10:36 45:32</small></td></tr>
+<tr><td><b>مَنَنَّا</b></td><td>2</td><td><code>مَنَنَّا</code></td><td><small>20:37 37:114</small></td></tr>
+<tr><td><b>أَئِنَّا</b></td><td>2</td><td><code>أَئِنَّا</code></td><td><small>27:67 37:36</small></td></tr>
+<tr><td><b>ظَنَنَّا</b></td><td>2</td><td><code>ظَنَنَّا</code></td><td><small>72:5 72:12</small></td></tr>
+<tr><td><b>وَمِنَّا</b></td><td>2</td><td><code>وَ+مِنَّا</code></td><td><small>72:11 72:14</small></td></tr>
+<tr><td><b>ظَنَّا</b></td><td>1</td><td><code>ظَنَّا</code></td><td><small>2:230</small></td></tr>
+<tr><td><b>لَعَنَّا</b></td><td>1</td><td><code>لَ+عَنَّا</code></td><td><small>4:47</small></td></tr>
+<tr><td><b>تَأْمَنَّا</b></td><td>1</td><td><code>تَأْمَ+نَّا</code></td><td><small>12:11</small></td></tr>
+<tr><td><b>وَأَلَنَّا</b></td><td>1</td><td><code>وَ+أَلَنَّا</code></td><td><small>34:10</small></td></tr>
+<tr><td><b>وَزَيَّنَّا</b></td><td>1</td><td><code>وَ+زَيَّ+نَّا</code></td><td><small>41:12</small></td></tr>
+</table>
+<h2>BASELINE_DEFECTS — عيوبُ A الأساس (لا تُصلَح هذه الجولة) — <code>BASELINE_DEFECTS.tsv</code></h2>
+<p><small>المؤكّدان (المالك) مشهودان في المصحف المختوم. المرشّحاتُ الآليّة (تنوينٌ على خانةِ مبنيّ/عامل) إشارةٌ ناقصة — لا تلتقط صنفَ المؤكّدَين (كلا شطرَيه «جذع») — تحتاج مراجعة.</small></p><table>
+<tr class=''><th>الكلمة</th><th>فصلُ A</th><th>الصواب</th><th>السبب</th><th>النوع</th><th>العدد</th></tr>
+<tr class='bad'><td>سَفِيهاً</td><td>سَفِي+هاً</td><td>وحدة</td><td>حرفٌ أصليّ عُومل لاحقةً (مشهودٌ في المصحف)</td><td>مؤكّد (المالك)</td><td>1</td></tr>
+<tr class='bad'><td>كَبِيراً</td><td>كَ+بِيراً</td><td>وحدة</td><td>حرفٌ أصليّ عُومل لاحقةً (مشهودٌ في المصحف)</td><td>مؤكّد (المالك)</td><td>17</td></tr>
+<tr class='bad'><td>كُلّا</td><td>كُ+لّاً</td><td>وحدة</td><td>حرفٌ أصليّ عُومل لاحقةً (مشهودٌ في المصحف)</td><td>مؤكّد (المالك)</td><td>5</td></tr>
+<tr class='bad'><td>لَيّا</td><td>لَ+يّاً</td><td>وحدة</td><td>حرفٌ أصليّ عُومل لاحقةً (مشهودٌ في المصحف)</td><td>مؤكّد (المالك)</td><td>1</td></tr>
+<tr class='bad'><td>فَان</td><td>فَ+انٍ</td><td>وحدة</td><td>حرفٌ أصليّ عُومل لاحقةً (مشهودٌ في المصحف)</td><td>مؤكّد (المالك)</td><td>1</td></tr>
+<tr class='keep'><td>أُف</td><td>أُفٍّ</td><td>—</td><td>تنوينٌ على خانةِ مبنيّ/عامل (إشارةٌ آليّة)</td><td>مرشّح — يحتاج مراجعة</td><td>3</td></tr>
+<tr class='keep'><td>إِلّا</td><td>إِلّاً</td><td>—</td><td>تنوينٌ على خانةِ مبنيّ/عامل (إشارةٌ آليّة)</td><td>مرشّح — يحتاج مراجعة</td><td>2</td></tr>
+<tr class='keep'><td>عَدّا</td><td>عَدّاً</td><td>—</td><td>تنوينٌ على خانةِ مبنيّ/عامل (إشارةٌ آليّة)</td><td>مرشّح — يحتاج مراجعة</td><td>2</td></tr>
+<tr class='keep'><td>أَيّا</td><td>أَيّاً</td><td>—</td><td>تنوينٌ على خانةِ مبنيّ/عامل (إشارةٌ آليّة)</td><td>مرشّح — يحتاج مراجعة</td><td>1</td></tr>
+<tr class='keep'><td>آن</td><td>آنٍ</td><td>—</td><td>تنوينٌ على خانةِ مبنيّ/عامل (إشارةٌ آليّة)</td><td>مرشّح — يحتاج مراجعة</td><td>1</td></tr>
+<tr class='keep'><td>لَّمّا</td><td>لَّمّاً</td><td>—</td><td>تنوينٌ على خانةِ مبنيّ/عامل (إشارةٌ آليّة)</td><td>مرشّح — يحتاج مراجعة</td><td>1</td></tr>
+</table>
+</body></html>

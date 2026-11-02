@@ -34,6 +34,47 @@ from .match import PRON_SUFFIXES, match_letters, vocal_compatible, vform_match
 from . import syllabify as cv
 from .affix import stem_info, radical_nun, short_host, ha_kasra_ok, hollow_radical_nun, plural_waw_host
 from .status import BLOCKED
+import os as _os
+
+# التجربة UNIVERSAL_SEGMENTATION_CONTROLLED_EXPERIMENT_02 (ليست سياسةَ إنتاج).
+# SARF_SEG_POLICY: A (الأساس، الافتراضيّ وغيابُه = A: المبنيّ لا يصل إلى المقشِّر) ؛
+# B (فتحُ الفحص: المبنيّ يدخل المقشِّر، بلا المانعَين) ؛ B2 (B مع short_host ومنطق اللاحقة حرفيًّا).
+def _POL():
+    return _os.environ.get('SARF_SEG_POLICY', 'A') or 'A'
+
+_HOST_PLAIN = None
+def _host_plain():
+    "أشكالُ العوامل جرًّا أو نسخًا (مجرّدةً) من جدول العوامل نفسِه — تصنيفٌ من المورد لا قائمةُ ألفاظ (R1)."
+    global _HOST_PLAIN
+    if _HOST_PLAIN is None:
+        import json as _json
+        _HOST_PLAIN = set()
+        H = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+        try:
+            for l in open(_os.path.join(H, 'operators_catalog.jsonl'), encoding='utf-8'):
+                l = l.strip()
+                if not l:
+                    continue
+                d = _json.loads(l)
+                g = d.get('group_name_ar', '') or ''
+                if 'جر' in g or 'نسخ' in g or 'نواسخ' in g or 'أخواتها' in g:
+                    for k in ('operator_plain', 'operator_form', 'vocalized_form'):
+                        if d.get(k):
+                            _HOST_PLAIN.add(strip_marks(d[k]))
+        except Exception:
+            pass
+    return _HOST_PLAIN
+
+def _is_host_b3(stem_text, stem_toks):
+    "R1/R2: الجزءُ السابق مضيفٌ صالح = فعل/اسم (stem_info) أو جرّ/نسخ (الجدول) أو short_host (شدّة، R3 رَبَّهُ)."
+    pos = stem_info(stem_text)['pos']
+    if pos in ('verb', 'noun'):
+        return True
+    if strip_marks(stem_text) in _host_plain():
+        return True
+    if short_host(stem_toks):
+        return True
+    return False
 
 AMIL, MABNI, ARTICLE, STEM, DIVINE = 'عامل', 'مبني', 'أل', 'جذع', 'لفظ الجلالة'
 CUT_TYPES = {ARTICLE, STEM}                                  # ما يُقطَّع
@@ -107,7 +148,7 @@ def _host(word, toks, offs, a, b, lex, at_word_start):
         e = lex.attested(text)
         if e and e['category'] == 'attached_pronoun':
             hits = [e]
-    if hits:
+    if hits and _POL() == 'A':
         return [_slot(word, offs, a, b, MABNI, 'lexicon', lexicon=[h['entry_id'] for h in hits],
                       note=hits[0]['category'])]
     slots = []
@@ -151,10 +192,22 @@ def _host(word, toks, offs, a, b, lex, at_word_start):
         k = len(stoks)
         if suf == 'نَا' and b - k - 1 >= a and SUKUN in toks[b - k - 1][1]:
             continue                                # «نَا» بعد ساكن ضمير الفاعل في الماضي (جَعَلۡنَا) لا يُفصل كالتاء
-        if (b - k - a < MIN_STEM and not short_host(toks[a:b - k])) or radical_nun(toks[a:b], suf) or \
-                hollow_radical_nun(toks[a:b], suf) or \
-                toks[b - k][0] == 'ة' or not ha_kasra_ok(toks[a:b], suf):   # التاء المربوطة ليست هاء الضمير (ٱلۡجِنَّةِ)
-            continue
+        _p = _POL()
+        if _p in ('A', 'B2'):                        # الحاجزان القديمان بنصّهما (A = الإنتاج، byte-identical؛ الطول/short_host قبل toks[b-k] يحميه بالقِصَر)
+            if (b - k - a < MIN_STEM and not short_host(toks[a:b - k])) or radical_nun(toks[a:b], suf) or \
+                    hollow_radical_nun(toks[a:b], suf) or \
+                    toks[b - k][0] == 'ة' or not ha_kasra_ok(toks[a:b], suf):   # التاء المربوطة ليست هاء الضمير
+                continue
+        else:                                        # B/B3: القيودُ البنيويّة مع حمايةِ المدى (الحاجزان مرفوعان/مصحَّحان)
+            if b - k < a:
+                continue                             # موضعُ اللاحقة يتجاوز الجذع: لا فصل (ويحمي toks[b-k])
+            if radical_nun(toks[a:b], suf) or hollow_radical_nun(toks[a:b], suf) or toks[b - k][0] == 'ة':
+                continue                             # نونُ الأصل/التاء المربوطة ليست ضميرًا (بنيةٌ لا حاجز)
+            if _p == 'B3':                           # R1/R2: الفصلُ بمضيفٍ صالح + ha_kasra (لا بالطول)
+                if b - k <= a or not _is_host_b3(word[offs[a][0]:offs[b - k - 1][1]], toks[a:b - k]) \
+                        or not ha_kasra_ok(toks[a:b], suf):
+                    continue
+            # _p == 'B': بلا الحاجزَين (الطول/short_host وha_kasra)
         cand = [(L, frozenset(m)) for L, m in toks[b - k:b]]
         if plain(cand, True) == plain(stoks, True) and vocal_compatible(cand, stoks)[0]:
             tail = _slot(word, offs, b - k, b, MABNI, 'enclitic', note='ضمير متصل')
@@ -183,6 +236,8 @@ def segment_word(word, wi, cands, lex):
         return dict(word_index=wi, word=word, toks=toks, slots=[sl],
                     units=[dict(text=word, kind=FIXED, label='حروف مقطّعة', slots=[0], syllables=[])])
     emap = _exp_map(word)
+    if _POL() != 'A' and _os.environ.get('SARF_SEG_RAISE_OPS'):
+        cands = []   # رفعُ استثناء العوامل (B/B2/B3 فقط): العاملُ يدخل المقشِّر كغيره، فلا op_slots
     # 1. خانات العوامل (غير المرفوضة) بمواضعها في الحروف الأصلية
     by_span = {}
     for c in cands:
