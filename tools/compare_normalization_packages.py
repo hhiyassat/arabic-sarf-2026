@@ -111,7 +111,7 @@ mf = {o['occurrence_id'] for v in ob for w in ('display', 'analysis') for o in o
 prot(4, 'تأجيل الوظيفة في المواضع الخمسة', mf == five, sorted(mf))
 iq = [o for v in ob for o in ob[v]['display'] if o['rule_id'] == 'N-IQLAB-TANWIN']
 prot(5, 'تركيب الحركة والميم الصغيرة في عمليةٍ واحدة مع حفظ مصدريهما',
-     iq and all(o['operation'] == 'تركيب' and any(p['function'] == 'ميم الإقلاب' for p in o['preserved_information'])
+     iq and all(o['operation'] == 'تركيب' and any(p['function'].startswith('ميم الإقلاب') for p in o['preserved_information'])
                 and len(o['preserved_information']) >= 2 for o in iq), f'{len(iq)} عملية')
 words = lambda R, w: R[w].split(' ')
 k14 = [d for d in rb['differences'] if d['occurrence_id'] in ('Q2:282:14', 'Q2:282:121')]
