@@ -20,7 +20,8 @@ from sarf.features import unit_features
 from sarf.features_ext import extra_features  # noqa: F401  (يضمن وجود الوحدة)
 
 NEW = ('root_class', 'root_arity', 'conjugability', 'transformations', 'definiteness_kind', 'final_form', 'case_marking',
-       'diptote', 'derivation_candidates', 'lemma', 'elative', 'enclitic_case', 'construction', 'stem_root_candidates', 'nisba', 'diminutive')
+       'diptote', 'derivation_candidates', 'lemma', 'elative', 'enclitic_case', 'construction', 'stem_root_candidates', 'nisba', 'diminutive', 'polarity',
+       'subject_kind', 'vocative', 'idafa')
 CAT = Catalog([os.path.join(H, 'operators_catalog.jsonl'), os.path.join(H, 'operators_catalog_split_vocalized.csv')])
 
 

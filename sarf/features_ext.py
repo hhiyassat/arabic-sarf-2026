@@ -134,8 +134,77 @@ def nisba_tasghir(stem):
     return out
 
 
+NEGATORS = {('لَمْ', '6'): 'نفي', ('لَنْ', '5'): 'نفي', ('لَا', '6'): 'نهي', ('لَا', '3'): 'نفي'}
+
+
+def _unit_of(seg, slot):
+    return next((i for i, u in enumerate(seg['units']) if slot in u.get('slots', [])), None) if seg else None
+
+
+def _last_mark(text):
+    t = letters(text)
+    return _marks(t[-1]) if t else set()
+
+
 def post_features(a, units, out):
-    """سماتٌ تحتاج علاقات الآية: المصدر المؤوَّل من «أَنْ» الناصبة المقبولة ومضارعها المنصوب (يُضاف إلى وحدة الأداة)"""
+    """سماتٌ تحتاج علاقات الآية أو جوار الوحدات (إضافةٌ خالصة، بـ setdefault):
+      construction     المصدر المؤوَّل من «أَنْ» الناصبة المقبولة ومضارعها المنصوب (على وحدة الأداة)
+      polarity         الفعل المنفي بـ«لَمْ» أو «لَنْ» أو «لَا» النافية المقبولة، والمنهي بـ«لَا» الناهية المقبولة؛ و«لَيْسَ» نفيٌ بنفسها
+      subject_kind     المبني للمجهول المثبت يُسند إلى نائب فاعل، والمعلوم المثبت إلى فاعل (نوع الإسناد، لا تعيين المسند إليه)
+      vocative         ما بعد «يَا» منادى (مرشّح: أثر «يَا» لم يثبت بالكتابة)
+      idafa            اسمٌ بلا أل ولا تنوين ولا ضمير، بعده اسمٌ مجرورٌ كتابةً بلا جار: مضافٌ ومضافٌ إليه (مرشّح)"""
+    segs = {sg['word_index']: sg for sg in a['segments']}
+    for o in a.get('operators', []):
+        r = o.get('relation') or {}
+        t = r.get('target') or {}
+        key = (o.get('operator'), str(o.get('group')))
+        if o.get('status') == 'accepted' and key in NEGATORS and t:
+            ui = _unit_of(segs.get(t.get('word_index')), t.get('slot'))
+            if ui is not None and (t['word_index'], ui) in out and (out[(t['word_index'], ui)].get('pos') or {}).get('v') == 'فعل':
+                kind = NEGATORS[key]
+                out[(t['word_index'], ui)].setdefault('polarity', feat(
+                    'منهيّ عنه' if kind == 'نهي' else 'منفي', PROVEN, f'«{o["operator"]}» (مج {o["group"]}) مقبولةٌ عاملةً فيه'))
+        if o.get('operator') == 'يَا' and o.get('status') != 'blocked' and t:
+            ui = _unit_of(segs.get(t.get('word_index')), t.get('slot'))
+            if ui is not None and (t['word_index'], ui) in out:
+                out[(t['word_index'], ui)].setdefault('vocative', feat(
+                    'منادى', CAND, '«يَا» قبله؛ وأثرها فيه لم يثبت بالكتابة', alt=['منادى', 'غير منادى (يَا للتنبيه)']))
+    for k, rec in out.items():
+        G = units.get(k)
+        if G is None:
+            continue
+        if rec.get('operator') and str(G.O.get('text', '')).startswith(('لَيْس', 'لَسْت', 'لَسْن')):
+            rec.setdefault('polarity', feat('منفي', PROVEN, '«لَيْسَ» فعلٌ ناسخٌ للنفي'))
+        vo = rec.get('voice') or {}
+        if (rec.get('pos') or {}).get('v') == 'فعل' and vo.get('st') == PROVEN and 'operator' not in rec and not G.Theta.get('protected'):
+            # الناسخ الفعلي (كان وأخواتها) مرفوعه اسمه لا فاعله: لا يُعطى نوع الإسناد هنا
+            rec.setdefault('subject_kind', feat('نائب فاعل' if vo.get('v') == 'مجهول' else 'فاعل', PROVEN,
+                                                f'البناء {vo.get("v")} مثبت: يُسند الفعل إلى ' + ('نائب فاعل' if vo.get('v') == 'مجهول' else 'فاعل') +
+                                                '؛ وتعيين المسند إليه في الجملة غير هذا'))
+    # الإضافة (مرشّحة): آخر وحدةٍ في الكلمة اسمٌ بلا أل ولا تنوين ولا ضمير متصل، وأول وحدةٍ في التالية اسمٌ مجرورٌ أو لفظ الجلالة مجروراً
+    for wi, sg in segs.items():
+        nx = segs.get(wi + 1)
+        if not nx or not sg['units'] or not nx['units']:
+            continue
+        hk, dk = (wi, len(sg['units']) - 1), (wi + 1, 0)
+        h, d = out.get(hk), out.get(dk)
+        if not h or not d or hk not in units or dk not in units:
+            continue
+        if (h.get('pos') or {}).get('v') != 'اسم' or (h.get('pos') or {}).get('st') != PROVEN:
+            continue
+        hs = [sg['slots'][i] for i in sg['units'][-1].get('slots', [])]
+        if any(x['type'] == 'أل' for x in hs) or (h.get('definiteness') or {}).get('v') == 'نكرة':
+            continue
+        hm = _last_mark(units[hk].O.get('text') or '')
+        if hm & TANWIN or not hm & {FATHA, DAMMA, KASRA}:
+            continue
+        dpos = (d.get('pos') or {}).get('v')
+        dm = _last_mark(units[dk].O.get('text') or '')
+        if dpos in ('اسم', 'لفظ الجلالة') and dm & {KASRA, KASRATAN}:
+            h.setdefault('idafa', feat('مضاف', CAND, f'بلا أل ولا تنوين، وبعده «{units[dk].O.get("text")}» مجرورٌ كتابةً بلا جار',
+                                       alt=['مضاف', 'ممنوع من الصرف أو ظرفٌ أو غيره']))
+            d.setdefault('idafa', feat('مضاف إليه', CAND, f'مجرورٌ كتابةً بلا جار بعد «{units[hk].O.get("text")}»',
+                                       alt=['مضاف إليه', 'نعتٌ أو بدلٌ مجرور']))
     for o in a.get('operators', []):
         r = o.get('relation') or {}
         t = r.get('target') or {}

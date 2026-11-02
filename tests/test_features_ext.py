@@ -52,6 +52,18 @@ check('أَشَدُّ: أَفَلّ المضعّف', _elative('أَشَدُّ') 
 check('أَقْسَطٌ بالتنوين: لا', _elative('أَقْسَطٌ') is None)
 check('كَتَبَ: ليس على أَفْعَل', _elative('كَتَبَ') is None)
 
+def by_any(cat, text, unit, key):
+    from sarf.analyze import analyze
+    from sarf.algebra import Trace, sentence_geo
+    from sarf.features import unit_features
+    a = analyze(cat, text)
+    _, U = sentence_geo(a, 'q', Trace())
+    for k, v in unit_features(a, U).items():
+        if U[k].O['text'] == unit and key in v:
+            return v[key]['v']
+    return None
+
+
 if hfn():
     from sarf.catalog import Catalog
     from sarf.analyze import analyze
@@ -83,6 +95,18 @@ if hfn():
     _, U3 = sentence_geo(a3, 't3', Trace())
     F3 = unit_features(a3, U3)
     check('أَنْ الناصبة المقبولة ومضارعها المنصوب: مصدر مؤوَّل', any(v.get('construction', {}).get('v') == 'مصدر مؤوَّل' for v in F3.values()))
+    a4 = analyze(cat, 'لَمۡ يَلِدۡ وَلَمۡ يُولَدۡ')
+    _, U4 = sentence_geo(a4, 't4', Trace())
+    F4 = {U4[k].O['text']: v for k, v in unit_features(a4, U4).items()}
+    check('«لَمْ» المقبولة: الفعل بعدها منفي', F4['يَلِدْ']['polarity']['v'] == 'منفي' and F4['يُولَدْ']['polarity']['v'] == 'منفي')
+    check('نوع الإسناد: المعلوم إلى فاعل، والمجهول إلى نائب فاعل',
+          F4['يَلِدْ']['subject_kind']['v'] == 'فاعل' and F4['يُولَدْ']['subject_kind']['v'] == 'نائب فاعل', (F4['يَلِدْ'], F4['يُولَدْ']))
+    check('«لَا» الناهية المقبولة: منهيّ عنه', by_any(cat, 'وَلَا يَبۡخَسۡ مِنۡهُ شَيۡـࣰٔاۚ', 'يَبْخَسْ', 'polarity') == 'منهيّ عنه')
+    check('الناسخ الفعلي لا يُعطى «فاعلاً» (مرفوعه اسمه)', by_any(cat, 'إِلَّآ أَن تَكُونَ تِجَٰرَةً', 'تَكُونَ', 'subject_kind') is None)
+    check('ما بعد «يَا»: منادى مرشّح', by_any(cat, 'يَٰٓأَيُّهَا ٱلَّذِينَ ءَامَنُوٓاْ', 'أَيُّهَا', 'vocative') == 'منادى')
+    check('الإضافة مرشّحة: بِكُلِّ شَيْءٍ', by_any(cat, 'وَٱللَّهُ بِكُلِّ شَيۡءٍ عَلِيمࣱ', 'كُلِّ', 'idafa') == 'مضاف' and
+          by_any(cat, 'وَٱللَّهُ بِكُلِّ شَيۡءٍ عَلِيمࣱ', 'شَيْءٍ', 'idafa') == 'مضاف إليه')
+    check('لَيْسَ: نفي', by_any(cat, 'فَلَيۡسَ عَلَيۡكُمۡ جُنَاحٌ', 'لَيْسَ', 'polarity') == 'منفي')
     check('لَيْسَ: جامد مثبت', any(v.get('conjugability', {}).get('v') == 'جامد' for v in F2.values()))
     # ٥. الإضافة خالصة: بلا السمات المضافة تبقى السمات القائمة كما هي بعينها
     keep = fx.extra_features
