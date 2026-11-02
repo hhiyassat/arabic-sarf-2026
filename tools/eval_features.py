@@ -17,6 +17,8 @@ sys.path.insert(0, H)
 ap = argparse.ArgumentParser()
 ap.add_argument('range', nargs='?', default='1-114')
 ap.add_argument('--jobs', type=int, default=os.cpu_count() or 1)
+ap.add_argument('--dump', help='سجلٌّ لكل وحدةٍ وسمة (jsonl): الحالة والقيمة والدليل، والمرجع حيث قوبل؛ '
+                               'فيه قيم QAC، فلا يُلتزم به (للمقارنة وحدها: tools/compare_runs.py)')
 args = ap.parse_args()
 lo, hi = (int(x) for x in args.range.split('-'))
 
@@ -69,9 +71,14 @@ def surah_job(s):
     cat = Catalog([H + 'operators_catalog.jsonl', H + 'operators_catalog_split_vocalized.csv'])
     C = collections.Counter()
     ex = collections.defaultdict(list)
+    DUMP = []
+    cur = {}
 
     def score(feat, rec, gold, loc, txt):
         st = rec['st']
+        if args.dump:
+            DUMP.append(dict(kind='scored', loc=loc, ui=cur.get('ui'), txt=txt, feat=feat, st=st, v=rec.get('v'),
+                             gold=gold, ev=rec.get('ev'), alt=rec.get('alt')))
         if st == PROVEN or st == CAND:
             tag = 'مثبت' if st == PROVEN else 'مرشّح'
             if gold is None:
@@ -101,6 +108,11 @@ def surah_job(s):
                     amap[i1 + k] = qws[j1 + k]
         for (wi, ui), rec in F.items():
             C['وحدات'] += 1
+            cur['ui'] = ui
+            if args.dump:
+                for f_, r_ in rec.items():
+                    DUMP.append(dict(kind='feature', loc=f'{s_}:{v}:{wi + 1}', ui=ui, txt=units[(wi, ui)].O['text'],
+                                     feat=f_, st=r_.get('st'), v=r_.get('v'), ev=r_.get('ev'), alt=r_.get('alt')))
             for f_, r_ in rec.items():
                 C[f'حالة:{f_}:{r_["st"]}'] += 1
             if wi not in amap:
@@ -153,15 +165,17 @@ def surah_job(s):
             for f_ in ('transitivity', 'bab', 'signified'):
                 if f_ in rec and rec[f_]['st'] == PROVEN:
                     C[f'{f_}:مثبت بلا مقابل في QAC'] += 1
-    return C, ex
+    return C, ex, DUMP
 
 
 if __name__ == '__main__':
     import multiprocessing as mp
     C, ex = collections.Counter(), collections.defaultdict(list)
     with mp.get_context('fork').Pool(args.jobs) as P:
-        for c, e in P.imap_unordered(surah_job, range(lo, hi + 1)):
+        DUMP = []
+        for c, e, d in P.imap_unordered(surah_job, range(lo, hi + 1)):
             C.update(c)
+            DUMP += d
             for k, v in e.items():
                 ex[k] += v
     feats = sorted({k.split(':')[0] for k in C if k.count(':') >= 1 and not k.startswith('حالة')})
@@ -178,6 +192,10 @@ if __name__ == '__main__':
             table[f] = row
     out = dict(range=args.range, counts=dict(C), table=table, examples={k: v[:30] for k, v in ex.items()})
     json.dump(out, open(H + 'reports/features_eval.json', 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+    if args.dump:
+        with open(args.dump, 'w', encoding='utf-8') as f_:
+            for r in sorted(DUMP, key=lambda r: (r['kind'], [int(x) for x in r['loc'].split(':')], r['ui'] or 0, r['feat'])):
+                f_.write(json.dumps(r, ensure_ascii=False, default=str, sort_keys=True) + '\n')
     for f, row in table.items():
         print(f, row)
     for k in sorted(C):

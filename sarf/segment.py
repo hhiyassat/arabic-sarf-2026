@@ -446,6 +446,16 @@ def relate(segs, cands):
                 r['target'].update(pos='verb', kind=m['kind'])
                 if c['group'] == '1':
                     r.update(expected='نصب', note='الجار قبل المضارع: النصب بأن مضمرة')
+                if m['kind'] == 'mudari' and m['mood'] is None and r['expected'] == 'جزم' and tg[0] + 1 < len(segs):
+                    tl_ = letters(ts['text'])
+                    nw = segs[tg[0] + 1]['word']
+                    # «ـَتِ» بعد فتحة تاءُ التأنيث في الماضي كُسرت لالتقاء الساكنين (أُنزِلَتِ، نَّفَعَتِ): ليست جزماً
+                    fem_t = len(tl_) > 1 and tl_[-1][0] == 'ت' and FATHA in tl_[-2][1]
+                    if tl_ and KASRA in tl_[-1][1] and nw[:1] == 'ا' and not fem_t:
+                        # الكسر قبل همزة الوصل: جزمٌ مكتوب، كُسر لالتقاء الساكنين (وَلۡيُمۡلِلِ ٱلَّذِي) أو بقي بعد حذف حرف
+                        # العلة (وَلۡيَتَّقِ ٱللَّهَ)؛ والكتابة لا تفصل بين السببين، وكلاهما جزم
+                        m = dict(m, mood='جزم')
+                        r['note'] = 'الكسر لالتقاء الساكنين أو بعد حذف حرف العلة'
                 if m['kind'] == 'mudari' and c['group'] in VERB_CHECKED and r['expected']:
                     r['observed'] = m['mood']
                     if m['mood'] == 'حذف النون':

@@ -68,5 +68,14 @@ check('morph(وَلَسۡتُمۡ): NOT_APPLICABLE بلا مرشّحات جذر�
 m = morph('عَلِمَ')
 check('morph(عَلِمَ): class_deferred، والبديل محفوظ ولا جذر مقبول', m['status'] == 'class_deferred' and m['root'] is None
       and m.get('alternative'), m.get('status'))
+# «أَعۡلَمُ»: هوية الصيغة غير حمايتها؛ الحماية باقية على المرشّح الفعلي، والتفضيل بديلٌ محفوظ (لا حذف من الجرد)
+p = protected('أَعْلَمُ')
+check('«أَعْلَمُ»: محمية مع بديل اسم التفضيل، والفئة مؤجَّلة', p and p['ambiguous'] and
+      any('اسم تفضيل' in a for a in p.get('alternatives', [])), p and p.get('alternatives'))
+p = protected('يَعْلَمُ')
+check('«يَعْلَمُ»: لا بديل تفضيل (ليست على أَفۡعَل)', p and not any('اسم تفضيل' in a for a in p.get('alternatives', [])),
+      p and p.get('alternatives'))
+m = morph('أَعْلَمُ')
+check('morph(أَعْلَمُ): class_deferred بلا جذرٍ مقبول', m['status'] == 'class_deferred' and m['root'] is None, m.get('status'))
 print('ALL OK' if not bad else f'FAILED {bad}')
 sys.exit(1 if bad else 0)

@@ -4,3 +4,5 @@ AGENT_TASKS/
 data/
 reports/features_*.html
 reports/trace_*.html
+reports/compare/
+reports/normalization/
