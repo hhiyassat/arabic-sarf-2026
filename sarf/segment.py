@@ -31,7 +31,6 @@ from .chars import (FATHA, DAMMA, KASRA, SUKUN, SHADDA, FATHATAN, DAMMATAN, KASR
                     MARKS, letters, plain, strip_marks)
 from .divine import divine_name
 from .match import PRON_SUFFIXES, match_letters, vocal_compatible, vform_match
-from . import syllabify as cv
 from .affix import stem_info, radical_nun, short_host, ha_kasra_ok, hollow_radical_nun, plural_waw_host
 from .status import BLOCKED
 
@@ -535,21 +534,29 @@ def segment(words, cands, lex):
     return segs, rels
 
 def syllabify_units(segs):
-    """تقطيع الوحدات التي تُقطَّع وحدها → ناتج بصيغة cv.run (counts، rows، events …)"""
+    """تقطيع الوحدات التي تُقطَّع وحدها، من خلايا الجبر ومقاطعه (sarf.syllables: مصدرٌ واحد مع sarf.algebra)
+    → ناتجٌ بالصيغة السابقة (counts، rows، others، events …).
+    events: عدّادات المقطِّع السابق (sarf.syllabify) كما كانت، تُحسب منه للتوافق وحدها، ولا يُؤخذ منه مقطع؛
+    وcell_events: أدوار خلايا الجبر معدودةً بأسمائها (همزة وصل، شدة، مدّ، تنوين، ما لا يُنطق وسببه)"""
     from collections import Counter
-    events, counts = cv.Events(), Counter()
+    from . import syllabify as legacy
+    from .syllables import unit_syllables, render, cv as cv_of
+    events, counts, cell_events = legacy.Events(), Counter(), Counter()
     rows, others, cv_line = [], [], []
     divine_words = []
     for seg in segs:
         wi = seg['word_index']
         if any(u['kind'] == DIVINE for u in seg['units']):
             divine_words.append(wi)
-        for u in seg['units']:
+        for ui, u in enumerate(seg['units']):
             if u['kind'] != CUT:
                 continue
-            r = cv.run(u['text'])
-            events.update(r['events'])
-            for rend, pat, verdict, _ in r['rows']:
+            _, sylls, stray, ev = unit_syllables(u['text'], f'w{wi}.u{ui}', word_end=ui == len(seg['units']) - 1)
+            cell_events.update(ev)
+            events.update(legacy.run(u['text'])['events'])
+            out = [(render(G), cv_of(G), 'OK') for G in sylls] + \
+                [(c.C, 'C', f'BLOCK:A1({why})') for c, why in stray]
+            for rend, pat, verdict in out:
                 rows.append((rend, pat, verdict, [wi]))
                 counts[pat] += 1
                 cv_line.append(pat)
@@ -558,7 +565,8 @@ def syllabify_units(segs):
                     others.append((rend, pat, verdict, [seg['word']]))
     events['DIVINE_NAME'] = len(divine_words)
     return dict(counts=counts, rows=rows, others=others, events=events, divine_words=divine_words,
-                cv_line=cv_line, n_words=len(segs), n_syll=len(rows), raw_words=[s['word'] for s in segs])
+                cv_line=cv_line, n_words=len(segs), n_syll=len(rows), raw_words=[s['word'] for s in segs],
+                cell_events=cell_events)
 
 def unit_view(segs):
     """كل كلمة بوحداتها: ما يُقطَّع بمقاطعه، وما سواه بوسمه"""

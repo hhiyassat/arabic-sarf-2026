@@ -56,84 +56,9 @@ def render_cells(cells, text, orphans=()):
     return ''.join(text[sp[j][0]:sp[j][1]] for j in sorted(seen)), seen
 
 
-# ---------- المستوى 1: المقطع بقوالبه الستة ----------
-SYLLABLE_SHAPES = ('CV', 'CVC', 'CVV', 'CVVC', 'CVVCC', 'CVCC')     # M: الأشكال الستة المرخَّصة
-WORD_FINAL_ONLY = ('CVCC', 'CVVCC')                                # لا يقعان إلا في آخر الكلمة (حكم صاحب النظرية)
-
-
-def rem_M(u, word_end=True):
-    """Rem_M(u) = {v | uv ∈ M}: البقايا الممكنة للمقطع الجاري u. وإذا لم يكن الموضع آخر الكلمة
-    سقط من M ما لا يقع إلا في آخرها (CVCC، CVVCC)"""
-    shapes = SYLLABLE_SHAPES if word_end else tuple(x for x in SYLLABLE_SHAPES if x not in WORD_FINAL_ONLY)
-    return {m[len(u):] for m in shapes if m.startswith(u)}
-
-
-def cell_shape(c, first):
-    """قراءة الخلية في المقطع: المتحركة صامتٌ ونواة (CV أو CVV)، والساكنة صامتٌ C"""
-    if c.H == '∅':
-        return 'C'
-    return 'CVV' if c.L == 2 else 'CV'
-
-
-def syllable_next(G):
-    """Next_Γ(G) مشتقٌّ من Rem_M: ما يمكن أن يلي المقطع الجاري (بقاياه غير ε)"""
-    u = cv(G) if G.A else ''
-    return {v for v in rem_M(u) if v}
-
-
-def cv(G):
-    c0 = G.A[0]
-    return 'C' + ('VV' if c0.L == 2 else 'V') + 'C' * (len(G.A) - 1)
-
-
-def syllabify(cells, base_id, T, word_end=True):
-    """المقاطع من الخلايا بالامتداد المرخَّص: تُضاف الخلية x إلى المقطع الجاري u إذا كان
-    Rem_M(u·x) ≠ ∅ (و CVCC/CVVCC لا تُقبل إلا والخلية آخر الكلمة)؛ ويُغلق المقطع بشهادتَي الإكمال
-    (u ∈ M) والحدّ (Rem_M(u·x) = ∅ للخلية التالية x، أو لا خلية بعده).
-    → (المقاطع المغلقة، الخلايا التي لم يُبنَ لها مقطع مع السبب)"""
-    out, stray = [], []
-    i, n = 0, len(cells)
-    while i < n:
-        G = Geo(f'{base_id}.σ{len(out)}', (SYLLABLE, 'مقطع'),
-                Omega=[Obligation('نواة متحركة')])
-        c = cells[i]
-        x = cell_shape(c, True)
-        # الساكنة في أول المقطع: Rem_M(C) يطلب V بعدها، وكل خلية تالية تبدأ بصامت، فلا تبلغ M: لا مقطع
-        if x == 'C':
-            stray.append((c, 'لا يُبتدأ بساكن'))
-            i += 1
-            continue
-        extend(G, c, None, Evidence('الخلية متحركة', [f'الحركة {c.H}', f'Rem_M({x}) ≠ ∅'],
-                                    [('الابتداء بساكن', 'الحركة مكتوبة')]),
-               T, discharge=['نواة متحركة'])
-        i += 1
-        why_end = None
-        while i < n:
-            u = cv(G)
-            x = cell_shape(cells[i], False)
-            last = i == n - 1 and word_end
-            # الحرف قبل المشدَّد مكتوبٌ بلا حركة، والمشدَّد خليتان (حكم صاحب النظرية: عَ.بَدْتْ.تُمْ):
-            # فالخاتمتان داخل الكلمة كما كُتبتا، لا بالأداء
-            written_cc = x == 'C' and cells[i].O.get('role') == 'شدة: الأول' and G.A[-1].H == '∅' and len(G.A) > 1
-            r = rem_M(u + x, word_end=last or written_cc)
-            if x != 'C' or not r:
-                why_end = (u, x, last)
-                break
-            extend(G, cells[i], 'خاتمة', Evidence('الخلية ساكنة', [f'Rem_M({u}·C) = {{{", ".join(sorted(v or "ε" for v in r))}}}']), T)
-            i += 1
-        u = cv(G)
-        ec = Evidence('قالب المقطع', [u, f'{u} ∈ M'], [('مقطع بلا نواة', 'النواة الخلية الأولى')])
-        if i == n:
-            eb = Evidence('نهاية الوحدة', ['لا خلية بعدها'])
-        elif why_end[1] != 'C':
-            eb = Evidence('الخلية التالية متحركة', [f'Rem_M({u}·{why_end[1]}) = ∅: المتحرك يبدأ مقطعاً'])
-        elif not why_end[2] and rem_M(u + 'C') and why_end[1] == 'C':
-            eb = Evidence('CVCC وCVVCC لا يقعان إلا في آخر الكلمة', [f'{u}·C ليس آخر الكلمة'])
-        else:
-            eb = Evidence('المقطع مشبَع', [f'Rem_M({u}) = {{ε}}'])
-        close(G, ec, eb, T)
-        out.append(G)
-    return out, stray
+# ---------- المستوى 1: المقطع بقوالبه الستة (sarf.syllables، مشتركٌ مع المحلّل) ----------
+from .syllables import (SYLLABLE_SHAPES, WORD_FINAL_ONLY, rem_M, cell_shape, syllable_next, cv,  # noqa: E402,F401
+                        syllabify)
 
 
 # ---------- الإسقاطات والمساواة ----------
@@ -237,11 +162,9 @@ def unit_geo(a, wi, ui, base_id, T, governed_info=None):
     u = seg['units'][ui]
     slots = [seg['slots'][k] for k in u['slots']]
     text = u['text']
-    first_vowel = None
-    if u['kind'] == 'cut' and u['syllables']:
-        c0, _ = cells_of(u['syllables'][0]['syl'], 'tmp')
-        first_vowel = c0[0].H if c0 else None
-    cells, toks = cells_of(text, base_id, first_vowel)
+    # حركة همزة الوصل من قاعدتها في sarf.syllables، لا من ناتج المقطِّع: الخلايا والمقاطع من مصدرٍ واحد
+    from .syllables import wasl_vowel
+    cells, toks = cells_of(text, base_id, wasl_vowel(text) if u['kind'] == 'cut' else None)
     orphans = cells_of.orphans
     # كل خلية ↦ خانتها، بمواضع الرسم: الخانات متتالية في نص الوحدة
     bounds, acc = [], 0

@@ -13,7 +13,7 @@ from .chars import (FATHA, DAMMA, KASRA, SUKUN, SHADDA, FATHATAN, DAMMATAN, KASR
                     DAGGER_ALIF, letters, mudgham)
 
 H_OF = {FATHA: 'a', DAMMA: 'u', KASRA: 'i', FATHATAN: 'a', DAMMATAN: 'u', KASRATAN: 'i'}
-MADD_OF = {'a': 'اى', 'u': 'و', 'i': 'ي'}
+MADD_OF = {'a': 'اى', 'u': 'و', 'i': 'يى'}     # «ى» بعد الكسرة ياء مدٍّ في الرسم (فِى، رَبِّى)
 HAMZA = {'أ': 'ء', 'إ': 'ء', 'ؤ': 'ء', 'ئ': 'ء', 'ء': 'ء'}
 # ---------- الخلية ----------
 @dataclass
@@ -82,6 +82,8 @@ def cells_of(text, base_id, wasl_vowel=None):
             prev.O['tok'].append(j); prev.O['madd'] = L + 'ٰ'
             continue
         C = HAMZA.get(L, L)
+        if L == 'ى' and m & {FATHA, DAMMA, KASRA, SUKUN, SHADDA, FATHATAN, DAMMATAN, KASRATAN}:
+            C = 'ي'                     # «ى» متحركةً أو ساكنةً أو مشدَّدة ياءٌ صامتة لا ألف (شَىْءٍ، إِلَىَّ)
         H = next((H_OF[x] for x in (FATHA, DAMMA, KASRA, FATHATAN, DAMMATAN, KASRATAN) if x in m), '∅')
         tanwin = bool(m & {FATHATAN, DAMMATAN, KASRATAN})
         if SHADDA in m and out:
