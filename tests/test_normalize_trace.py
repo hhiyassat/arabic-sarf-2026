@@ -191,6 +191,38 @@ out = subprocess.run([sys.executable, '-c', 'import sys; sys.path.insert(0, %r);
 check('٧: وحدة التطبيع لا تحمِّل وحدات التحليل (pipeline، segment، judge، root، algebra، features…)',
       set(eval(out)) <= {'sarf.normalize', 'sarf.normalize_trace', 'sarf.chars'}, out)
 
+# ---------- N04: إعادة البناء لا تستعير قيم المصدر، والإفساد يُكشف ----------
+import copy
+from sarf.normalize_trace import reconstruct_source, verify_reconstructed_source
+r = normalize_traced(TEXT[(2, 282)], '2:282')
+rec, f = reconstruct_source(r['cells_display'], r['ops_display'], r['source_length'])
+check('N04: إعادة البناء من الخلايا والسجل وحدهما تطابق المصدر (2:282)',
+      not f and verify_reconstructed_source(rec, r['source'])['match'], [x['code'] for x in f])
+def _corrupt(fn, which='display'):
+    cells, ops = copy.deepcopy(r['cells_' + which]), copy.deepcopy(r['ops_' + which])
+    fn(cells, ops)
+    rec, f = reconstruct_source(cells, ops, r['source_length'])
+    return {x['code'] for x in f} | ({verify_reconstructed_source(rec, r['source'])['code']} - {None})
+def _p(ops, fn):
+    return next((o, p) for o in ops for p in o['preserved_information'] if fn(p))
+def c1(cells, ops):
+    o, p = _p(ops, lambda p: p['function'] == 'علامة وقف'); p['char'] = '\u06D6' if p['char'] == '\u06D7' else '\u06D7'
+def c2(cells, ops):
+    o, p = _p(ops, lambda p: p['function'] == 'علامة وقف'); p['char'] = '\u06D6' if p['char'] == '\u06D7' else '\u06D7'; p['codepoint'] = f"U+{ord(p['char']):04X}"
+def c3(cells, ops):
+    o, p = _p(ops, lambda p: p['function'] == 'ميم الإقلاب'); o['preserved_information'].remove(p)
+def c6(cells, ops):
+    next(c for c in cells if not c['derived'] and len(c['src']) == 1 and c['c'] == 'ك')['c'] = 'ق'
+def c9(cells, ops):
+    next(c for c in cells if c['derived'] and not c['src'])['derived'] = False
+for name, fn, which, code in (('محرفٌ محفوظ بلا رمزه', c1, 'display', 'R3_CODEPOINT'),
+                              ('محرفٌ محفوظ برمزه المتّسق', c2, 'display', 'R8_OP_SOURCE_MISMATCH'),
+                              ('حذف محفوظٍ لازم', c3, 'display', 'R1_MISSING'),
+                              ('تغيير قيمة خليةٍ أصلية', c6, 'display', 'V1_MISMATCH'),
+                              ('مشتقٌّ يُنسب إلى المكتوب', c9, 'analysis', 'R6_NONDERIVED_WITHOUT_SOURCE')):
+    got = _corrupt(fn, which)
+    check(f'N04 إفساد «{name}» يُكشف بـ{code}', code in got, got)
+
 if '--quick' not in sys.argv:
     n = dict(restore=0, incomplete=0, attr=0, nfc=0, legacy=0, determinism=0, reject=0, info=0)
     ex = {}

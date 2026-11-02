@@ -30,7 +30,7 @@ import unicodedata
 from .chars import SUKUN, SHADDA, FATHA, DAMMA, KASRA, FATHATAN, DAMMATAN, KASRATAN, letters
 from . import normalize as N
 
-NORM_CONTRACT = 'N3.0'   # N3.0: شكل العلامة غير وظيفتها (التنوين)؛ N2.0: حقول السجل وحفظ صورة المستبدَل
+NORM_CONTRACT = 'N3.1'   # N3.1: إعادة بناء المصدر من الخلايا والسجل وحدهما (النواتج كما في N3.0)؛ N3.0: شكل العلامة غير وظيفتها
 DAGGER = 'ٰ'
 TATWEEL = 'ـ'
 
@@ -632,7 +632,7 @@ def normalize_traced(text, loc='', implicit_sukun=None, strict=False):
     _unresolved(D)
     _mark_function(D)
     display = D.finish()
-    return dict(source=text, analysis=analysis, display=display, contract=NORM_CONTRACT,
+    return dict(source=text, source_length=len(text), analysis=analysis, display=display, contract=NORM_CONTRACT,
                 cells_analysis=[_cell(t, text) for t in A.T], cells_display=[_cell(t, text) for t in D.T],
                 ops_analysis=A.ops, ops_display=D.ops)
 
@@ -685,15 +685,117 @@ def _mark_function(R):
                           mark_function_status=MARK_FUNCTION_UNSET))
 
 
+# ---------- إعادة بناء المصدر (N04) ----------
+# الخلل في N3: كانت restore_source تجمع المواضع ثم تقرأ قيمها من المصدر نفسه، فتنجح ولو فسدت القيم المحفوظة.
+# الآن: إعادة البناء من خلايا الناتج وسجل العمليات وحدهما (والطول المعلَن لضبط المواضع)، ثم المقارنة خطوةٌ مستقلة.
+RECON_CODES = {
+    'R1_MISSING': 'موضعٌ في المصدر بلا قيمة: لا خلية أصلية له ولا معلومة محفوظة',
+    'R2_CONFLICT': 'قيمتان متعارضتان للموضع نفسه (محفوظتان، أو خليتان أصليتان)',
+    'R3_CODEPOINT': 'المحرف المحفوظ لا يطابق رمزه المسجَّل (codepoint)',
+    'R4_AT_OUTSIDE_SPANS': 'موضع المعلومة المحفوظة خارج مجالات مصدر عمليتها',
+    'R5_COMPOSITE_UNPRESERVED': 'خلية أصلية مركّبة من أكثر من موضع، وبعض مواضعها بلا معلومة محفوظة',
+    'R6_NONDERIVED_WITHOUT_SOURCE': 'خليةٌ غير مشتقّة بلا موضع مصدر: محرفٌ يُنسب إلى المكتوب بلا مصدر',
+    'R7_OUT_OF_RANGE': 'موضعٌ خارج طول المصدر المعلَن',
+    'R8_OP_SOURCE_MISMATCH': 'نصّ مصدر العملية (source_text/source_codepoints) يخالف المستعاد في مجالاتها',
+    'R9_MARK_FORM_MISMATCH': 'شكل علامة التنوين (mark.form) يخالف رموز المستعاد في مواضع مصدرها',
+    'R10_PRESERVED_BUT_UNCHANGED': 'معلومةٌ محفوظة لموضعٍ تحمل خليته الأصلية المحرف نفسه دون تغيير',
+    'V1_MISMATCH': 'النص المستعاد لا يطابق المصدر الأصلي',
+    'V2_LENGTH': 'طول النص المستعاد لا يطابق طول المصدر الأصلي',
+}
+
+
+def _cpstr(s):
+    return ' '.join(f'U+{ord(c):04X}' for c in s)
+
+
+def reconstruct_source(cells, ops, source_length):
+    """المصدر من الخلايا وسجل العمليات وحدهما. → (النص المستعاد أو None، [إخفاق مسمّى: code, at, detail])
+    لا يقرأ قيمة أي محرفٍ من المصدر الأصلي. المحرف غير المتغيّر من خليته الأصلية (غير مشتقّة، مصدرها موضعٌ واحد)،
+    والمحذوف أو المستبدل أو المركّب من preserved_information؛ والمشتقّ لا يدخل المستعاد."""
+    fails = []
+    L = source_length
+
+    def fail(code, at=None, detail=''):
+        fails.append(dict(code=code, at=at, detail=detail))
+    pres = {}
+    for o in ops:
+        spans = o.get('source_spans') or []
+        for p in o.get('preserved_information') or []:
+            at, ch = p.get('at'), p.get('char')
+            if not isinstance(at, int) or not (0 <= at < L):
+                fail('R7_OUT_OF_RANGE', at, o.get('op_id'))
+                continue
+            if not isinstance(ch, str) or len(ch) != 1 or p.get('codepoint') != f'U+{ord(ch):04X}':
+                fail('R3_CODEPOINT', at, f"{o.get('op_id')}: {ch!r} {p.get('codepoint')}")
+                continue
+            if not any(a <= at < b for a, b in spans):
+                fail('R4_AT_OUTSIDE_SPANS', at, o.get('op_id'))
+            if at in pres and pres[at] != ch:
+                fail('R2_CONFLICT', at, f'محفوظ {_cpstr(pres[at])} ≠ {_cpstr(ch)}')
+            pres.setdefault(at, ch)
+    cellval = {}
+    for k, c in enumerate(cells):
+        src = c.get('src') or []
+        if any(not isinstance(i, int) or not (0 <= i < L) for i in src):
+            fail('R7_OUT_OF_RANGE', None, f'خلية {k}')
+            continue
+        if c.get('derived'):
+            continue
+        if not src:
+            fail('R6_NONDERIVED_WITHOUT_SOURCE', None, f'خلية {k} {_cpstr(c.get("c", ""))}')
+            continue
+        if len(src) > 1:
+            for i in src:
+                if i not in pres:
+                    fail('R5_COMPOSITE_UNPRESERVED', i, f'خلية {k}')
+            continue
+        i = src[0]
+        if i in pres:
+            if c.get('c') == pres[i]:
+                fail('R10_PRESERVED_BUT_UNCHANGED', i, f'خلية {k}')
+            continue
+        if i in cellval and cellval[i] != c.get('c'):
+            fail('R2_CONFLICT', i, f'خليتان {_cpstr(cellval[i])} ≠ {_cpstr(c.get("c", ""))}')
+        cellval.setdefault(i, c.get('c'))
+    out = []
+    for i in range(L):
+        v = pres.get(i, cellval.get(i))
+        if v is None:
+            fail('R1_MISSING', i)
+            out.append(None)
+        else:
+            out.append(v)
+    if any(x is None for x in out):
+        return None, fails
+    text = ''.join(out)
+    # الاتساق الدلالي بعد البناء: نصّ مصدر كل عملية، وشكل كل علامة تنوين
+    for o in ops:
+        spans = o.get('source_spans') or []
+        got = ''.join(text[i] for a, b in spans for i in range(a, b) if 0 <= i < L)
+        if spans and (got != o.get('source_text') or _cpstr(got) != o.get('source_codepoints')):
+            fail('R8_OP_SOURCE_MISMATCH', spans[0][0], o.get('op_id'))
+    for k, c in enumerate(cells):
+        m = c.get('mark')
+        if m is not None and m.get('form') != _cpstr(''.join(text[i] for i in c.get('src') or [] if 0 <= i < L)):
+            fail('R9_MARK_FORM_MISMATCH', (c.get('src') or [None])[0], f'خلية {k}: {m.get("form")}')
+    return (text if not fails else None), fails
+
+
+def verify_reconstructed_source(reconstructed, original):
+    """المقارنة خطوةٌ مستقلة بعد إعادة البناء: → dict(match, code, first_diff)"""
+    if reconstructed is None:
+        return dict(match=False, code='NOT_RECONSTRUCTED', first_diff=None)
+    if len(reconstructed) != len(original):
+        return dict(match=False, code='V2_LENGTH', first_diff=min(len(reconstructed), len(original)))
+    d = next((i for i, (a, b) in enumerate(zip(reconstructed, original)) if a != b), None)
+    return dict(match=d is None, code=None if d is None else 'V1_MISMATCH', first_diff=d)
+
+
 def restore_source(res, which='analysis'):
-    """المصدر حرفياً من محارف الناتج غير المشتقّة ومحارف المصدر المحذوفة في السجل"""
-    got = {}
-    for c in res['cells_' + which]:
-        for i in c['src']:
-            got[i] = None
-    for o in res['ops_' + which]:
-        for p in o['preserved_information']:
-            got[p['at']] = None
-    src = res['source']
-    missing = [i for i in range(len(src)) if i not in got]
-    return ''.join(src[i] for i in sorted(got)), missing
+    """واجهة N3 محفوظة: → (المستعاد أو ''، [إخفاقات]). تبني من الخلايا والسجل والطول المعلَن وحدها، ثم تقارن بالمصدر؛
+    ويُعدّ عدم التطابق إخفاقاً مسمّى (V1/V2)، فلا تنجح بقيمٍ فاسدة"""
+    rec, fails = reconstruct_source(res['cells_' + which], res['ops_' + which], res['source_length'])
+    v = verify_reconstructed_source(rec, res['source'])
+    if not v['match'] and rec is not None:
+        fails = fails + [dict(code=v['code'], at=v['first_diff'], detail='')]
+    return rec or '', fails

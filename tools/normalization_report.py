@@ -119,7 +119,7 @@ for s, v, t in ROWS:
     if loc == '2:282':
         D282 = r
     C['verses'] += 1
-    gzc.write(json.dumps(dict(verse=loc, source=t, display=r['display'], analysis=r['analysis'],
+    gzc.write(json.dumps(dict(verse=loc, source=t, source_length=r['source_length'], display=r['display'], analysis=r['analysis'],
                               cells_display=r['cells_display'], cells_analysis=r['cells_analysis']), ensure_ascii=False) + '\n')
     for which in ('display', 'analysis'):
         rs, miss = restore_source(r, which)
