@@ -30,6 +30,7 @@ from .root import verse_morph, hfn
 from .align import align
 from .segment import segment, syllabify_units
 from .lexicon import MabniLexicon
+from .core import Trace
 
 UTHMANI = {'auto': None, 'on': True, 'off': False}   # auto←None (تلقائي) / on←True / off←False
 
@@ -42,6 +43,7 @@ class VerseContext:
         self.uthmani = uthmani
         self.done = []          # أسماء المراحل المنفَّذة بالترتيب
         self.log = []           # (المرحلة، ملخّص قصير)
+        self.trace = Trace()    # الأثر T الواحد من الاستلام إلى الجملة (sarf.core)
 
     def has(self, field):
         return hasattr(self, field)
@@ -265,11 +267,13 @@ class Pipeline:
         for st in self.stages:
             if st.name in skip:
                 ctx.log.append((st.name, 'تُجووزت'))
+                ctx.trace.stage(st.name, 'تُجووزت')
             else:
                 missing = [f for f in st.requires if not ctx.has(f)]
                 if missing:
                     raise RuntimeError(f"المرحلة {st.name} تحتاج {', '.join(missing)}، ولم تُنتجه مرحلة قبلها")
                 ctx.log.append((st.name, st.fn(ctx, self)))
+                ctx.trace.stage(st.name, ctx.log[-1][1])
                 ctx.done.append(st.name)
             if st.name == until:
                 break
