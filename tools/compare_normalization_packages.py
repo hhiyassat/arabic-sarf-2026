@@ -3,8 +3,13 @@
 
     python3 compare_normalization_packages.py --a <حزمة الأساس> --b <الحزمة الجديدة> [--out ملف.json]
 
-يقارن لكل آية: نصّ display ونصّ analysis، والخلايا (المحرف، المصدر، الاشتقاق، العلامة)، وسجلّ العمليات كاملاً،
-وسجلّات الفروق في run.json بالوقوع، والأعداد. والإضافة الموثّقة (حقلٌ جديد) تُعدّ إضافةً لا تغييراً، وتُسرد.
+الحكم صارم (N04، بعد المراجعة): أي فرقٍ غير مأذون يُفشل المقارنة (رمز خروج 1)، ولو تساوت النصوص والأعداد.
+يُقارَن كل شيءٍ كاملاً لا حقولاً مختارة، ومنه:
+  - مجموعة الآيات في الاتجاهين، والتكرار في الخلايا والعمليات وسجلات الفروق؛
+  - كل حقلٍ في سجل الآية، وفي كل خلية، وفي كل عملية، وفي كل سجلّ فرق؛
+  - وأقسام run.json كلها، إلا الهوية وبصمات الملفات.
+والإضافة المأذونة وحدها: source_length في سجل الآية، بشرط أن تساوي طول المصدر. وكل إضافةٍ سواها، أو حذفٌ، أو تغيير،
+فرقٌ غير مأذون.
 """
 import argparse, collections, gzip, json, os, sys
 
@@ -13,21 +18,33 @@ ap.add_argument('--a', required=True)
 ap.add_argument('--b', required=True)
 ap.add_argument('--out')
 a = ap.parse_args()
+ALLOWED_ADDITIONS = {'cells_record': {'source_length'}}
+RUN_EXEMPT = {'identity', 'ops_log', 'cells_log'}       # تختلف بطبيعتها بين تشغيلين (الهوية، وبصمات الملفات المضغوطة)
 
 
 def load(d):
+    dup = collections.Counter()
     cells = {}
     with gzip.open(os.path.join(d, 'normalization_cells.jsonl.gz'), 'rt', encoding='utf-8') as f:
         for line in f:
             R = json.loads(line)
+            if R['verse'] in cells:
+                dup['cells_verse'] += 1
             cells[R['verse']] = R
     ops = collections.defaultdict(lambda: {'display': [], 'analysis': []})
+    seen = set()
     with gzip.open(os.path.join(d, 'normalization_ops.jsonl.gz'), 'rt', encoding='utf-8') as f:
         for line in f:
             o = json.loads(line)
+            key = (o['verse'], o['representation'], o.get('op_id'))
+            if key in seen:
+                dup['op_id'] += 1
+            seen.add(key)
             ops[o['verse']][o['representation']].append(o)
     run = json.load(open(os.path.join(d, 'normalization_run.json'), encoding='utf-8'))
-    return cells, ops, run
+    occ = collections.Counter(o['occurrence_id'] for o in run['differences'])
+    dup['difference_occurrence_id'] = sum(n - 1 for n in occ.values() if n > 1)
+    return cells, ops, run, +dup
 
 
 A, B = load(a.a), load(a.b)
@@ -42,53 +59,68 @@ def note(k, v):
         ex[k].append(v)
 
 
-for v in A[0]:
-    ra, rb = A[0][v], B[0].get(v)
-    if rb is None:
-        note('verse_missing', v)
-        continue
-    for k in set(rb) - set(ra):
-        added['cells_record:' + k] += 1
+for side, d in (('a', A[3]), ('b', B[3])):
+    for k, n in d.items():
+        for _ in range(n):
+            note(f'duplicate_{k}_{side}', k)
+va, vb = set(A[0]), set(B[0])
+for v in sorted(va - vb):
+    note('verse_removed', v)
+for v in sorted(vb - va):
+    note('verse_added', v)
+for v in sorted(set(A[1]) ^ set(B[1])):
+    note('ops_verse_set_differs', v)
+
+
+def cmp_dict(x, y, where, allowed=frozenset()):
+    """كل مفتاحٍ في الاتجاهين؛ والإضافة المأذونة تُعدّ ولا تُعدّ تغييراً"""
+    for key in set(x) | set(y):
+        if key not in x:
+            if key in allowed:
+                added[f'{where}:{key}'] += 1
+            else:
+                note(f'unauthorized_added_field:{where}:{key}', where)
+        elif key not in y:
+            note(f'removed_field:{where}:{key}', where)
+        elif x[key] != y[key]:
+            note(f'changed:{where}:{key}', where)
+
+
+for v in sorted(va & vb):
+    ra, rb = A[0][v], B[0][v]
+    flat_a = {k: w for k, w in ra.items() if not k.startswith('cells_')}
+    flat_b = {k: w for k, w in rb.items() if not k.startswith('cells_')}
+    cmp_dict(flat_a, flat_b, 'cells_record', ALLOWED_ADDITIONS['cells_record'])
+    if 'source_length' in rb and (not isinstance(rb['source_length'], int) or rb['source_length'] != len(rb.get('source', ''))):
+        note('invalid_source_length', v)
     for which in ('display', 'analysis'):
-        if ra[which] != rb[which]:
-            note(f'text_{which}', v)
-        ca, cb = ra['cells_' + which], rb['cells_' + which]
-        if len(ca) != len(cb):
+        ca, cb_ = ra.get('cells_' + which, []), rb.get('cells_' + which, [])
+        if len(ca) != len(cb_):
             note(f'cells_{which}_count', v)
-            continue
-        for x, y in zip(ca, cb):
-            for key in ('c', 'src', 'derived', 'mark'):
-                if x.get(key) != y.get(key):
-                    note(f'cells_{which}_{key}', f'{v}')
-            for key in set(y) - set(x):
-                added[f'cell:{key}'] += 1
-        oa, ob = A[1][v][which], B[1][v][which]
-        if len(oa) != len(ob):
+        for x, y in zip(ca, cb_):
+            cmp_dict(x, y, f'cells_{which}')
+        oa, ob_ = A[1][v][which], B[1][v][which]
+        if len(oa) != len(ob_):
             note(f'ops_{which}_count', v)
-            continue
-        for x, y in zip(oa, ob):
-            for key in x:
-                if x.get(key) != y.get(key):
-                    note(f'ops_{which}_{key}', f"{v} {x.get('op_id')}")
-            for key in set(y) - set(x):
-                added[f'op:{key}'] += 1
+        for x, y in zip(oa, ob_):
+            cmp_dict(x, y, f'ops_{which}')
 da = {o['occurrence_id']: o for o in A[2]['differences']}
 db = {o['occurrence_id']: o for o in B[2]['differences']}
-for k in set(da) | set(db):
-    if k not in db or k not in da:
-        note('difference_record_presence', k)
+for k in sorted(set(da) ^ set(db)):
+    note('difference_record_presence', k)
+for k in sorted(set(da) & set(db)):
+    cmp_dict(da[k], db[k], 'difference_record')
+for key in set(A[2]) | set(B[2]):
+    if key in RUN_EXEMPT or key == 'differences':
         continue
-    for key in da[k]:
-        if da[k].get(key) != db[k].get(key):
-            note(f'difference_record_{key}', k)
-    for key in set(db[k]) - set(da[k]):
-        added[f'difference_record:{key}'] += 1
+    if A[2].get(key) != B[2].get(key):
+        note(f'run_json_section:{key}', key)
 ka, kb = A[2]['counts'], B[2]['counts']
 count_diffs = {k: (ka.get(k), kb.get(k)) for k in set(ka) | set(kb) if ka.get(k) != kb.get(k)}
 
 # حماية إصلاحات N3 بالاسم (في الحزمة الجديدة، وبمقارنتها بالأساس)
 P = []
-cb, ob, rb = B
+cb, ob, rb = B[:3]
 
 
 def prot(no, name, ok, ev):
@@ -97,7 +129,7 @@ def prot(no, name, ok, ev):
 
 r = cb['2:282']
 prot(1, 'حفظ المصدر الأصلي حرفياً (نص المصدر في الخلايا كما هو في الأساس)',
-     all(B[0][v]['source'] == A[0][v]['source'] for v in A[0]), 'مقارنة حقل source للآيات كلها')
+     va == vb and all(B[0][v].get('source') == A[0][v].get('source') for v in A[0]), 'مقارنة حقل source للآيات كلها')
 prot(2, 'فصل العرض المعياري عن التمثيل التحليلي',
      sum(1 for v in cb if cb[v]['display'] != cb[v]['analysis']) == sum(1 for v in A[0] if A[0][v]['display'] != A[0][v]['analysis']) > 0,
      'عدد الآيات التي يختلف فيها الناتجان مساوٍ للأساس')
@@ -137,15 +169,19 @@ prot(11, 'الحالات غير المحسومة وأسبابها وروابطه
      rb['counts']['words_unresolved'])
 
 out = dict(a=a.a, b=a.b, run_a=A[2]['identity']['run_id'], run_b=B[2]['identity']['run_id'],
-           changes=dict(C), examples={k: v for k, v in ex.items()}, additive_fields=dict(added),
+           changes=dict(C), examples={k: v for k, v in ex.items()}, allowed_additions=dict(added),
+           allowed_additions_rule={k: sorted(v) for k, v in ALLOWED_ADDITIONS.items()},
            count_differences=count_diffs, protection=P,
-           texts_identical=not any(k.startswith('text_') for k in C),
+           texts_identical=not any(k.startswith('changed:cells_record:display') or k.startswith('changed:cells_record:analysis')
+                                   for k in C),
            all_protected=all(p['ok'] for p in P))
+out['verdict_ok'] = not C and not count_diffs and out['all_protected']
 if a.out:
     json.dump(out, open(a.out, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
-print('تغييرات:', dict(C) or 'لا شيء')
-print('إضافات موثّقة:', dict(added) or 'لا شيء')
+print('فروقٌ غير مأذونة:', dict(C) or 'لا شيء')
+print('إضافاتٌ مأذونة (source_length، بقيمٍ صحيحة):', dict(added) or 'لا شيء')
 print('فروق الأعداد:', count_diffs or 'لا شيء')
 for p in P:
     print(('OK  ' if p['ok'] else 'BAD ') + f"{p['no']} {p['name']}")
-sys.exit(0 if out['texts_identical'] and out['all_protected'] else 1)
+print('PASS' if out['verdict_ok'] else 'FAIL')
+sys.exit(0 if out['verdict_ok'] else 1)
