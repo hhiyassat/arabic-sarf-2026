@@ -207,6 +207,10 @@ for s, v, t in ROWS:
             if o['rule_id'] not in ('N-SPACE', 'I-UNRESOLVED', 'N-MARK-FUNCTION') and changed:
                 reasons.append(dict(side='الناتج المعياري', rule_id=o['rule_id'], why=RULES[o['rule_id']][2]))
         d_rules = {o['rule_id'] for o in od}
+        # ما يطبّقه أحد الناتجين دون الآخر في هذه الكلمة (الفرق المتماثل بين قواعدهما)
+        gap = sorted((d_rules ^ {o['rule_id'] for o in oa}) - {'N-SPACE', 'I-UNRESOLVED', 'N-MARK-FUNCTION'})
+        if dw != aw and not gap:
+            C['gap_unexplained'] += 1
         for rr in sorted({o['rule_id'] for o in oa} - d_rules):
             if rr in PREV_SIDE and changed:
                 reasons.append(dict(side='الناتج السابق', rule_id=rr, why=PREV_SIDE[rr]))
@@ -231,7 +235,7 @@ for s, v, t in ROWS:
                                   source_spans=o['source_spans'], normalized_text=o['normalized_text'], status=o['status'])
                              for o in od if o['rule_id'] != 'N-SPACE'],
             rules=rules, preserved=sorted({f"{p['function']} {p['codepoint']}" for o in od for p in o['preserved_information']}),
-            difference_reasons=reasons, difference_check=('الفرق سكونٌ مشتقٌّ في الناتج السابق وحده (تحقّقٌ بالمقارنة)'
+            difference_reasons=reasons, representation_gap_rules=gap if dw != aw else [], difference_check=('الفرق سكونٌ مشتقٌّ في الناتج السابق وحده (تحقّقٌ بالمقارنة)'
                                                           if only_sukun else None),
             verification=verdict, deferral_reason='؛ '.join(un) if un else None))
 gz.close()
@@ -255,7 +259,7 @@ counts = dict(
     restore_failures=dict(normalized_output=C['restore_fail_display'], analysis_representation=C['restore_fail_analysis']),
     unrecorded_differences=dict(normalized_output=C['unrecorded_display'], analysis_representation=C['unrecorded_analysis']),
     alignment_errors=dict(verses=C['alignment_error_verses'], words=C['alignment_error_words']),
-    differences_unexplained=C['diff_unexplained'], differences_only_derived_sukun=C['diff_only_derived_sukun'],
+    differences_unexplained=C['diff_unexplained'], representation_gap_unexplained=C['gap_unexplained'], differences_only_derived_sukun=C['diff_only_derived_sukun'],
     source_words_dropped_but_preserved=C['words_dropped_but_preserved'],
     residual_uncovered_marks_in_output=dict(residual))
 coverage = [dict(codepoint=k, name=unicodedata.name(chr(int(k[2:], 16)), '?'), cls=char_class(chr(int(k[2:], 16))),
@@ -288,8 +292,8 @@ in282 = lambda o: o['verse'] == '2:282'
 GAP = collections.Counter()
 for o in occ:
     if o['new_output'] != o['analysis_representation']:
-        for x in o['difference_reasons']:
-            GAP[x['rule_id']] += 1
+        for x in o['representation_gap_rules']:
+            GAP[x] += 1
 mark_deferred = [o for o in occ if o['deferral_reason'] and 'نون التوكيد' in o['deferral_reason']]
 mark_rows = '\n'.join(f"| {o['occurrence_id']} | {o['source']} | {o['new_output']} | {o['analysis_representation']} | غير محسوم |"
                       for o in mark_deferred)
@@ -341,7 +345,8 @@ NEXTSTAGE = f"""## مدخل المرحلة التالية (خلايا المكت
   - وللتنوين `mark` (شكلٌ بلا وظيفة).
 - ولكل كلمةٍ سجلُّ عملياتها، ومنه كل «غير محسوم».
 
-**ما يختلف فيه التمثيل التحليلي عن الناتج المعياري** (كلمات بالقاعدة):
+**ما يختلف فيه التمثيل التحليلي عن الناتج المعياري**: القواعد التي يطبّقها أحدهما دون الآخر، بعدد الكلمات. \
+وكلماتٌ يختلف فيها الناتجان بلا قاعدةٍ فارقة: {counts['representation_gap_unexplained']}.
 
 | القاعدة | الكلمات |
 |---|---:|
