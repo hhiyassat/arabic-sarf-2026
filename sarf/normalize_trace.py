@@ -86,8 +86,7 @@ RULES = {
     'I-HAMZA-MADD': ('1.0', 'I', 'الهمزة المفتوحة بعدها ألف مدٍّ تُكتب آ (ءَامَنُوا ← آمَنُوا، ٱلۡقُرۡءَان ← الْقُرْآن)'),
     'I-SMALL-LETTER': ('1.0', 'I', 'الواو والياء الصغيرتان في غير الصلة حرفٌ في الإملاء (يَلۡوُۥنَ ← يَلْوُونَ)، إلا «دَاوُۥد» '
                        'فالإملاء بواوٍ واحدة'),
-    'I-IDGHAM-SHADDA': ('1.0', 'K/I', 'الشدّة على أول الكلمة علامة إدغام ما قبلها فيها (مُّسَمࣰّى، بَّيۡنَكُمۡ، رِّجَالِكُمۡ): '
-                        'ضبطٌ أدائي يُحذف من العرض الإملائي ويُحفظ؛ ويبقى في التمثيل التحليلي كما كان'),
+    'I-TANWIN-HAMZA-ALIF': ('1.0', 'I', 'تنوين الفتح على همزةٍ فوق الألف لا تُكتب بعده ألف (خَطَأً، مَلْجَأً، مُتَّكَأً)'),
     'I-ULA-WAW': ('1.0', 'I', 'واو «أولئك، أولو، أولات، أولي» تُكتب في الإملاء وإن وُسمت بالصفر (فَأُوْلَٰٓئِكَ ← فَأُولَئِكَ)؛ '
                   'وتُحذف علامة الصفر وحدها، ويبقى حذفها في التمثيل التحليلي (D21)'),
     'I-UNRESOLVED': ('1.0', 'I', 'صورةٌ رسمية لا تحسمها قاعدةٌ مكتوبة هنا (يَٰٓأَيُّهَا: الإملاء يفصل «يا»؛ وما بقي فيه أثرٌ عثماني): '
@@ -179,17 +178,26 @@ class Run:
                 out.append(Tok(ch, rest_src, True, [oid]))       # محرفٌ ثانٍ من المصدر نفسه (١ ← متعدد)
             else:
                 out.append(Tok(ch, (), True, [oid]))             # مضاف: لا يُنسب إلى المصدر
-        dropped = [t for t in rest] if not unmatched_new else []
-        dropped_src = sorted({i for t in dropped for i in t.src if not t.derived})
-        info = [dict(char=self.source[i], cp=f'U+{ord(self.source[i]):04X}', at=i, category=_cat(self.source[i]))
-                for i in dropped_src]
+        # المعلومة المحفوظة: كل محرفٍ من المصدر لم يبقَ بعينه في الناتج (محذوفاً كان أو مستبدَلاً أو مركَّباً)،
+        # بموضعه ورمزه ووظيفته؛ فصورة التنوين المتتابع مثلاً تبقى محفوظةً وإن صار تنويناً عادياً
+        mapped = {}
+        for tok in out:
+            for i in tok.src:
+                mapped.setdefault(i, tok.c)
+        gone = sorted({i for t in rest for i in t.src if not t.derived and mapped.get(i) != self.source[i]})
+        info = [dict(char=self.source[i], codepoint=f'U+{ord(self.source[i]):04X}', at=i, function=_cat(self.source[i]))
+                for i in gone]
         src_all = sorted({i for t in old for i in t.src})
         wd = sorted({self.word_of[i] for i in src_all if self.word_of[i] is not None})
+        occ = f"Q{self.loc}:{wd[0] + 1}" + (f"-{wd[-1] + 1}" if len(wd) > 1 else '') if wd and self.loc else (self.loc or 'نص')
         self.ops.append(dict(
-            id=f'{self.loc}#{oid}', rule=rule, rule_version=RULES[rule][0], rule_ref=RULES[rule][1], type=kind,
-            words=[w + 1 for w in wd], src_spans=_spans(src_all), src_text=''.join(self.source[i] for i in src_all),
-            src_cp=cp(''.join(self.source[i] for i in src_all)), before=''.join(t.c for t in old), before_cp=cp(''.join(t.c for t in old)),
-            after=new, after_cp=cp(new), preserved=info, status=status, note=note, _toks=None))
+            op_id=f'{self.loc}#{self.mode[0]}{oid}', occurrence_id=occ, words=[w + 1 for w in wd],
+            source_spans=_spans(src_all), source_text=''.join(self.source[i] for i in src_all),
+            source_codepoints=cp(''.join(self.source[i] for i in src_all)),
+            input_text=''.join(t.c for t in old), input_codepoints=cp(''.join(t.c for t in old)),
+            normalized_text=new, normalized_codepoints=cp(new), normalized_spans=None,
+            operation=kind, rule_id=rule, rule_version=RULES[rule][0], rule_reference=RULES[rule][1],
+            preserved_information=info, status=status, reason=note))
         self.T[a:b] = out
         return True
 
@@ -215,8 +223,9 @@ class Run:
                 o = self.ops[oid]
                 o.setdefault('_out', []).append(i)
         for o in self.ops:
-            o['out_spans'] = _spans(o.pop('_out', []))
-            o.pop('_toks', None)
+            if o['normalized_spans'] is None:
+                o['normalized_spans'] = _spans(o.pop('_out', []))
+            o.pop('_out', None)
         return out
 
 
@@ -421,8 +430,8 @@ def _clusters(w):
 
 # ---------- العرض الإملائي ----------
 OMIT_ALIF = re.compile(
-    '^(?:[وفبلك][َِ])?(?:'
-    'هَٰ?ذَ|هَٰ?ذِ|هَٰٓؤُ|هَٰ?كَذَ|ذَٰلِكَ|ذَٰلِكُ|ذَٰلِكِ|أُو?لَٰٓئِكَ|أُو?لَٰئِكَ|لَٰكِن|لَٰكِنَّ|إِلَٰه|ٱلرَّحۡمَٰن|الرَّحْمَٰن|طه'
+    '^(?:[وفبلك][َِ]|أَ)*(?:'
+    'هَٰ?ذَ|هَٰ?ذِ|هَٰٓؤُ|هَٰ?كَذَ|ذَٰلِكَ|ذَٰلِكُ|ذَٰلِكِ|أُو?لَٰٓ?ئِك|لَٰكِن|لَٰكِنَّ|إِلَٰه|ءِلَٰه|ٱلرَّحۡمَٰن|الرَّحْمَٰن|طه'
     ')')
 
 
@@ -434,8 +443,21 @@ def _display_rules(R):
         omit = bool(OMIT_ALIF.match(w))
         # الهمزة المفتوحة بعدها ألف مدٍّ ← آ (ما لم يسبقها مدّ)
         for m in reversed(list(re.finditer('([^اوي]?)(ء)َ(ا)', w))):
-            if m.group(1) or m.start() == 0:
-                R.replace(a + m.start(2), a + m.end(3), 'آ', 'I-HAMZA-MADD')
+            if not (m.group(1) or m.start() == 0):
+                continue
+            before = w[:m.start(2)]
+            pm = re.search('[\u064B-\u0652]*$', before).group()
+            pb = re.sub('[\u064B-\u0652\u0670]', '', before)[-1:]
+            after = re.sub('[\u064B-\u0652\u0670]', '', w[m.end(3):])
+            prefix_only = re.fullmatch('[\u0648\u0641\u0628\u0644\u0643][\u064E\u0650]', before) is not None
+            if not prefix_only and (KASRA in pm or pb == 'ي' and (not pm or SUKUN in pm)):
+                continue
+            if '\u06EC' in R.source and any(R.source[i] == '\u06EC' for t in R.T[a:a + len(w)] for i in t.src) or \
+                    any('\u06EC' in R.source[max(0, i - 1):i + 2] for i in R.T[a + m.start(3)].src):
+                continue                                      # الألف عليها علامة التسهيل (ءَا۬عۡجَمِيࣱّ): همزةٌ ثانية لا مدّ                                      # كرسيّها الياء (ٱلسَّيِّـَٔاتِ ← السَّيِّئَاتِ): لا مدّة
+            if not after:
+                continue                                      # الألف آخر الكلمة (رَءَا): غير محسوم، يُعلَّم في _unresolved
+            R.replace(a + m.start(2), a + m.end(3), 'آ', 'I-HAMZA-MADD')
         w = R.s[a:R.s.find(' ', a) if R.s.find(' ', a) >= 0 else len(R.s)]
         b = a + len(w)
         # الخنجرية
@@ -462,10 +484,13 @@ def _display_rules(R):
                 R.replace(a + m.start(), a + m.end(), '', 'I-MAQSURA-FINAL')
     # الهمزة المرسومة على المطّة أو على السطر وسطاً: كرسيّها بقواعد الإملاء
     _imlai_hamza(R)
-    # الشدّة على أول الكلمة علامةُ إدغامٍ من الكلمة قبلها (مُّسَمًّى، بَّيۡنَكُمۡ): ضبطٌ أدائي لا إملاء
-    s = R.s
-    for m in reversed(list(re.finditer('(?:^| )([^ \u064B-\u0652\u0670])([\u064B-\u0650]?)(\u0651)', s))):
-        R.replace(m.start(3), m.end(3), '', 'I-IDGHAM-SHADDA')
+    # الهمزة على الألف وبعدها ألفٌ من الخنجرية داخل الكلمة (ٱلۡـَٰٔنَ، قُرۡءَٰنًا): مدّة (آ)
+    for m in reversed(list(re.finditer('أَا(?=[^ ])', R.s))):
+        R.replace(m.start(), m.end(), 'آ', 'I-HAMZA-MADD')
+    # تنوين الفتح على همزةٍ فوق الألف لا تُكتب بعده ألف (خَطَـࣰٔا ← خَطَأً، مَلۡجَـًٔا ← مَلْجَأً)
+    for m in reversed(list(re.finditer('أً(ا)(?= |$)', R.s))):
+        R.replace(m.start(1), m.end(1), '', 'I-TANWIN-HAMZA-ALIF')
+    # والشدّة تبقى حيث كُتبت، ومنها شدّة الإدغام على أول الكلمة (مُّسَمًّى): حفظ الشدّة وعلاقتها بحرفها من العقد
 
 
 VOW = {FATHA: 2, DAMMA: 3, KASRA: 4, FATHATAN: 2, DAMMATAN: 3, KASRATAN: 4}
@@ -489,6 +514,12 @@ def _imlai_hamza(R):
         base_before = [c for c in w_before if not unicodedata.combining(c) and c != DAGGER]
         if not base_before:
             continue                                          # أول الكلمة: همزة القطع مرسومة بكرسيّها في المصدر
+        if re.fullmatch('[\u0648\u0641\u0628\u0644\u0643][\u064E\u0650]', w_before):
+            # بعد سابقةٍ من حرفٍ واحد (بِـَٔايَٰتِ): همزةٌ أولى، كرسيّها الألف بحركتها هي
+            hv0 = next((c for c in w_after[:1] if c in (FATHA, DAMMA, KASRA)), None)
+            seat = 'إ' if hv0 == KASRA else 'أ'
+            R.replace(i, i + 1, seat, 'I-HAMZA', note='همزةٌ أولى بعد سابقة')
+            continue
         after_marks = ''
         for c in w_after:                                     # علامات الهمزة نفسها حتى الحرف التالي
             if not (unicodedata.combining(c) or c == DAGGER):
@@ -511,6 +542,7 @@ def _imlai_hamza(R):
             seat = 'ء'                                        # بعد مدٍّ أو واوٍ ساكنة: على السطر
         elif prev == 'ي' and pv <= 1:
             seat = 'ئ'
+            # بعد الياء الساكنة ياءً (هَيْئَة، شَيْئًا، خَطِيئَة): قرار مجمع اللغة العربية بالقاهرة
         elif final:
             seat = {4: 'ئ', 3: 'ؤ', 2: 'أ'}.get(pv, 'ء')
             if rest_letters == ['ا'] and pv <= 1:            # شَيۡـًٔا، جُزۡءًا
@@ -539,13 +571,23 @@ def _unresolved(R):
             why.append('«ها» التنبيه موصولةٌ بما بعدها رسماً (هَٰٓأَنتُمۡ)، والإملاء يفصلها')
         if DAGGER in w:
             why.append('ألفٌ خنجرية لم تحسمها قاعدة')
+        if re.match('^لْ[أإآءئؤ]', w):
+            why.append('لام التعريف بلا ألفٍ رسماً (لۡـَٔيۡكَةِ)؛ وإثبات الألف قراءةٌ لا رسم')
+        if '\u06EC' in sw and 'ا\u06EC' in swn:
+            why.append('ألفٌ عليها علامة التسهيل (ءَا۬عۡجَمِيࣱّ): همزةٌ ثانية مسهَّلة، وكتابتها إملاءً «أأعجمي» قراءةٌ لا رسم')
+        if re.search('[ءأ]َا$', w):
+            why.append('الألف بعد الهمزة في آخر الكلمة (رَءَا)، والإملاء «رأى»: تحويلها ياءً معرفةٌ بالكلمة لا رسم')
         if why:
-            R.ops.append(dict(id=f'{R.loc}#{len(R.ops)}', rule='I-UNRESOLVED', rule_version='1.0', rule_ref='I',
-                              type='غير محسوم', words=sorted({R.word_of[i] + 1 for t in R.T[m.start():m.end()] for i in t.src
-                                                             if R.word_of[i] is not None}),
-                              src_spans=_spans([i for t in R.T[m.start():m.end()] for i in t.src]), src_text='',
-                              src_cp='', before=w, before_cp=cp(w), after=w, after_cp=cp(w), preserved=[],
-                              status='غير محسوم', note='؛ '.join(why), out_spans=[[m.start(), m.end()]]))
+            ws = sorted({R.word_of[i] + 1 for t in R.T[m.start():m.end()] for i in t.src if R.word_of[i] is not None})
+            sp = sorted({i for t in R.T[m.start():m.end()] for i in t.src})
+            R.ops.append(dict(op_id=f'{R.loc}#{R.mode[0]}{len(R.ops)}',
+                              occurrence_id=f"Q{R.loc}:{ws[0]}" + (f"-{ws[-1]}" if len(ws) > 1 else '') if ws else R.loc,
+                              words=ws, source_spans=_spans(sp), source_text=''.join(R.source[i] for i in sp),
+                              source_codepoints=cp(''.join(R.source[i] for i in sp)), input_text=w, input_codepoints=cp(w),
+                              normalized_text=w, normalized_codepoints=cp(w), normalized_spans=[[m.start(), m.end()]],
+                              operation='غير محسوم', rule_id='I-UNRESOLVED', rule_version=RULES['I-UNRESOLVED'][0],
+                              rule_reference=RULES['I-UNRESOLVED'][1], preserved_information=[],
+                              status='غير محسوم', reason='؛ '.join(why)))
 
 
 # ---------- الواجهة ----------
@@ -590,7 +632,7 @@ def restore_source(res, which='analysis'):
         for i in c['src']:
             got[i] = None
     for o in res['ops_' + which]:
-        for p in o['preserved']:
+        for p in o['preserved_information']:
             got[p['at']] = None
     src = res['source']
     missing = [i for i in range(len(src)) if i not in got]
