@@ -3,6 +3,9 @@
 """
 tools/report_serial.py — تسمية التقارير: arabic-sarf-<رقم تسلسلي>.html (حكم المالك، 3 نوفمبر 2026).
 
+التقرير هو صفحة مسار التحليل (tools/pipeline_trace.py) بشكلها ومحتواها، يُكتب باسم arabic-sarf-NNN.html إذا لم يُعطَ -o.
+وأمر publish أدناه لصفحات الملخّص وحدها، وليس بديلاً عن التقرير.
+
 كل تقريرٍ يُسلَّم يُنشر صفحة HTML واحدة باسم arabic-sarf-NNN.html في reports/، والرقم التالي يُحسب من الموجود
 (لا يُعاد استعمال رقم ولا يُستبدل تقريرٌ سابق). ويُسجَّل كل تقرير في reports/arabic-sarf-index.md بتاريخه والتزامه ومصادره.
 
@@ -19,6 +22,19 @@ PAT = re.compile(r'^arabic-sarf-(\d+)\.html$')
 def next_serial():
     nums = [int(m.group(1)) for _, _, fs in os.walk(R) for f in fs for m in [PAT.match(f)] if m]
     return max(nums, default=0) + 1
+
+
+def register(path, title, sources, commit=None, note=''):
+    """يسجّل تقريراً منشوراً في reports/arabic-sarf-index.md (الرقم من اسم الملف)"""
+    name = os.path.basename(path)
+    n = int(PAT.match(name).group(1))
+    if commit is None:
+        commit = subprocess.run(['git', '-C', H, 'rev-parse', '--short', 'HEAD'], capture_output=True, text=True).stdout.strip()
+    idx = os.path.join(R, 'arabic-sarf-index.md')
+    if not os.path.exists(idx):
+        open(idx, 'w', encoding='utf-8').write('# فهرس التقارير (arabic-sarf-NNN.html)\n\n| الرقم | الملف | التاريخ | الالتزام | العنوان | المصادر |\n|---|---|---|---|---|---|\n')
+    with open(idx, 'a', encoding='utf-8') as f:
+        f.write(f"| {n:03d} | `{name}` | {datetime.date.today().isoformat()} | `{commit}` | {title}{(' — ' + note) if note else ''} | {sources} |\n")
 
 
 def _inline(s):

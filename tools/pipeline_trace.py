@@ -49,7 +49,12 @@ else:
                                                      for l in open('data/quran_hafs.tsv', encoding='utf-8'))}
     VERSES = [(int(s), v, ROWS[(int(s), v)]) for v in range(int(a_), int(b_) + 1)]
     tag = f"{s}_{a_}" + (f"-{b_}" if b_ != a_ else '')
-OUT = args.out or f'reports/trace_{tag}.html'
+if args.out:
+    OUT = args.out
+else:                                   # حكم المالك: التقرير صفحة المسار نفسها باسم arabic-sarf-<رقم>.html
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import report_serial
+    OUT = os.path.join('reports', f'arabic-sarf-{report_serial.next_serial():03d}.html')
 h = html.escape
 SECTIONS = []          # (رقم، عنوان، شرح، html، نصّ للطرفية)
 
@@ -582,5 +587,8 @@ page += f'<footer class="mut">بصمة المخرج (sha256 للصفحة قبل 
 os.makedirs(os.path.dirname(os.path.abspath(OUT)), exist_ok=True)
 open(OUT, 'w', encoding='utf-8').write(page)
 print(f'\nكُتب {OUT}')
+if not args.out:
+    report_serial.register(OUT, title, f"`tools/pipeline_trace.py {args.ref or '--text'}`", commit=PROV['commit'][:7],
+                           note=f"هوية التشغيل {PROV['run_id']}" + (' (تعديلات غير ملتزم بها)' if PROV['dirty'] else ''))
 print(f"هوية التشغيل {PROV['run_id']} · الالتزام {PROV['commit'][:10]} · "
       f"{'تعديلات غير ملتزم بها: ' + str(len(PROV['dirty'])) if PROV['dirty'] else 'الشيفرة مطابقة للالتزام'}")

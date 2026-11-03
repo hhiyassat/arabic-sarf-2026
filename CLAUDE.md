@@ -64,6 +64,7 @@
 
 ## ٥. تسمية التقارير (حكم المالك، 3 نوفمبر 2026)
 
-- كل تقريرٍ يُسلَّم يُنشر صفحة HTML واحدة باسم `arabic-sarf-<رقم تسلسلي>.html` في `reports/` (مثل `arabic-sarf-001.html`).
-- الرقم التالي يُحسب من الموجود بـ`tools/report_serial.py next`، والنشر بـ`tools/report_serial.py publish --title … <مصادر.md> [--link …]`.
-- لا يُعاد استعمال رقم، ولا يُستبدل تقريرٌ سابق؛ ويُسجَّل كل تقرير في `reports/arabic-sarf-index.md` بتاريخه والتزامه ومصادره.
+- التقرير هو **صفحة مسار التحليل** (`tools/pipeline_trace.py`) بشكلها وأقسامها ومحتواها، ولا يُبدَّل قالبها.
+- تُكتب باسم `arabic-sarf-<رقم تسلسلي>.html` في `reports/` (مثل `arabic-sarf-003.html`): `python3 tools/pipeline_trace.py 2:282` بلا `-o`.
+- الرقم التالي يُحسب من الموجود (`tools/report_serial.py next`)؛ ولا يُعاد استعمال رقم، ولا يُستبدل تقريرٌ سابق.
+- يُسجَّل كل تقرير في `reports/arabic-sarf-index.md` بتاريخه والتزامه وهوية تشغيله وأمره.
