@@ -321,6 +321,8 @@ def _candidates_kind(text, info):
         if cls == 'VIII' and len(toks) > 1 and toks[1][0] in ('ط', 'د'):
             seqs.append([toks[0], ('ت', toks[1][1])] + toks[2:])
         for seq in seqs:
+            if not seq:
+                continue                               # تسلسلٌ فارغ بعد نزع اللواحق (أَتَاكَ في الرسم الإملائي): لا قالب يطابقه
             if kind == 'madi' and not sig and seq and not (FATHA in seq[-1][1] or seq[-1][0] in ('ى', 'ا')) and \
                     not text.endswith(('تْ', 'تِ')):
                 continue                               # الماضي بلا لاحقة آخره مفتوح (يَكُنۡ ليس ماضياً)

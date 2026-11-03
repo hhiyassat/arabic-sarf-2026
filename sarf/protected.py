@@ -347,6 +347,12 @@ def _search(toks):
                 if r == 0 and len(rest) < 3 and not any(_key(rest[:1]) == q for q in ('و', 'ف')) and \
                         not any(_strict(rest, _toks(q), iltiqa=False) for q in SHORT_AFTER_HAMZA):
                     continue                                  # أَمِنَ فعلٌ لا «أَ» + «مِنَ»: الاستفهام قبل قلبٍ قصير بلا عاطف
+                madd = tk[len(pt) - 1][0] == 'آ'               # «آ» حرفاً واحداً: الهمزة والألف بعدها
+                tail = rest if madd else rest[1:] if rest and rest[0][0] == 'ا' else None
+                if r == 0 and tail is not None and not (
+                        len(tail) > 1 and tail[0][0] == 'ل' and (not tail[0][1] or SUKUN in tail[0][1] or SHADDA in tail[1][1])):
+                    continue                                  # «آ» = همزة الاستفهام فوق همزة وصل «ال» وحدها (آللَّهُ، آلْآنَ)؛
+                                                              # لا آمَنَ ولا آيَاتِ ولا آلَاءِ ولا آوَوا في الرسم الإملائي
                 stack.append((rest, pre + [p]))
                 if p in ('لَ', 'لِ', 'بِ', 'كَ') and rest and rest[0][0] == 'ا':
                     stack.append((rest[1:], pre + [p]))           # بِٱلۡ: همزة الوصل تسقط بعد الجارّ

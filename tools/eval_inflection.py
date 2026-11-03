@@ -22,7 +22,8 @@ def _one(t):
     from sarf.features import unit_features
     from sarf.relations import verse_relations, check_inflection
     s, v, text = t
-    a = analyze(_CAT[0], text)
+    from sarf import quran_source
+    a = analyze(_CAT[0], text, quran_source.uthmani_mode())
     _, U = sentence_geo(a, f'Q{s}:{v}', Trace())
     out = verse_relations(a, U, unit_features(a, U), f'{s}:{v}')
     rows = []
@@ -48,8 +49,8 @@ def main():
     sys.path.insert(0, os.path.join(H, 'tools'))
     import provenance
     _CAT.append(Catalog([os.path.join(H, 'operators_catalog.jsonl'), os.path.join(H, 'operators_catalog_split_vocalized.csv')]))
-    V = [(int(p[0]), int(p[1]), p[2]) for p in (l.rstrip('\n').split('\t') for l in open(os.path.join(H, 'data', 'quran_hafs.tsv'),
-                                                                                        encoding='utf-8')) if len(p) >= 3 and p[0].isdigit()]
+    from sarf import quran_source
+    V = quran_source.rows()
     with mp.get_context('fork').Pool(a.jobs) as P:
         res = P.map(_one, V, chunksize=20)
     C, K, conf, chk, verbs_jarr = collections.Counter(), collections.Counter(), [], [], 0

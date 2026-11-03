@@ -36,7 +36,8 @@ def code_files():
 
 def data_files():
     out = [os.path.join(H, f) for f in ('operators_catalog.jsonl', 'operators_catalog_split_vocalized.csv',
-                                         'data/quran_hafs.tsv') if os.path.exists(os.path.join(H, f))]
+                                         'data/quran_hafs.tsv', 'data/quran_simple.tsv', 'data/quran-simple-enhanced.txt')
+           if os.path.exists(os.path.join(H, f))]
     out += glob.glob(os.path.join(H, 'lexicon', '*.jsonl'))
     return out
 

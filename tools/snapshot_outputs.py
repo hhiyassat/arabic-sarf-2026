@@ -29,10 +29,15 @@ def canon(x):
 
 def _verses(root, only):
     out = []
-    for l in open(os.path.join(root, 'data', 'quran_hafs.tsv'), encoding='utf-8'):
-        p = l.rstrip('\n').split('\t')
-        if len(p) >= 3 and p[0].isdigit() and (not only or f'{p[0]}:{p[1]}' in only):
-            out.append((int(p[0]), int(p[1]), p[2]))
+    import importlib.util                   # منفذ المصحف من هذا المستودع: المدخل واحدٌ للنسختين المقارَنتين
+    spec = importlib.util.spec_from_file_location('quran_source_here', os.path.join(os.path.dirname(os.path.dirname(
+        os.path.abspath(__file__))), 'sarf', 'quran_source.py'))
+    qs = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(qs)
+    _CTX['mode'] = qs.uthmani_mode()
+    for s_, v_, t_ in qs.rows():
+        if not only or f'{s_}:{v_}' in only:
+            out.append((s_, v_, t_))
     return out
 
 
@@ -44,7 +49,7 @@ def _one(t):
     from sarf.algebra import Trace, sentence_geo
     from sarf.features import unit_features
     s, v, text = t
-    a = analyze(_CTX['cat'], text)
+    a = analyze(_CTX['cat'], text, _CTX.get('mode', 'auto'))
     T = Trace()
     S, units = sentence_geo(a, f'Q{s}:{v}', T)
     F = unit_features(a, units)

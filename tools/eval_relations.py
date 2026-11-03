@@ -21,15 +21,14 @@ CAT = Catalog([os.path.join(H, 'operators_catalog.jsonl'), os.path.join(H, 'oper
 
 
 def verses():
-    for l in open(os.path.join(H, 'data', 'quran_hafs.tsv'), encoding='utf-8'):
-        p = l.rstrip('\n').split('\t')
-        if len(p) >= 3 and p[0].isdigit():
-            yield int(p[0]), int(p[1]), p[2]
+    from sarf import quran_source
+    yield from quran_source.rows()
 
 
 def rel_of(t):
     s, v, text = t
-    a = analyze(CAT, text)
+    from sarf import quran_source
+    a = analyze(CAT, text, quran_source.uthmani_mode())
     _, U = sentence_geo(a, f'Q{s}:{v}', Trace())
     out = verse_relations(a, U, unit_features(a, U), f'{s}:{v}')
     return f'{s}:{v}', out, check_records(out['records'], out['tokens'])

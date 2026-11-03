@@ -45,8 +45,8 @@ if args.text:
 else:
     s, vv = args.ref.split(':')
     a_, b_ = (vv.split('-') + [vv])[:2]
-    ROWS = {(int(x[0]), int(x[1])): x[2] for x in (l.rstrip('\n').split('\t')
-                                                     for l in open('data/quran_hafs.tsv', encoding='utf-8'))}
+    from sarf import quran_source
+    ROWS = {(s_, v_): t_ for s_, v_, t_ in quran_source.rows()}
     VERSES = [(int(s), v, ROWS[(int(s), v)]) for v in range(int(a_), int(b_) + 1)]
     tag = f"{s}_{a_}" + (f"-{b_}" if b_ != a_ else '')
 if args.out:
@@ -87,7 +87,7 @@ PIPE = Pipeline(cat)
 per_verse = []
 for s, v, text in VERSES:
     ctx_cls = __import__('sarf.pipeline', fromlist=['VerseContext']).VerseContext
-    ctx = ctx_cls(text, 'auto')
+    ctx = ctx_cls(text, 'auto' if args.text else quran_source.uthmani_mode())
     snaps, logs = {}, []
     for st in PIPE.stages:
         logs.append((st.name, st.doc, st.fn(ctx, PIPE)))
@@ -106,7 +106,7 @@ for pv in per_verse:
     items.append((pv['s'], pv['v'], pv['a'], units, S_))
     cur = dict(s=pv['s'], v=pv['v'], text=pv['text'], a=pv['a'], units=units, S=S_)
     if prev is not None:
-        cross += cross_ayah_links(lambda t_: analyze(cat, t_), prev, cur)
+        cross += cross_ayah_links(lambda t_: analyze(cat, t_, 'auto' if args.text else quran_source.uthmani_mode()), prev, cur)
         ends.add((prev['s'], prev['v']))
     prev = cur
 LT, lstats, _ = linguistic_layer(items, Trace(), 'trace', cross=cross, checked_ends=frozenset(ends))
@@ -120,7 +120,15 @@ for pv in per_verse:
     sha = hashlib.sha256(pv['text'].encode()).hexdigest()[:16]
     rows.append([f"{pv['s']}:{pv['v']}", f"<span class='ar'>{h(pv['text'])}</span>", f'{len(pv["text"].split())}', f'<code>{sha}</code>'])
     tl.append(f"{pv['s']}:{pv['v']}  {pv['text']}")
-section(1, 'المدخل', 'النص كما ورد، بحركاته ورسمه (data/quran_hafs.tsv أو --text)', rows, ['الموضع', 'النص', 'الكلمات', 'البصمة'], tl)
+    if not args.text:
+        src_line = quran_source.source_line(pv['s'], pv['v'])
+        if src_line and src_line != pv['text']:
+            rows.append([f"{pv['s']}:{pv['v']} (المصدر)", f"<span class='ar'>{h(src_line)}</span>", '—',
+                         '<code>' + hashlib.sha256(src_line.encode()).hexdigest()[:16] + '</code>'])
+section(1, 'المدخل', ('النص المحلَّل، بحركاته ورسمه، من ' + (quran_source.tsv_path() if not args.text else '--text') +
+                     ' (المصحف المعتمد: ' + (quran_source.name() if not args.text else 'نصّ حرّ') + '). وصفّ «المصدر» سطر الملف كما ورد: '
+                     'البسملة الملصقة بالآية الأولى مفصولةٌ عن التحليل، و«<sel>» وقفٌ غير محدَّد النوع خارج التحليل (حكم المالك، 3 نوفمبر 2026)'),
+        rows, ['الموضع', 'النص', 'الكلمات', 'البصمة'], tl)
 
 # ٢ التطبيع: محاذاةٌ بمجالات محارف المصدر، لا بترتيب القائمتين
 from sarf.normalize import uthmani_normalize
@@ -179,7 +187,8 @@ for pv in per_verse:
     pv['srcmap'] = source_map(pv['text'], pv['a']['normalized'])
     # العرض الإملائي (display) والعمليات المسجَّلة بقواعدها (sarf.normalize_trace)؛ والتحليل يجري على التمثيل التحليلي
     try:
-        nt = normalize_traced(pv['text'])
+        nt = normalize_traced(pv['text'], implicit_sukun=None if args.text else
+                              {'on': True, 'off': False, 'auto': None}[quran_source.uthmani_mode()])
         disp = nt['display'].split()
         disp = disp if len(disp) == len(nor) else None
         ops = nt['ops_analysis']

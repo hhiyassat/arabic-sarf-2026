@@ -43,6 +43,7 @@ def check(name, cond, got):
 
 
 def verse_text(s, v):
+    # هذا الملف مثبَّتٌ على مصحف المجمّع (مواضعه وصيغه من تدقيق 2:282)؛ والمصحف المعتمد الجديد له tests/test_quran_source.py
     for l in open(H + 'data/quran_hafs.tsv', encoding='utf-8'):
         p = l.rstrip('\n').split('\t')
         if len(p) >= 3 and p[0] == str(s) and p[1] == str(v):
@@ -153,7 +154,7 @@ check('I13 عابر: الإسناد المرخَّص هو مصدر رفع الم
 with tempfile.TemporaryDirectory() as d:
     out = os.path.join(d, 't.html')
     subprocess.run([sys.executable, H + 'tools/pipeline_trace.py', '2:282', '-o', out, '--quiet'], check=True,
-                   capture_output=True, env=dict(os.environ))
+                   capture_output=True, env=dict(os.environ, SARF_QURAN='hafs_kfgqpc'))   # المصدر نفسه الذي يقرؤه هذا الملف
     page = open(out, encoding='utf-8').read()
 import html as _h
 missing = [(u, axes[u]['inflection']['statement']) for u, _, _ in o['tokens'] if axes[u]['inflection']['statement'] and

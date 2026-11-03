@@ -18,7 +18,7 @@ def _one(t):
     from sarf.features import unit_features
     from sarf.relations import verse_relations
     s, v, text = t
-    a = analyze(_CAT[0], text)
+    a = analyze(_CAT[0], text, _MODE[0] if _MODE else 'auto')
     _, U = sentence_geo(a, f'Q{s}:{v}', Trace())
     out = verse_relations(a, U, unit_features(a, U), f'{s}:{v}')
     keep = ('relation_id', 'type', 'rule_id', 'rule_version', 'status', 'heads', 'positions', 'texts', 'reason', 'premises',
@@ -30,6 +30,7 @@ def _one(t):
 
 
 _CAT = []
+_MODE = []
 
 
 def dump(root, path, jobs):
@@ -37,8 +38,13 @@ def dump(root, path, jobs):
     sys.path.insert(0, root)
     from sarf.catalog import Catalog
     _CAT.append(Catalog([os.path.join(root, 'operators_catalog.jsonl'), os.path.join(root, 'operators_catalog_split_vocalized.csv')]))
-    V = [(int(p[0]), int(p[1]), p[2]) for p in (l.rstrip('\n').split('\t') for l in open(os.path.join(root, 'data', 'quran_hafs.tsv'),
-                                                                                        encoding='utf-8')) if len(p) >= 3 and p[0].isdigit()]
+    import importlib.util                   # منفذ المصحف من هذا المستودع (لا من الجذر المقارَن): المدخل واحدٌ للطرفين
+    spec = importlib.util.spec_from_file_location('quran_source_here', os.path.join(os.path.dirname(os.path.dirname(
+        os.path.abspath(__file__))), 'sarf', 'quran_source.py'))
+    qs = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(qs)
+    V = qs.rows()
+    _MODE.append(qs.uthmani_mode())
     with mp.get_context('fork').Pool(jobs) as P:
         lines = P.map(_one, V, chunksize=20)
     with gzip.open(path, 'wt', encoding='utf-8') as f:
