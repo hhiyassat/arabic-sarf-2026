@@ -1,0 +1,352 @@
+[
+ {
+  "id": "T01",
+  "input": "زيدٌ قائمٌ",
+  "contract_expectation": "إسناد اسمي محلي؛ لا شهادة حد",
+  "executed": true,
+  "result": "DIFFERS",
+  "observed": "«زَيْدٌ» نكرةٌ بالتنوين ولا جرد أعلامٍ يثبت علميته: N01 مؤجَّل (أهلية الابتداء)؛ والنمط نفسه بمعرفةٍ مثبتة «الرَّجُلُ قَائِمٌ» مرخَّص بلا شهادة حدّ"
+ },
+ {
+  "id": "T02",
+  "input": "في الدار رجلٌ",
+  "contract_expectation": "PP ونواة في الوجه الخبري",
+  "executed": true,
+  "result": "PASS",
+  "observed": [
+   "LICENSED",
+   "LICENSED"
+  ]
+ },
+ {
+  "id": "T03",
+  "input": "زيدٌ في الدار",
+  "contract_expectation": "نواة بخبر شبه جملة (N02)",
+  "executed": true,
+  "result": "DIFFERS",
+  "observed": "«زَيْدٌ» بلا دليل علمية: N02 مؤجَّل؛ و«ٱلرَّجُلُ فِي ٱلدَّارِ» مرخَّص بـN02"
+ },
+ {
+  "id": "T04",
+  "input": "الله الصمد",
+  "contract_expectation": "لا رفض لتعريف الخبر؛ قاعدة أو تأجيل",
+  "executed": true,
+  "result": "PASS",
+  "observed": [
+   "DEFERRED",
+   "الطرفان معرفتان أو تعريف المسند غير منفيّ: خبرٌ معرفة، أو نعت، أو بدل — خارج تغطية N01 v1"
+  ]
+ },
+ {
+  "id": "T05",
+  "input": "زيدٌ",
+  "contract_expectation": "مسند إليه محتمل؛ لا خبر ولا إغلاق",
+  "executed": true,
+  "result": "PASS",
+  "observed": "مسندٌ إليه محتمل بلا مسندٍ في إطاره: لا يُختلق خبر"
+ },
+ {
+  "id": "T06",
+  "input": "زيدٌ قائمًا",
+  "contract_expectation": "رفض مرشّح الخبر المرفوع وحده",
+  "executed": true,
+  "result": "PASS",
+  "observed": "«قَائِمًا» نصب كتابةً: لا يُرخَّص خبراً مفرداً مرفوعاً في هذا الوجه (ولا يُحكم على النص كله)"
+ },
+ {
+  "id": "T07",
+  "input": "كان زيدٌ قائمًا",
+  "contract_expectation": "وصلة ناسخ؛ لا مبتدأ وخبر",
+  "executed": true,
+  "result": "PASS",
+  "observed": "LICENSED"
+ },
+ {
+  "id": "T08",
+  "input": "إن زيدًا قائمٌ",
+  "contract_expectation": "اسم إن وخبرها",
+  "executed": true,
+  "result": "PASS",
+  "observed": "LICENSED"
+ },
+ {
+  "id": "T09",
+  "input": "الذي عليه الحق",
+  "contract_expectation": "نواة في الصلة؛ الهاء محل جر؛ العائد مستقل",
+  "executed": true,
+  "result": "PASS",
+  "observed": {
+   "container": "LICENSED",
+   "nucleus": "LICENSED",
+   "resumptive": "DEFERRED"
+  }
+ },
+ {
+  "id": "T10",
+  "input": "كان الذي عليه الحق سفيهًا",
+  "contract_expectation": "الصلة لا تبتلع سفيهًا؛ خبر كان",
+  "executed": true,
+  "result": "PASS",
+  "observed": {
+   "extent": {
+    "relative": "الَّذِي",
+    "content": "عَلَيْ هِ الْحَقُّ"
+   },
+   "khabar": "سَفِيهًا"
+  }
+ },
+ {
+  "id": "T11",
+  "input": "فليس عليكم جناح",
+  "contract_expectation": "وصلة ليس أو تأجيل محدد؛ لا إغلاق",
+  "executed": true,
+  "result": "PASS",
+  "observed": [
+   "LICENSED",
+   {
+    "nasikh": "لَيْسَ",
+    "ism": "جُنَاحٌ",
+    "khabar": "عَلَيْ كُمْ"
+   }
+  ]
+ },
+ {
+  "id": "T12",
+  "input": "والله بكل شيء عليم",
+  "contract_expectation": "نواة محلية، والتعلق مستقل؛ لا جذر للفظ الجلالة",
+  "executed": true,
+  "result": "PASS",
+  "observed": {
+   "nucleus": "LICENSED",
+   "hosts": [
+    "عَلِيمٌ"
+   ]
+  }
+ },
+ {
+  "id": "T13",
+  "input": "ذلكم أقسط عند الله",
+  "contract_expectation": "الإسناد غير التعلق؛ عند ظرف لا جار",
+  "executed": true,
+  "result": "PASS",
+  "observed": {
+   "advp": "LICENSED",
+   "nucleus": [
+    "DEFERRED",
+    "اسمية «أَقْسَطُ» غير مثبتة في هذا التحليل (أَفْعَل: اسم تفضيلٍ مرشّح، أو مضارع ا"
+   ]
+  }
+ },
+ {
+  "id": "T14",
+  "input": "مررت برجل في الدار",
+  "contract_expectation": "حفظ بدائل التعلق والوصف",
+  "executed": true,
+  "result": "PASS",
+  "observed": [
+   "فعل",
+   "وصفٌ محتمل (قالب)",
+   "نعتٌ للنكرة قبله (متعلّقٌ بمحذوف)"
+  ]
+ },
+ {
+  "id": "T15",
+  "input": "محمدٌ أخوه حاضرٌ",
+  "contract_expectation": "لا وصل آلي لأول اسمين",
+  "executed": true,
+  "result": "PASS",
+  "observed": [
+   {
+    "subject": "مُحَمَّدٌ",
+    "predicate": "أَخُو"
+   }
+  ]
+ },
+ {
+  "id": "T16",
+  "input": "شهيدين / رجلين / امرأتان",
+  "contract_expectation": "مصالحة الاسمية مع سبب الإغلاق",
+  "executed": true,
+  "result": "PASS",
+  "observed": []
+ },
+ {
+  "id": "T17",
+  "input": "تكتبوه / تكتبوها",
+  "contract_expectation": "مصالحة الفعلية مع الوصف القديم",
+  "executed": true,
+  "result": "PASS",
+  "observed": [
+   [
+    true,
+    "كتب"
+   ],
+   [
+    true,
+    "كتب"
+   ]
+  ]
+ },
+ {
+  "id": "T18",
+  "input": "اسم مبني في محل رفع",
+  "contract_expectation": "دليل المحل كافٍ",
+  "executed": true,
+  "result": "PASS",
+  "observed": [
+   "«هُوَ» أول الكلام (أول الآية)",
+   "«هُوَ»: مبنيٌّ: المحلّ يُعيَّن بموقعه",
+   "«هُوَ»: ملف المبنيات: separate_pronoun",
+   "«قَائِمٌ»: الرفع مكتوب، والتنكير مثبت"
+  ]
+ },
+ {
+  "id": "T19",
+  "input": "تنوين بلا وظيفة معيّنة",
+  "contract_expectation": "لا اسمية من الشكل وحده",
+  "executed": true,
+  "result": "DIFFERS",
+  "observed": "الاسمية في المشروع تثبت بالتنوين المكتوب (حكمٌ قائم في sarf.features)، والعقد يمنعه شاهداً وحده: تعارضٌ معروض على صاحب النظرية؛ والدليل ظاهرٌ في المقدّمات، والإسناد غير مرخَّص هنا"
+ },
+ {
+  "id": "T20",
+  "input": "إزاحة كلمة من طرف",
+  "contract_expectation": "كشف عدم احتواء الرأس",
+  "executed": true,
+  "result": "PASS",
+  "observed": [
+   "2:282:PREDICATIVE_PP:N02:predicate_pp=2:282.w25.u0+subject=2:282.w26.u0: الرأس «subject» ليس من أعضاء طرفه",
+   "2:282:PREDICATIVE_PP:N02:predicate_pp=2:282.w25.u0+subject=2:282.w26.u0: حاويةٌ غير موجودة"
+  ]
+ },
+ {
+  "id": "T21",
+  "input": "نقل علاقة إلى حاوية مجاورة",
+  "contract_expectation": "كشف العبور",
+  "executed": true,
+  "result": "PASS",
+  "observed": [
+   "2:282:PREDICATIVE_PP:N02:predicate_pp=2:282.w25.u0+subject=2:282.w26.u0: العضو 2:282.w26.u0 خارج امتداد حاويته",
+   "2:282:PREDICATIVE_PP:N02:predicate_pp=2:282.w25.u0+subject=2:282.w26.u0: العضو 2:282.w25.u0 خارج امتداد حاويته"
+  ]
+ },
+ {
+  "id": "T22",
+  "input": "برهان دائري",
+  "contract_expectation": "لا ترخيص نهائي",
+  "executed": true,
+  "result": "PASS",
+  "observed": [
+   "برهانٌ دائري: X1 ← X2 ← X1",
+   "X1: مقدّماته كلها علاقاتٌ بلا حقيقةٍ مصدرية مستقلة",
+   "X2: مقدّماته كلها علاقاتٌ بلا حقيقةٍ مصدرية مستقلة"
+  ]
+ },
+ {
+  "id": "T23",
+  "input": "مرشح واحد وبحث ناقص",
+  "contract_expectation": "DEFERRED للانفراد",
+  "executed": true,
+  "result": "PASS",
+  "observed": 4
+ },
+ {
+  "id": "T24",
+  "input": "تكرار اللفظ في موضعين",
+  "contract_expectation": "هويتان مختلفتان",
+  "executed": true,
+  "result": "PASS",
+  "observed": {
+   "positions": [
+    [
+     "2:282:25"
+    ],
+    [
+     "2:282:37"
+    ]
+   ],
+   "detected": 2
+  }
+ },
+ {
+  "id": "T25",
+  "input": "ىٰ / خنجرية على غير ى",
+  "contract_expectation": "حذف في الأولى فقط",
+  "executed": true,
+  "result": "PASS",
+  "observed": [
+   "إِلَى",
+   "ذَٰلِكَ"
+  ]
+ },
+ {
+  "id": "T26",
+  "input": "نواة مكتملة ومتعلّق مؤجَّل",
+  "contract_expectation": "nucleus_complete دون clause_complete",
+  "executed": true,
+  "result": "PASS",
+  "observed": [
+   true,
+   null
+  ]
+ },
+ {
+  "id": "T27",
+  "input": "نهاية آية مع التزام مفتوح",
+  "contract_expectation": "حد مصدر لا اكتمال",
+  "executed": true,
+  "result": "PASS",
+  "observed": [
+   "PREDICATION"
+  ]
+ },
+ {
+  "id": "T28",
+  "input": "عليه بمعنى غير محسوم",
+  "contract_expectation": "PP يُبنى بمقدماته",
+  "executed": true,
+  "result": "PASS",
+  "observed": [
+   {
+    "preposition": "عَلَيْ",
+    "complement": "هِ"
+   },
+   {
+    "preposition": "عَلَيْ",
+    "complement": "هِ"
+   }
+  ]
+ },
+ {
+  "id": "T29",
+  "input": "مثبت قديم فُقد",
+  "contract_expectation": "يظهر في المقارنة",
+  "executed": true,
+  "result": "PASS",
+  "observed": [
+   [
+    [
+     [
+      "1:1",
+      "a",
+      "morph",
+      0,
+      "status"
+     ],
+     "accepted ← deferred"
+    ]
+   ],
+   {
+    "a/extra": 1
+   }
+  ]
+ },
+ {
+  "id": "T30",
+  "input": "توقف البحث",
+  "contract_expectation": "SEARCH_INCOMPLETE لا رفض",
+  "executed": true,
+  "result": "PASS",
+  "observed": 14
+ }
+]

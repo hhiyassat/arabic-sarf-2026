@@ -1,0 +1,3603 @@
+{
+ "identity": {
+  "commit": "f91fd1eaaafa804cc6f50acfe0c9f23a26e36fc6",
+  "branch": "nominal-nucleus-01",
+  "commit_date": "2026-11-03T04:43:34+00:00",
+  "dirty": [],
+  "dirty_diff_sha": "—",
+  "code_sha": "67fa7bcd4ea4d7ae",
+  "command": "tools/eval_relations.py --jobs 4",
+  "python": "3.13.17",
+  "hashseed": "0",
+  "hfn_path": "release_v18",
+  "hfn_sha": "8f5dd3684b0f1f80",
+  "data_sha": "95bd27743f566b6f",
+  "input_sha": "d2700864f1a1abe9",
+  "started": "2026-11-03T05:06:56+00:00",
+  "policy": "عقد النواة الاسمية والتعلّق v1",
+  "run_id": "4b760cb24147"
+ },
+ "verses": 6236,
+ "counts": {
+  "ADVP|P02|DEFERRED": 379,
+  "ADVP|P02|LICENSED": 845,
+  "ATTACH:hosts": 25237,
+  "ATTACH:search_incomplete": 11879,
+  "ATTACH|A01|DEFERRED": 11879,
+  "CONTAINER_RELATIVE|R01|DEFERRED": 1,
+  "CONTAINER_RELATIVE|R01|LICENSED": 17,
+  "NASIKH|V01|DEFERRED": 1871,
+  "NASIKH|V01|LICENSED": 330,
+  "PP|P01|LICENSED": 11270,
+  "PREDICATION|N01|DEFERRED": 1932,
+  "PREDICATION|N01|LICENSED": 212,
+  "PREDICATION|N01|REJECTED": 76,
+  "PREDICATIVE_PP|N02|DEFERRED": 78,
+  "PREDICATIVE_PP|N02|LICENSED": 87,
+  "RESUMPTIVE|R01|DEFERRED": 14
+ },
+ "examples": {
+  "PP|P01|LICENSED": "1:1: preposition=«بِسْمِ» — حرف جرٍّ مقبول ومعموله في وحدةٍ واحدة",
+  "ATTACH|A01|DEFERRED": "1:1: oblique=«بِسْمِ» — لا مضيف ممكن في الإطار؛ والبحث غير مكتمل: لا جرد لأطر التعلّق",
+  "PREDICATION|N01|DEFERRED": "1:2: subject=«الْحَمْدُ» / predicate=«رَبِّ» — اسمية «رَبِّ» غير مثبتة في هذا التحليل",
+  "ADVP|P02|LICENSED": "2:4: adverb=«قَبْلِ» / complement=«كَ» — ظرفٌ من جرد المشروع ومضافٌ إليه",
+  "NASIKH|V01|DEFERRED": "2:6: nasikh=«إِنَّ» / ism=«الَّذِينَ» — لا خبر مثبتٌ بشرط هذا الإصدار",
+  "PREDICATIVE_PP|N02|LICENSED": "2:7: subject=«غِشَٰوَةٌ» / predicate_pp=«عَلَى أَبْصَٰرِ هِمْ» — شبه جملةٍ مقدَّمة ونكرةٌ مرفوعة تختم الإطار",
+  "PREDICATION|N01|LICENSED": "2:19: subject=«اللَّهُ» / predicate=«مُحِيطٌ» — معرفةٌ مرفوعة في أول الكلام ومسندٌ نكرةٌ مرفوعٌ كتابةً",
+  "ADVP|P02|DEFERRED": "2:25: adverb=«قَبْلُ» — ظرفٌ بلا مضافٍ إليه مثبت بعده",
+  "NASIKH|V01|LICENSED": "2:26: nasikh=«أَنَّ» / ism=«هُ» / khabar=«الْحَقُّ» — «الْحَقُّ» اسمٌ مرفوع كتابةً بعد الاسم",
+  "PREDICATIVE_PP|N02|DEFERRED": "2:36: subject=«مَتَٰعٌ» / predicate_pp=«إِلَى حِينٍ» — «مَتَٰعٌ» وصفٌ أو مصدرٌ يعمل: قد تتعلّق شبه الجملة به لا أن تكون خبراً",
+  "PREDICATION|N01|REJECTED": "2:89: subject=«لَعْنَةُ» / predicate=«اللَّهِ» — «اللَّهِ» جر كتابةً: لا يُرخَّص خبراً مفرداً مرفوعاً في هذا الوجه (ولا يُحكم على النص كله)",
+  "CONTAINER_RELATIVE|R01|LICENSED": "2:237: relative=«الَّذِي» / content=«بِ يَدِهِ عُقْدَةُ» — الموصول المختصّ تليه شبه جملة ثم مرفوع: صلةٌ اسمية (خبرها شبه الجملة المقدَّمة)",
+  "RESUMPTIVE|R01|DEFERRED": "2:282: pronoun=«هِ» / relative=«الَّذِي» — ملف المبنيات لا يسجّل شخص «هِ» وعدده وجنسه: المطابقة غير مثبتة",
+  "CONTAINER_RELATIVE|R01|DEFERRED": "42:3: relative=«الَّذِينَ» / content=«مِنْ قَبْلِ كَ اللَّهُ» — الموصول مجرور، وقبله الفعل «يُوحِي»: المعرفة المرفوعة «اللَّهُ» قد تكون فاعله لا مسنداً في الصلة"
+ },
+ "check_errors": [],
+ "check_error_count": 0,
+ "verse": {
+  "ref": "2:282",
+  "records": [
+   {
+    "relation_id": "2:282:PP:P01:complement=Q2:282.w5.u1+preposition=Q2:282.w5.u0",
+    "source_id": "2:282",
+    "type": "PP",
+    "rule_id": "P01",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w5.u1@v1+Q2:282.w5.u0@v1",
+    "container_id": null,
+    "heads": {
+     "preposition": "Q2:282.w5.u0",
+     "complement": "Q2:282.w5.u1"
+    },
+    "members": {
+     "preposition": [
+      "Q2:282.w5.u0"
+     ],
+     "complement": [
+      "Q2:282.w5.u1"
+     ]
+    },
+    "positions": {
+     "preposition": [
+      "2:282:6"
+     ],
+     "complement": [
+      "2:282:6"
+     ]
+    },
+    "texts": {
+     "preposition": "بِ",
+     "complement": "دَيْنٍ"
+    },
+    "premises": [
+     "حكم العامل «بِ» (مج 1): مقبول — ['السبب: مطابقة الحروف والحركة', 'الشرط: العلامة المكتوبة توافق أثره (جر)', 'الموانع المفحوصة: R6 المرفوع بعد الجار']",
+     "العلامة في المعمول: جر"
+    ],
+    "checked": [
+     "R6 المرفوع بعد الجار (في حكم العامل)"
+    ],
+    "alternatives": [],
+    "status": "LICENSED",
+    "reason": "حرف جرٍّ مقبول ومعموله",
+    "selected_analysis": null,
+    "nucleus_complete": null,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false,
+    "edges": [
+     [
+      "GOVERN",
+      "Q2:282.w5.u0",
+      "Q2:282.w5.u1"
+     ]
+    ],
+    "attachment": "غير مثبت: انظر A01"
+   },
+   {
+    "relation_id": "2:282:PP:P01:complement=Q2:282.w7.u0+preposition=Q2:282.w6.u0",
+    "source_id": "2:282",
+    "type": "PP",
+    "rule_id": "P01",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w7.u0@v1+Q2:282.w6.u0@v1",
+    "container_id": null,
+    "heads": {
+     "preposition": "Q2:282.w6.u0",
+     "complement": "Q2:282.w7.u0"
+    },
+    "members": {
+     "preposition": [
+      "Q2:282.w6.u0"
+     ],
+     "complement": [
+      "Q2:282.w7.u0"
+     ]
+    },
+    "positions": {
+     "preposition": [
+      "2:282:7"
+     ],
+     "complement": [
+      "2:282:8"
+     ]
+    },
+    "texts": {
+     "preposition": "إِلَى",
+     "complement": "أَجَلٍ"
+    },
+    "premises": [
+     "حكم العامل «إِلَى» (مج 1): مقبول — ['السبب: مطابقة الحروف والحركة', 'الشرط: العلامة المكتوبة توافق أثره (جر)', 'الموانع المفحوصة: R6 المرفوع بعد الجار']",
+     "العلامة في المعمول: جر"
+    ],
+    "checked": [
+     "R6 المرفوع بعد الجار (في حكم العامل)"
+    ],
+    "alternatives": [],
+    "status": "LICENSED",
+    "reason": "حرف جرٍّ مقبول ومعموله",
+    "selected_analysis": null,
+    "nucleus_complete": null,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false,
+    "edges": [
+     [
+      "GOVERN",
+      "Q2:282.w6.u0",
+      "Q2:282.w7.u0"
+     ]
+    ],
+    "attachment": "غير مثبت: انظر A01"
+   },
+   {
+    "relation_id": "2:282:PP:P01:complement=Q2:282.w13.u1+preposition=Q2:282.w13.u0",
+    "source_id": "2:282",
+    "type": "PP",
+    "rule_id": "P01",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w13.u1@v1+Q2:282.w13.u0@v1",
+    "container_id": null,
+    "heads": {
+     "preposition": "Q2:282.w13.u0",
+     "complement": "Q2:282.w13.u1"
+    },
+    "members": {
+     "preposition": [
+      "Q2:282.w13.u0"
+     ],
+     "complement": [
+      "Q2:282.w13.u1"
+     ]
+    },
+    "positions": {
+     "preposition": [
+      "2:282:14"
+     ],
+     "complement": [
+      "2:282:14"
+     ]
+    },
+    "texts": {
+     "preposition": "بِ",
+     "complement": "الْعَدْلِ"
+    },
+    "premises": [
+     "حكم العامل «بِ» (مج 1): مقبول — ['السبب: مطابقة الحروف والحركة', 'الشرط: العلامة المكتوبة توافق أثره (جر)', 'الموانع المفحوصة: R6 المرفوع بعد الجار']",
+     "العلامة في المعمول: جر"
+    ],
+    "checked": [
+     "R6 المرفوع بعد الجار (في حكم العامل)"
+    ],
+    "alternatives": [],
+    "status": "LICENSED",
+    "reason": "حرف جرٍّ مقبول ومعموله",
+    "selected_analysis": null,
+    "nucleus_complete": null,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false,
+    "edges": [
+     [
+      "GOVERN",
+      "Q2:282.w13.u0",
+      "Q2:282.w13.u1"
+     ]
+    ],
+    "attachment": "غير مثبت: انظر A01"
+   },
+   {
+    "relation_id": "2:282:PP:P01:complement=Q2:282.w25.u1+preposition=Q2:282.w25.u0",
+    "source_id": "2:282",
+    "type": "PP",
+    "rule_id": "P01",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w25.u1@v1+Q2:282.w25.u0@v1",
+    "container_id": null,
+    "heads": {
+     "preposition": "Q2:282.w25.u0",
+     "complement": "Q2:282.w25.u1"
+    },
+    "members": {
+     "preposition": [
+      "Q2:282.w25.u0"
+     ],
+     "complement": [
+      "Q2:282.w25.u1"
+     ]
+    },
+    "positions": {
+     "preposition": [
+      "2:282:26"
+     ],
+     "complement": [
+      "2:282:26"
+     ]
+    },
+    "texts": {
+     "preposition": "عَلَيْ",
+     "complement": "هِ"
+    },
+    "premises": [
+     "حكم العامل «عَلَى» (مج 1): مقبول — ['السبب: مطابقة الحروف والحركة', 'الشرط: معموله مبنيٌّ من ملف المبنيات (ضمير متصل) في محلّ جر']",
+     "العلامة في المعمول: محلاً"
+    ],
+    "checked": [
+     "R6 المرفوع بعد الجار (في حكم العامل)"
+    ],
+    "alternatives": [],
+    "status": "LICENSED",
+    "reason": "حرف جرٍّ مقبول ومعموله",
+    "selected_analysis": null,
+    "nucleus_complete": null,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false,
+    "edges": [
+     [
+      "GOVERN",
+      "Q2:282.w25.u0",
+      "Q2:282.w25.u1"
+     ]
+    ],
+    "attachment": "غير مثبت: انظر A01"
+   },
+   {
+    "relation_id": "2:282:PP:P01:complement=Q2:282.w32.u1+preposition=Q2:282.w32.u0",
+    "source_id": "2:282",
+    "type": "PP",
+    "rule_id": "P01",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w32.u1@v1+Q2:282.w32.u0@v1",
+    "container_id": null,
+    "heads": {
+     "preposition": "Q2:282.w32.u0",
+     "complement": "Q2:282.w32.u1"
+    },
+    "members": {
+     "preposition": [
+      "Q2:282.w32.u0"
+     ],
+     "complement": [
+      "Q2:282.w32.u1"
+     ]
+    },
+    "positions": {
+     "preposition": [
+      "2:282:33"
+     ],
+     "complement": [
+      "2:282:33"
+     ]
+    },
+    "texts": {
+     "preposition": "مِنْ",
+     "complement": "هُ"
+    },
+    "premises": [
+     "حكم العامل «مِنْ» (مج 1): مقبول — ['السبب: مطابقة الحروف والحركة', 'الشرط: معموله مبنيٌّ من ملف المبنيات (ضمير متصل) في محلّ جر']",
+     "العلامة في المعمول: محلاً"
+    ],
+    "checked": [
+     "R6 المرفوع بعد الجار (في حكم العامل)"
+    ],
+    "alternatives": [],
+    "status": "LICENSED",
+    "reason": "حرف جرٍّ مقبول ومعموله",
+    "selected_analysis": null,
+    "nucleus_complete": null,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false,
+    "edges": [
+     [
+      "GOVERN",
+      "Q2:282.w32.u0",
+      "Q2:282.w32.u1"
+     ]
+    ],
+    "attachment": "غير مثبت: انظر A01"
+   },
+   {
+    "relation_id": "2:282:PP:P01:complement=Q2:282.w37.u1+preposition=Q2:282.w37.u0",
+    "source_id": "2:282",
+    "type": "PP",
+    "rule_id": "P01",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w37.u1@v1+Q2:282.w37.u0@v1",
+    "container_id": null,
+    "heads": {
+     "preposition": "Q2:282.w37.u0",
+     "complement": "Q2:282.w37.u1"
+    },
+    "members": {
+     "preposition": [
+      "Q2:282.w37.u0"
+     ],
+     "complement": [
+      "Q2:282.w37.u1"
+     ]
+    },
+    "positions": {
+     "preposition": [
+      "2:282:38"
+     ],
+     "complement": [
+      "2:282:38"
+     ]
+    },
+    "texts": {
+     "preposition": "عَلَيْ",
+     "complement": "هِ"
+    },
+    "premises": [
+     "حكم العامل «عَلَى» (مج 1): مقبول — ['السبب: مطابقة الحروف والحركة', 'الشرط: معموله مبنيٌّ من ملف المبنيات (ضمير متصل) في محلّ جر']",
+     "العلامة في المعمول: محلاً"
+    ],
+    "checked": [
+     "R6 المرفوع بعد الجار (في حكم العامل)"
+    ],
+    "alternatives": [],
+    "status": "LICENSED",
+    "reason": "حرف جرٍّ مقبول ومعموله",
+    "selected_analysis": null,
+    "nucleus_complete": null,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false,
+    "edges": [
+     [
+      "GOVERN",
+      "Q2:282.w37.u0",
+      "Q2:282.w37.u1"
+     ]
+    ],
+    "attachment": "غير مثبت: انظر A01"
+   },
+   {
+    "relation_id": "2:282:PP:P01:complement=Q2:282.w50.u1+preposition=Q2:282.w50.u0",
+    "source_id": "2:282",
+    "type": "PP",
+    "rule_id": "P01",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w50.u1@v1+Q2:282.w50.u0@v1",
+    "container_id": null,
+    "heads": {
+     "preposition": "Q2:282.w50.u0",
+     "complement": "Q2:282.w50.u1"
+    },
+    "members": {
+     "preposition": [
+      "Q2:282.w50.u0"
+     ],
+     "complement": [
+      "Q2:282.w50.u1"
+     ]
+    },
+    "positions": {
+     "preposition": [
+      "2:282:51"
+     ],
+     "complement": [
+      "2:282:51"
+     ]
+    },
+    "texts": {
+     "preposition": "بِ",
+     "complement": "الْعَدْلِ"
+    },
+    "premises": [
+     "حكم العامل «بِ» (مج 1): مقبول — ['السبب: مطابقة الحروف والحركة', 'الشرط: العلامة المكتوبة توافق أثره (جر)', 'الموانع المفحوصة: R6 المرفوع بعد الجار']",
+     "العلامة في المعمول: جر"
+    ],
+    "checked": [
+     "R6 المرفوع بعد الجار (في حكم العامل)"
+    ],
+    "alternatives": [],
+    "status": "LICENSED",
+    "reason": "حرف جرٍّ مقبول ومعموله",
+    "selected_analysis": null,
+    "nucleus_complete": null,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false,
+    "edges": [
+     [
+      "GOVERN",
+      "Q2:282.w50.u0",
+      "Q2:282.w50.u1"
+     ]
+    ],
+    "attachment": "غير مثبت: انظر A01"
+   },
+   {
+    "relation_id": "2:282:PP:P01:complement=Q2:282.w54.u0+preposition=Q2:282.w53.u0",
+    "source_id": "2:282",
+    "type": "PP",
+    "rule_id": "P01",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w54.u0@v1+Q2:282.w53.u0@v1",
+    "container_id": null,
+    "heads": {
+     "preposition": "Q2:282.w53.u0",
+     "complement": "Q2:282.w54.u0"
+    },
+    "members": {
+     "preposition": [
+      "Q2:282.w53.u0"
+     ],
+     "complement": [
+      "Q2:282.w54.u0",
+      "Q2:282.w54.u1"
+     ]
+    },
+    "positions": {
+     "preposition": [
+      "2:282:54"
+     ],
+     "complement": [
+      "2:282:55",
+      "2:282:55"
+     ]
+    },
+    "texts": {
+     "preposition": "مِنْ",
+     "complement": "رِّجَالِ كُمْ"
+    },
+    "premises": [
+     "حكم العامل «مِنْ» (مج 1): مقبول — ['السبب: مطابقة الحروف والحركة', 'الشرط: العلامة المكتوبة توافق أثره (جر)', 'الموانع المفحوصة: R6 المرفوع بعد الجار']",
+     "العلامة في المعمول: جر"
+    ],
+    "checked": [
+     "R6 المرفوع بعد الجار (في حكم العامل)"
+    ],
+    "alternatives": [],
+    "status": "LICENSED",
+    "reason": "حرف جرٍّ مقبول ومعموله",
+    "selected_analysis": null,
+    "nucleus_complete": null,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false,
+    "edges": [
+     [
+      "GOVERN",
+      "Q2:282.w53.u0",
+      "Q2:282.w54.u0"
+     ]
+    ],
+    "attachment": "غير مثبت: انظر A01"
+   },
+   {
+    "relation_id": "2:282:PP:P01:complement=Q2:282.w64.u0+preposition=Q2:282.w63.u0",
+    "source_id": "2:282",
+    "type": "PP",
+    "rule_id": "P01",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w64.u0@v1+Q2:282.w63.u0@v1",
+    "container_id": null,
+    "heads": {
+     "preposition": "Q2:282.w63.u0",
+     "complement": "Q2:282.w64.u0"
+    },
+    "members": {
+     "preposition": [
+      "Q2:282.w63.u0"
+     ],
+     "complement": [
+      "Q2:282.w64.u0"
+     ]
+    },
+    "positions": {
+     "preposition": [
+      "2:282:64"
+     ],
+     "complement": [
+      "2:282:65"
+     ]
+    },
+    "texts": {
+     "preposition": "مِنَ",
+     "complement": "الشُّهَدَاءِ"
+    },
+    "premises": [
+     "حكم العامل «مِنْ» (مج 1): مقبول — ['السبب: مطابقة الحروف والحركة', 'الشرط: العلامة المكتوبة توافق أثره (جر)', 'الموانع المفحوصة: R6 المرفوع بعد الجار']",
+     "العلامة في المعمول: جر"
+    ],
+    "checked": [
+     "R6 المرفوع بعد الجار (في حكم العامل)"
+    ],
+    "alternatives": [],
+    "status": "LICENSED",
+    "reason": "حرف جرٍّ مقبول ومعموله",
+    "selected_analysis": null,
+    "nucleus_complete": null,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false,
+    "edges": [
+     [
+      "GOVERN",
+      "Q2:282.w63.u0",
+      "Q2:282.w64.u0"
+     ]
+    ],
+    "attachment": "غير مثبت: انظر A01"
+   },
+   {
+    "relation_id": "2:282:PP:P01:complement=Q2:282.w85.u0+preposition=Q2:282.w84.u0",
+    "source_id": "2:282",
+    "type": "PP",
+    "rule_id": "P01",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w85.u0@v1+Q2:282.w84.u0@v1",
+    "container_id": null,
+    "heads": {
+     "preposition": "Q2:282.w84.u0",
+     "complement": "Q2:282.w85.u0"
+    },
+    "members": {
+     "preposition": [
+      "Q2:282.w84.u0"
+     ],
+     "complement": [
+      "Q2:282.w85.u0",
+      "Q2:282.w85.u1"
+     ]
+    },
+    "positions": {
+     "preposition": [
+      "2:282:85"
+     ],
+     "complement": [
+      "2:282:86",
+      "2:282:86"
+     ]
+    },
+    "texts": {
+     "preposition": "إِلَى",
+     "complement": "أَجَلِ هِ"
+    },
+    "premises": [
+     "حكم العامل «إِلَى» (مج 1): مقبول — ['السبب: مطابقة الحروف والحركة', 'الشرط: العلامة المكتوبة توافق أثره (جر)', 'الموانع المفحوصة: R6 المرفوع بعد الجار']",
+     "العلامة في المعمول: جر"
+    ],
+    "checked": [
+     "R6 المرفوع بعد الجار (في حكم العامل)"
+    ],
+    "alternatives": [],
+    "status": "LICENSED",
+    "reason": "حرف جرٍّ مقبول ومعموله",
+    "selected_analysis": null,
+    "nucleus_complete": null,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false,
+    "edges": [
+     [
+      "GOVERN",
+      "Q2:282.w84.u0",
+      "Q2:282.w85.u0"
+     ]
+    ],
+    "attachment": "غير مثبت: انظر A01"
+   },
+   {
+    "relation_id": "2:282:PP:P01:preposition=Q2:282.w91.u0",
+    "source_id": "2:282",
+    "type": "PP",
+    "rule_id": "P01",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w91.u0@v1",
+    "container_id": null,
+    "heads": {
+     "preposition": "Q2:282.w91.u0"
+    },
+    "members": {
+     "preposition": [
+      "Q2:282.w91.u0"
+     ]
+    },
+    "positions": {
+     "preposition": [
+      "2:282:92"
+     ]
+    },
+    "texts": {
+     "preposition": "لِلشَّهَٰدَةِ"
+    },
+    "premises": [
+     "حكم العامل «لِ» (مج 1): مقبول",
+     "العلامة في المعمول: جر"
+    ],
+    "checked": [],
+    "alternatives": [],
+    "status": "LICENSED",
+    "reason": "حرف جرٍّ مقبول ومعموله في وحدةٍ واحدة",
+    "selected_analysis": null,
+    "nucleus_complete": null,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false,
+    "merged_unit": true,
+    "attachment": "غير مثبت: انظر A01"
+   },
+   {
+    "relation_id": "2:282:PP:P01:complement=Q2:282.w103.u1+preposition=Q2:282.w103.u0",
+    "source_id": "2:282",
+    "type": "PP",
+    "rule_id": "P01",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w103.u1@v1+Q2:282.w103.u0@v1",
+    "container_id": null,
+    "heads": {
+     "preposition": "Q2:282.w103.u0",
+     "complement": "Q2:282.w103.u1"
+    },
+    "members": {
+     "preposition": [
+      "Q2:282.w103.u0"
+     ],
+     "complement": [
+      "Q2:282.w103.u1"
+     ]
+    },
+    "positions": {
+     "preposition": [
+      "2:282:104"
+     ],
+     "complement": [
+      "2:282:104"
+     ]
+    },
+    "texts": {
+     "preposition": "عَلَيْ",
+     "complement": "كُمْ"
+    },
+    "premises": [
+     "حكم العامل «عَلَى» (مج 1): مقبول — ['السبب: مطابقة الحروف والحركة', 'الشرط: معموله مبنيٌّ من ملف المبنيات (ضمير متصل) في محلّ جر']",
+     "العلامة في المعمول: محلاً"
+    ],
+    "checked": [
+     "R6 المرفوع بعد الجار (في حكم العامل)"
+    ],
+    "alternatives": [],
+    "status": "LICENSED",
+    "reason": "حرف جرٍّ مقبول ومعموله",
+    "selected_analysis": null,
+    "nucleus_complete": null,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false,
+    "edges": [
+     [
+      "GOVERN",
+      "Q2:282.w103.u0",
+      "Q2:282.w103.u1"
+     ]
+    ],
+    "attachment": "غير مثبت: انظر A01"
+   },
+   {
+    "relation_id": "2:282:PP:P01:complement=Q2:282.w119.u1+preposition=Q2:282.w119.u0",
+    "source_id": "2:282",
+    "type": "PP",
+    "rule_id": "P01",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w119.u1@v1+Q2:282.w119.u0@v1",
+    "container_id": null,
+    "heads": {
+     "preposition": "Q2:282.w119.u0",
+     "complement": "Q2:282.w119.u1"
+    },
+    "members": {
+     "preposition": [
+      "Q2:282.w119.u0"
+     ],
+     "complement": [
+      "Q2:282.w119.u1"
+     ]
+    },
+    "positions": {
+     "preposition": [
+      "2:282:120"
+     ],
+     "complement": [
+      "2:282:120"
+     ]
+    },
+    "texts": {
+     "preposition": "بِ",
+     "complement": "كُمْ"
+    },
+    "premises": [
+     "حكم العامل «بِ» (مج 1): مقبول — ['السبب: مطابقة الحروف والحركة', 'الشرط: معموله ضمير متصل مبني في محلّ جر']",
+     "العلامة في المعمول: محلاً"
+    ],
+    "checked": [
+     "R6 المرفوع بعد الجار (في حكم العامل)"
+    ],
+    "alternatives": [],
+    "status": "LICENSED",
+    "reason": "حرف جرٍّ مقبول ومعموله",
+    "selected_analysis": null,
+    "nucleus_complete": null,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false,
+    "edges": [
+     [
+      "GOVERN",
+      "Q2:282.w119.u0",
+      "Q2:282.w119.u1"
+     ]
+    ],
+    "attachment": "غير مثبت: انظر A01"
+   },
+   {
+    "relation_id": "2:282:PP:P01:complement=Q2:282.w125.u1+preposition=Q2:282.w125.u0",
+    "source_id": "2:282",
+    "type": "PP",
+    "rule_id": "P01",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w125.u1@v1+Q2:282.w125.u0@v1",
+    "container_id": null,
+    "heads": {
+     "preposition": "Q2:282.w125.u0",
+     "complement": "Q2:282.w125.u1"
+    },
+    "members": {
+     "preposition": [
+      "Q2:282.w125.u0"
+     ],
+     "complement": [
+      "Q2:282.w125.u1"
+     ],
+     "complement_ext": [
+      "Q2:282.w126.u0"
+     ]
+    },
+    "positions": {
+     "preposition": [
+      "2:282:126"
+     ],
+     "complement": [
+      "2:282:126"
+     ],
+     "complement_ext": [
+      "2:282:127"
+     ]
+    },
+    "texts": {
+     "preposition": "بِ",
+     "complement": "كُلِّ",
+     "complement_ext": "شَيْءٍ"
+    },
+    "premises": [
+     "حكم العامل «بِ» (مج 1): مقبول — ['السبب: مطابقة الحروف والحركة', 'الشرط: العلامة المكتوبة توافق أثره (جر)', 'الموانع المفحوصة: R6 المرفوع بعد الجار']",
+     "العلامة في المعمول: جر"
+    ],
+    "checked": [
+     "R6 المرفوع بعد الجار (في حكم العامل)"
+    ],
+    "alternatives": [],
+    "status": "LICENSED",
+    "reason": "حرف جرٍّ مقبول ومعموله، ومضافٌ إليه مرشّح يمدّ المكمّل",
+    "selected_analysis": null,
+    "nucleus_complete": null,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false,
+    "edges": [
+     [
+      "GOVERN",
+      "Q2:282.w125.u0",
+      "Q2:282.w125.u1"
+     ]
+    ],
+    "attachment": "غير مثبت: انظر A01"
+   },
+   {
+    "relation_id": "2:282:ADVP:P02:adverb=Q2:282.w11.u0+complement=Q2:282.w11.u1",
+    "source_id": "2:282",
+    "type": "ADVP",
+    "rule_id": "P02",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w11.u0@v1+Q2:282.w11.u1@v1",
+    "container_id": null,
+    "heads": {
+     "adverb": "Q2:282.w11.u0",
+     "complement": "Q2:282.w11.u1"
+    },
+    "members": {
+     "adverb": [
+      "Q2:282.w11.u0"
+     ],
+     "complement": [
+      "Q2:282.w11.u1"
+     ]
+    },
+    "positions": {
+     "adverb": [
+      "2:282:12"
+     ],
+     "complement": [
+      "2:282:12"
+     ]
+    },
+    "texts": {
+     "adverb": "بَّيْنَ",
+     "complement": "كُمْ"
+    },
+    "premises": [
+     "جرد الظروف sarf.algebra.ZURUF_V",
+     "ضميرٌ متصل «كُمْ» مضافٌ إليه"
+    ],
+    "checked": [
+     "ليس حرف جر: الظرف اسمٌ منصوب على الظرفية والمضاف إليه بعده"
+    ],
+    "alternatives": [],
+    "status": "LICENSED",
+    "reason": "ظرفٌ من جرد المشروع ومضافٌ إليه",
+    "selected_analysis": null,
+    "nucleus_complete": null,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false,
+    "edges": [
+     [
+      "GOVERN",
+      "Q2:282.w11.u0",
+      "Q2:282.w11.u1"
+     ]
+    ],
+    "attachment": "غير مثبت: انظر A01",
+    "phrase_kind": "OBL/ADVP"
+   },
+   {
+    "relation_id": "2:282:ADVP:P02:adverb=Q2:282.w88.u0+complement=Q2:282.w89.u0",
+    "source_id": "2:282",
+    "type": "ADVP",
+    "rule_id": "P02",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w88.u0@v1+Q2:282.w89.u0@v1",
+    "container_id": null,
+    "heads": {
+     "adverb": "Q2:282.w88.u0",
+     "complement": "Q2:282.w89.u0"
+    },
+    "members": {
+     "adverb": [
+      "Q2:282.w88.u0"
+     ],
+     "complement": [
+      "Q2:282.w89.u0"
+     ]
+    },
+    "positions": {
+     "adverb": [
+      "2:282:89"
+     ],
+     "complement": [
+      "2:282:90"
+     ]
+    },
+    "texts": {
+     "adverb": "عِنْدَ",
+     "complement": "اللَّهِ"
+    },
+    "premises": [
+     "جرد الظروف sarf.algebra.ZURUF_V",
+     "«اللَّهِ» مجرورٌ كتابةً بعده بلا جار"
+    ],
+    "checked": [
+     "ليس حرف جر: الظرف اسمٌ منصوب على الظرفية والمضاف إليه بعده"
+    ],
+    "alternatives": [],
+    "status": "LICENSED",
+    "reason": "ظرفٌ من جرد المشروع ومضافٌ إليه",
+    "selected_analysis": null,
+    "nucleus_complete": null,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false,
+    "edges": [
+     [
+      "GOVERN",
+      "Q2:282.w88.u0",
+      "Q2:282.w89.u0"
+     ]
+    ],
+    "attachment": "غير مثبت: انظر A01",
+    "phrase_kind": "OBL/ADVP"
+   },
+   {
+    "relation_id": "2:282:ADVP:P02:adverb=Q2:282.w101.u0+complement=Q2:282.w101.u1",
+    "source_id": "2:282",
+    "type": "ADVP",
+    "rule_id": "P02",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w101.u0@v1+Q2:282.w101.u1@v1",
+    "container_id": null,
+    "heads": {
+     "adverb": "Q2:282.w101.u0",
+     "complement": "Q2:282.w101.u1"
+    },
+    "members": {
+     "adverb": [
+      "Q2:282.w101.u0"
+     ],
+     "complement": [
+      "Q2:282.w101.u1"
+     ]
+    },
+    "positions": {
+     "adverb": [
+      "2:282:102"
+     ],
+     "complement": [
+      "2:282:102"
+     ]
+    },
+    "texts": {
+     "adverb": "بَيْنَ",
+     "complement": "كُمْ"
+    },
+    "premises": [
+     "جرد الظروف sarf.algebra.ZURUF_V",
+     "ضميرٌ متصل «كُمْ» مضافٌ إليه"
+    ],
+    "checked": [
+     "ليس حرف جر: الظرف اسمٌ منصوب على الظرفية والمضاف إليه بعده"
+    ],
+    "alternatives": [],
+    "status": "LICENSED",
+    "reason": "ظرفٌ من جرد المشروع ومضافٌ إليه",
+    "selected_analysis": null,
+    "nucleus_complete": null,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false,
+    "edges": [
+     [
+      "GOVERN",
+      "Q2:282.w101.u0",
+      "Q2:282.w101.u1"
+     ]
+    ],
+    "attachment": "غير مثبت: انظر A01",
+    "phrase_kind": "OBL/ADVP"
+   },
+   {
+    "relation_id": "2:282:CONTAINER_RELATIVE:R01:relative=Q2:282.w24.u0",
+    "source_id": "2:282",
+    "type": "CONTAINER_RELATIVE",
+    "rule_id": "R01",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w24.u0@v1",
+    "container_id": null,
+    "heads": {
+     "relative": "Q2:282.w24.u0"
+    },
+    "members": {
+     "relative": [
+      "Q2:282.w24.u0"
+     ],
+     "content": [
+      "Q2:282.w25.u0",
+      "Q2:282.w25.u1",
+      "Q2:282.w26.u0"
+     ]
+    },
+    "positions": {
+     "relative": [
+      "2:282:25"
+     ],
+     "content": [
+      "2:282:26",
+      "2:282:26",
+      "2:282:27"
+     ]
+    },
+    "texts": {
+     "relative": "الَّذِي",
+     "content": "عَلَيْ هِ الْحَقُّ"
+    },
+    "premises": [
+     "«الَّذِي» موصولٌ مختصّ (ملف المبنيات)",
+     "2:282:PP:P01:complement=Q2:282.w25.u1+preposition=Q2:282.w25.u0",
+     "«الْحَقُّ» مرفوعٌ كتابةً"
+    ],
+    "checked": [
+     "حدّ الصلة بعد «الْحَقُّ»: «وَلْ» لا يتّصل بالصلة بقاعدةٍ في هذا الإصدار"
+    ],
+    "alternatives": [],
+    "status": "LICENSED",
+    "reason": "الموصول المختصّ تليه شبه جملة ثم مرفوع: صلةٌ اسمية (خبرها شبه الجملة المقدَّمة)",
+    "selected_analysis": null,
+    "nucleus_complete": null,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false,
+    "extent": [
+     "Q2:282.w24.u0",
+     "Q2:282.w25.u0",
+     "Q2:282.w25.u1",
+     "Q2:282.w26.u0"
+    ]
+   },
+   {
+    "relation_id": "2:282:PREDICATIVE_PP:N02:predicate_pp=Q2:282.w25.u0+subject=Q2:282.w26.u0",
+    "source_id": "2:282",
+    "type": "PREDICATIVE_PP",
+    "rule_id": "N02",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w25.u0@v1+Q2:282.w26.u0@v1",
+    "container_id": "2:282:CONTAINER_RELATIVE:R01:relative=Q2:282.w24.u0",
+    "heads": {
+     "subject": "Q2:282.w26.u0",
+     "predicate_pp": "Q2:282.w25.u0"
+    },
+    "members": {
+     "subject": [
+      "Q2:282.w26.u0"
+     ],
+     "predicate_pp": [
+      "Q2:282.w25.u0",
+      "Q2:282.w25.u1"
+     ]
+    },
+    "positions": {
+     "subject": [
+      "2:282:27"
+     ],
+     "predicate_pp": [
+      "2:282:26",
+      "2:282:26"
+     ]
+    },
+    "texts": {
+     "subject": "الْحَقُّ",
+     "predicate_pp": "عَلَيْ هِ"
+    },
+    "premises": [
+     "2:282:CONTAINER_RELATIVE:R01:relative=Q2:282.w24.u0",
+     "2:282:PP:P01:complement=Q2:282.w25.u1+preposition=Q2:282.w25.u0",
+     "«الْحَقُّ»: الرفع مكتوب (الضمة)"
+    ],
+    "checked": [
+     "الصلة لا تكون مفرداً: فالمرفوع بعد شبه الجملة ليس معطوفاً عليها ولا مضافاً إليها"
+    ],
+    "alternatives": [],
+    "status": "LICENSED",
+    "reason": "في إطار الصلة: شبه الجملة المقدَّمة خبر، والمرفوع بعدها مسندٌ إليه",
+    "selected_analysis": null,
+    "nucleus_complete": true,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false,
+    "display_convention": "شبه الجملة خبرٌ في هذا الوجه (أو متعلّقٌ بخبرٍ محذوف)؛ ولا يُكتب المحذوف"
+   },
+   {
+    "relation_id": "2:282:RESUMPTIVE:R01:pronoun=Q2:282.w25.u1+relative=Q2:282.w24.u0",
+    "source_id": "2:282",
+    "type": "RESUMPTIVE",
+    "rule_id": "R01",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w25.u1@v1+Q2:282.w24.u0@v1",
+    "container_id": "2:282:CONTAINER_RELATIVE:R01:relative=Q2:282.w24.u0",
+    "heads": {
+     "pronoun": "Q2:282.w25.u1",
+     "relative": "Q2:282.w24.u0"
+    },
+    "members": {
+     "pronoun": [
+      "Q2:282.w25.u1"
+     ],
+     "relative": [
+      "Q2:282.w24.u0"
+     ]
+    },
+    "positions": {
+     "pronoun": [
+      "2:282:26"
+     ],
+     "relative": [
+      "2:282:25"
+     ]
+    },
+    "texts": {
+     "pronoun": "هِ",
+     "relative": "الَّذِي"
+    },
+    "premises": [
+     "2:282:CONTAINER_RELATIVE:R01:relative=Q2:282.w24.u0",
+     "سمات الضمير من ملف المبنيات"
+    ],
+    "checked": [],
+    "alternatives": [],
+    "status": "DEFERRED",
+    "reason": "ملف المبنيات لا يسجّل شخص «هِ» وعدده وجنسه: المطابقة غير مثبتة",
+    "selected_analysis": null,
+    "nucleus_complete": null,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false
+   },
+   {
+    "relation_id": "2:282:CONTAINER_RELATIVE:R01:relative=Q2:282.w36.u0",
+    "source_id": "2:282",
+    "type": "CONTAINER_RELATIVE",
+    "rule_id": "R01",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w36.u0@v1",
+    "container_id": null,
+    "heads": {
+     "relative": "Q2:282.w36.u0"
+    },
+    "members": {
+     "relative": [
+      "Q2:282.w36.u0"
+     ],
+     "content": [
+      "Q2:282.w37.u0",
+      "Q2:282.w37.u1",
+      "Q2:282.w38.u0"
+     ]
+    },
+    "positions": {
+     "relative": [
+      "2:282:37"
+     ],
+     "content": [
+      "2:282:38",
+      "2:282:38",
+      "2:282:39"
+     ]
+    },
+    "texts": {
+     "relative": "الَّذِي",
+     "content": "عَلَيْ هِ الْحَقُّ"
+    },
+    "premises": [
+     "«الَّذِي» موصولٌ مختصّ (ملف المبنيات)",
+     "2:282:PP:P01:complement=Q2:282.w37.u1+preposition=Q2:282.w37.u0",
+     "«الْحَقُّ» مرفوعٌ كتابةً"
+    ],
+    "checked": [
+     "حدّ الصلة بعد «الْحَقُّ»: «سَفِيهًا» منصوب"
+    ],
+    "alternatives": [],
+    "status": "LICENSED",
+    "reason": "الموصول المختصّ تليه شبه جملة ثم مرفوع: صلةٌ اسمية (خبرها شبه الجملة المقدَّمة)",
+    "selected_analysis": null,
+    "nucleus_complete": null,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false,
+    "extent": [
+     "Q2:282.w36.u0",
+     "Q2:282.w37.u0",
+     "Q2:282.w37.u1",
+     "Q2:282.w38.u0"
+    ]
+   },
+   {
+    "relation_id": "2:282:PREDICATIVE_PP:N02:predicate_pp=Q2:282.w37.u0+subject=Q2:282.w38.u0",
+    "source_id": "2:282",
+    "type": "PREDICATIVE_PP",
+    "rule_id": "N02",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w37.u0@v1+Q2:282.w38.u0@v1",
+    "container_id": "2:282:CONTAINER_RELATIVE:R01:relative=Q2:282.w36.u0",
+    "heads": {
+     "subject": "Q2:282.w38.u0",
+     "predicate_pp": "Q2:282.w37.u0"
+    },
+    "members": {
+     "subject": [
+      "Q2:282.w38.u0"
+     ],
+     "predicate_pp": [
+      "Q2:282.w37.u0",
+      "Q2:282.w37.u1"
+     ]
+    },
+    "positions": {
+     "subject": [
+      "2:282:39"
+     ],
+     "predicate_pp": [
+      "2:282:38",
+      "2:282:38"
+     ]
+    },
+    "texts": {
+     "subject": "الْحَقُّ",
+     "predicate_pp": "عَلَيْ هِ"
+    },
+    "premises": [
+     "2:282:CONTAINER_RELATIVE:R01:relative=Q2:282.w36.u0",
+     "2:282:PP:P01:complement=Q2:282.w37.u1+preposition=Q2:282.w37.u0",
+     "«الْحَقُّ»: الرفع مكتوب (الضمة)"
+    ],
+    "checked": [
+     "الصلة لا تكون مفرداً: فالمرفوع بعد شبه الجملة ليس معطوفاً عليها ولا مضافاً إليها"
+    ],
+    "alternatives": [],
+    "status": "LICENSED",
+    "reason": "في إطار الصلة: شبه الجملة المقدَّمة خبر، والمرفوع بعدها مسندٌ إليه",
+    "selected_analysis": null,
+    "nucleus_complete": true,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false,
+    "display_convention": "شبه الجملة خبرٌ في هذا الوجه (أو متعلّقٌ بخبرٍ محذوف)؛ ولا يُكتب المحذوف"
+   },
+   {
+    "relation_id": "2:282:RESUMPTIVE:R01:pronoun=Q2:282.w37.u1+relative=Q2:282.w36.u0",
+    "source_id": "2:282",
+    "type": "RESUMPTIVE",
+    "rule_id": "R01",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w37.u1@v1+Q2:282.w36.u0@v1",
+    "container_id": "2:282:CONTAINER_RELATIVE:R01:relative=Q2:282.w36.u0",
+    "heads": {
+     "pronoun": "Q2:282.w37.u1",
+     "relative": "Q2:282.w36.u0"
+    },
+    "members": {
+     "pronoun": [
+      "Q2:282.w37.u1"
+     ],
+     "relative": [
+      "Q2:282.w36.u0"
+     ]
+    },
+    "positions": {
+     "pronoun": [
+      "2:282:38"
+     ],
+     "relative": [
+      "2:282:37"
+     ]
+    },
+    "texts": {
+     "pronoun": "هِ",
+     "relative": "الَّذِي"
+    },
+    "premises": [
+     "2:282:CONTAINER_RELATIVE:R01:relative=Q2:282.w36.u0",
+     "سمات الضمير من ملف المبنيات"
+    ],
+    "checked": [],
+    "alternatives": [],
+    "status": "DEFERRED",
+    "reason": "ملف المبنيات لا يسجّل شخص «هِ» وعدده وجنسه: المطابقة غير مثبتة",
+    "selected_analysis": null,
+    "nucleus_complete": null,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false
+   },
+   {
+    "relation_id": "2:282:NASIKH:V01:ism=Q2:282.w36.u0+khabar=Q2:282.w39.u0+nasikh=Q2:282.w35.u0",
+    "source_id": "2:282",
+    "type": "NASIKH",
+    "rule_id": "V01",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w36.u0@v1+Q2:282.w39.u0@v1+Q2:282.w35.u0@v1",
+    "container_id": null,
+    "heads": {
+     "nasikh": "Q2:282.w35.u0",
+     "ism": "Q2:282.w36.u0",
+     "khabar": "Q2:282.w39.u0"
+    },
+    "members": {
+     "nasikh": [
+      "Q2:282.w35.u0"
+     ],
+     "ism": [
+      "Q2:282.w36.u0"
+     ],
+     "khabar": [
+      "Q2:282.w39.u0"
+     ]
+    },
+    "positions": {
+     "nasikh": [
+      "2:282:36"
+     ],
+     "ism": [
+      "2:282:37"
+     ],
+     "khabar": [
+      "2:282:40"
+     ]
+    },
+    "texts": {
+     "nasikh": "كَانَ",
+     "ism": "الَّذِي",
+     "khabar": "سَفِيهًا"
+    },
+    "premises": [
+     "حكم الناسخ «كَانَ» (مج 10): مقبول، واسمه «الَّذِي» (محلاً)",
+     "2:282:CONTAINER_RELATIVE:R01:relative=Q2:282.w36.u0"
+    ],
+    "checked": [
+     "N01 غير المنسوخة لا تُطبَّق على اسم الناسخ وخبره"
+    ],
+    "alternatives": [],
+    "status": "LICENSED",
+    "reason": "«سَفِيهًا» اسمٌ منصوب كتابةً بعد الاسم وصلته",
+    "selected_analysis": null,
+    "nucleus_complete": true,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false
+   },
+   {
+    "relation_id": "2:282:NASIKH:V01:ism=Q2:282.w104.u0+khabar=Q2:282.w103.u0+nasikh=Q2:282.w102.u1",
+    "source_id": "2:282",
+    "type": "NASIKH",
+    "rule_id": "V01",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w104.u0@v1+Q2:282.w103.u0@v1+Q2:282.w102.u1@v1",
+    "container_id": null,
+    "heads": {
+     "nasikh": "Q2:282.w102.u1",
+     "ism": "Q2:282.w104.u0",
+     "khabar": "Q2:282.w103.u0"
+    },
+    "members": {
+     "nasikh": [
+      "Q2:282.w102.u1"
+     ],
+     "ism": [
+      "Q2:282.w104.u0"
+     ],
+     "khabar": [
+      "Q2:282.w103.u0",
+      "Q2:282.w103.u1"
+     ]
+    },
+    "positions": {
+     "nasikh": [
+      "2:282:103"
+     ],
+     "ism": [
+      "2:282:105"
+     ],
+     "khabar": [
+      "2:282:104",
+      "2:282:104"
+     ]
+    },
+    "texts": {
+     "nasikh": "لَيْسَ",
+     "ism": "جُنَاحٌ",
+     "khabar": "عَلَيْ كُمْ"
+    },
+    "premises": [
+     "حكم الناسخ «لَيْسَ» (مج 10): مقبول، واسمه «جُنَاحٌ» (رفع)",
+     "2:282:PP:P01:complement=Q2:282.w103.u1+preposition=Q2:282.w103.u0"
+    ],
+    "checked": [
+     "N01 غير المنسوخة لا تُطبَّق على اسم الناسخ وخبره"
+    ],
+    "alternatives": [],
+    "status": "LICENSED",
+    "reason": "شبه جملةٍ مقدَّمة بين الناسخ واسمه النكرة: خبرٌ مقدَّم",
+    "selected_analysis": null,
+    "nucleus_complete": true,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false
+   },
+   {
+    "relation_id": "2:282:NASIKH:V01:ism=Q2:282.w117.u2+khabar=Q2:282.w118.u0+nasikh=Q2:282.w117.u1",
+    "source_id": "2:282",
+    "type": "NASIKH",
+    "rule_id": "V01",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w117.u2@v1+Q2:282.w118.u0@v1+Q2:282.w117.u1@v1",
+    "container_id": null,
+    "heads": {
+     "nasikh": "Q2:282.w117.u1",
+     "ism": "Q2:282.w117.u2",
+     "khabar": "Q2:282.w118.u0"
+    },
+    "members": {
+     "nasikh": [
+      "Q2:282.w117.u1"
+     ],
+     "ism": [
+      "Q2:282.w117.u2"
+     ],
+     "khabar": [
+      "Q2:282.w118.u0"
+     ]
+    },
+    "positions": {
+     "nasikh": [
+      "2:282:118"
+     ],
+     "ism": [
+      "2:282:118"
+     ],
+     "khabar": [
+      "2:282:119"
+     ]
+    },
+    "texts": {
+     "nasikh": "إِنَّ",
+     "ism": "هُ",
+     "khabar": "فُسُوقٌ"
+    },
+    "premises": [
+     "حكم الناسخ «إِنَّ» (مج 2): مقبول، واسمه «هُ» (محلاً)"
+    ],
+    "checked": [
+     "N01 غير المنسوخة لا تُطبَّق على اسم الناسخ وخبره"
+    ],
+    "alternatives": [],
+    "status": "LICENSED",
+    "reason": "«فُسُوقٌ» اسمٌ مرفوع كتابةً بعد الاسم",
+    "selected_analysis": null,
+    "nucleus_complete": true,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false
+   },
+   {
+    "relation_id": "2:282:PREDICATION:N01:subject=Q2:282.w59.u1",
+    "source_id": "2:282",
+    "type": "PREDICATION",
+    "rule_id": "N01",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w59.u1@v1",
+    "container_id": null,
+    "heads": {
+     "subject": "Q2:282.w59.u1"
+    },
+    "members": {
+     "subject": [
+      "Q2:282.w59.u1"
+     ]
+    },
+    "positions": {
+     "subject": [
+      "2:282:60"
+     ]
+    },
+    "texts": {
+     "subject": "رَجُلٌ"
+    },
+    "premises": [
+     "«رَجُلٌ» أول الكلام (بعد عاطف)",
+     "«رَجُلٌ»: الرفع مكتوب (الضمة)",
+     "«رَجُلٌ»: التنكير مثبت (التنوين)"
+    ],
+    "checked": [],
+    "alternatives": [
+     "معطوفٌ على ما قبل العاطف"
+    ],
+    "status": "DEFERRED",
+    "reason": "مسندٌ إليه محتمل بلا مسندٍ في إطاره: لا يُختلق خبر",
+    "selected_analysis": null,
+    "nucleus_complete": false,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false
+   },
+   {
+    "relation_id": "2:282:PREDICATION:N01:predicate=Q2:282.w61.u0+subject=Q2:282.w60.u1",
+    "source_id": "2:282",
+    "type": "PREDICATION",
+    "rule_id": "N01",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w61.u0@v1+Q2:282.w60.u1@v1",
+    "container_id": null,
+    "heads": {
+     "subject": "Q2:282.w60.u1",
+     "predicate": "Q2:282.w61.u0"
+    },
+    "members": {
+     "subject": [
+      "Q2:282.w60.u1"
+     ],
+     "predicate": [
+      "Q2:282.w61.u0"
+     ]
+    },
+    "positions": {
+     "subject": [
+      "2:282:61"
+     ],
+     "predicate": [
+      "2:282:62"
+     ]
+    },
+    "texts": {
+     "subject": "امْرَأَتَانِ",
+     "predicate": "مِمَّنْ"
+    },
+    "premises": [
+     "«امْرَأَتَانِ» أول الكلام (بعد عاطف)",
+     "«امْرَأَتَانِ»: لا علامة إعرابٍ مكتوبةٌ تدلّ",
+     "«امْرَأَتَانِ»: التعريف والتنكير غير مثبتين"
+    ],
+    "checked": [
+     "ناسخٌ مثبت عامل فيهما",
+     "عاملٌ مقبول في المسند إليه",
+     "علامةٌ مخالفة في المسند"
+    ],
+    "alternatives": [
+     "معطوفٌ على ما قبل العاطف (لا مبتدأ)"
+    ],
+    "status": "DEFERRED",
+    "reason": "اسمية «مِمَّنْ» غير مثبتة في هذا التحليل",
+    "selected_analysis": null,
+    "nucleus_complete": false,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false,
+    "edges": []
+   },
+   {
+    "relation_id": "2:282:PREDICATION:N01:predicate=Q2:282.w87.u0+subject=Q2:282.w86.u0",
+    "source_id": "2:282",
+    "type": "PREDICATION",
+    "rule_id": "N01",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w87.u0@v1+Q2:282.w86.u0@v1",
+    "container_id": null,
+    "heads": {
+     "subject": "Q2:282.w86.u0",
+     "predicate": "Q2:282.w87.u0"
+    },
+    "members": {
+     "subject": [
+      "Q2:282.w86.u0"
+     ],
+     "predicate": [
+      "Q2:282.w87.u0"
+     ]
+    },
+    "positions": {
+     "subject": [
+      "2:282:87"
+     ],
+     "predicate": [
+      "2:282:88"
+     ]
+    },
+    "texts": {
+     "subject": "ذَٰلِكُمْ",
+     "predicate": "أَقْسَطُ"
+    },
+    "premises": [
+     "«ذَٰلِكُمْ» أول الكلام (ضميرٌ أو إشارة)",
+     "«ذَٰلِكُمْ»: مبنيٌّ: المحلّ يُعيَّن بموقعه",
+     "«ذَٰلِكُمْ»: ملف المبنيات: demonstrative"
+    ],
+    "checked": [
+     "ناسخٌ مثبت عامل فيهما",
+     "عاملٌ مقبول في المسند إليه",
+     "علامةٌ مخالفة في المسند"
+    ],
+    "alternatives": [],
+    "status": "DEFERRED",
+    "reason": "اسمية «أَقْسَطُ» غير مثبتة في هذا التحليل (أَفْعَل: اسم تفضيلٍ مرشّح، أو مضارع المتكلم)",
+    "selected_analysis": null,
+    "nucleus_complete": false,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false,
+    "edges": []
+   },
+   {
+    "relation_id": "2:282:PREDICATION:N01:predicate=Q2:282.w127.u0+subject=Q2:282.w124.u1",
+    "source_id": "2:282",
+    "type": "PREDICATION",
+    "rule_id": "N01",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w127.u0@v1+Q2:282.w124.u1@v1",
+    "container_id": null,
+    "heads": {
+     "subject": "Q2:282.w124.u1",
+     "predicate": "Q2:282.w127.u0"
+    },
+    "members": {
+     "subject": [
+      "Q2:282.w124.u1"
+     ],
+     "predicate": [
+      "Q2:282.w127.u0"
+     ]
+    },
+    "positions": {
+     "subject": [
+      "2:282:125"
+     ],
+     "predicate": [
+      "2:282:128"
+     ]
+    },
+    "texts": {
+     "subject": "اللَّهُ",
+     "predicate": "عَلِيمٌ"
+    },
+    "premises": [
+     "«اللَّهُ» أول الكلام (بعد عاطف)",
+     "«اللَّهُ»: الرفع مكتوب (الضمة)",
+     "«اللَّهُ»: لفظ الجلالة (علم)",
+     "2:282:PP:P01:complement=Q2:282.w125.u1+preposition=Q2:282.w125.u0",
+     "«عَلِيمٌ»: الرفع مكتوب، والتنكير مثبت"
+    ],
+    "checked": [
+     "ناسخٌ مثبت عامل فيهما",
+     "عاملٌ مقبول في المسند إليه",
+     "علامةٌ مخالفة في المسند"
+    ],
+    "alternatives": [
+     "معطوفٌ على ما قبل العاطف (لا مبتدأ)",
+     "شبه الجملة بين الطرفين خبرٌ أول أو متعلّقٌ بالمسند: انظر A01"
+    ],
+    "status": "LICENSED",
+    "reason": "معرفةٌ مرفوعة في أول الكلام ومسندٌ نكرةٌ مرفوعٌ كتابةً",
+    "selected_analysis": null,
+    "nucleus_complete": true,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false,
+    "edges": [
+     [
+      "PREDICATION",
+      "Q2:282.w124.u1",
+      "Q2:282.w127.u0"
+     ]
+    ],
+    "roles": {
+     "subject": "مبتدأ",
+     "predicate": "خبر"
+    }
+   },
+   {
+    "relation_id": "2:282:ATTACH:A01:oblique=Q2:282.w5.u0",
+    "source_id": "2:282",
+    "type": "ATTACH",
+    "rule_id": "A01",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w5.u0@v1",
+    "container_id": null,
+    "heads": {
+     "oblique": "Q2:282.w5.u0"
+    },
+    "members": {
+     "oblique": [
+      "Q2:282.w5.u0",
+      "Q2:282.w5.u1"
+     ]
+    },
+    "positions": {
+     "oblique": [
+      "2:282:6",
+      "2:282:6"
+     ]
+    },
+    "texts": {
+     "oblique": "بِ دَيْنٍ"
+    },
+    "premises": [
+     "2:282:PP:P01:complement=Q2:282.w5.u1+preposition=Q2:282.w5.u0"
+    ],
+    "checked": [],
+    "alternatives": [
+     {
+      "host": "Q2:282.w4.u0",
+      "host_text": "تَدَايَنْتُمْ",
+      "host_position": "2:282:5",
+      "host_kind": "فعل",
+      "status": "DEFERRED",
+      "reason": "إطار تعلّق المضيف بهذا الحرف أو الظرف غير مسجَّل في المشروع (لا جرد أطر)"
+     },
+     {
+      "host": "Q2:282.w7.u0",
+      "host_text": "أَجَلٍ",
+      "host_position": "2:282:8",
+      "host_kind": "مصدر",
+      "status": "DEFERRED",
+      "reason": "إطار تعلّق المضيف بهذا الحرف أو الظرف غير مسجَّل في المشروع (لا جرد أطر)"
+     }
+    ],
+    "status": "DEFERRED",
+    "reason": "2 مضيفاً ممكناً، ولا إطار تعلّقٍ مثبت لأيٍّ منها؛ والبحث غير مكتمل: لا جرد لأطر التعلّق",
+    "selected_analysis": null,
+    "nucleus_complete": null,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false,
+    "search_status": "SEARCH_INCOMPLETE",
+    "search_scope": {
+     "frame": [
+      "2:282:4",
+      "2:282:9"
+     ],
+     "container": null
+    }
+   },
+   {
+    "relation_id": "2:282:ATTACH:A01:oblique=Q2:282.w6.u0",
+    "source_id": "2:282",
+    "type": "ATTACH",
+    "rule_id": "A01",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w6.u0@v1",
+    "container_id": null,
+    "heads": {
+     "oblique": "Q2:282.w6.u0"
+    },
+    "members": {
+     "oblique": [
+      "Q2:282.w6.u0",
+      "Q2:282.w7.u0"
+     ]
+    },
+    "positions": {
+     "oblique": [
+      "2:282:7",
+      "2:282:8"
+     ]
+    },
+    "texts": {
+     "oblique": "إِلَى أَجَلٍ"
+    },
+    "premises": [
+     "2:282:PP:P01:complement=Q2:282.w7.u0+preposition=Q2:282.w6.u0"
+    ],
+    "checked": [],
+    "alternatives": [
+     {
+      "host": "Q2:282.w4.u0",
+      "host_text": "تَدَايَنْتُمْ",
+      "host_position": "2:282:5",
+      "host_kind": "فعل",
+      "status": "DEFERRED",
+      "reason": "إطار تعلّق المضيف بهذا الحرف أو الظرف غير مسجَّل في المشروع (لا جرد أطر)"
+     },
+     {
+      "host": "Q2:282.w5.u1",
+      "host_text": "دَيْنٍ",
+      "host_position": "2:282:6",
+      "host_kind": "مصدر",
+      "status": "DEFERRED",
+      "reason": "إطار تعلّق المضيف بهذا الحرف أو الظرف غير مسجَّل في المشروع (لا جرد أطر)"
+     },
+     {
+      "host": "Q2:282.w5.u1",
+      "host_text": "دَيْنٍ",
+      "host_position": "2:282:6",
+      "host_kind": "نعتٌ للنكرة قبله (متعلّقٌ بمحذوف)",
+      "status": "DEFERRED",
+      "reason": "شبه الجملة بعد نكرة تحتمل الوصف؛ والمحذوف لا يُكتب ولا يُعيَّن لفظه"
+     }
+    ],
+    "status": "DEFERRED",
+    "reason": "3 مضيفاً ممكناً، ولا إطار تعلّقٍ مثبت لأيٍّ منها؛ والبحث غير مكتمل: لا جرد لأطر التعلّق",
+    "selected_analysis": null,
+    "nucleus_complete": null,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false,
+    "search_status": "SEARCH_INCOMPLETE",
+    "search_scope": {
+     "frame": [
+      "2:282:4",
+      "2:282:9"
+     ],
+     "container": null
+    }
+   },
+   {
+    "relation_id": "2:282:ATTACH:A01:oblique=Q2:282.w13.u0",
+    "source_id": "2:282",
+    "type": "ATTACH",
+    "rule_id": "A01",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w13.u0@v1",
+    "container_id": null,
+    "heads": {
+     "oblique": "Q2:282.w13.u0"
+    },
+    "members": {
+     "oblique": [
+      "Q2:282.w13.u0",
+      "Q2:282.w13.u1"
+     ]
+    },
+    "positions": {
+     "oblique": [
+      "2:282:14",
+      "2:282:14"
+     ]
+    },
+    "texts": {
+     "oblique": "بِ الْعَدْلِ"
+    },
+    "premises": [
+     "2:282:PP:P01:complement=Q2:282.w13.u1+preposition=Q2:282.w13.u0"
+    ],
+    "checked": [],
+    "alternatives": [
+     {
+      "host": "Q2:282.w10.u1",
+      "host_text": "يَكْتُبْ",
+      "host_position": "2:282:11",
+      "host_kind": "فعل",
+      "status": "DEFERRED",
+      "reason": "إطار تعلّق المضيف بهذا الحرف أو الظرف غير مسجَّل في المشروع (لا جرد أطر)"
+     },
+     {
+      "host": "Q2:282.w12.u0",
+      "host_text": "كَاتِبٌ",
+      "host_position": "2:282:13",
+      "host_kind": "اسم فاعل",
+      "status": "DEFERRED",
+      "reason": "إطار تعلّق المضيف بهذا الحرف أو الظرف غير مسجَّل في المشروع (لا جرد أطر)"
+     },
+     {
+      "host": "Q2:282.w12.u0",
+      "host_text": "كَاتِبٌ",
+      "host_position": "2:282:13",
+      "host_kind": "نعتٌ للنكرة قبله (متعلّقٌ بمحذوف)",
+      "status": "DEFERRED",
+      "reason": "شبه الجملة بعد نكرة تحتمل الوصف؛ والمحذوف لا يُكتب ولا يُعيَّن لفظه"
+     }
+    ],
+    "status": "DEFERRED",
+    "reason": "3 مضيفاً ممكناً، ولا إطار تعلّقٍ مثبت لأيٍّ منها؛ والبحث غير مكتمل: لا جرد لأطر التعلّق",
+    "selected_analysis": null,
+    "nucleus_complete": null,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false,
+    "search_status": "SEARCH_INCOMPLETE",
+    "search_scope": {
+     "frame": [
+      "2:282:11",
+      "2:282:14"
+     ],
+     "container": null
+    }
+   },
+   {
+    "relation_id": "2:282:ATTACH:A01:oblique=Q2:282.w32.u0",
+    "source_id": "2:282",
+    "type": "ATTACH",
+    "rule_id": "A01",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w32.u0@v1",
+    "container_id": null,
+    "heads": {
+     "oblique": "Q2:282.w32.u0"
+    },
+    "members": {
+     "oblique": [
+      "Q2:282.w32.u0",
+      "Q2:282.w32.u1"
+     ]
+    },
+    "positions": {
+     "oblique": [
+      "2:282:33",
+      "2:282:33"
+     ]
+    },
+    "texts": {
+     "oblique": "مِنْ هُ"
+    },
+    "premises": [
+     "2:282:PP:P01:complement=Q2:282.w32.u1+preposition=Q2:282.w32.u0"
+    ],
+    "checked": [],
+    "alternatives": [
+     {
+      "host": "Q2:282.w31.u0",
+      "host_text": "يَبْخَسْ",
+      "host_position": "2:282:32",
+      "host_kind": "فعل",
+      "status": "DEFERRED",
+      "reason": "إطار تعلّق المضيف بهذا الحرف أو الظرف غير مسجَّل في المشروع (لا جرد أطر)"
+     },
+     {
+      "host": "Q2:282.w33.u0",
+      "host_text": "شَيْءًا",
+      "host_position": "2:282:34",
+      "host_kind": "مصدر",
+      "status": "DEFERRED",
+      "reason": "إطار تعلّق المضيف بهذا الحرف أو الظرف غير مسجَّل في المشروع (لا جرد أطر)"
+     }
+    ],
+    "status": "DEFERRED",
+    "reason": "2 مضيفاً ممكناً، ولا إطار تعلّقٍ مثبت لأيٍّ منها؛ والبحث غير مكتمل: لا جرد لأطر التعلّق",
+    "selected_analysis": null,
+    "nucleus_complete": null,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false,
+    "search_status": "SEARCH_INCOMPLETE",
+    "search_scope": {
+     "frame": [
+      "2:282:31",
+      "2:282:34"
+     ],
+     "container": null
+    }
+   },
+   {
+    "relation_id": "2:282:ATTACH:A01:oblique=Q2:282.w50.u0",
+    "source_id": "2:282",
+    "type": "ATTACH",
+    "rule_id": "A01",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w50.u0@v1",
+    "container_id": null,
+    "heads": {
+     "oblique": "Q2:282.w50.u0"
+    },
+    "members": {
+     "oblique": [
+      "Q2:282.w50.u0",
+      "Q2:282.w50.u1"
+     ]
+    },
+    "positions": {
+     "oblique": [
+      "2:282:51",
+      "2:282:51"
+     ]
+    },
+    "texts": {
+     "oblique": "بِ الْعَدْلِ"
+    },
+    "premises": [
+     "2:282:PP:P01:complement=Q2:282.w50.u1+preposition=Q2:282.w50.u0"
+    ],
+    "checked": [],
+    "alternatives": [
+     {
+      "host": "Q2:282.w48.u1",
+      "host_text": "يُمْلِلْ",
+      "host_position": "2:282:49",
+      "host_kind": "فعل",
+      "status": "DEFERRED",
+      "reason": "إطار تعلّق المضيف بهذا الحرف أو الظرف غير مسجَّل في المشروع (لا جرد أطر)"
+     }
+    ],
+    "status": "DEFERRED",
+    "reason": "1 مضيفاً ممكناً، ولا إطار تعلّقٍ مثبت لأيٍّ منها؛ والبحث غير مكتمل: لا جرد لأطر التعلّق",
+    "selected_analysis": null,
+    "nucleus_complete": null,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false,
+    "search_status": "SEARCH_INCOMPLETE",
+    "search_scope": {
+     "frame": [
+      "2:282:49",
+      "2:282:51"
+     ],
+     "container": null
+    }
+   },
+   {
+    "relation_id": "2:282:ATTACH:A01:oblique=Q2:282.w53.u0",
+    "source_id": "2:282",
+    "type": "ATTACH",
+    "rule_id": "A01",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w53.u0@v1",
+    "container_id": null,
+    "heads": {
+     "oblique": "Q2:282.w53.u0"
+    },
+    "members": {
+     "oblique": [
+      "Q2:282.w53.u0",
+      "Q2:282.w54.u0",
+      "Q2:282.w54.u1"
+     ]
+    },
+    "positions": {
+     "oblique": [
+      "2:282:54",
+      "2:282:55",
+      "2:282:55"
+     ]
+    },
+    "texts": {
+     "oblique": "مِنْ رِّجَالِ كُمْ"
+    },
+    "premises": [
+     "2:282:PP:P01:complement=Q2:282.w54.u0+preposition=Q2:282.w53.u0"
+    ],
+    "checked": [],
+    "alternatives": [
+     {
+      "host": "Q2:282.w51.u1",
+      "host_text": "اسْتَشْهِدُوا",
+      "host_position": "2:282:52",
+      "host_kind": "فعل",
+      "status": "DEFERRED",
+      "reason": "إطار تعلّق المضيف بهذا الحرف أو الظرف غير مسجَّل في المشروع (لا جرد أطر)"
+     }
+    ],
+    "status": "DEFERRED",
+    "reason": "1 مضيفاً ممكناً، ولا إطار تعلّقٍ مثبت لأيٍّ منها؛ والبحث غير مكتمل: لا جرد لأطر التعلّق",
+    "selected_analysis": null,
+    "nucleus_complete": null,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false,
+    "search_status": "SEARCH_INCOMPLETE",
+    "search_scope": {
+     "frame": [
+      "2:282:52",
+      "2:282:55"
+     ],
+     "container": null
+    }
+   },
+   {
+    "relation_id": "2:282:ATTACH:A01:oblique=Q2:282.w63.u0",
+    "source_id": "2:282",
+    "type": "ATTACH",
+    "rule_id": "A01",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w63.u0@v1",
+    "container_id": null,
+    "heads": {
+     "oblique": "Q2:282.w63.u0"
+    },
+    "members": {
+     "oblique": [
+      "Q2:282.w63.u0",
+      "Q2:282.w64.u0"
+     ]
+    },
+    "positions": {
+     "oblique": [
+      "2:282:64",
+      "2:282:65"
+     ]
+    },
+    "texts": {
+     "oblique": "مِنَ الشُّهَدَاءِ"
+    },
+    "premises": [
+     "2:282:PP:P01:complement=Q2:282.w64.u0+preposition=Q2:282.w63.u0"
+    ],
+    "checked": [],
+    "alternatives": [
+     {
+      "host": "Q2:282.w62.u0",
+      "host_text": "تَرْضَوْنَ",
+      "host_position": "2:282:63",
+      "host_kind": "فعل",
+      "status": "DEFERRED",
+      "reason": "إطار تعلّق المضيف بهذا الحرف أو الظرف غير مسجَّل في المشروع (لا جرد أطر)"
+     },
+     {
+      "host": "Q2:282.w66.u0",
+      "host_text": "تَضِلَّ",
+      "host_position": "2:282:67",
+      "host_kind": "فعل",
+      "status": "DEFERRED",
+      "reason": "إطار تعلّق المضيف بهذا الحرف أو الظرف غير مسجَّل في المشروع (لا جرد أطر)"
+     }
+    ],
+    "status": "DEFERRED",
+    "reason": "2 مضيفاً ممكناً، ولا إطار تعلّقٍ مثبت لأيٍّ منها؛ والبحث غير مكتمل: لا جرد لأطر التعلّق",
+    "selected_analysis": null,
+    "nucleus_complete": null,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false,
+    "search_status": "SEARCH_INCOMPLETE",
+    "search_scope": {
+     "frame": [
+      "2:282:61",
+      "2:282:68"
+     ],
+     "container": null
+    }
+   },
+   {
+    "relation_id": "2:282:ATTACH:A01:oblique=Q2:282.w84.u0",
+    "source_id": "2:282",
+    "type": "ATTACH",
+    "rule_id": "A01",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w84.u0@v1",
+    "container_id": null,
+    "heads": {
+     "oblique": "Q2:282.w84.u0"
+    },
+    "members": {
+     "oblique": [
+      "Q2:282.w84.u0",
+      "Q2:282.w85.u0",
+      "Q2:282.w85.u1"
+     ]
+    },
+    "positions": {
+     "oblique": [
+      "2:282:85",
+      "2:282:86",
+      "2:282:86"
+     ]
+    },
+    "texts": {
+     "oblique": "إِلَى أَجَلِ هِ"
+    },
+    "premises": [
+     "2:282:PP:P01:complement=Q2:282.w85.u0+preposition=Q2:282.w84.u0"
+    ],
+    "checked": [],
+    "alternatives": [
+     {
+      "host": "Q2:282.w78.u0",
+      "host_text": "تَسْءَمُوا",
+      "host_position": "2:282:79",
+      "host_kind": "فعل",
+      "status": "DEFERRED",
+      "reason": "إطار تعلّق المضيف بهذا الحرف أو الظرف غير مسجَّل في المشروع (لا جرد أطر)"
+     },
+     {
+      "host": "Q2:282.w80.u0",
+      "host_text": "تَكْتُبُو",
+      "host_position": "2:282:81",
+      "host_kind": "فعل",
+      "status": "DEFERRED",
+      "reason": "إطار تعلّق المضيف بهذا الحرف أو الظرف غير مسجَّل في المشروع (لا جرد أطر)"
+     },
+     {
+      "host": "Q2:282.w81.u0",
+      "host_text": "صَغِيرًا",
+      "host_position": "2:282:82",
+      "host_kind": "وصفٌ محتمل (قالب)",
+      "status": "DEFERRED",
+      "reason": "إطار تعلّق المضيف بهذا الحرف أو الظرف غير مسجَّل في المشروع (لا جرد أطر)"
+     },
+     {
+      "host": "Q2:282.w83.u0",
+      "host_text": "كَبِيرًا",
+      "host_position": "2:282:84",
+      "host_kind": "وصفٌ محتمل (قالب)",
+      "status": "DEFERRED",
+      "reason": "إطار تعلّق المضيف بهذا الحرف أو الظرف غير مسجَّل في المشروع (لا جرد أطر)"
+     },
+     {
+      "host": "Q2:282.w87.u0",
+      "host_text": "أَقْسَطُ",
+      "host_position": "2:282:88",
+      "host_kind": "أَفْعَل (تفضيلٌ مرشّح)",
+      "status": "DEFERRED",
+      "reason": "إطار تعلّق المضيف بهذا الحرف أو الظرف غير مسجَّل في المشروع (لا جرد أطر)"
+     },
+     {
+      "host": "Q2:282.w83.u0",
+      "host_text": "كَبِيرًا",
+      "host_position": "2:282:84",
+      "host_kind": "نعتٌ للنكرة قبله (متعلّقٌ بمحذوف)",
+      "status": "DEFERRED",
+      "reason": "شبه الجملة بعد نكرة تحتمل الوصف؛ والمحذوف لا يُكتب ولا يُعيَّن لفظه"
+     }
+    ],
+    "status": "DEFERRED",
+    "reason": "6 مضيفاً ممكناً، ولا إطار تعلّقٍ مثبت لأيٍّ منها؛ والبحث غير مكتمل: لا جرد لأطر التعلّق",
+    "selected_analysis": null,
+    "nucleus_complete": null,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false,
+    "search_status": "SEARCH_INCOMPLETE",
+    "search_scope": {
+     "frame": [
+      "2:282:78",
+      "2:282:90"
+     ],
+     "container": null
+    }
+   },
+   {
+    "relation_id": "2:282:ATTACH:A01:oblique=Q2:282.w91.u0",
+    "source_id": "2:282",
+    "type": "ATTACH",
+    "rule_id": "A01",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w91.u0@v1",
+    "container_id": null,
+    "heads": {
+     "oblique": "Q2:282.w91.u0"
+    },
+    "members": {
+     "oblique": [
+      "Q2:282.w91.u0"
+     ]
+    },
+    "positions": {
+     "oblique": [
+      "2:282:92"
+     ]
+    },
+    "texts": {
+     "oblique": "لِلشَّهَٰدَةِ"
+    },
+    "premises": [
+     "2:282:PP:P01:preposition=Q2:282.w91.u0"
+    ],
+    "checked": [],
+    "alternatives": [
+     {
+      "host": "Q2:282.w90.u1",
+      "host_text": "أَقْوَمُ",
+      "host_position": "2:282:91",
+      "host_kind": "أَفْعَل (تفضيلٌ مرشّح)",
+      "status": "DEFERRED",
+      "reason": "إطار تعلّق المضيف بهذا الحرف أو الظرف غير مسجَّل في المشروع (لا جرد أطر)"
+     }
+    ],
+    "status": "DEFERRED",
+    "reason": "1 مضيفاً ممكناً، ولا إطار تعلّقٍ مثبت لأيٍّ منها؛ والبحث غير مكتمل: لا جرد لأطر التعلّق",
+    "selected_analysis": null,
+    "nucleus_complete": null,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false,
+    "search_status": "SEARCH_INCOMPLETE",
+    "search_scope": {
+     "frame": [
+      "2:282:91",
+      "2:282:92"
+     ],
+     "container": null
+    }
+   },
+   {
+    "relation_id": "2:282:ATTACH:A01:oblique=Q2:282.w119.u0",
+    "source_id": "2:282",
+    "type": "ATTACH",
+    "rule_id": "A01",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w119.u0@v1",
+    "container_id": null,
+    "heads": {
+     "oblique": "Q2:282.w119.u0"
+    },
+    "members": {
+     "oblique": [
+      "Q2:282.w119.u0",
+      "Q2:282.w119.u1"
+     ]
+    },
+    "positions": {
+     "oblique": [
+      "2:282:120",
+      "2:282:120"
+     ]
+    },
+    "texts": {
+     "oblique": "بِ كُمْ"
+    },
+    "premises": [
+     "2:282:PP:P01:complement=Q2:282.w119.u1+preposition=Q2:282.w119.u0"
+    ],
+    "checked": [],
+    "alternatives": [
+     {
+      "host": "Q2:282.w118.u0",
+      "host_text": "فُسُوقٌ",
+      "host_position": "2:282:119",
+      "host_kind": "مصدر",
+      "status": "DEFERRED",
+      "reason": "إطار تعلّق المضيف بهذا الحرف أو الظرف غير مسجَّل في المشروع (لا جرد أطر)"
+     },
+     {
+      "host": "Q2:282.w118.u0",
+      "host_text": "فُسُوقٌ",
+      "host_position": "2:282:119",
+      "host_kind": "نعتٌ للنكرة قبله (متعلّقٌ بمحذوف)",
+      "status": "DEFERRED",
+      "reason": "شبه الجملة بعد نكرة تحتمل الوصف؛ والمحذوف لا يُكتب ولا يُعيَّن لفظه"
+     }
+    ],
+    "status": "DEFERRED",
+    "reason": "2 مضيفاً ممكناً، ولا إطار تعلّقٍ مثبت لأيٍّ منها؛ والبحث غير مكتمل: لا جرد لأطر التعلّق",
+    "selected_analysis": null,
+    "nucleus_complete": null,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false,
+    "search_status": "SEARCH_INCOMPLETE",
+    "search_scope": {
+     "frame": [
+      "2:282:118",
+      "2:282:120"
+     ],
+     "container": null
+    }
+   },
+   {
+    "relation_id": "2:282:ATTACH:A01:oblique=Q2:282.w125.u0",
+    "source_id": "2:282",
+    "type": "ATTACH",
+    "rule_id": "A01",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w125.u0@v1",
+    "container_id": null,
+    "heads": {
+     "oblique": "Q2:282.w125.u0"
+    },
+    "members": {
+     "oblique": [
+      "Q2:282.w125.u0",
+      "Q2:282.w125.u1",
+      "Q2:282.w126.u0"
+     ]
+    },
+    "positions": {
+     "oblique": [
+      "2:282:126",
+      "2:282:126",
+      "2:282:127"
+     ]
+    },
+    "texts": {
+     "oblique": "بِ كُلِّ شَيْءٍ"
+    },
+    "premises": [
+     "2:282:PP:P01:complement=Q2:282.w125.u1+preposition=Q2:282.w125.u0"
+    ],
+    "checked": [],
+    "alternatives": [
+     {
+      "host": "Q2:282.w127.u0",
+      "host_text": "عَلِيمٌ",
+      "host_position": "2:282:128",
+      "host_kind": "وصفٌ محتمل (قالب)",
+      "status": "DEFERRED",
+      "reason": "إطار تعلّق المضيف بهذا الحرف أو الظرف غير مسجَّل في المشروع (لا جرد أطر)"
+     }
+    ],
+    "status": "DEFERRED",
+    "reason": "1 مضيفاً ممكناً، ولا إطار تعلّقٍ مثبت لأيٍّ منها؛ والبحث غير مكتمل: لا جرد لأطر التعلّق",
+    "selected_analysis": null,
+    "nucleus_complete": null,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false,
+    "search_status": "SEARCH_INCOMPLETE",
+    "search_scope": {
+     "frame": [
+      "2:282:125",
+      "2:282:128"
+     ],
+     "container": null
+    }
+   },
+   {
+    "relation_id": "2:282:ATTACH:A01:oblique=Q2:282.w11.u0",
+    "source_id": "2:282",
+    "type": "ATTACH",
+    "rule_id": "A01",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w11.u0@v1",
+    "container_id": null,
+    "heads": {
+     "oblique": "Q2:282.w11.u0"
+    },
+    "members": {
+     "oblique": [
+      "Q2:282.w11.u0",
+      "Q2:282.w11.u1"
+     ]
+    },
+    "positions": {
+     "oblique": [
+      "2:282:12",
+      "2:282:12"
+     ]
+    },
+    "texts": {
+     "oblique": "بَّيْنَ كُمْ"
+    },
+    "premises": [
+     "2:282:ADVP:P02:adverb=Q2:282.w11.u0+complement=Q2:282.w11.u1"
+    ],
+    "checked": [],
+    "alternatives": [
+     {
+      "host": "Q2:282.w10.u1",
+      "host_text": "يَكْتُبْ",
+      "host_position": "2:282:11",
+      "host_kind": "فعل",
+      "status": "DEFERRED",
+      "reason": "إطار تعلّق المضيف بهذا الحرف أو الظرف غير مسجَّل في المشروع (لا جرد أطر)"
+     },
+     {
+      "host": "Q2:282.w12.u0",
+      "host_text": "كَاتِبٌ",
+      "host_position": "2:282:13",
+      "host_kind": "اسم فاعل",
+      "status": "DEFERRED",
+      "reason": "إطار تعلّق المضيف بهذا الحرف أو الظرف غير مسجَّل في المشروع (لا جرد أطر)"
+     },
+     {
+      "host": "Q2:282.w13.u1",
+      "host_text": "الْعَدْلِ",
+      "host_position": "2:282:14",
+      "host_kind": "مصدر",
+      "status": "DEFERRED",
+      "reason": "إطار تعلّق المضيف بهذا الحرف أو الظرف غير مسجَّل في المشروع (لا جرد أطر)"
+     }
+    ],
+    "status": "DEFERRED",
+    "reason": "3 مضيفاً ممكناً، ولا إطار تعلّقٍ مثبت لأيٍّ منها؛ والبحث غير مكتمل: لا جرد لأطر التعلّق",
+    "selected_analysis": null,
+    "nucleus_complete": null,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false,
+    "search_status": "SEARCH_INCOMPLETE",
+    "search_scope": {
+     "frame": [
+      "2:282:11",
+      "2:282:14"
+     ],
+     "container": null
+    }
+   },
+   {
+    "relation_id": "2:282:ATTACH:A01:oblique=Q2:282.w88.u0",
+    "source_id": "2:282",
+    "type": "ATTACH",
+    "rule_id": "A01",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w88.u0@v1",
+    "container_id": null,
+    "heads": {
+     "oblique": "Q2:282.w88.u0"
+    },
+    "members": {
+     "oblique": [
+      "Q2:282.w88.u0",
+      "Q2:282.w89.u0"
+     ]
+    },
+    "positions": {
+     "oblique": [
+      "2:282:89",
+      "2:282:90"
+     ]
+    },
+    "texts": {
+     "oblique": "عِنْدَ اللَّهِ"
+    },
+    "premises": [
+     "2:282:ADVP:P02:adverb=Q2:282.w88.u0+complement=Q2:282.w89.u0"
+    ],
+    "checked": [],
+    "alternatives": [
+     {
+      "host": "Q2:282.w78.u0",
+      "host_text": "تَسْءَمُوا",
+      "host_position": "2:282:79",
+      "host_kind": "فعل",
+      "status": "DEFERRED",
+      "reason": "إطار تعلّق المضيف بهذا الحرف أو الظرف غير مسجَّل في المشروع (لا جرد أطر)"
+     },
+     {
+      "host": "Q2:282.w80.u0",
+      "host_text": "تَكْتُبُو",
+      "host_position": "2:282:81",
+      "host_kind": "فعل",
+      "status": "DEFERRED",
+      "reason": "إطار تعلّق المضيف بهذا الحرف أو الظرف غير مسجَّل في المشروع (لا جرد أطر)"
+     },
+     {
+      "host": "Q2:282.w81.u0",
+      "host_text": "صَغِيرًا",
+      "host_position": "2:282:82",
+      "host_kind": "وصفٌ محتمل (قالب)",
+      "status": "DEFERRED",
+      "reason": "إطار تعلّق المضيف بهذا الحرف أو الظرف غير مسجَّل في المشروع (لا جرد أطر)"
+     },
+     {
+      "host": "Q2:282.w83.u0",
+      "host_text": "كَبِيرًا",
+      "host_position": "2:282:84",
+      "host_kind": "وصفٌ محتمل (قالب)",
+      "status": "DEFERRED",
+      "reason": "إطار تعلّق المضيف بهذا الحرف أو الظرف غير مسجَّل في المشروع (لا جرد أطر)"
+     },
+     {
+      "host": "Q2:282.w85.u0",
+      "host_text": "أَجَلِ",
+      "host_position": "2:282:86",
+      "host_kind": "مصدر",
+      "status": "DEFERRED",
+      "reason": "إطار تعلّق المضيف بهذا الحرف أو الظرف غير مسجَّل في المشروع (لا جرد أطر)"
+     },
+     {
+      "host": "Q2:282.w87.u0",
+      "host_text": "أَقْسَطُ",
+      "host_position": "2:282:88",
+      "host_kind": "أَفْعَل (تفضيلٌ مرشّح)",
+      "status": "DEFERRED",
+      "reason": "إطار تعلّق المضيف بهذا الحرف أو الظرف غير مسجَّل في المشروع (لا جرد أطر)"
+     }
+    ],
+    "status": "DEFERRED",
+    "reason": "6 مضيفاً ممكناً، ولا إطار تعلّقٍ مثبت لأيٍّ منها؛ والبحث غير مكتمل: لا جرد لأطر التعلّق",
+    "selected_analysis": null,
+    "nucleus_complete": null,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false,
+    "search_status": "SEARCH_INCOMPLETE",
+    "search_scope": {
+     "frame": [
+      "2:282:78",
+      "2:282:90"
+     ],
+     "container": null
+    }
+   },
+   {
+    "relation_id": "2:282:ATTACH:A01:oblique=Q2:282.w101.u0",
+    "source_id": "2:282",
+    "type": "ATTACH",
+    "rule_id": "A01",
+    "rule_version": "v1",
+    "analysis_id": "Q2:282.w101.u0@v1",
+    "container_id": null,
+    "heads": {
+     "oblique": "Q2:282.w101.u0"
+    },
+    "members": {
+     "oblique": [
+      "Q2:282.w101.u0",
+      "Q2:282.w101.u1"
+     ]
+    },
+    "positions": {
+     "oblique": [
+      "2:282:102",
+      "2:282:102"
+     ]
+    },
+    "texts": {
+     "oblique": "بَيْنَ كُمْ"
+    },
+    "premises": [
+     "2:282:ADVP:P02:adverb=Q2:282.w101.u0+complement=Q2:282.w101.u1"
+    ],
+    "checked": [],
+    "alternatives": [
+     {
+      "host": "Q2:282.w92.u1",
+      "host_text": "أَدْنَى",
+      "host_position": "2:282:93",
+      "host_kind": "أَفْعَل (تفضيلٌ مرشّح)",
+      "status": "DEFERRED",
+      "reason": "إطار تعلّق المضيف بهذا الحرف أو الظرف غير مسجَّل في المشروع (لا جرد أطر)"
+     },
+     {
+      "host": "Q2:282.w94.u0",
+      "host_text": "تَرْتَابُوا",
+      "host_position": "2:282:95",
+      "host_kind": "فعل",
+      "status": "DEFERRED",
+      "reason": "إطار تعلّق المضيف بهذا الحرف أو الظرف غير مسجَّل في المشروع (لا جرد أطر)"
+     },
+     {
+      "host": "Q2:282.w97.u0",
+      "host_text": "تَكُونَ",
+      "host_position": "2:282:98",
+      "host_kind": "فعل",
+      "status": "DEFERRED",
+      "reason": "إطار تعلّق المضيف بهذا الحرف أو الظرف غير مسجَّل في المشروع (لا جرد أطر)"
+     },
+     {
+      "host": "Q2:282.w98.u0",
+      "host_text": "تِجَٰرَةً",
+      "host_position": "2:282:99",
+      "host_kind": "وصفٌ محتمل (قالب)",
+      "status": "DEFERRED",
+      "reason": "إطار تعلّق المضيف بهذا الحرف أو الظرف غير مسجَّل في المشروع (لا جرد أطر)"
+     },
+     {
+      "host": "Q2:282.w99.u0",
+      "host_text": "حَاضِرَةً",
+      "host_position": "2:282:100",
+      "host_kind": "اسم فاعل",
+      "status": "DEFERRED",
+      "reason": "إطار تعلّق المضيف بهذا الحرف أو الظرف غير مسجَّل في المشروع (لا جرد أطر)"
+     },
+     {
+      "host": "Q2:282.w100.u0",
+      "host_text": "تُدِيرُونَ",
+      "host_position": "2:282:101",
+      "host_kind": "فعل",
+      "status": "DEFERRED",
+      "reason": "إطار تعلّق المضيف بهذا الحرف أو الظرف غير مسجَّل في المشروع (لا جرد أطر)"
+     }
+    ],
+    "status": "DEFERRED",
+    "reason": "6 مضيفاً ممكناً، ولا إطار تعلّقٍ مثبت لأيٍّ منها؛ والبحث غير مكتمل: لا جرد لأطر التعلّق",
+    "selected_analysis": null,
+    "nucleus_complete": null,
+    "clause_complete": null,
+    "boundary_proven": false,
+    "sentence_closed": false,
+    "search_status": "SEARCH_INCOMPLETE",
+    "search_scope": {
+     "frame": [
+      "2:282:93",
+      "2:282:102"
+     ],
+     "container": null
+    }
+   }
+  ],
+  "tokens": [
+   [
+    "Q2:282.w0.u0",
+    "2:282:1",
+    "يَٰ"
+   ],
+   [
+    "Q2:282.w0.u1",
+    "2:282:1",
+    "أَيُّهَا"
+   ],
+   [
+    "Q2:282.w1.u0",
+    "2:282:2",
+    "الَّذِينَ"
+   ],
+   [
+    "Q2:282.w2.u0",
+    "2:282:3",
+    "ءَامَنُوا"
+   ],
+   [
+    "Q2:282.w3.u0",
+    "2:282:4",
+    "إِذَا"
+   ],
+   [
+    "Q2:282.w4.u0",
+    "2:282:5",
+    "تَدَايَنْتُمْ"
+   ],
+   [
+    "Q2:282.w5.u0",
+    "2:282:6",
+    "بِ"
+   ],
+   [
+    "Q2:282.w5.u1",
+    "2:282:6",
+    "دَيْنٍ"
+   ],
+   [
+    "Q2:282.w6.u0",
+    "2:282:7",
+    "إِلَى"
+   ],
+   [
+    "Q2:282.w7.u0",
+    "2:282:8",
+    "أَجَلٍ"
+   ],
+   [
+    "Q2:282.w8.u0",
+    "2:282:9",
+    "مُّسَمًّى"
+   ],
+   [
+    "Q2:282.w9.u0",
+    "2:282:10",
+    "فَ"
+   ],
+   [
+    "Q2:282.w9.u1",
+    "2:282:10",
+    "اكْتُبُو"
+   ],
+   [
+    "Q2:282.w9.u2",
+    "2:282:10",
+    "هُ"
+   ],
+   [
+    "Q2:282.w10.u0",
+    "2:282:11",
+    "وَلْ"
+   ],
+   [
+    "Q2:282.w10.u1",
+    "2:282:11",
+    "يَكْتُبْ"
+   ],
+   [
+    "Q2:282.w11.u0",
+    "2:282:12",
+    "بَّيْنَ"
+   ],
+   [
+    "Q2:282.w11.u1",
+    "2:282:12",
+    "كُمْ"
+   ],
+   [
+    "Q2:282.w12.u0",
+    "2:282:13",
+    "كَاتِبٌ"
+   ],
+   [
+    "Q2:282.w13.u0",
+    "2:282:14",
+    "بِ"
+   ],
+   [
+    "Q2:282.w13.u1",
+    "2:282:14",
+    "الْعَدْلِ"
+   ],
+   [
+    "Q2:282.w14.u0",
+    "2:282:15",
+    "وَ"
+   ],
+   [
+    "Q2:282.w14.u1",
+    "2:282:15",
+    "لَا"
+   ],
+   [
+    "Q2:282.w15.u0",
+    "2:282:16",
+    "يَأْبَ"
+   ],
+   [
+    "Q2:282.w16.u0",
+    "2:282:17",
+    "كَاتِبٌ"
+   ],
+   [
+    "Q2:282.w17.u0",
+    "2:282:18",
+    "أَنْ"
+   ],
+   [
+    "Q2:282.w18.u0",
+    "2:282:19",
+    "يَكْتُبَ"
+   ],
+   [
+    "Q2:282.w19.u0",
+    "2:282:20",
+    "كَ"
+   ],
+   [
+    "Q2:282.w19.u1",
+    "2:282:20",
+    "مَا"
+   ],
+   [
+    "Q2:282.w20.u0",
+    "2:282:21",
+    "عَلَّمَ"
+   ],
+   [
+    "Q2:282.w20.u1",
+    "2:282:21",
+    "هُ"
+   ],
+   [
+    "Q2:282.w21.u0",
+    "2:282:22",
+    "اللَّهُ"
+   ],
+   [
+    "Q2:282.w22.u0",
+    "2:282:23",
+    "فَلْ"
+   ],
+   [
+    "Q2:282.w22.u1",
+    "2:282:23",
+    "يَكْتُبْ"
+   ],
+   [
+    "Q2:282.w23.u0",
+    "2:282:24",
+    "وَلْ"
+   ],
+   [
+    "Q2:282.w23.u1",
+    "2:282:24",
+    "يُمْلِلِ"
+   ],
+   [
+    "Q2:282.w24.u0",
+    "2:282:25",
+    "الَّذِي"
+   ],
+   [
+    "Q2:282.w25.u0",
+    "2:282:26",
+    "عَلَيْ"
+   ],
+   [
+    "Q2:282.w25.u1",
+    "2:282:26",
+    "هِ"
+   ],
+   [
+    "Q2:282.w26.u0",
+    "2:282:27",
+    "الْحَقُّ"
+   ],
+   [
+    "Q2:282.w27.u0",
+    "2:282:28",
+    "وَلْ"
+   ],
+   [
+    "Q2:282.w27.u1",
+    "2:282:28",
+    "يَتَّقِ"
+   ],
+   [
+    "Q2:282.w28.u0",
+    "2:282:29",
+    "اللَّهَ"
+   ],
+   [
+    "Q2:282.w29.u0",
+    "2:282:30",
+    "رَبَّ"
+   ],
+   [
+    "Q2:282.w29.u1",
+    "2:282:30",
+    "هُ"
+   ],
+   [
+    "Q2:282.w30.u0",
+    "2:282:31",
+    "وَ"
+   ],
+   [
+    "Q2:282.w30.u1",
+    "2:282:31",
+    "لَا"
+   ],
+   [
+    "Q2:282.w31.u0",
+    "2:282:32",
+    "يَبْخَسْ"
+   ],
+   [
+    "Q2:282.w32.u0",
+    "2:282:33",
+    "مِنْ"
+   ],
+   [
+    "Q2:282.w32.u1",
+    "2:282:33",
+    "هُ"
+   ],
+   [
+    "Q2:282.w33.u0",
+    "2:282:34",
+    "شَيْءًا"
+   ],
+   [
+    "Q2:282.w34.u0",
+    "2:282:35",
+    "فَ"
+   ],
+   [
+    "Q2:282.w34.u1",
+    "2:282:35",
+    "إِنْ"
+   ],
+   [
+    "Q2:282.w35.u0",
+    "2:282:36",
+    "كَانَ"
+   ],
+   [
+    "Q2:282.w36.u0",
+    "2:282:37",
+    "الَّذِي"
+   ],
+   [
+    "Q2:282.w37.u0",
+    "2:282:38",
+    "عَلَيْ"
+   ],
+   [
+    "Q2:282.w37.u1",
+    "2:282:38",
+    "هِ"
+   ],
+   [
+    "Q2:282.w38.u0",
+    "2:282:39",
+    "الْحَقُّ"
+   ],
+   [
+    "Q2:282.w39.u0",
+    "2:282:40",
+    "سَفِيهًا"
+   ],
+   [
+    "Q2:282.w40.u0",
+    "2:282:41",
+    "أَوْ"
+   ],
+   [
+    "Q2:282.w41.u0",
+    "2:282:42",
+    "ضَعِيفًا"
+   ],
+   [
+    "Q2:282.w42.u0",
+    "2:282:43",
+    "أَوْ"
+   ],
+   [
+    "Q2:282.w43.u0",
+    "2:282:44",
+    "لَا"
+   ],
+   [
+    "Q2:282.w44.u0",
+    "2:282:45",
+    "يَسْتَطِيعُ"
+   ],
+   [
+    "Q2:282.w45.u0",
+    "2:282:46",
+    "أَنْ"
+   ],
+   [
+    "Q2:282.w46.u0",
+    "2:282:47",
+    "يُمِلَّ"
+   ],
+   [
+    "Q2:282.w47.u0",
+    "2:282:48",
+    "هُوَ"
+   ],
+   [
+    "Q2:282.w48.u0",
+    "2:282:49",
+    "فَلْ"
+   ],
+   [
+    "Q2:282.w48.u1",
+    "2:282:49",
+    "يُمْلِلْ"
+   ],
+   [
+    "Q2:282.w49.u0",
+    "2:282:50",
+    "وَلِيُّ"
+   ],
+   [
+    "Q2:282.w49.u1",
+    "2:282:50",
+    "هُ"
+   ],
+   [
+    "Q2:282.w50.u0",
+    "2:282:51",
+    "بِ"
+   ],
+   [
+    "Q2:282.w50.u1",
+    "2:282:51",
+    "الْعَدْلِ"
+   ],
+   [
+    "Q2:282.w51.u0",
+    "2:282:52",
+    "وَ"
+   ],
+   [
+    "Q2:282.w51.u1",
+    "2:282:52",
+    "اسْتَشْهِدُوا"
+   ],
+   [
+    "Q2:282.w52.u0",
+    "2:282:53",
+    "شَهِيدَيْنِ"
+   ],
+   [
+    "Q2:282.w53.u0",
+    "2:282:54",
+    "مِنْ"
+   ],
+   [
+    "Q2:282.w54.u0",
+    "2:282:55",
+    "رِّجَالِ"
+   ],
+   [
+    "Q2:282.w54.u1",
+    "2:282:55",
+    "كُمْ"
+   ],
+   [
+    "Q2:282.w55.u0",
+    "2:282:56",
+    "فَ"
+   ],
+   [
+    "Q2:282.w55.u1",
+    "2:282:56",
+    "إِنْ"
+   ],
+   [
+    "Q2:282.w56.u0",
+    "2:282:57",
+    "لَّمْ"
+   ],
+   [
+    "Q2:282.w57.u0",
+    "2:282:58",
+    "يَكُونَا"
+   ],
+   [
+    "Q2:282.w58.u0",
+    "2:282:59",
+    "رَجُلَيْنِ"
+   ],
+   [
+    "Q2:282.w59.u0",
+    "2:282:60",
+    "فَ"
+   ],
+   [
+    "Q2:282.w59.u1",
+    "2:282:60",
+    "رَجُلٌ"
+   ],
+   [
+    "Q2:282.w60.u0",
+    "2:282:61",
+    "وَ"
+   ],
+   [
+    "Q2:282.w60.u1",
+    "2:282:61",
+    "امْرَأَتَانِ"
+   ],
+   [
+    "Q2:282.w61.u0",
+    "2:282:62",
+    "مِمَّنْ"
+   ],
+   [
+    "Q2:282.w62.u0",
+    "2:282:63",
+    "تَرْضَوْنَ"
+   ],
+   [
+    "Q2:282.w63.u0",
+    "2:282:64",
+    "مِنَ"
+   ],
+   [
+    "Q2:282.w64.u0",
+    "2:282:65",
+    "الشُّهَدَاءِ"
+   ],
+   [
+    "Q2:282.w65.u0",
+    "2:282:66",
+    "أَنْ"
+   ],
+   [
+    "Q2:282.w66.u0",
+    "2:282:67",
+    "تَضِلَّ"
+   ],
+   [
+    "Q2:282.w67.u0",
+    "2:282:68",
+    "إِحْدَى"
+   ],
+   [
+    "Q2:282.w67.u1",
+    "2:282:68",
+    "هُمَا"
+   ],
+   [
+    "Q2:282.w68.u0",
+    "2:282:69",
+    "فَ"
+   ],
+   [
+    "Q2:282.w68.u1",
+    "2:282:69",
+    "تُذَكِّرَ"
+   ],
+   [
+    "Q2:282.w69.u0",
+    "2:282:70",
+    "إِحْدَى"
+   ],
+   [
+    "Q2:282.w69.u1",
+    "2:282:70",
+    "هُمَا"
+   ],
+   [
+    "Q2:282.w70.u0",
+    "2:282:71",
+    "الْأُخْرَى"
+   ],
+   [
+    "Q2:282.w71.u0",
+    "2:282:72",
+    "وَ"
+   ],
+   [
+    "Q2:282.w71.u1",
+    "2:282:72",
+    "لَا"
+   ],
+   [
+    "Q2:282.w72.u0",
+    "2:282:73",
+    "يَأْبَ"
+   ],
+   [
+    "Q2:282.w73.u0",
+    "2:282:74",
+    "الشُّهَدَاءُ"
+   ],
+   [
+    "Q2:282.w74.u0",
+    "2:282:75",
+    "إِذَا"
+   ],
+   [
+    "Q2:282.w75.u0",
+    "2:282:76",
+    "مَا"
+   ],
+   [
+    "Q2:282.w76.u0",
+    "2:282:77",
+    "دُعُوا"
+   ],
+   [
+    "Q2:282.w77.u0",
+    "2:282:78",
+    "وَ"
+   ],
+   [
+    "Q2:282.w77.u1",
+    "2:282:78",
+    "لَا"
+   ],
+   [
+    "Q2:282.w78.u0",
+    "2:282:79",
+    "تَسْءَمُوا"
+   ],
+   [
+    "Q2:282.w79.u0",
+    "2:282:80",
+    "أَنْ"
+   ],
+   [
+    "Q2:282.w80.u0",
+    "2:282:81",
+    "تَكْتُبُو"
+   ],
+   [
+    "Q2:282.w80.u1",
+    "2:282:81",
+    "هُ"
+   ],
+   [
+    "Q2:282.w81.u0",
+    "2:282:82",
+    "صَغِيرًا"
+   ],
+   [
+    "Q2:282.w82.u0",
+    "2:282:83",
+    "أَوْ"
+   ],
+   [
+    "Q2:282.w83.u0",
+    "2:282:84",
+    "كَبِيرًا"
+   ],
+   [
+    "Q2:282.w84.u0",
+    "2:282:85",
+    "إِلَى"
+   ],
+   [
+    "Q2:282.w85.u0",
+    "2:282:86",
+    "أَجَلِ"
+   ],
+   [
+    "Q2:282.w85.u1",
+    "2:282:86",
+    "هِ"
+   ],
+   [
+    "Q2:282.w86.u0",
+    "2:282:87",
+    "ذَٰلِكُمْ"
+   ],
+   [
+    "Q2:282.w87.u0",
+    "2:282:88",
+    "أَقْسَطُ"
+   ],
+   [
+    "Q2:282.w88.u0",
+    "2:282:89",
+    "عِنْدَ"
+   ],
+   [
+    "Q2:282.w89.u0",
+    "2:282:90",
+    "اللَّهِ"
+   ],
+   [
+    "Q2:282.w90.u0",
+    "2:282:91",
+    "وَ"
+   ],
+   [
+    "Q2:282.w90.u1",
+    "2:282:91",
+    "أَقْوَمُ"
+   ],
+   [
+    "Q2:282.w91.u0",
+    "2:282:92",
+    "لِلشَّهَٰدَةِ"
+   ],
+   [
+    "Q2:282.w92.u0",
+    "2:282:93",
+    "وَ"
+   ],
+   [
+    "Q2:282.w92.u1",
+    "2:282:93",
+    "أَدْنَى"
+   ],
+   [
+    "Q2:282.w93.u0",
+    "2:282:94",
+    "أَلَّا"
+   ],
+   [
+    "Q2:282.w94.u0",
+    "2:282:95",
+    "تَرْتَابُوا"
+   ],
+   [
+    "Q2:282.w95.u0",
+    "2:282:96",
+    "إِلَّا"
+   ],
+   [
+    "Q2:282.w96.u0",
+    "2:282:97",
+    "أَنْ"
+   ],
+   [
+    "Q2:282.w97.u0",
+    "2:282:98",
+    "تَكُونَ"
+   ],
+   [
+    "Q2:282.w98.u0",
+    "2:282:99",
+    "تِجَٰرَةً"
+   ],
+   [
+    "Q2:282.w99.u0",
+    "2:282:100",
+    "حَاضِرَةً"
+   ],
+   [
+    "Q2:282.w100.u0",
+    "2:282:101",
+    "تُدِيرُونَ"
+   ],
+   [
+    "Q2:282.w100.u1",
+    "2:282:101",
+    "هَا"
+   ],
+   [
+    "Q2:282.w101.u0",
+    "2:282:102",
+    "بَيْنَ"
+   ],
+   [
+    "Q2:282.w101.u1",
+    "2:282:102",
+    "كُمْ"
+   ],
+   [
+    "Q2:282.w102.u0",
+    "2:282:103",
+    "فَ"
+   ],
+   [
+    "Q2:282.w102.u1",
+    "2:282:103",
+    "لَيْسَ"
+   ],
+   [
+    "Q2:282.w103.u0",
+    "2:282:104",
+    "عَلَيْ"
+   ],
+   [
+    "Q2:282.w103.u1",
+    "2:282:104",
+    "كُمْ"
+   ],
+   [
+    "Q2:282.w104.u0",
+    "2:282:105",
+    "جُنَاحٌ"
+   ],
+   [
+    "Q2:282.w105.u0",
+    "2:282:106",
+    "أَلَّا"
+   ],
+   [
+    "Q2:282.w106.u0",
+    "2:282:107",
+    "تَكْتُبُو"
+   ],
+   [
+    "Q2:282.w106.u1",
+    "2:282:107",
+    "هَا"
+   ],
+   [
+    "Q2:282.w107.u0",
+    "2:282:108",
+    "وَ"
+   ],
+   [
+    "Q2:282.w107.u1",
+    "2:282:108",
+    "أَشْهِدُوا"
+   ],
+   [
+    "Q2:282.w108.u0",
+    "2:282:109",
+    "إِذَا"
+   ],
+   [
+    "Q2:282.w109.u0",
+    "2:282:110",
+    "تَبَايَعْتُمْ"
+   ],
+   [
+    "Q2:282.w110.u0",
+    "2:282:111",
+    "وَ"
+   ],
+   [
+    "Q2:282.w110.u1",
+    "2:282:111",
+    "لَا"
+   ],
+   [
+    "Q2:282.w111.u0",
+    "2:282:112",
+    "يُضَارَّ"
+   ],
+   [
+    "Q2:282.w112.u0",
+    "2:282:113",
+    "كَاتِبٌ"
+   ],
+   [
+    "Q2:282.w113.u0",
+    "2:282:114",
+    "وَ"
+   ],
+   [
+    "Q2:282.w113.u1",
+    "2:282:114",
+    "لَا"
+   ],
+   [
+    "Q2:282.w114.u0",
+    "2:282:115",
+    "شَهِيدٌ"
+   ],
+   [
+    "Q2:282.w115.u0",
+    "2:282:116",
+    "وَ"
+   ],
+   [
+    "Q2:282.w115.u1",
+    "2:282:116",
+    "إِنْ"
+   ],
+   [
+    "Q2:282.w116.u0",
+    "2:282:117",
+    "تَفْعَلُوا"
+   ],
+   [
+    "Q2:282.w117.u0",
+    "2:282:118",
+    "فَ"
+   ],
+   [
+    "Q2:282.w117.u1",
+    "2:282:118",
+    "إِنَّ"
+   ],
+   [
+    "Q2:282.w117.u2",
+    "2:282:118",
+    "هُ"
+   ],
+   [
+    "Q2:282.w118.u0",
+    "2:282:119",
+    "فُسُوقٌ"
+   ],
+   [
+    "Q2:282.w119.u0",
+    "2:282:120",
+    "بِ"
+   ],
+   [
+    "Q2:282.w119.u1",
+    "2:282:120",
+    "كُمْ"
+   ],
+   [
+    "Q2:282.w120.u0",
+    "2:282:121",
+    "وَ"
+   ],
+   [
+    "Q2:282.w120.u1",
+    "2:282:121",
+    "اتَّقُوا"
+   ],
+   [
+    "Q2:282.w121.u0",
+    "2:282:122",
+    "اللَّهَ"
+   ],
+   [
+    "Q2:282.w122.u0",
+    "2:282:123",
+    "وَ"
+   ],
+   [
+    "Q2:282.w122.u1",
+    "2:282:123",
+    "يُعَلِّمُ"
+   ],
+   [
+    "Q2:282.w122.u2",
+    "2:282:123",
+    "كُمُ"
+   ],
+   [
+    "Q2:282.w123.u0",
+    "2:282:124",
+    "اللَّهُ"
+   ],
+   [
+    "Q2:282.w124.u0",
+    "2:282:125",
+    "وَ"
+   ],
+   [
+    "Q2:282.w124.u1",
+    "2:282:125",
+    "اللَّهُ"
+   ],
+   [
+    "Q2:282.w125.u0",
+    "2:282:126",
+    "بِ"
+   ],
+   [
+    "Q2:282.w125.u1",
+    "2:282:126",
+    "كُلِّ"
+   ],
+   [
+    "Q2:282.w126.u0",
+    "2:282:127",
+    "شَيْءٍ"
+   ],
+   [
+    "Q2:282.w127.u0",
+    "2:282:128",
+    "عَلِيمٌ"
+   ]
+  ],
+  "check": []
+ }
+}

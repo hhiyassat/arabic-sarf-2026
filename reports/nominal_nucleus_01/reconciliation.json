@@ -1,0 +1,3735 @@
+{
+ "baseline": "algebra-core 812fdc1",
+ "new": "dayn-audit-01 f91fd1e",
+ "hfn": "release_v18 في الطرفين",
+ "note": "كل صفٍّ حكمٌ لوحدةٍ بهويتها تغيّر بين النسختين؛ والمقابلة بالمرجع (QAC) للقياس وحده خارج المستودع",
+ "count": 191,
+ "verse_2_282": [
+  {
+   "position": "2:282:53",
+   "unit": "Q2:282.w52.u0",
+   "text": "شَهِيدَيْنِ",
+   "analysis_id": "Q2:282.w52.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "2:282:59",
+   "unit": "Q2:282.w58.u0",
+   "text": "رَجُلَيْنِ",
+   "analysis_id": "Q2:282.w58.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "2:282:61",
+   "unit": "Q2:282.w60.u1",
+   "text": "امْرَأَتَانِ",
+   "analysis_id": "Q2:282.w60.u1@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "2:282:81",
+   "unit": "Q2:282.w80.u0",
+   "text": "تَكْتُبُو",
+   "analysis_id": "Q2:282.w80.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "كتب",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "2:282:107",
+   "unit": "Q2:282.w106.u0",
+   "text": "تَكْتُبُو",
+   "analysis_id": "Q2:282.w106.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "كتب",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  }
+ ],
+ "all": [
+  {
+   "position": "2:19:12",
+   "unit": "Q2:19.w11.u0",
+   "text": "ءَاذَانِ",
+   "analysis_id": "Q2:19.w11.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "ءذن",
+    "pattern": "بناء سيبويه: فَاعَالٌ (S052، ج4 ص249)",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "2:76:18",
+   "unit": "Q2:76.w17.u1",
+   "text": "يُحَاجُّو",
+   "analysis_id": "Q2:76.w17.u1@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "الجذر والوزن مؤجَّلان: أكثر من جذر مسجَّل في HFN، ولا حدث بالوزن: حجج (III)، حوج (IX)، حيج (IX)"
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "2:85:18",
+   "unit": "Q2:85.w17.u0",
+   "text": "تُفَٰدُو",
+   "analysis_id": "Q2:85.w17.u0@f91fd1e",
+   "old": {
+    "closed": true,
+    "root": "فدي",
+    "pattern": "III",
+    "deferred": null
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "الجذر والوزن مؤجَّلان: أكثر من جذر أو وزن مرخَّص: فدي (III)، فيد (I)، فود (IV)"
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "2:114:19",
+   "unit": "Q2:114.w18.u0",
+   "text": "يَدْخُلُو",
+   "analysis_id": "Q2:114.w18.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "دخل",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "2:128:3",
+   "unit": "Q2:128.w2.u0",
+   "text": "مُسْلِمَيْنِ",
+   "analysis_id": "Q2:128.w2.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "2:187:49",
+   "unit": "Q2:187.w48.u0",
+   "text": "تُبَٰشِرُو",
+   "analysis_id": "Q2:187.w48.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "بشر",
+    "pattern": "III",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "2:187:58",
+   "unit": "Q2:187.w57.u0",
+   "text": "تَقْرَبُو",
+   "analysis_id": "Q2:187.w57.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "قرب",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "2:191:13",
+   "unit": "Q2:191.w12.u0",
+   "text": "تُقَٰتِلُو",
+   "analysis_id": "Q2:191.w12.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "قتل",
+    "pattern": "III",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "2:191:18",
+   "unit": "Q2:191.w17.u0",
+   "text": "يُقَٰتِلُو",
+   "analysis_id": "Q2:191.w17.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "قتل",
+    "pattern": "III",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "2:217:33",
+   "unit": "Q2:217.w32.u0",
+   "text": "يَرُدُّو",
+   "analysis_id": "Q2:217.w32.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "ردد",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "2:220:12",
+   "unit": "Q2:220.w11.u0",
+   "text": "تُخَالِطُو",
+   "analysis_id": "Q2:220.w11.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "خلط",
+    "pattern": "III",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "2:222:12",
+   "unit": "Q2:222.w11.u0",
+   "text": "تَقْرَبُو",
+   "analysis_id": "Q2:222.w11.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "قرب",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "2:229:2",
+   "unit": "Q2:229.w1.u0",
+   "text": "مَرَّتَانِ",
+   "analysis_id": "Q2:229.w1.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "2:229:39",
+   "unit": "Q2:229.w38.u0",
+   "text": "تَعْتَدُو",
+   "analysis_id": "Q2:229.w38.u0@f91fd1e",
+   "old": {
+    "closed": true,
+    "root": "عدو",
+    "pattern": "VIII",
+    "deferred": null
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "الجذر والوزن مؤجَّلان: أكثر من جذر أو وزن مرخَّص: عدو (VIII)، عتد (I)"
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "2:231:12",
+   "unit": "Q2:231.w11.u0",
+   "text": "تُمْسِكُو",
+   "analysis_id": "Q2:231.w11.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "مسك",
+    "pattern": "IV",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "2:232:7",
+   "unit": "Q2:232.w6.u0",
+   "text": "تَعْضُلُو",
+   "analysis_id": "Q2:232.w6.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "عضل",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "2:233:4",
+   "unit": "Q2:233.w3.u0",
+   "text": "حَوْلَيْنِ",
+   "analysis_id": "Q2:233.w3.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "حلي",
+    "pattern": "بناء سيبويه: فَوْعَلانٌ (S181، ج4 ص264) أو فَوْعَلٌ (S286، ج4 ص274)",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "2:233:5",
+   "unit": "Q2:233.w4.u0",
+   "text": "كَامِلَيْنِ",
+   "analysis_id": "Q2:233.w4.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "2:235:20",
+   "unit": "Q2:235.w19.u0",
+   "text": "تُوَاعِدُو",
+   "analysis_id": "Q2:235.w19.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "وعد",
+    "pattern": "III",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "2:236:9",
+   "unit": "Q2:236.w8.u0",
+   "text": "تَمَسُّو",
+   "analysis_id": "Q2:236.w8.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "مسس",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "2:237:6",
+   "unit": "Q2:237.w5.u0",
+   "text": "تَمَسُّو",
+   "analysis_id": "Q2:237.w5.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "مسس",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "2:265:18",
+   "unit": "Q2:265.w17.u0",
+   "text": "ضِعْفَيْنِ",
+   "analysis_id": "Q2:265.w17.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "2:282:53",
+   "unit": "Q2:282.w52.u0",
+   "text": "شَهِيدَيْنِ",
+   "analysis_id": "Q2:282.w52.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "2:282:59",
+   "unit": "Q2:282.w58.u0",
+   "text": "رَجُلَيْنِ",
+   "analysis_id": "Q2:282.w58.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "2:282:61",
+   "unit": "Q2:282.w60.u1",
+   "text": "امْرَأَتَانِ",
+   "analysis_id": "Q2:282.w60.u1@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "2:282:81",
+   "unit": "Q2:282.w80.u0",
+   "text": "تَكْتُبُو",
+   "analysis_id": "Q2:282.w80.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "كتب",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "2:282:107",
+   "unit": "Q2:282.w106.u0",
+   "text": "تَكْتُبُو",
+   "analysis_id": "Q2:282.w106.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "كتب",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "3:73:19",
+   "unit": "Q3:73.w18.u0",
+   "text": "يُحَاجُّو",
+   "analysis_id": "Q3:73.w18.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "الجذر والوزن مؤجَّلان: أكثر من جذر مسجَّل في HFN، ولا حدث بالوزن: حجج (III)، حوج (IX)، حيج (IX)"
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "3:100:11",
+   "unit": "Q3:100.w10.u0",
+   "text": "يَرُدُّو",
+   "analysis_id": "Q3:100.w10.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "ردد",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "3:111:2",
+   "unit": "Q3:111.w1.u0",
+   "text": "يَضُرُّو",
+   "analysis_id": "Q3:111.w1.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "ضرر",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "3:111:6",
+   "unit": "Q3:111.w5.u0",
+   "text": "يُقَٰتِلُو",
+   "analysis_id": "Q3:111.w5.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "قتل",
+    "pattern": "III",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "3:111:7",
+   "unit": "Q3:111.w6.u0",
+   "text": "يُوَلُّو",
+   "analysis_id": "Q3:111.w6.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "الجذر والوزن مؤجَّلان: لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة"
+   },
+   "new": {
+    "closed": true,
+    "root": "ولي",
+    "pattern": "II",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "3:115:6",
+   "unit": "Q3:115.w5.u0",
+   "text": "يُكْفَرُو",
+   "analysis_id": "Q3:115.w5.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "الجذر والوزن مؤجَّلان: أكثر من جذر أو وزن مرخَّص: كفر (I)، كفر (IV)"
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "3:122:3",
+   "unit": "Q3:122.w2.u0",
+   "text": "طَّائِفَتَانِ",
+   "analysis_id": "Q3:122.w2.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "3:149:8",
+   "unit": "Q3:149.w7.u0",
+   "text": "يَرُدُّو",
+   "analysis_id": "Q3:149.w7.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "ردد",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "3:175:7",
+   "unit": "Q3:175.w6.u0",
+   "text": "تَخَافُو",
+   "analysis_id": "Q3:175.w6.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "الجذر والوزن مؤجَّلان: أكثر من جذر أو وزن مرخَّص: خوف (I)، خيف (I)"
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "4:6:15",
+   "unit": "Q4:6.w14.u0",
+   "text": "تَأْكُلُو",
+   "analysis_id": "Q4:6.w14.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "ءكل",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "4:11:13",
+   "unit": "Q4:11.w12.u0",
+   "text": "اثْنَتَيْنِ",
+   "analysis_id": "Q4:11.w12.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "4:16:1",
+   "unit": "Q4:16.w0.u1",
+   "text": "الَّذَانِ",
+   "analysis_id": "Q4:16.w0.u1@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "4:19:12",
+   "unit": "Q4:19.w11.u0",
+   "text": "تَعْضُلُو",
+   "analysis_id": "Q4:19.w11.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "عضل",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "4:65:6",
+   "unit": "Q4:65.w5.u0",
+   "text": "يُحَكِّمُو",
+   "analysis_id": "Q4:65.w5.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "حكم",
+    "pattern": "II",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "4:88:5",
+   "unit": "Q4:88.w4.u0",
+   "text": "فِئَتَيْنِ",
+   "analysis_id": "Q4:88.w4.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "4:90:14",
+   "unit": "Q4:90.w13.u0",
+   "text": "يُقَٰتِلُو",
+   "analysis_id": "Q4:90.w13.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "قتل",
+    "pattern": "III",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "4:90:27",
+   "unit": "Q4:90.w26.u0",
+   "text": "يُقَٰتِلُو",
+   "analysis_id": "Q4:90.w26.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "قتل",
+    "pattern": "III",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "4:91:5",
+   "unit": "Q4:91.w4.u0",
+   "text": "يَأْمَنُو",
+   "analysis_id": "Q4:91.w4.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "ءمن",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "4:91:17",
+   "unit": "Q4:91.w16.u0",
+   "text": "يَعْتَزِلُو",
+   "analysis_id": "Q4:91.w16.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "عزل",
+    "pattern": "VIII",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "4:92:52",
+   "unit": "Q4:92.w51.u0",
+   "text": "شَهْرَيْنِ",
+   "analysis_id": "Q4:92.w51.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "4:92:53",
+   "unit": "Q4:92.w52.u0",
+   "text": "مُتَتَابِعَيْنِ",
+   "analysis_id": "Q4:92.w52.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "4:113:10",
+   "unit": "Q4:113.w9.u0",
+   "text": "يُضِلُّو",
+   "analysis_id": "Q4:113.w9.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "ضلل",
+    "pattern": "IV",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "4:127:24",
+   "unit": "Q4:127.w23.u0",
+   "text": "تَنْكِحُو",
+   "analysis_id": "Q4:127.w23.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "الجذر والوزن مؤجَّلان: لا رخصة: لم يرد أيٌّ من المرشَّحات في HFN"
+   },
+   "new": {
+    "closed": true,
+    "root": "نكح",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "4:129:13",
+   "unit": "Q4:129.w12.u1",
+   "text": "تَذَرُو",
+   "analysis_id": "Q4:129.w12.u1@f91fd1e",
+   "old": {
+    "closed": true,
+    "root": "ذرو",
+    "pattern": "I",
+    "deferred": null
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "الجذر والوزن مؤجَّلان: أكثر من جذر أو وزن مرخَّص: وذر (I)، ذرو (I)"
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "4:176:28",
+   "unit": "Q4:176.w27.u0",
+   "text": "اثْنَتَيْنِ",
+   "analysis_id": "Q4:176.w27.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "5:23:2",
+   "unit": "Q5:23.w1.u0",
+   "text": "رَجُلَانِ",
+   "analysis_id": "Q5:23.w1.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "رجل",
+    "pattern": "بناء سيبويه: فَعُلٌ (S006، ج4 ص243)",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "5:42:16",
+   "unit": "Q5:42.w15.u0",
+   "text": "يَضُرُّو",
+   "analysis_id": "Q5:42.w15.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "ضرر",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "5:49:12",
+   "unit": "Q5:49.w11.u0",
+   "text": "يَفْتِنُو",
+   "analysis_id": "Q5:49.w11.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "فتن",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "5:64:13",
+   "unit": "Q5:64.w12.u0",
+   "text": "مَبْسُوطَتَانِ",
+   "analysis_id": "Q5:64.w12.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "5:106:12",
+   "unit": "Q5:106.w11.u0",
+   "text": "اثْنَانِ",
+   "analysis_id": "Q5:106.w11.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "5:106:17",
+   "unit": "Q5:106.w16.u0",
+   "text": "ءَاخَرَانِ",
+   "analysis_id": "Q5:106.w16.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "ءخر",
+    "pattern": "بناء سيبويه: فَاعَلٌ (S048، ج4 ص249)",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "5:107:7",
+   "unit": "Q5:107.w6.u1",
+   "text": "ءَاخَرَانِ",
+   "analysis_id": "Q5:107.w6.u1@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "ءخر",
+    "pattern": "بناء سيبويه: فَاعَلٌ (S048، ج4 ص249)",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "5:116:12",
+   "unit": "Q5:116.w11.u0",
+   "text": "إِلَٰهَيْنِ",
+   "analysis_id": "Q5:116.w11.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "6:25:12",
+   "unit": "Q6:25.w11.u0",
+   "text": "ءَاذَانِ",
+   "analysis_id": "Q6:25.w11.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "ءذن",
+    "pattern": "بناء سيبويه: فَاعَالٌ (S052، ج4 ص249)",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "6:116:7",
+   "unit": "Q6:116.w6.u0",
+   "text": "يُضِلُّو",
+   "analysis_id": "Q6:116.w6.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "ضلل",
+    "pattern": "IV",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "6:121:16",
+   "unit": "Q6:121.w15.u1",
+   "text": "يُجَٰدِلُو",
+   "analysis_id": "Q6:121.w15.u1@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "جدل",
+    "pattern": "III",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "6:143:5",
+   "unit": "Q6:143.w4.u0",
+   "text": "اثْنَيْنِ",
+   "analysis_id": "Q6:143.w4.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "ثني",
+    "pattern": "بناء سيبويه: إِفْعَلٌ (S015، ج4 ص245)",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "6:143:8",
+   "unit": "Q6:143.w7.u0",
+   "text": "اثْنَيْنِ",
+   "analysis_id": "Q6:143.w7.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "ثني",
+    "pattern": "بناء سيبويه: إِفْعَلٌ (S015، ج4 ص245)",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "6:143:10",
+   "unit": "Q6:143.w9.u0",
+   "text": "ءَالذَّكَرَيْنِ",
+   "analysis_id": "Q6:143.w9.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "6:144:3",
+   "unit": "Q6:144.w2.u0",
+   "text": "اثْنَيْنِ",
+   "analysis_id": "Q6:144.w2.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "ثني",
+    "pattern": "بناء سيبويه: إِفْعَلٌ (S015، ج4 ص245)",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "6:144:6",
+   "unit": "Q6:144.w5.u0",
+   "text": "اثْنَيْنِ",
+   "analysis_id": "Q6:144.w5.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "ثني",
+    "pattern": "بناء سيبويه: إِفْعَلٌ (S015، ج4 ص245)",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "6:144:8",
+   "unit": "Q6:144.w7.u0",
+   "text": "ءَالذَّكَرَيْنِ",
+   "analysis_id": "Q6:144.w7.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "6:148:28",
+   "unit": "Q6:148.w27.u1",
+   "text": "تُخْرِجُو",
+   "analysis_id": "Q6:148.w27.u1@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "خرج",
+    "pattern": "IV",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "7:20:21",
+   "unit": "Q7:20.w20.u0",
+   "text": "مَلَكَيْنِ",
+   "analysis_id": "Q7:20.w20.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "7:46:16",
+   "unit": "Q7:46.w15.u0",
+   "text": "يَدْخُلُو",
+   "analysis_id": "Q7:46.w15.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "دخل",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "7:73:30",
+   "unit": "Q7:73.w29.u0",
+   "text": "تَمَسُّو",
+   "analysis_id": "Q7:73.w29.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "مسس",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "7:169:18",
+   "unit": "Q7:169.w17.u0",
+   "text": "يَأْخُذُو",
+   "analysis_id": "Q7:169.w17.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "ءخذ",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "8:17:2",
+   "unit": "Q8:17.w1.u0",
+   "text": "تَقْتُلُو",
+   "analysis_id": "Q8:17.w1.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "قتل",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "8:30:6",
+   "unit": "Q8:30.w5.u1",
+   "text": "يُثْبِتُو",
+   "analysis_id": "Q8:30.w5.u1@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "ثبت",
+    "pattern": "IV",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "8:30:8",
+   "unit": "Q8:30.w7.u0",
+   "text": "يَقْتُلُو",
+   "analysis_id": "Q8:30.w7.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "قتل",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "8:30:10",
+   "unit": "Q8:30.w9.u0",
+   "text": "يُخْرِجُو",
+   "analysis_id": "Q8:30.w9.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "خرج",
+    "pattern": "IV",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "8:62:4",
+   "unit": "Q8:62.w3.u0",
+   "text": "يَخْدَعُو",
+   "analysis_id": "Q8:62.w3.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "الجذر والوزن مؤجَّلان: لا رخصة: لم يرد أيٌّ من المرشَّحات في HFN"
+   },
+   "new": {
+    "closed": true,
+    "root": "خدع",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "8:65:13",
+   "unit": "Q8:65.w12.u0",
+   "text": "مِئَتَيْنِ",
+   "analysis_id": "Q8:65.w12.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "8:66:15",
+   "unit": "Q8:66.w14.u0",
+   "text": "مِئَتَيْنِ",
+   "analysis_id": "Q8:66.w14.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "8:66:21",
+   "unit": "Q8:66.w20.u0",
+   "text": "أَلْفَيْنِ",
+   "analysis_id": "Q8:66.w20.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "8:73:7",
+   "unit": "Q8:73.w6.u0",
+   "text": "تَفْعَلُو",
+   "analysis_id": "Q8:73.w6.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "فعل",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "9:4:8",
+   "unit": "Q9:4.w7.u0",
+   "text": "يَنْقُصُو",
+   "analysis_id": "Q9:4.w7.u0@f91fd1e",
+   "old": {
+    "closed": true,
+    "root": "قصو",
+    "pattern": "VII",
+    "deferred": null
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "الجذر والوزن مؤجَّلان: أكثر من جذر مسجَّل في HFN، ولا حدث بالوزن: قصو (VII)، نقص (I)"
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "9:39:10",
+   "unit": "Q9:39.w9.u0",
+   "text": "تَضُرُّو",
+   "analysis_id": "Q9:39.w9.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "ضرر",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "9:40:2",
+   "unit": "Q9:40.w1.u0",
+   "text": "تَنْصُرُو",
+   "analysis_id": "Q9:40.w1.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "الجذر والوزن مؤجَّلان: لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة"
+   },
+   "new": {
+    "closed": true,
+    "root": "نصر",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "9:40:11",
+   "unit": "Q9:40.w10.u0",
+   "text": "اثْنَيْنِ",
+   "analysis_id": "Q9:40.w10.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "ثني",
+    "pattern": "بناء سيبويه: إِفْعَلٌ (S015، ج4 ص245)",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "9:101:17",
+   "unit": "Q9:101.w16.u0",
+   "text": "مَّرَّتَيْنِ",
+   "analysis_id": "Q9:101.w16.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "9:104:6",
+   "unit": "Q9:104.w5.u0",
+   "text": "يَقْبَلُ",
+   "analysis_id": "Q9:104.w5.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "الجذر والوزن مؤجَّلان: لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة"
+   },
+   "new": {
+    "closed": true,
+    "root": "قبل",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "9:126:10",
+   "unit": "Q9:126.w9.u0",
+   "text": "مَرَّتَيْنِ",
+   "analysis_id": "Q9:126.w9.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "11:40:12",
+   "unit": "Q11:40.w11.u0",
+   "text": "زَوْجَيْنِ",
+   "analysis_id": "Q11:40.w11.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "11:40:13",
+   "unit": "Q11:40.w12.u0",
+   "text": "اثْنَيْنِ",
+   "analysis_id": "Q11:40.w12.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "ثني",
+    "pattern": "بناء سيبويه: إِفْعَلٌ (S015، ج4 ص245)",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "11:64:13",
+   "unit": "Q11:64.w12.u0",
+   "text": "تَمَسُّو",
+   "analysis_id": "Q11:64.w12.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "مسس",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "12:15:6",
+   "unit": "Q12:15.w5.u0",
+   "text": "يَجْعَلُو",
+   "analysis_id": "Q12:15.w5.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "جعل",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "12:36:4",
+   "unit": "Q12:36.w3.u0",
+   "text": "فَتَيَانِ",
+   "analysis_id": "Q12:36.w3.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "فتي",
+    "pattern": "بناء سيبويه: فَعَلٌ (S004، ج4 ص243) أو فَعَلَى (S101، ج4 ص256)",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "12:45:9",
+   "unit": "Q12:45.w8.u0",
+   "text": "أُنَبِّئُ",
+   "analysis_id": "Q12:45.w8.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "الجذر والوزن مؤجَّلان: لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة"
+   },
+   "new": {
+    "closed": true,
+    "root": "نبء",
+    "pattern": "II",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "12:69:11",
+   "unit": "Q12:69.w10.u0",
+   "text": "أَخُو",
+   "analysis_id": "Q12:69.w10.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "الجذر والوزن مؤجَّلان: لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة"
+   },
+   "new": {
+    "closed": true,
+    "root": "ءخو",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "13:3:14",
+   "unit": "Q13:3.w13.u0",
+   "text": "زَوْجَيْنِ",
+   "analysis_id": "Q13:3.w13.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "13:3:15",
+   "unit": "Q13:3.w14.u0",
+   "text": "اثْنَيْنِ",
+   "analysis_id": "Q13:3.w14.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "ثني",
+    "pattern": "بناء سيبويه: إِفْعَلٌ (S015، ج4 ص245)",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "14:10:26",
+   "unit": "Q14:10.w25.u0",
+   "text": "تَصُدُّو",
+   "analysis_id": "Q14:10.w25.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "صدد",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "14:33:5",
+   "unit": "Q14:33.w4.u0",
+   "text": "دَائِبَيْنِ",
+   "analysis_id": "Q14:33.w4.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "16:1:5",
+   "unit": "Q16:1.w4.u0",
+   "text": "تَسْتَعْجِلُو",
+   "analysis_id": "Q16:1.w4.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "عجل",
+    "pattern": "X",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "16:8:4",
+   "unit": "Q16:8.w3.u1",
+   "text": "تَرْكَبُو",
+   "analysis_id": "Q16:8.w3.u1@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "ركب",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "16:51:5",
+   "unit": "Q16:51.w4.u0",
+   "text": "إِلَٰهَيْنِ",
+   "analysis_id": "Q16:51.w4.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "16:51:6",
+   "unit": "Q16:51.w5.u0",
+   "text": "اثْنَيْنِ",
+   "analysis_id": "Q16:51.w5.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "ثني",
+    "pattern": "بناء سيبويه: إِفْعَلٌ (S015، ج4 ص245)",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "16:76:4",
+   "unit": "Q16:76.w3.u0",
+   "text": "رَّجُلَيْنِ",
+   "analysis_id": "Q16:76.w3.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "17:4:10",
+   "unit": "Q17:4.w9.u0",
+   "text": "مَرَّتَيْنِ",
+   "analysis_id": "Q17:4.w9.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "17:12:4",
+   "unit": "Q17:12.w3.u0",
+   "text": "ءَايَتَيْنِ",
+   "analysis_id": "Q17:12.w3.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "17:46:8",
+   "unit": "Q17:46.w7.u0",
+   "text": "ءَاذَانِ",
+   "analysis_id": "Q17:46.w7.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "ءذن",
+    "pattern": "بناء سيبويه: فَاعَالٌ (S052، ج4 ص249)",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "17:76:6",
+   "unit": "Q17:76.w5.u1",
+   "text": "يُخْرِجُو",
+   "analysis_id": "Q17:76.w5.u1@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "خرج",
+    "pattern": "IV",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "18:11:3",
+   "unit": "Q18:11.w2.u0",
+   "text": "ءَاذَانِ",
+   "analysis_id": "Q18:11.w2.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "ءذن",
+    "pattern": "بناء سيبويه: فَاعَالٌ (S052، ج4 ص249)",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "18:20:5",
+   "unit": "Q18:20.w4.u0",
+   "text": "يَرْجُمُو",
+   "analysis_id": "Q18:20.w4.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "رجم",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "18:20:7",
+   "unit": "Q18:20.w6.u0",
+   "text": "يُعِيدُو",
+   "analysis_id": "Q18:20.w6.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "عود",
+    "pattern": "IV",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "18:32:4",
+   "unit": "Q18:32.w3.u0",
+   "text": "رَّجُلَيْنِ",
+   "analysis_id": "Q18:32.w3.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "18:32:7",
+   "unit": "Q18:32.w6.u0",
+   "text": "جَنَّتَيْنِ",
+   "analysis_id": "Q18:32.w6.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "18:39:16",
+   "unit": "Q18:39.w15.u0",
+   "text": "أَقَلَّ",
+   "analysis_id": "Q18:39.w15.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "الجذر والوزن مؤجَّلان: يطابق فعل HFN «قَلَّ» حرفاً وحركة، ولم يثبت بالكتابة أنه فعل"
+   },
+   "new": {
+    "closed": true,
+    "root": "قلل",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "18:57:21",
+   "unit": "Q18:57.w20.u0",
+   "text": "ءَاذَانِ",
+   "analysis_id": "Q18:57.w20.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "ءذن",
+    "pattern": "بناء سيبويه: فَاعَالٌ (S052، ج4 ص249)",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "18:77:11",
+   "unit": "Q18:77.w10.u0",
+   "text": "يُضَيِّفُو",
+   "analysis_id": "Q18:77.w10.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "ضيف",
+    "pattern": "II",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "18:80:5",
+   "unit": "Q18:80.w4.u0",
+   "text": "مُؤْمِنَيْنِ",
+   "analysis_id": "Q18:80.w4.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "18:97:4",
+   "unit": "Q18:97.w3.u0",
+   "text": "يَظْهَرُو",
+   "analysis_id": "Q18:97.w3.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "ظهر",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "22:19:2",
+   "unit": "Q22:19.w1.u0",
+   "text": "خَصْمَانِ",
+   "analysis_id": "Q22:19.w1.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "خصم",
+    "pattern": "بناء سيبويه: فَعْلٌ (S001، ج4 ص242)",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "22:42:2",
+   "unit": "Q22:42.w1.u0",
+   "text": "يُكَذِّبُو",
+   "analysis_id": "Q22:42.w1.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "كذب",
+    "pattern": "II",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "22:73:24",
+   "unit": "Q22:73.w23.u0",
+   "text": "يَسْتَنْقِذُو",
+   "analysis_id": "Q22:73.w23.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "نقذ",
+    "pattern": "X",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "23:27:17",
+   "unit": "Q23:27.w16.u0",
+   "text": "زَوْجَيْنِ",
+   "analysis_id": "Q23:27.w16.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "23:27:18",
+   "unit": "Q23:27.w17.u0",
+   "text": "اثْنَيْنِ",
+   "analysis_id": "Q23:27.w17.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "ثني",
+    "pattern": "بناء سيبويه: إِفْعَلٌ (S015، ج4 ص245)",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "24:28:7",
+   "unit": "Q24:28.w6.u0",
+   "text": "تَدْخُلُو",
+   "analysis_id": "Q24:28.w6.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "دخل",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "24:54:16",
+   "unit": "Q24:54.w15.u0",
+   "text": "تُطِيعُو",
+   "analysis_id": "Q24:54.w15.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "طوع",
+    "pattern": "IV",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "24:62:16",
+   "unit": "Q24:62.w15.u0",
+   "text": "يَسْتَءْذِنُو",
+   "analysis_id": "Q24:62.w15.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "ءذن",
+    "pattern": "X",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "26:156:2",
+   "unit": "Q26:156.w1.u0",
+   "text": "تَمَسُّو",
+   "analysis_id": "Q26:156.w1.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "مسس",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "27:45:12",
+   "unit": "Q27:45.w11.u0",
+   "text": "فَرِيقَانِ",
+   "analysis_id": "Q27:45.w11.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "فرق",
+    "pattern": "بناء سيبويه: فَعِيلٌ (S205، ج4 ص267)",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "28:9:9",
+   "unit": "Q28:9.w8.u0",
+   "text": "تَقْتُلُو",
+   "analysis_id": "Q28:9.w8.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "قتل",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "28:15:10",
+   "unit": "Q28:15.w9.u0",
+   "text": "رَجُلَيْنِ",
+   "analysis_id": "Q28:15.w9.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "28:20:13",
+   "unit": "Q28:20.w12.u1",
+   "text": "يَقْتُلُو",
+   "analysis_id": "Q28:20.w12.u1@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "قتل",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "28:23:14",
+   "unit": "Q28:23.w13.u0",
+   "text": "امْرَأَتَيْنِ",
+   "analysis_id": "Q28:23.w13.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "28:32:16",
+   "unit": "Q28:32.w15.u0",
+   "text": "بُرْهَٰنَانِ",
+   "analysis_id": "Q28:32.w15.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "28:48:21",
+   "unit": "Q28:48.w20.u0",
+   "text": "سِحْرَانِ",
+   "analysis_id": "Q28:48.w20.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "سحر",
+    "pattern": "بناء سيبويه: فِعْلٌ (S002، ج4 ص242)",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "28:54:4",
+   "unit": "Q28:54.w3.u0",
+   "text": "مَّرَّتَيْنِ",
+   "analysis_id": "Q28:54.w3.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "29:4:7",
+   "unit": "Q29:4.w6.u0",
+   "text": "يَسْبِقُو",
+   "analysis_id": "Q29:4.w6.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "سبق",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "33:30:11",
+   "unit": "Q33:30.w10.u0",
+   "text": "ضِعْفَيْنِ",
+   "analysis_id": "Q33:30.w10.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "33:31:10",
+   "unit": "Q33:31.w9.u0",
+   "text": "مَرَّتَيْنِ",
+   "analysis_id": "Q33:31.w9.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "33:49:12",
+   "unit": "Q33:49.w11.u0",
+   "text": "تَمَسُّو",
+   "analysis_id": "Q33:49.w11.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "مسس",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "33:68:3",
+   "unit": "Q33:68.w2.u0",
+   "text": "ضِعْفَيْنِ",
+   "analysis_id": "Q33:68.w2.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "34:15:7",
+   "unit": "Q34:15.w6.u0",
+   "text": "جَنَّتَانِ",
+   "analysis_id": "Q34:15.w6.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "34:16:8",
+   "unit": "Q34:16.w7.u0",
+   "text": "جَنَّتَيْنِ",
+   "analysis_id": "Q34:16.w7.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "35:4:2",
+   "unit": "Q35:4.w1.u0",
+   "text": "يُكَذِّبُو",
+   "analysis_id": "Q35:4.w1.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "كذب",
+    "pattern": "II",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "35:25:2",
+   "unit": "Q35:25.w1.u0",
+   "text": "يُكَذِّبُو",
+   "analysis_id": "Q35:25.w1.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "كذب",
+    "pattern": "II",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "36:14:4",
+   "unit": "Q36:14.w3.u0",
+   "text": "اثْنَيْنِ",
+   "analysis_id": "Q36:14.w3.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "ثني",
+    "pattern": "بناء سيبويه: إِفْعَلٌ (S015، ج4 ص245)",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "38:22:10",
+   "unit": "Q38:22.w9.u0",
+   "text": "خَصْمَانِ",
+   "analysis_id": "Q38:22.w9.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "خصم",
+    "pattern": "بناء سيبويه: فَعْلٌ (S001، ج4 ص242)",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "38:57:2",
+   "unit": "Q38:57.w1.u1",
+   "text": "يَذُوقُو",
+   "analysis_id": "Q38:57.w1.u1@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "ذوق",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "39:3:13",
+   "unit": "Q39:3.w12.u1",
+   "text": "يُقَرِّبُو",
+   "analysis_id": "Q39:3.w12.u1@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "قرب",
+    "pattern": "II",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "39:17:5",
+   "unit": "Q39:17.w4.u0",
+   "text": "يَعْبُدُو",
+   "analysis_id": "Q39:17.w4.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "عبد",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "39:46:10",
+   "unit": "Q39:46.w9.u0",
+   "text": "تَحْكُمُ",
+   "analysis_id": "Q39:46.w9.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "الجذر والوزن مؤجَّلان: لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة"
+   },
+   "new": {
+    "closed": true,
+    "root": "حكم",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "40:5:12",
+   "unit": "Q40:5.w11.u1",
+   "text": "يَأْخُذُو",
+   "analysis_id": "Q40:5.w11.u1@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "ءخذ",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "40:11:4",
+   "unit": "Q40:11.w3.u0",
+   "text": "اثْنَتَيْنِ",
+   "analysis_id": "Q40:11.w3.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "40:11:6",
+   "unit": "Q40:11.w5.u0",
+   "text": "اثْنَتَيْنِ",
+   "analysis_id": "Q40:11.w5.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "41:5:9",
+   "unit": "Q41:5.w8.u0",
+   "text": "ءَاذَانِ",
+   "analysis_id": "Q41:5.w8.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "ءذن",
+    "pattern": "بناء سيبويه: فَاعَالٌ (S052، ج4 ص249)",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "41:29:6",
+   "unit": "Q41:29.w5.u0",
+   "text": "الَّذَيْنِ",
+   "analysis_id": "Q41:29.w5.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "41:44:21",
+   "unit": "Q41:44.w20.u0",
+   "text": "ءَاذَانِ",
+   "analysis_id": "Q41:44.w20.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "ءذن",
+    "pattern": "بناء سيبويه: فَاعَالٌ (S052، ج4 ص249)",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "48:9:4",
+   "unit": "Q48:9.w3.u1",
+   "text": "تُعَزِّرُو",
+   "analysis_id": "Q48:9.w3.u1@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "عزر",
+    "pattern": "II",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "48:9:5",
+   "unit": "Q48:9.w4.u1",
+   "text": "تُوَقِّرُو",
+   "analysis_id": "Q48:9.w4.u1@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "وقر",
+    "pattern": "II",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "48:9:6",
+   "unit": "Q48:9.w5.u1",
+   "text": "تُسَبِّحُو",
+   "analysis_id": "Q48:9.w5.u1@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "سبح",
+    "pattern": "II",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "48:15:7",
+   "unit": "Q48:15.w6.u1",
+   "text": "تَأْخُذُو",
+   "analysis_id": "Q48:15.w6.u1@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "ءخذ",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "49:9:2",
+   "unit": "Q49:9.w1.u0",
+   "text": "طَائِفَتَانِ",
+   "analysis_id": "Q49:9.w1.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "51:49:5",
+   "unit": "Q51:49.w4.u0",
+   "text": "زَوْجَيْنِ",
+   "analysis_id": "Q51:49.w4.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "53:9:3",
+   "unit": "Q53:9.w2.u0",
+   "text": "قَوْسَيْنِ",
+   "analysis_id": "Q53:9.w2.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "قسي",
+    "pattern": "بناء سيبويه: فَوْعَلانٌ (S181، ج4 ص264) أو فَوْعَلٌ (S286، ج4 ص274)",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "55:46:5",
+   "unit": "Q55:46.w4.u0",
+   "text": "جَنَّتَانِ",
+   "analysis_id": "Q55:46.w4.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "55:50:2",
+   "unit": "Q55:50.w1.u0",
+   "text": "عَيْنَانِ",
+   "analysis_id": "Q55:50.w1.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "عين",
+    "pattern": "بناء سيبويه: فَعْلٌ (S001، ج4 ص242)",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "55:52:5",
+   "unit": "Q55:52.w4.u0",
+   "text": "زَوْجَانِ",
+   "analysis_id": "Q55:52.w4.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "زوج",
+    "pattern": "بناء سيبويه: فَعْلٌ (S001، ج4 ص242)",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "55:62:3",
+   "unit": "Q55:62.w2.u0",
+   "text": "جَنَّتَانِ",
+   "analysis_id": "Q55:62.w2.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "55:64:1",
+   "unit": "Q55:64.w0.u0",
+   "text": "مُدْهَامَّتَانِ",
+   "analysis_id": "Q55:64.w0.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "55:66:2",
+   "unit": "Q55:66.w1.u0",
+   "text": "عَيْنَانِ",
+   "analysis_id": "Q55:66.w1.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "عين",
+    "pattern": "بناء سيبويه: فَعْلٌ (S001، ج4 ص242)",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "57:28:9",
+   "unit": "Q57:28.w8.u0",
+   "text": "كِفْلَيْنِ",
+   "analysis_id": "Q57:28.w8.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "58:4:5",
+   "unit": "Q58:4.w4.u0",
+   "text": "شَهْرَيْنِ",
+   "analysis_id": "Q58:4.w4.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "58:4:6",
+   "unit": "Q58:4.w5.u0",
+   "text": "مُتَتَابِعَيْنِ",
+   "analysis_id": "Q58:4.w5.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "59:17:6",
+   "unit": "Q59:17.w5.u0",
+   "text": "خَٰلِدَيْنِ",
+   "analysis_id": "Q59:17.w5.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "60:2:2",
+   "unit": "Q60:2.w1.u0",
+   "text": "يَثْقَفُو",
+   "analysis_id": "Q60:2.w1.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "ثقف",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "60:8:7",
+   "unit": "Q60:8.w6.u0",
+   "text": "يُقَٰتِلُو",
+   "analysis_id": "Q60:8.w6.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "قتل",
+    "pattern": "III",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "60:8:11",
+   "unit": "Q60:8.w10.u0",
+   "text": "يُخْرِجُو",
+   "analysis_id": "Q60:8.w10.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "خرج",
+    "pattern": "IV",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "60:8:15",
+   "unit": "Q60:8.w14.u0",
+   "text": "تَبَرُّو",
+   "analysis_id": "Q60:8.w14.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "برر",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "60:10:16",
+   "unit": "Q60:10.w15.u0",
+   "text": "تَرْجِعُو",
+   "analysis_id": "Q60:10.w15.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "رجع",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "60:10:34",
+   "unit": "Q60:10.w33.u0",
+   "text": "تَنْكِحُو",
+   "analysis_id": "Q60:10.w33.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "الجذر والوزن مؤجَّلان: لا رخصة: لم يرد أيٌّ من المرشَّحات في HFN"
+   },
+   "new": {
+    "closed": true,
+    "root": "نكح",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "62:5:7",
+   "unit": "Q62:5.w6.u0",
+   "text": "يَحْمِلُو",
+   "analysis_id": "Q62:5.w6.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "حمل",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "65:1:14",
+   "unit": "Q65:1.w13.u0",
+   "text": "تُخْرِجُو",
+   "analysis_id": "Q65:1.w13.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "خرج",
+    "pattern": "IV",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "65:6:8",
+   "unit": "Q65:6.w7.u0",
+   "text": "تُضَارُّو",
+   "analysis_id": "Q65:6.w7.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "الجذر والوزن مؤجَّلان: أكثر من جذر مسجَّل في HFN، ولا حدث بالوزن: ضرر (III)، ضور (IX)، ضير (IX)"
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "66:10:12",
+   "unit": "Q66:10.w11.u0",
+   "text": "عَبْدَيْنِ",
+   "analysis_id": "Q66:10.w11.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "66:10:15",
+   "unit": "Q66:10.w14.u0",
+   "text": "صَٰلِحَيْنِ",
+   "analysis_id": "Q66:10.w14.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "67:4:4",
+   "unit": "Q67:4.w3.u0",
+   "text": "كَرَّتَيْنِ",
+   "analysis_id": "Q67:4.w3.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  },
+  {
+   "position": "67:16:11",
+   "unit": "Q67:16.w10.u0",
+   "text": "تَمُورُ",
+   "analysis_id": "Q67:16.w10.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "الجذر والوزن مؤجَّلان: لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة"
+   },
+   "new": {
+    "closed": true,
+    "root": "مور",
+    "pattern": "I",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "71:7:9",
+   "unit": "Q71:7.w8.u0",
+   "text": "ءَاذَانِ",
+   "analysis_id": "Q71:7.w8.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "ءذن",
+    "pattern": "بناء سيبويه: فَاعَالٌ (S052، ج4 ص249)",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "90:8:4",
+   "unit": "Q90:8.w3.u0",
+   "text": "عَيْنَيْنِ",
+   "analysis_id": "Q90:8.w3.u0@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": true,
+    "root": "عني",
+    "pattern": "بناء سيبويه: فَيْعَلانٌ (S162، ج4 ص262) أو فَيْعَلٌ (S200، ج4 ص266)",
+    "deferred": null
+   },
+   "rule": "F07b/F07c (الجذع قبل الضمير، وشهادة التوافق في مسار الجذر)"
+  },
+  {
+   "position": "90:9:2",
+   "unit": "Q90:9.w1.u1",
+   "text": "شَفَتَيْنِ",
+   "analysis_id": "Q90:9.w1.u1@f91fd1e",
+   "old": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم أو غيره: لم تثبت الاسمية بالكتابة، والجذر والوزن مؤجَّلان"
+   },
+   "new": {
+    "closed": false,
+    "root": null,
+    "pattern": null,
+    "deferred": "اسم: لا مدخل له في HFN (مصدر، اسم فاعل، اسم مفعول)"
+   },
+   "rule": "F07a (لاحقة التثنية علامة اسم)"
+  }
+ ]
+}
