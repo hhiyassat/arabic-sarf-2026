@@ -8,7 +8,7 @@
     DIFFERS  السلوك مخالفٌ لتوقّع العقد بسببٍ موثَّق (يُفحص السلوك الموثَّق نفسه، ويُعلن الخلاف)
     FAIL     لا هذا ولا ذاك
 
-لا تُمرَّر القيم المتوقعة إلى المحلّل: المدخل نصٌّ مشكول وحده. والنتائج تُكتب في reports/nominal_nucleus_01/tests.json.
+لا تُمرَّر القيم المتوقعة إلى المحلّل: المدخل نصٌّ مشكول وحده. والنتائج تُكتب في reports/nominal_nucleus_02/tests.json.
 
     PYTHONHASHSEED=0 python3 tests/test_relations.py
 """
@@ -22,12 +22,16 @@ from sarf.root import hfn
 RESULTS = []
 
 
+CLASS = {}      # تصنيف ما لا يستوفي توقّع العقد: INVENTORY_GAP (نقص جرد)، COVERAGE_GAP (نقص تغطية تحليل)، RULE_CONFLICT (تعارض حكم)
+
+
 def case(tid, inp, expectation, fn):
     try:
         status, got = fn()
     except Exception as e:                          # الاختبار نُفِّذ وانهار: فاشل، ويُسجَّل سببه
         status, got = 'FAIL', f'{type(e).__name__}: {e}'
-    RESULTS.append(dict(id=tid, input=inp, contract_expectation=expectation, executed=True, result=status, observed=got))
+    RESULTS.append(dict(id=tid, input=inp, contract_expectation=expectation, executed=True, result=status, observed=got,
+                        classification=CLASS.get(tid) if status == 'DIFFERS' else None))
     print(f'{status:<8} {tid} {inp} — {got if status != "PASS" else ""}'[:300])
 
 
@@ -71,15 +75,18 @@ Q282 = next(l.split('\t')[2].strip() for l in open(H + 'data/quran_hafs.tsv', en
 A282, U282, F282, R282 = run(Q282, '2:282')
 
 
+CLASS['T01'] = 'INVENTORY_GAP + COVERAGE_GAP: «زَيْد» خارج جرد الأعلام، و«قَائِم» اسم فاعلٍ أجوف لا يُحلَّل؛ فاسمية كليهما من التنوين وحده'
+
+
 def t01():
     _, _, _, o = run('زَيۡدٌ قَائِمٌ')
     r = one(o, 'PREDICATION', subject='زَيْدٌ', predicate='قَائِمٌ')
-    _, _, _, o2 = run('ٱلرَّجُلُ قَائِمٌ')
-    r2 = one(o2, 'PREDICATION', subject='الرَّجُلُ', predicate='قَائِمٌ')
-    if r and r['status'] == DEFERRED and 'أهلية الابتداء' in r['reason'] and r2 and r2['status'] == LICENSED and not r2['boundary_proven']:
-        return 'DIFFERS', ('«زَيْدٌ» نكرةٌ بالتنوين ولا جرد أعلامٍ يثبت علميته: N01 مؤجَّل (أهلية الابتداء)؛ '
-                           'والنمط نفسه بمعرفةٍ مثبتة «الرَّجُلُ قَائِمٌ» مرخَّص بلا شهادة حدّ')
-    return 'FAIL', (r, r2)
+    _, _, _, o2 = run('ٱلرَّجُلُ كَاتِبٌ')
+    r2 = one(o2, 'PREDICATION', subject='الرَّجُلُ', predicate='كَاتِبٌ')
+    if r and r['status'] == DEFERRED and 'التنوين وحده' in r['reason'] and r2 and r2['status'] == LICENSED and not r2['boundary_proven']:
+        return 'DIFFERS', ('الشاهد الحرفي مؤجَّل: اسمية «زَيْدٌ» من التنوين وحده (T19)؛ والنمط نفسه بدليلٍ مستقل '
+                           '«الرَّجُلُ كَاتِبٌ» (أل، واسم فاعلٍ مغلق) مرخَّص بلا شهادة حدّ')
+    return 'FAIL', (r and r['reason'], r2 and r2['status'])
 
 
 def t02():
@@ -88,6 +95,9 @@ def t02():
     n = one(o, 'PREDICATIVE_PP', subject='رَجُلٌ')
     return ok(pp and pp['status'] == LICENSED and n and n['status'] == LICENSED and not n['boundary_proven'] and
               not n['sentence_closed'], (pp and pp['status'], n and n['status']))
+
+
+CLASS['T03'] = 'INVENTORY_GAP: «زَيْد» خارج جرد الأعلام، فاسميته وتعريفه غير مثبتين'
 
 
 def t03():
@@ -112,23 +122,47 @@ def t05():
     return ok(r and r['status'] == DEFERRED and 'predicate' not in r['heads'] and not r['sentence_closed'], r and r['reason'])
 
 
+CLASS['T06'] = CLASS['T01']
+
+
 def t06():
     _, _, _, o = run('زَيۡدٌ قَائِمًا')
     r = one(o, 'PREDICATION', subject='زَيْدٌ', predicate='قَائِمًا')
-    return ok(r and r['status'] == REJECTED and 'ولا يُحكم على النص كله' in r['reason'] and
-              not any(x['status'] == REJECTED for x in o['records'] if x is not r), r and r['reason'])
+    _, _, _, o2 = run('ٱلرَّجُلُ كَاتِبًا')
+    r2 = one(o2, 'PREDICATION', subject='الرَّجُلُ', predicate='كَاتِبًا')
+    good = r2 and r2['status'] == REJECTED and 'ولا يُحكم على النص كله' in r2['reason'] and \
+        not any(x['status'] == REJECTED for x in o2['records'] if x is not r2)
+    if r and r['status'] == DEFERRED and good:
+        return 'DIFFERS', 'الشاهد الحرفي مؤجَّل (اسمية الطرفين من التنوين وحده)؛ ونظيره «الرَّجُلُ كَاتِبًا» مرشّحٌ مرفوض وحده'
+    return ok(r and r['status'] == REJECTED, (r and r['reason'], r2 and r2['status']))
+
+
+CLASS['T07'] = 'COVERAGE_GAP: «قَائِم» اسم فاعلٍ أجوف لا يُحلَّل؛ فاسمية الخبر من التنوين وحده'
 
 
 def t07():
     _, _, _, o = run('كَانَ زَيۡدٌ قَائِمًا')
-    v = one(o, 'NASIKH', nasikh='كَانَ', ism='زَيْدٌ', khabar='قَائِمًا')
-    return ok(v and v['status'] == LICENSED and not recs(o, 'PREDICATION'), v and v['status'])
+    v = one(o, 'NASIKH', nasikh='كَانَ', ism='زَيْدٌ')
+    _, _, _, o2 = run('كَانَ ٱلرَّجُلُ كَاتِبًا')
+    v2 = one(o2, 'NASIKH', nasikh='كَانَ', ism='الرَّجُلُ', khabar='كَاتِبًا')
+    nn = not recs(o, 'PREDICATION') and not recs(o2, 'PREDICATION')
+    if v and v['status'] == DEFERRED and v2 and v2['status'] == LICENSED and nn:
+        return 'DIFFERS', 'الوصلة قائمة والطرفان لا يُسمَّيان مبتدأً وخبراً؛ وخبر الشاهد الحرفي مؤجَّل (التنوين وحده)، ونظيره «كَاتِبًا» مرخَّص'
+    return ok(v and v['status'] == LICENSED and nn, (v and v['status'], v2 and v2['status']))
+
+
+CLASS['T08'] = CLASS['T07']
 
 
 def t08():
     _, _, _, o = run('إِنَّ زَيۡدًا قَائِمٌ')
-    v = one(o, 'NASIKH', nasikh='إِنَّ', ism='زَيْدًا', khabar='قَائِمٌ')
-    return ok(v and v['status'] == LICENSED and not recs(o, 'PREDICATION'), v and v['status'])
+    v = one(o, 'NASIKH', nasikh='إِنَّ', ism='زَيْدًا')
+    _, _, _, o2 = run('إِنَّ ٱلرَّجُلَ كَاتِبٌ')
+    v2 = one(o2, 'NASIKH', nasikh='إِنَّ', ism='الرَّجُلَ', khabar='كَاتِبٌ')
+    nn = not recs(o, 'PREDICATION') and not recs(o2, 'PREDICATION')
+    if v and v['status'] == DEFERRED and v2 and v2['status'] == LICENSED and nn:
+        return 'DIFFERS', 'اسم إنّ منصوبٌ ولا يُشترط رفعه؛ وخبر الشاهد الحرفي مؤجَّل (التنوين وحده)، ونظيره «كَاتِبٌ» مرخَّص'
+    return ok(v and v['status'] == LICENSED and nn, (v and v['status'], v2 and v2['status']))
 
 
 def t09():
@@ -205,18 +239,18 @@ def t17():
 
 
 def t18():
-    _, _, _, o = run('هُوَ قَائِمٌ')
-    r = one(o, 'PREDICATION', subject='هُوَ', predicate='قَائِمٌ')
+    _, _, _, o = run('هُوَ عَلِيمٌ')
+    r = one(o, 'PREDICATION', subject='هُوَ', predicate='عَلِيمٌ')
     return ok(r and r['status'] == LICENSED and any('المحلّ' in p for p in r['premises']), r and r['premises'])
 
 
 def t19():
-    _, _, _, o = run('رَجُلٌ قَائِمٌ')
-    r = one(o, 'PREDICATION', subject='رَجُلٌ')
-    if r and r['status'] != LICENSED and any('التنوين' in p for p in r['premises']):
-        return 'DIFFERS', ('الاسمية في المشروع تثبت بالتنوين المكتوب (حكمٌ قائم في sarf.features)، والعقد يمنعه شاهداً وحده: '
-                           'تعارضٌ معروض على صاحب النظرية؛ والدليل ظاهرٌ في المقدّمات، والإسناد غير مرخَّص هنا')
-    return ok(False, r)
+    a, U, F, o = run('ٱلرَّجُلُ قَائِمٌ')
+    r = one(o, 'PREDICATION', subject='الرَّجُلُ', predicate='قَائِمٌ')
+    k = next(k for k in U if U[k].O['text'] == 'قَائِمٌ')
+    ax = o['axes'][U[k].id]
+    return ok(r and r['status'] == DEFERRED and 'التنوين وحده' in r['reason'] and F[k]['pos']['v'] == 'اسم' and ax['word_class'][0] is None,
+              dict(status=r and r['status'], feature_pos=F[k]['pos'], axis=ax['word_class']))
 
 
 def t20():
@@ -245,7 +279,7 @@ def t22():
 
 
 def t23():
-    one_host = [x for x in R282['records'] if x['type'] == 'ATTACH' and len(x['alternatives']) == 1]
+    one_host = [x for x in R282['records'] if x['type'] == 'ATTACH' and x['rule_id'] == 'A01' and len(x['alternatives']) == 1]
     return ok(one_host and all(x['status'] == DEFERRED and x['search_status'] == SEARCH_INCOMPLETE and
                                x['selected_analysis'] is None for x in one_host), len(one_host))
 
@@ -269,10 +303,11 @@ def t25():
 
 
 def t26():
-    _, _, _, o = run('وَٱللَّهُ بِكُلِّ شَيۡءٍ عَلِيمٌ')
-    n = one(o, 'PREDICATION', subject='اللَّهُ')
-    return ok(n and n['nucleus_complete'] is True and n['clause_complete'] is not True and recs(o, 'ATTACH')[0]['status'] == DEFERRED,
-              n and (n['nucleus_complete'], n['clause_complete']))
+    _, _, _, o = run('ٱلرَّجُلُ كَاتِبٌ فِي ٱلدَّارِ يَكۡتُبُ')
+    n = one(o, 'PREDICATION', subject='الرَّجُلُ')
+    at = recs(o, 'ATTACH')
+    return ok(n and n['status'] == LICENSED and n['nucleus_complete'] is True and n['clause_complete'] is not True and at and
+              all(x['status'] == DEFERRED for x in at), (n and n['status'], [(x['rule_id'], x['status']) for x in at]))
 
 
 def t27():
@@ -296,8 +331,28 @@ def t29():
 
 
 def t30():
-    at = [x for x in R282['records'] if x['type'] == 'ATTACH']
+    at = [x for x in R282['records'] if x['type'] == 'ATTACH' and x['rule_id'] == 'A01']
     return ok(at and all(x['search_status'] == SEARCH_INCOMPLETE and x['status'] != REJECTED for x in at), len(at))
+
+
+def t31():
+    _, _, _, o = run('وَلۡيَكۡتُب بَّيۡنَكُمۡ كَاتِبُۢ بِٱلۡعَدۡلِۚ')
+    at = next((x for x in recs(o, 'ATTACH') if x['texts']['oblique'] == 'بَّيْنَ كُمْ'), None)
+    kinds = sorted(h['host_kind'] for h in (at or {}).get('alternatives', []) if isinstance(h, dict))
+    return ok(at and at['rule_id'] == 'A01' and at['status'] == DEFERRED and 'فعل' in kinds and len(kinds) >= 2, kinds)
+
+
+def t32():
+    _, _, _, o = run('هُوَ أَعۡلَمُ بِكُمۡ')
+    n = one(o, 'PREDICATION', subject='هُوَ')
+    return ok(n and n['status'] == DEFERRED and not any(x['rule_id'] == 'A02' for x in recs(o, 'ATTACH')), n and n['reason'])
+
+
+def t33():
+    t = 'وَأُمَّهَٰتُكُمُ ٱلَّٰتِيٓ أَرۡضَعۡنَكُمۡ وَأَخَوَٰتُكُم مِّنَ ٱلرَّضَٰعَةِ'
+    _, _, _, o = run(t)
+    n = one(o, 'PREDICATIVE_PP', subject='أَخَوَٰتُ')
+    return ok(n and n['status'] == DEFERRED and 'منافس العطف' in n['reason'], n and n['reason'])
 
 
 for tid, inp, exp, fn in [
@@ -330,11 +385,14 @@ for tid, inp, exp, fn in [
         ('T27', 'نهاية آية مع التزام مفتوح', 'حد مصدر لا اكتمال', t27),
         ('T28', 'عليه بمعنى غير محسوم', 'PP يُبنى بمقدماته', t28),
         ('T29', 'مثبت قديم فُقد', 'يظهر في المقارنة', t29),
-        ('T30', 'توقف البحث', 'SEARCH_INCOMPLETE لا رفض', t30)]:
+        ('T30', 'توقف البحث', 'SEARCH_INCOMPLETE لا رفض', t30),
+        ('T31', 'وليكتب بينكم كاتب', 'منافسة: فعلٌ ووصف في الإطار: لا تعلّق مرخَّص (A01 مؤجَّل)', t31),
+        ('T32', 'هو أعلمُ بكم', 'تأجيل: أَفْعَل يلتبس بمضارع المتكلم (عَلِمَ يَعْلَمُ): لا E01 ولا A02', t32),
+        ('T33', 'وأخواتكم من الرضاعة (4:23)', 'العطف: لا إسناد زائف؛ تأجيلٌ بمنافس العطف', t33)]:
     case(tid, inp, exp, fn)
 
-os.makedirs(H + 'reports/nominal_nucleus_01', exist_ok=True)
-json.dump(RESULTS, open(H + 'reports/nominal_nucleus_01/tests.json', 'w', encoding='utf-8'), ensure_ascii=False, indent=1, default=str)
+os.makedirs(H + 'reports/nominal_nucleus_02', exist_ok=True)
+json.dump(RESULTS, open(H + 'reports/nominal_nucleus_02/tests.json', 'w', encoding='utf-8'), ensure_ascii=False, indent=1, default=str)
 n = {k: sum(r['result'] == k for r in RESULTS) for k in ('PASS', 'DIFFERS', 'FAIL')}
 print(n)
 print('ALL OK' if not n['FAIL'] else f'FAILED {n["FAIL"]}')

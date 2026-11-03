@@ -66,8 +66,29 @@ class _Tok:
         self.golden = prot.get('cls') == 'اسم ذهبي'
         self.mcat = _mabni_cat(self.text, prot.get('identity')) if self.lex == 'مبني' or prot.get('cls') == 'مبني' else None
 
+        pe = str((self.feats.get('pos') or {}).get('ev') or '')
+        # شكل التنوين وحده ليس شهادة اسمية في هذه الطبقة (العقد T19)؛ وسمة الصنف القائمة في sarf.features لا تُغيَّر
+        self.shape_only = self.pos == 'اسم' and pe.strip() == 'التنوين'
+        self.noun_ev = pe or None
+
     def nounish(self):
-        return self.pos == 'اسم' and self.pos_st == 'مثبت' or self.divine or self.golden
+        """اسمٌ بدليلٍ غير شكل التنوين وحده: السمة المثبتة بدليلٍ آخر، أو لفظ الجلالة، أو اسمٌ ذهبي"""
+        return self.pos == 'اسم' and self.pos_st == 'مثبت' and not self.shape_only or self.divine or self.golden
+
+    def axes(self):
+        """محاور مستقلة لا يُغني أحدها عن الآخر: صنف الكلمة، والبناء والإعراب، والحماية، والعمل؛ كلٌّ بدليله أو «غير محسوم»"""
+        wc = ('اسم', self.noun_ev or 'لفظ الجلالة' if self.divine else 'اسمٌ ذهبي' if self.golden else None) \
+            if self.nounish() else \
+            ('اسم', f'ملف المبنيات: {self.mcat}') if self.mcat in ('separate_pronoun', 'demonstrative', 'relative', 'attached_pronoun') else \
+            ('فعل', (self.feats.get('pos') or {}).get('ev')) if self.pos == 'فعل' and self.pos_st == 'مثبت' else \
+            ('حرف', f'ملف المبنيات: {self.mcat}') if self.mcat == 'particle' else \
+            (None, 'الاسمية من شكل التنوين وحده: غير محسوم في هذه الطبقة' if self.shape_only else 'غير محسوم')
+        build = ('مبني', 'ملف المبنيات أو الحماية') if self.lex == 'مبني' or self.mcat else \
+            ('معرب', f'العلامة المكتوبة: {self.case}') if self.case else (None, 'غير محسوم')
+        prot = (self.G.Theta.get('protected') or {}).get('cls')
+        op = (self.lex or '').startswith('عامل') or 'عامل' in (self.lex or '')
+        return dict(word_class=wc, build=build, protection=(prot, 'الجرد المعتمد') if prot else (None, '—'),
+                    operator=(True, f'خانة {self.lex}') if op else (False, '—'))
 
     def definite(self):
         """→ (معرفة؟، الدليل) من السمات القائمة؛ وNone إن لم يثبت"""
@@ -225,11 +246,15 @@ def verse_relations(a, units, F, ref):
                        'ظرفٌ من جرد المشروع ومضافٌ إليه', premises=['جرد الظروف sarf.algebra.ZURUF_V', why],
                        checked=['ليس حرف جر: الظرف اسمٌ منصوب على الظرفية والمضاف إليه بعده'],
                        edges=[('GOVERN', t.uid, comp[0].uid)], attachment='غير مثبت: انظر A01', phrase_kind='OBL/ADVP')
+        elif n is not None and n.wi == t.wi + 1 and word_start(n) and not n.conj and n.shape_only and n.case in ('جر', 'جر أو نصب'):
+            rec = _rec(ref, 'ADVP', 'P02', {'adverb': t}, {'adverb': [t], 'complement_candidate': [n]}, DEFERRED,
+                       f'«{n.text}» مجرورٌ بعده، واسميته من شكل التنوين وحده (العقد T19): المضاف إليه غير مثبت',
+                       premises=['جرد الظروف sarf.algebra.ZURUF_V'], alternatives=[f'«{n.text}» مضافٌ إليه'], phrase_kind='OBL/ADVP')
         else:
             rec = _rec(ref, 'ADVP', 'P02', {'adverb': t}, {'adverb': [t]}, DEFERRED, 'ظرفٌ بلا مضافٍ إليه مثبت بعده',
                        premises=['جرد الظروف sarf.algebra.ZURUF_V'], phrase_kind='OBL/ADVP')
         R.append(rec)
-        obliques[t.k] = (rec, [t] + (comp or []))
+        obliques[t.k] = (rec, [t] + (comp or rec['members'].get('complement_candidate') and [n] or []))
     span_of = {}                                    # وحدة ← شبه الجملة التي تضمّها
     for hk, (rec, us) in obliques.items():
         for u in us:
@@ -255,6 +280,11 @@ def verse_relations(a, units, F, ref):
             continue
         prec, pus, j = ob
         s = toks[j] if j < len(toks) else None
+        if s is not None and s.shape_only and s.k not in governed and s.nominative()[0] is True:
+            R.append(_rec(ref, 'CONTAINER_RELATIVE', 'R01', {'relative': t}, {'relative': [t], 'content': pus + [s]}, DEFERRED,
+                          f'اسمية «{s.text}» من شكل التنوين وحده (العقد T19): لا تُبنى الصلة الاسمية بها',
+                          premises=[prec['relation_id']]))
+            continue
         if s is None or not s.nounish() or s.k in governed or s.nominative()[0] is not True:
             continue
         rel_gov = governed.get(t.k)
@@ -321,6 +351,7 @@ def verse_relations(a, units, F, ref):
             continue
         prem = [f'حكم الناسخ «{o["operator"]}» (مج {g}): مقبول، واسمه «{ism.text}» ({r.get("observed")})']
         khabar, kwhy, kst = None, 'لا خبر مثبتٌ بشرط هذا الإصدار', DEFERRED
+        kcand = None
         between = [toks[j] for j in range(i_n + 1, i_s) if not toks[j].enclitic or toks[j].wi != op_t.wi]
         ob = oblique_at(i_n + 1) if between else None
         if ob and ob[2] == i_s and ism.definite()[0] is False:
@@ -340,25 +371,59 @@ def verse_relations(a, units, F, ref):
             if c is not None and c.nounish() and c.case == want and c.k not in governed:
                 khabar, kwhy, kst = [c], f'«{c.text}» اسمٌ {"منصوب" if want == "نصب" else "مرفوع"} كتابةً بعد الاسم' + \
                     (' وصلته' if cont else ''), LICENSED
-            elif c is not None and c.nounish() and c.case in ('نصب', 'رفع', 'جر') and c.case != want:
+            elif c is not None and (c.nounish() or c.shape_only) and c.case in ('نصب', 'رفع', 'جر') and c.case != want:
                 kwhy = f'«{c.text}» {c.case} كتابةً، والناسخ يقتضي {want}: لا يُرخَّص خبراً'
+            elif c is not None and c.shape_only and c.k not in governed and c.case == want:
+                kwhy = f'«{c.text}» خبرٌ مرشّح، واسميته من شكل التنوين وحده (العقد T19): لا يُرخَّص به الخبر'
+                kcand = [c]
         heads = {'nasikh': op_t, 'ism': ism}
         members = {'nasikh': [op_t], 'ism': [ism]}
         if khabar:
             heads['khabar'] = khabar[0]
             members['khabar'] = khabar
+        elif kcand:
+            members['khabar_candidate'] = kcand     # المرشّح ظاهرٌ في السجل لا يسقط، ولا يُثبَّت خبراً
         rec = _rec(ref, 'NASIKH', 'V01', heads, members, kst, kwhy, premises=prem,
+                   alternatives=[f'«{kcand[0].text}» خبر «{o["operator"]}» إن ثبتت اسميته بدليلٍ غير التنوين'] if kcand else [],
                    checked=['N01 غير المنسوخة لا تُطبَّق على اسم الناسخ وخبره'], nucleus_complete=kst == LICENSED)
         R.append(rec)
         for us in members.values():
             for u in us:
                 if u is not op_t:
                     bound[u.k] = rec['relation_id']
+
+    licensed_subjects = set()                       # المسند إليه في نواةٍ مرخَّصة: لا يكون منافس عطفٍ لما بعده
+
+    def coord_rival(s):
+        """منافس العطف: أقرب اسمٍ مرفوعٍ كتابةً قبل العاطف في الآية (في ثماني كلماتٍ قبله)، خارج شبه الجملة.
+        ولا منافس: إن كان المسند إليه ضميراً منفصلاً (يُبتدأ به بعد الواو حالاً أو استئنافاً)، أو فصل بينهما فعلٌ ليس
+        في صلة موصولٍ بعد المنافس (اكتمل كلامه)، أو كان المنافس مسنداً إليه في نواةٍ مرخَّصة"""
+        from .algebra import PRON_FREE_V
+        if s.mcat == 'separate_pronoun' or is_form(s.text, PRON_FREE_V):
+            return None
+        i0 = idx[(s.wi, 0)]
+        verb_between, rel_between = False, False
+        for j in range(i0 - 1, -1, -1):
+            x = toks[j]
+            if x.wi < s.wi - 8:
+                break
+            if x.pos == 'فعل':
+                verb_between = True
+            if x.lex == 'مبني' and is_form(x.text, REL_SPECIFIC):
+                rel_between = True
+            if x.k in span_of or x.enclitic or x.conj:
+                continue
+            if x.case == 'رفع' and x.pos != 'فعل':
+                if x.k in licensed_subjects or verb_between and not rel_between:
+                    return None
+                return x                                # المنافس المحتمل يكفي للتأجيل: رفعٌ مكتوب في غير فعل
+        return None
+
     # N01 وN02 خارج الحاويات
     for i, s in enumerate(toks):
         if s.conj or s.enclitic or not word_start(s) or s.k in bound or s.k in span_of:
             continue
-        if not (s.nounish() or s.mcat in ('separate_pronoun', 'demonstrative') or
+        if not (s.nounish() or s.shape_only or s.mcat in ('separate_pronoun', 'demonstrative') or
                 s.lex == 'مبني' and s.dkind in ('معرفة: ضمير', 'معرفة: اسم إشارة')):
             continue
         prev_conj = s.ui > 0
@@ -388,6 +453,7 @@ def verse_relations(a, units, F, ref):
             p = None                                  # عاملٌ بعده (مِمَّنْ، إِذَا، لَا): ليس مسنداً مفرداً
         base_prem = [f'«{s.text}» أول الكلام ({"بعد عاطف" if prev_conj else "أول الآية" if s.wi == 0 else "ضميرٌ أو إشارة"})',
                      f'«{s.text}»: {nom_why}', f'«{s.text}»: {dfn_why}']
+        rival = coord_rival(s) if prev_conj else None
         if nom is False:
             continue
         if p is None and mid and len(mid) == 1:
@@ -401,6 +467,11 @@ def verse_relations(a, units, F, ref):
                 st_, why = DEFERRED, f'الإطار انقطع بما له الصدارة «{toks[fe].text}» لا بعاطفٍ ولا بآخر الآية: قد يكون المسند بعده'
             elif deriv:
                 st_, why = DEFERRED, f'«{s.text}» وصفٌ أو مصدرٌ يعمل: قد تتعلّق شبه الجملة به لا أن تكون خبراً'
+            elif s.shape_only:
+                st_, why = DEFERRED, f'اسمية «{s.text}» من شكل التنوين وحده (العقد T19): لا يُرخَّص بها إسناد'
+            elif rival is not None:
+                st_, why = DEFERRED, (f'منافس العطف: «{rival.text}» ({rival.loc}) مرفوعٌ قبل العاطف، فقد يكون «{s.text}» معطوفاً عليه '
+                                      'وشبه الجملة نعتاً له أو متعلّقةً به، لا خبراً')
             elif not dfn:
                 st_, why = DEFERRED, 'أهلية الابتداء غير مثبتة'
             else:
@@ -412,6 +483,8 @@ def verse_relations(a, units, F, ref):
                           nucleus_complete=st_ == LICENSED,
                           display_convention='شبه الجملة خبر (أو متعلّقٌ بخبرٍ محذوف)؛ ولا يُكتب المحذوف'))
             used_as_pred.add(mid[0][0]['relation_id'])
+            if st_ == LICENSED:
+                licensed_subjects.add(s.k)
             continue
         if p is None:
             if not mid:
@@ -423,9 +496,14 @@ def verse_relations(a, units, F, ref):
         members = {'subject': [s], 'predicate': [p]}
         prem = base_prem + [m[0]['relation_id'] for m in mid]
         alts = ['معطوفٌ على ما قبل العاطف (لا مبتدأ)'] if prev_conj else []
-        if not p.nounish():
+        if rival is not None:
+            alts.append(f'«{s.text}» معطوفٌ على «{rival.text}» ({rival.loc})، والمسند لهما أو لغيرهما')
+        if s.shape_only:
+            st_, why = DEFERRED, f'اسمية «{s.text}» من شكل التنوين وحده (العقد T19): لا يُرخَّص بها إسناد'
+        elif not p.nounish():
             st_, why = DEFERRED, f'اسمية «{p.text}» غير مثبتة في هذا التحليل' + \
-                (' (أَفْعَل: اسم تفضيلٍ مرشّح، أو مضارع المتكلم)' if 'elative' in p.feats else '')
+                (' (أَفْعَل: اسم تفضيلٍ مرشّح، أو مضارع المتكلم)' if 'elative' in p.feats else '') + \
+                (': من شكل التنوين وحده (العقد T19)' if p.shape_only else '')
         elif p.case in ('نصب', 'جر') or p.case and p.case not in ('رفع',):
             st_, why = REJECTED, f'«{p.text}» {p.case} كتابةً: لا يُرخَّص خبراً مفرداً مرفوعاً في هذا الوجه (ولا يُحكم على النص كله)'
         elif p.case != 'رفع':
@@ -440,7 +518,7 @@ def verse_relations(a, units, F, ref):
             alts += ['نعت', 'بدل', 'خبرٌ معرفة']
         else:
             nn = toks[j + 1] if j + 1 < fe else None
-            if nn is not None and not nn.enclitic and nn.nounish() and nn.case == 'رفع':
+            if nn is not None and not nn.enclitic and (nn.nounish() or nn.shape_only) and nn.case == 'رفع':
                 st_, why = DEFERRED, f'بعد «{p.text}» مرفوعٌ آخر «{nn.text}»: خبرٌ جملة أو تعدّد أو نعت — خارج القاعدة البسيطة'
                 alts.append('خبرٌ جملة اسمية')
             else:
@@ -455,6 +533,7 @@ def verse_relations(a, units, F, ref):
                       edges=[('PREDICATION', s.uid, p.uid)] if st_ == LICENSED else []))
         if st_ == LICENSED:
             R[-1]['roles'] = {'subject': 'مبتدأ', 'predicate': 'خبر'}
+            licensed_subjects.add(s.k)
     # N02: شبه جملة في أول الكلام ثم نكرةٌ مرفوعة تختم الإطار (في الدار رجلٌ)
     for i, t in enumerate(toks):
         if not word_start(t) or t.k in bound or not (t.wi == 0 or t.ui > 0 and toks[i - 1].conj):
@@ -465,15 +544,18 @@ def verse_relations(a, units, F, ref):
         j = ob[2]
         fe = frame_end(i)
         s = toks[j] if j < fe else None
-        if s is None or not s.nounish() or s.k in bound or s.k in governed or j + 1 != fe:
+        if s is None or not (s.nounish() or s.shape_only) or s.k in bound or s.k in governed or j + 1 != fe:
             continue
         nom, nwhy = s.nominative()
         dfn, dwhy = s.definite()
         if nom is not True:
             continue
-        st_ = LICENSED if dfn is False else DEFERRED
+        st_ = LICENSED if dfn is False and not s.shape_only else DEFERRED
+        if s.shape_only:
+            dwhy += '؛ واسميته من شكل التنوين وحده (العقد T19)'
         R.append(_rec(ref, 'PREDICATIVE_PP', 'N02', {'subject': s, 'predicate_pp': ob[1][0]}, {'subject': [s], 'predicate_pp': ob[1]},
                       st_, 'شبه جملةٍ مقدَّمة ونكرةٌ مرفوعة تختم الإطار' if st_ == LICENSED else
+                      f'اسمية «{s.text}» من شكل التنوين وحده (العقد T19)' if s.shape_only else
                       'المرفوع بعد شبه الجملة معرفة خارج إطار صلةٍ مثبت: خارج تغطية N02 v1',
                       premises=[ob[0]['relation_id'], f'«{s.text}»: {nwhy}', f'«{s.text}»: {dwhy}'],
                       nucleus_complete=st_ == LICENSED,
@@ -522,7 +604,8 @@ def verse_relations(a, units, F, ref):
                       '؛ والبحث غير مكتمل: لا جرد لأطر التعلّق',
                       premises=[orec['relation_id']], alternatives=hosts, container=cont, search_status=SEARCH_INCOMPLETE,
                       search_scope=dict(frame=[toks[lo].loc, toks[hi - 1].loc] if hi > lo else [], container=cont)))
-    return dict(records=R, tokens=[(t.uid, t.loc, t.text) for t in toks])
+    return dict(records=R, tokens=[(t.uid, t.loc, t.text) for t in toks],
+                axes={t.uid: t.axes() for t in toks})
 
 
 def check_records(records, tokens):

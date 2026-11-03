@@ -474,6 +474,43 @@ section(14, 'الجملة', 'جهتان مختلفتان: «التمام» (F) �
         'الالتزامات كلها: إغلاق كل وحدة، وموضع كل كلمة، وحسم كل علاقة. فالجملة قد تكون تامّةً في التحليل مفتوحةً غير مغلقة. والآية لا تُغلق الجملة. '
         'والروابط معروضةٌ بأطرافها، والالتزامات المفتوحة كاملةً بلا اختصار',
         rows_j, ['الجملة', 'من – إلى', 'النص', 'الإغلاق', 'التمام (F)', 'الروابط', 'كلمات بلا موضع', 'التزامات مفتوحة'], tl_j)
+# ١٤أ العلاقات المحلية (عقد النواة الاسمية والتعلّق، sarf.relations) بأدلتها؛ و١٤ب محاور الصنف المستقلة
+from sarf.relations import verse_relations, check_records
+rows_r, tl_r, rows_x, tl_x = [], [], [], []
+for pv in per_verse:
+    ref = f"{pv['s']}:{pv['v']}"
+    rel = verse_relations(pv['a'], pv['units'], pv['F'], ref)
+    errs = check_records(rel['records'], rel['tokens'])
+    for r in rel['records']:
+        if r['type'] in ('PP', 'ADVP') and r['status'] == 'LICENSED':
+            continue                                  # الجار والمجرور والظرف المرخَّصان: في المرحلة ١١ وفي مقدّمات ما يليهما
+        alts = '<br>'.join(h(a if isinstance(a, str) else f"{a['host_kind']}: «{a['host_text']}» ({a['host_position']}) — {a['status']}")
+                           for a in r['alternatives']) or '—'
+        rows_r.append([h(r['type']), f"{h(r['rule_id'])} {h(r['rule_version'])}", f"<span class='st {'p' if r['status'] == 'LICENSED' else 'c'}'>{h(r['status'])}</span>",
+                       '<br>'.join(f"{h(k)}: <span class='ar'>{h(v)}</span> <sub>{h('، '.join(r['positions'][k]))}</sub>" for k, v in r['texts'].items()),
+                       h(r['reason']), '<br>'.join(h(str(x))[:170] for x in r['premises']) or '—', alts,
+                       h(' / '.join(f'{k}={r.get(k)}' for k in ('nucleus_complete', 'clause_complete', 'boundary_proven', 'sentence_closed'))) +
+                       (f"<br>{h(r.get('search_status'))}" if r.get('search_status') else ''),
+                       f"<code>{h(r['relation_id'])}</code>"])
+        if len(tl_r) < N:
+            tl_r.append(f"{r['type']:<18} {r['rule_id']} {r['status']:<9} " + ' / '.join(f'{k}=«{v}»' for k, v in r['texts'].items())[:110])
+    rows_r.append(['—', '—', '—', f'الفحص البنيوي: {"سليم" if not errs else h("؛ ".join(errs))}', '', '', '', '', ''])
+    for uid, ax in rel['axes'].items():
+        loc_ = next((l for u, l, _ in rel['tokens'] if u == uid), '')
+        txt = next((t for u, _, t in rel['tokens'] if u == uid), '')
+        rows_x.append([h(loc_), f"<span class='ar'>{h(txt)}</span>"] +
+                      [f"{h(ar(ax[k][0]) if ax[k][0] is not None else 'غير محسوم')}<br><sub>{h(str(ax[k][1] or ''))[:120]}</sub>"
+                       for k in ('word_class', 'build', 'protection', 'operator')])
+section('14أ', 'العلاقات المحلية بأدلتها (عقد النواة الاسمية والتعلّق v1)',
+        'سجلات sarf.relations: لكل علاقةٍ قاعدتها وإصدارها، وأطرافها بمواضعها، وسببها، ومقدّماتها (حقائق مصدرية أو علاقاتٌ قبلها)، '
+        'وبدائلها ومضيفوها، وحقول الاكتمال المستقلة. «LICENSED» علاقةٌ محلية في وجهها، لا اختيارٌ نهائي ولا إغلاق جملة. '
+        'والجار والمجرور والظرف المرخَّصان لا تُكرَّر صفوفهما هنا، وهما في المقدّمات بمعرّفاتهما',
+        rows_r, ['النوع', 'القاعدة', 'الحالة', 'الأطراف', 'السبب', 'المقدّمات', 'البدائل والمضيفون', 'الاكتمال', 'المعرّف'], tl_r)
+section('14ب', 'محاور الصنف المستقلة',
+        'صنف الكلمة (اسم، فعل، حرف)، والبناء والإعراب، والحماية الدستورية، والعمل: محاور لا يُغني أحدها عن الآخر؛ '
+        'و«مبني» ليس بديلاً عن «اسم»، و«عامل» ليس صنفاً رابعاً. وشكل التنوين وحده لا يثبت الاسمية في هذا المحور (العقد T19)، '
+        'وسمة الصنف في المرحلة ١٣ باقيةٌ كما هي بدليلها',
+        rows_x, ['الموضع', 'الوحدة', 'صنف الكلمة', 'البناء والإعراب', 'الحماية', 'العمل'], tl_x)
 section(15, 'الوحدة الخطابية', 'الجمل المتصلة بحدودها وتعلّقها. ونهاية السورة تحدّ نطاق المصدر ولا تثبت وحدها اكتمال البنية: '
         'الإغلاق الخارجي لا يُحكم به إلا باستيفاء التزامات الوحدة', rows_d,
         ['الوحدة', 'المدى', 'الجمل', 'الحالة', 'الحدّ'], tl_d)
