@@ -355,6 +355,16 @@ def t33():
     return ok(n and n['status'] == DEFERRED and 'منافس العطف' in n['reason'], n and n['reason'])
 
 
+def t35():
+    # الإسناد المؤجَّل لا يحجب الوجه الآخر: شبه الجملة في N02 المؤجَّل لها مرشّح تعلّقٍ ظاهر (A01)
+    t = 'وَأُمَّهَٰتُكُمُ ٱلَّٰتِيٓ أَرۡضَعۡنَكُمۡ وَأَخَوَٰتُكُم مِّنَ ٱلرَّضَٰعَةِ'
+    _, _, _, o = run(t)
+    n = one(o, 'PREDICATIVE_PP', subject='أَخَوَٰتُ')
+    at = [x for x in recs(o, 'ATTACH') if n and set(x['positions']['oblique']) & set(n['positions']['predicate_pp'])]
+    return ok(n and n['status'] == DEFERRED and len(at) == 1 and at[0]['status'] == DEFERRED,
+              dict(n=n and n['status'], attach=[(x['rule_id'], x['status']) for x in at]))
+
+
 for tid, inp, exp, fn in [
         ('T01', 'زيدٌ قائمٌ', 'إسناد اسمي محلي؛ لا شهادة حد', t01),
         ('T02', 'في الدار رجلٌ', 'PP ونواة في الوجه الخبري', t02),
@@ -388,7 +398,8 @@ for tid, inp, exp, fn in [
         ('T30', 'توقف البحث', 'SEARCH_INCOMPLETE لا رفض', t30),
         ('T31', 'وليكتب بينكم كاتب', 'منافسة: فعلٌ ووصف في الإطار: لا تعلّق مرخَّص (A01 مؤجَّل)', t31),
         ('T32', 'هو أعلمُ بكم', 'تأجيل: أَفْعَل يلتبس بمضارع المتكلم (عَلِمَ يَعْلَمُ): لا E01 ولا A02', t32),
-        ('T33', 'وأخواتكم من الرضاعة (4:23)', 'العطف: لا إسناد زائف؛ تأجيلٌ بمنافس العطف', t33)]:
+        ('T33', 'وأخواتكم من الرضاعة (4:23)', 'العطف: لا إسناد زائف؛ تأجيلٌ بمنافس العطف', t33),
+        ('T35', 'وأخواتكم من الرضاعة: التعلّق ظاهر', 'الإسناد المؤجَّل لا يحجب مرشّح التعلّق', t35)]:
     case(tid, inp, exp, fn)
 
 os.makedirs(H + 'reports/nominal_nucleus_02', exist_ok=True)

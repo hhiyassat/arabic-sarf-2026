@@ -61,6 +61,7 @@ CAUSES = {
     'T19_HOST': 'مضيفٌ محتمل أُسقط من بدائل A01: اسميته من التنوين وحده (T19)',
     'COORD': 'منافس العطف (إصلاح الإسناد الزائف داخل العطف)',
     'T19_CASCADE': 'تابعٌ لتغيّرٍ بـT19 في الآية نفسها يشاركه موضعاً (حاويةٌ أو شبه جملةٍ أُجِّلت فسقط ما بُني عليها)',
+    'UNHIDE': 'مرشّح تعلّقٍ (A01) كان محجوباً بإسنادٍ مؤجَّل (N02) فظهر: المؤجَّل لا يحجب الوجه الآخر',
     'ID': 'تغيّر المعرّف وحده بتغيّر الأعضاء: انظر سبب السجل المقابل',
     'OTHER': 'غير مصنَّف آلياً: يُراجع يدوياً',
 }
@@ -75,6 +76,10 @@ def cause(a, b, B):
     if b is not None and b['rule_id'] == 'A02' or a is not None and b is None and a['type'] == 'ATTACH' and \
             any(x['rule_id'] == 'A02' and x['positions'].get('oblique') == a['positions'].get('oblique') for x in B.values()):
         return 'A02'
+    if a is None and b['type'] == 'ATTACH' and b['rule_id'] == 'A01' and \
+            any(x['type'] == 'PREDICATIVE_PP' and x['status'] != 'LICENSED' and
+                set(x['positions'].get('predicate_pp', [])) & set(b['positions'].get('oblique', [])) for x in B.values()):
+        return 'UNHIDE'
     for mark, c in (('E01', 'E01'), ('T19', 'T19'), ('منافس العطف', 'COORD'), ('معطوفٌ على «', 'COORD')):
         if _has(a, mark) != _has(b, mark):
             return c

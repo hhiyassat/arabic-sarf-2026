@@ -482,8 +482,8 @@ def verse_relations(a, units, F, ref):
                           premises=base_prem + [mid[0][0]['relation_id'], 'لا مضيف بعد شبه الجملة داخل الإطار'],
                           nucleus_complete=st_ == LICENSED,
                           display_convention='شبه الجملة خبر (أو متعلّقٌ بخبرٍ محذوف)؛ ولا يُكتب المحذوف'))
-            used_as_pred.add(mid[0][0]['relation_id'])
-            if st_ == LICENSED:
+            if st_ == LICENSED:                     # المؤجَّل لا يحجب مرشّحات التعلّق: الوجه الآخر يبقى ظاهراً في A01
+                used_as_pred.add(mid[0][0]['relation_id'])
                 licensed_subjects.add(s.k)
             continue
         if p is None:
@@ -560,7 +560,8 @@ def verse_relations(a, units, F, ref):
                       premises=[ob[0]['relation_id'], f'«{s.text}»: {nwhy}', f'«{s.text}»: {dwhy}'],
                       nucleus_complete=st_ == LICENSED,
                       display_convention='شبه الجملة خبرٌ مقدَّم (أو متعلّقٌ بخبرٍ محذوف)؛ ولا يُكتب المحذوف'))
-        used_as_pred.add(ob[0]['relation_id'])
+        if st_ == LICENSED:
+            used_as_pred.add(ob[0]['relation_id'])
     # A01 توليد مرشّحات التعلّق
     for hk, (orec, ous) in obliques.items():
         if orec['status'] != LICENSED or orec['relation_id'] in used_as_pred:
