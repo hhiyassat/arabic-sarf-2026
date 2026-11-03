@@ -496,7 +496,7 @@ def _morph(text, info=None):
                    reason='الجذر مسجَّل في HFN، والوزن بالقالب؛ ولا حدث مسجَّل بهذا الوزن، فالحدث ومعناه مؤجَّلان')
     elif rooted:
         out.update(status='deferred', reason='أكثر من جذر مسجَّل في HFN، ولا حدث بالوزن: ' +
-                   '، '.join(f'{r} ({c})' for r, c in rooted))
+                   '، '.join(f'{r} ({c})' for r, c in sorted(rooted)))   # ترتيبٌ ثابت لا يتبع PYTHONHASHSEED
     else:
         out.update(status='deferred', reason='لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة'
                    if exact_only else 'لا رخصة: لم يرد أيٌّ من المرشَّحات في HFN')
@@ -546,6 +546,14 @@ def verse_morph(segs, governed=None, nouns=()):
             if prev_al or (seg['word_index'], s['index']) in nouns or set(s['text']) & {FATHATAN, DAMMATAN, KASRATAN}:
                 continue
             info = stem_info(s['text'])
+            nxt = seg['slots'][s['index'] + 1] if s['index'] + 1 < len(seg['slots']) else None
+            if info.get('suffix') is None and nxt is not None and nxt['type'] == 'مبني' and nxt.get('role') == 'enclitic' and \
+                    (seg['word_index'], s['index']) in governed:
+                # الجذع قبل ضميرٍ متصل فصله المقشِّر (تَكۡتُبُو | هُ)، وفعليته ثابتةٌ بعاملٍ أو بالتوافق: لاحقته لا تُعرف إلا
+                # بالكلمة كلها (واو الجماعة قبل الضمير). وما لم تثبت فعليته لا يُمسّ: فَاعِلُو + ضمير يحتمل اسم الفاعل (بَٰلِغُوهُ)
+                whole = stem_info(s['text'] + nxt['text'])
+                if whole.get('suffix') and whole.get('object') == nxt['text']:
+                    info = dict(whole, object=None)
             if (seg['word_index'], s['index']) in governed:
                 info = dict(info, pos='verb')
             m = morph(s['text'], info)

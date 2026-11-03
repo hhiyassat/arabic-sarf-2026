@@ -283,11 +283,12 @@ if hfn() and rows:
     check('البقرة ١٧: جواب «لَمَّا» «ذَهَبَ» (ماضٍ بعد جملة الشرط)، لا فاءٌ بعيدة',
           lm and lm[0]['obligations'][1][1] and lm[0]['obligations'][1][2].startswith('ماضٍ'), lm)
     sm = structs((2, 23))
-    last = [x for x in sm['cond'] if x['location'].endswith(':17')]
+    # المواضع المعروضة من الواحد (words_text، تدقيق F10)
+    last = [x for x in sm['cond'] if x['location'].endswith(':18')]
     check('البقرة ٢٣: «إِن كُنتُمۡ صَٰدِقِينَ» لا يستوفي جوابه «فَإِن» التالية (شرطٌ جديد)، وجوابه محذوفٌ مرشَّح',
           last and not last[0]['obligations'][1][1] and 'محذوف' in last[0]['obligations'][1][2], last)
     sm = structs((2, 24))
-    ng = [x for x in sm['cond'] if x['location'].endswith(':0')]
+    ng = [x for x in sm['cond'] if x['location'].endswith(':1')]
     check('البقرة ٢٤: «فَإِن لَّمۡ تَفۡعَلُواْ»: جملة الشرط منفيّة ورأسها «تَفۡعَلُواْ»، والجواب «فَٱتَّقُواْ»',
           ng and ng[0]['obligations'][0][2].startswith('منفيٌّ') and 'تَفْعَلُوا' in ng[0]['obligations'][0][2] and
           ng[0]['obligations'][1][1], ng)
@@ -297,11 +298,11 @@ if hfn() and rows:
     check('البقرة ٥: «وَأُوْلَٰٓئِكَ» معطوفةٌ على «أُوْلَٰٓئِكَ عَلَىٰ هُدࣰى…» (رأسها اسم الإشارة)، لا «يُوقِنُونَ…»',
           c5 and c5[0]['A'] and c5[0]['A'][0].startswith('«أُلَٰئِكَ عَلَى'), c5)
     MU, (LT, st_) = layers([(2, 6), (2, 7)])
-    c7 = [x for x in linguistic_layer.samples['coord'] if x['location'] == '2:7:6']
+    c7 = [x for x in linguistic_layer.samples['coord'] if x['location'] == '2:7:7']
     check('البقرة ٧: «وَعَلَىٰٓ أَبۡصَٰرِهِمۡ» طرفها «خَتَمَ ٱللَّهُ…» بنواتها «خَتَمَ»، لا «يُؤۡمِنُونَ خَتَمَ…»',
           c7 and c7[0]['A'] and c7[0]['A'][0].startswith('«خَتَمَ') and 'يُؤْمِنُونَ' not in c7[0]['A'][0], c7)
     sm = structs((2, 4))
-    c4 = [x for x in sm['coord'] if x['location'] == '2:4:5']
+    c4 = [x for x in sm['coord'] if x['location'] == '2:4:6']
     check('البقرة ٤: «وَمَآ أُنزِلَ مِن قَبۡلِكَ» موصولةٌ معطوفة على «بِمَآ»، لا جملة', c4 and c4[0]['level'] == 'مفرد', c4)
     # مراجعة التقرير الثالثة (١): الشاهد يقابل الخلايا؛ «تُوبُوا» لاحقتها المكتوبة «وا»، و«ون» صنفها
     from sarf.checker import witness_problems
@@ -326,7 +327,7 @@ if hfn() and rows:
               any('لا يقابل الخلايا' in w for w in witness_problems(J5)), witness_problems(J5))
     # مراجعة التقرير الخامسة (١): «وَبِٱلۡأٓخِرَةِ هُمۡ يُوقِنُونَ» معطوفٌ كاملٌ بعلاقاته، ولا يُقطع قبل اكتماله
     sm = structs((2, 4))
-    cb = [x for x in sm['coord'] if x['location'] == '2:4:9']
+    cb = [x for x in sm['coord'] if x['location'] == '2:4:10']
     check('البقرة ٤: المعطوف B «وَبِٱلۡأٓخِرَةِ هُمۡ يُوقِنُونَ» كاملاً: جملة اسمية مبتدؤها «هُمۡ» وخبرها «يُوقِنُونَ»، وشبه الجملة متعلّقة به',
           cb and cb[0]['B_full']['text'] == 'وَبِالْآخِرَةِ هُمْ يُوقِنُونَ' and cb[0]['B_full']['type'].startswith('جملة اسمية') and
           any('متعلّقة بـ«يُوقِنُونَ»' in r_ for r_ in cb[0]['B_full']['relations']), cb and cb[0]['B_full'])

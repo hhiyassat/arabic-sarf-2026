@@ -218,8 +218,11 @@ def _agree(ctx, res):
     return f"{len(ctx.agreement)} فعلاً بسمات التوافق"
 
 def _root(ctx, res):
-    ctx.morph = verse_morph(ctx.segments, getattr(ctx, 'governed', None) or _governed_verbs(ctx),
-                            nouns=_governed_nouns(ctx))
+    gov = dict(getattr(ctx, 'governed', None) or _governed_verbs(ctx))
+    # ما أثبت التوافق (T18) فعليته فعلٌ في مسار الجذر أيضاً، كما في السمات (sarf.features: الصنف فعل مثبت بالتوافق)
+    for g in getattr(ctx, 'agreement', []):
+        gov.setdefault((g['word_index'], g['slot']), 'T18')
+    ctx.morph = verse_morph(ctx.segments, gov, nouns=_governed_nouns(ctx))
     n = sum(m['status'] == 'accepted' for m in ctx.morph)
     return f"{n} جذراً مقبولاً من {len(ctx.morph)}" + ('' if hfn() else ' (HFN غير موجود)')
 

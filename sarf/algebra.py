@@ -242,6 +242,16 @@ def unit_geo(a, wi, ui, base_id, T, governed_info=None):
                       'التنوين' if any(c.O.get('tanwin') for c in cells) else
                       'التاء المربوطة' if any(c.C == 'ة' for c in cells) else
                       'حرف جر مقبول' if jarr else None)
+        if noun_proof is None:
+            # لاحقة التثنية بعد ثلاثة أحرفٍ فأكثر علامة اسم، كما في sarf.features (S13): «ـَيۡنِ» لا يُختم بها فعل،
+            # و«ـَانِ» لا يُختم بها إلا مضارعٌ بحرف مضارعة (يَفۡعَلَانِ). وبها تتّسق طبقة الإغلاق وطبقة السمات
+            from .features import noun_suffix, _rest
+            st_text = stem[0]['text']
+            sfx = noun_suffix(st_text)
+            tl_ = letters(st_text)
+            if sfx and sfx[0] == 'dual' and len(letters(_rest(st_text, 2))) >= 3 and \
+                    (sfx[3] == 'ـَيْنِ' or not (tl_[0][0] in 'يتنأ' and tl_[0][1] & {FATHA, DAMMA})):
+                noun_proof = f'لاحقة التثنية «{sfx[3]}» بعد ثلاثة أحرفٍ فأكثر'
         sc = [c for c in cells if c.O['slot'] == 'جذع']
         if noun_proof is None and len(sc) == 3 and sc[0].L == 2 and sc[0].H == 'a' and sc[1].H == 'i' and \
                 sc[1].L == 1 and sc[2].H in ('u', 'i'):
@@ -1492,7 +1502,9 @@ def cond_structs(feats, nuc_pos, starts, ay_end=None):
                     # الفاء الرابطة تدخل على ما لا يصلح شرطاً؛ فإن دخلت على ماضٍ بلا «قد» أو مضارعٍ مجزوم
                     # (فَبَلَغۡنَ، فَيُحۡفِكُمۡ) فهي عاطفةٌ على فعل الشرط في الظاهر، أو رابطةٌ بقدٍ مقدَّرة: يُحفظ الموضع
                     # مرشّحاً ويُتابَع البحث عن جوابٍ بدليلٍ لا يلتبس
+                    # ولامُ الأمر الجازمة في الكلمة نفسها طلبٌ لا يصلح شرطاً (فَلۡيُمۡلِلۡ): فالفاء رابطة
                     shartable = s_pos is not None and k > s_pos and not g.get('qad') and not g.get('neg') and \
+                        '6' not in g.get('ops', []) and \
                         (g['verb'] == 'madi' or g.get('vshape') == 'madi' and not g.get('noun') or
                          g['verb'] == 'mudari' and g.get('mood') == 'جزم')
                     if shartable:
@@ -1855,7 +1867,8 @@ def relations_after(feats, p):
 
 
 def words_text(words, p):
-    return f'{words[p][0]}:{words[p][1]}:{words[p][2]}'
+    """موضع الكلمة للعرض: السورة:الآية:رقم الكلمة من الواحد (كما في بقية التقرير)؛ والمعرّفات الداخلية (Q2:282.w23) من الصفر"""
+    return f'{words[p][0]}:{words[p][1]}:{words[p][2] + 1}'
 
 
 def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف المجمّع)', cross=(), checked_ends=frozenset(), mut_budget=400):

@@ -168,20 +168,35 @@ def source_map(text, normalized):
 
 
 rows, tl = [], []
+from sarf.normalize_trace import normalize_traced
 for pv in per_verse:
     nor = pv['a']['normalized'].split()
     pv['srcmap'] = source_map(pv['text'], pv['a']['normalized'])
+    # العرض الإملائي (display) والعمليات المسجَّلة بقواعدها (sarf.normalize_trace)؛ والتحليل يجري على التمثيل التحليلي
+    try:
+        nt = normalize_traced(pv['text'])
+        disp = nt['display'].split()
+        disp = disp if len(disp) == len(nor) else None
+        ops = nt['ops_analysis']
+    except Exception:                                 # التقرير لا يتوقف إن تعذّر السجل؛ ويُعلن ذلك في العمود
+        disp, ops = None, []
     for wi, spans, parts, ok in pv['srcmap']:
+        rules = sorted({o['rule_id'] for o in ops for a_, b_ in (o.get('source_spans') or [])
+                        for x, y in spans if a_ < y and x < b_})
         src = ' + '.join(parts)
         sp = '، '.join(f'{a}–{b}' for a, b in spans)
         note = ('' if ok else 'غير مقابَل') + ('؛ جزآن في المصدر يُجمعان' if len(parts) > 1 else '') + \
             (f'؛ التطبيع غيّر الحروف ({ok[8:]})' if isinstance(ok, str) else '')
-        rows.append([loc(pv, wi), f"<span class='ar'>{h(src)}</span>", f'<code>{sp}</code>', f"<span class='ar'>{h(nor[wi])}</span>", esc(note.strip('؛ '))])
+        rows.append([loc(pv, wi), f"<span class='ar'>{h(src)}</span>", f'<code>{sp}</code>',
+                     f"<span class='ar'>{h(disp[wi]) if disp else '—'}</span>", f"<span class='ar'>{h(nor[wi])}</span>",
+                     f"<code>{h(' '.join(rules)) or '—'}</code>", esc(note.strip('؛ '))])
         if wi < N or len(parts) > 1 or not ok:
             tl.append(f"{loc(pv, wi):<10} [{sp}] {src:<22} → {nor[wi]}  {note}")
-section(2, 'التطبيع', 'العثماني إلى إملائيٍّ مشكول (sarf.normalize). المحاذاة بمجالات محارف المصدر: كل كلمةٍ مطبَّعة تُربط بالجزء أو الأجزاء '
-        'التي أنتجتها؛ فإن فُصلت الكلمة في المصدر بمسافة (مُّسَمّٗ ى، شَيۡـٔٗ اۚ) جُمع جزآها، ولا تُقابل القائمتان بترتيبهما',
-        rows, ['الموضع', 'المصدر', 'مجال المحارف', 'بعد التطبيع', 'ملاحظة'], tl)
+section(2, 'التطبيع', 'تمثيلان من المصدر نفسه (sarf.normalize_trace، العقد N3.1): العرض الإملائي (display) والتمثيل التحليلي (analysis) '
+        'الذي تجري عليه المراحل كلها؛ وعمود القواعد معرّفات العمليات المسجَّلة على محارف الكلمة في التمثيل التحليلي، وسجلّها الكامل '
+        'بمجالاته في حزمة التطبيع. المحاذاة بمجالات محارف المصدر: كل كلمةٍ مطبَّعة تُربط بالجزء أو الأجزاء التي أنتجتها؛ فإن فُصلت '
+        'الكلمة في المصدر بمسافة (مُّسَمّٗ ى، شَيۡـٔٗ اۚ) جُمع جزآها، ولا تُقابل القائمتان بترتيبهما',
+        rows, ['الموضع', 'المصدر', 'مجال المحارف', 'العرض (display)', 'التحليلي (analysis)', 'القواعد', 'ملاحظة'], tl)
 
 # ٣ الترقيم: خلايا المكتوب
 rows, tl = [], []
@@ -365,12 +380,21 @@ for pv in per_verse:
         th = G.Theta
         what = th.get('lex') or (th.get('protected') or {}).get('cls') or ''
         rp = ' '.join(x for x in [th.get('R') and f"الجذر {th['R']}", th.get('P') and f"الوزن {th['P']}"] if x)
+        if str(th.get('P') or '').startswith('بناء سيبويه') and 'ة' in G.O['text'] and 'ة' not in str(th.get('P')):
+            rp += ' (وزن الجذع؛ وتاء التأنيث لاحقةٌ خارجه)'
+        # خريطة المطابقة α: كل خليةٍ ↦ موقعها من الجذر أو الزوائد، وعمليات التحويل (sarf.algebra.align_alpha)
+        cl = G.O.get('cells') or []
+        al = th.get('alpha')
+        amap = ' '.join(f"{c.C}:{x or '—'}" for c, x in zip(cl, al)) if al and len(al) == len(cl) else ''
+        if th.get('ops'):
+            amap += ' | ' + '، '.join(th['ops'])
         rows.append([loc(pv, wi), f"<span class='ar'>{h(G.O['text'])}</span>", 'مغلقة' if G.closed else 'معلَّقة',
-                     esc(what), esc(rp), esc('' if G.closed else (G.O.get('deferred') or '')[:100])])
+                     esc(what), esc(rp), f"<span class='ar'>{h(amap)}</span>" if amap else '—',
+                     esc('' if G.closed else (G.O.get('deferred') or '')[:100])])
         if len(tl) < N:
             tl.append(f"{loc(pv, wi):<10} {G.O['text']:<16} {'مغلقة' if G.closed else 'معلَّقة':<8} {what} {rp}")
 section(12, 'الوحدات اللفظية وإغلاقها', 'كل وحدةٍ بخلاياها: تُغلق بالمعجم أو الحماية أو بإنجاز الجذر والوزن Realize(R, P, F)، وإلا تبقى معلَّقة بسببها (sarf.algebra)',
-        rows, ['الموضع', 'الوحدة', 'الحالة', 'الإغلاق', 'الجذر والوزن', 'سبب التعليق'], tl)
+        rows, ['الموضع', 'الوحدة', 'الحالة', 'الإغلاق', 'الجذر والوزن', 'خريطة α والتحويل', 'سبب التعليق'], tl)
 
 # ١٣ السمات الصرفية
 LBL = dict(pos='الصنف', tense='الزمن', voice='البناء', subject='ضمير الصيغة', augmentation='التجرّد والزيادة', transitivity='التعدّي',
@@ -410,7 +434,9 @@ rows, tl = [], []
 for pv in per_verse:
     for (wi, ui), rec in sorted(pv['F'].items()):
         shown = [(LBL.get(f, f), r) for f, r in rec.items() if f in LBL and r['st'] in ('مثبت', 'مرشّح')]
-        cells = '؛ '.join(f"{n}: {h(fv(r['v']))} <span class='st {'p' if r['st'] == 'مثبت' else 'c'}'>{r['st']}</span>" for n, r in shown)
+        cells = '؛ '.join(f"{n}: {h(fv(r['v']))} <span class='st {'p' if r['st'] == 'مثبت' else 'c'}'>{r['st']}</span>" +
+                         (f" <span class='mut'>[البدائل: {h('، '.join(fv(x) for x in r['alt']))}]</span>"
+                          if r['st'] == 'مرشّح' and r.get('alt') else '') for n, r in shown)
         rows.append([loc(pv, wi), f"<span class='ar'>{h(pv['units'][(wi, ui)].O['text'])}</span>", cells or '<span class="mut">مؤجَّل كله</span>'])
         if len(tl) < N:
             tl.append(f"{loc(pv, wi):<10} {pv['units'][(wi, ui)].O['text']:<16} " +
