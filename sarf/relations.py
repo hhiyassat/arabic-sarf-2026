@@ -184,11 +184,70 @@ class _Tok:
 STATE_ADJ = {'رفع': 'مرفوع', 'نصب': 'منصوب', 'جر': 'مجرور', 'جزم': 'مجزوم'}
 STATE_NOUN = {'رفع': 'رفعه', 'نصب': 'نصبه', 'جر': 'جرّه', 'جزم': 'جزمه'}
 _EFFECT = {'جر ما بعده': 'جر', 'نصب الفعل المضارع': 'نصب', 'جزم المضارع': 'جزم'}
-def _caps(effect):
-    """قدرة العامل من نصّ أثره في الجرد: الحالات المذكورة فيه (جر، نصب، رفع، جزم)؛ ولا يُستنتج غير المذكور"""
+def _cases_in(e):
+    return {c for c, ws in (('جر', ('جر', 'مجرور')), ('نصب', ('نصب', 'منصوب', 'تنصب', 'ينصب')), ('رفع', ('رفع', 'مرفوع', 'ترفع')),
+                            ('جزم', ('جزم', 'مجزوم', 'تجزم'))) if any(w in e for w in ws)}
+
+
+def _effect_parts(effect):
+    """أثر العامل في الجرد مفصولاً من نصّه، بلا استنتاج غير المذكور:
+    lafzi: ما يُحدثه لفظاً في معموله؛ mahall_of_complement: محلّ المعمول الأصلي الذي يذكره الجرد (الباء ومن الزائدتان)؛
+    mediated: ما يُحدثه بوساطة («بأن مضمرة»)؛ none: لا أثر («لا تؤثر»، «لا تجزم»)"""
     e = effect or ''
-    return {c for c, ws in (('جر', ('جر', 'مجرور')), ('نصب', ('نصب', 'منصوب')), ('رفع', ('رفع', 'مرفوع')), ('جزم', ('جزم', 'مجزوم')))
-            if any(w in e for w in ws)}
+    out = dict(lafzi=set(), mahall_of_complement=set(), mediated=set(), none=False)
+    if e.startswith('لا '):
+        out['none'] = True
+        return out
+    head, _, tail = e.partition('—')
+    if 'مضمرة' in e:
+        out['mediated'] = _cases_in(e)
+        return out
+    out['lafzi'] = _cases_in(head)
+    if 'محل' in tail:
+        out['mahall_of_complement'] = _cases_in(tail) or {'الأصلي'}
+    elif 'محل' in head and 'لا محلي' not in head:
+        out['mahall_of_complement'] = {'الأصلي'}
+    return out
+
+
+def _caps(effect):
+    """القدرة اللفظية وحدها (الأثر المباشر في لفظ المعمول)"""
+    return _effect_parts(effect)['lafzi']
+
+
+def _capacity(o):
+    """قدرة العامل عبر معانيه في الجرد: لفظية، ومحلّ معمولٍ أصلي، وبوساطة؛ كلٌّ مجموعةٌ مستقلة"""
+    cap = dict(lafzi=set(), mahall_of_complement=set(), mediated=set())
+    for x in o.get('meanings') or []:
+        pt = _effect_parts(x.get('effect'))
+        for k in cap:
+            cap[k] |= pt[k]
+    return {k: sorted(v) for k, v in cap.items()}
+
+
+def _mark_dims(name, cap=None):
+    """أبعاد وصف العلامة مستقلة: الحامل (حركة، حرف، حذف، سكون)، والظهور (ظاهرة، مقدّرة، غير ظاهرة)، والأصالة (أصلية، فرعية نيابةً)،
+    وسبب الفرعية أو التقدير"""
+    if not name:
+        return None
+    if name.startswith('مقدّرة'):
+        return dict(carrier='حركة', visibility='مقدّرة', originality='أصلية', reason='التعذّر: الألف لا تقبل الحركة')
+    if name.startswith('السكون ('):
+        return dict(carrier='سكون', visibility='غير ظاهرة', originality='أصلية',
+                    reason='حُرِّك آخره بالكسر لالتقاء الساكنين: الكسرة حركة تخلّص لا علامة')
+    if name == 'السكون':
+        return dict(carrier='سكون', visibility='ظاهرة', originality='أصلية', reason=None)
+    if name in ('الكسرة', 'الفتحة', 'الضمة'):
+        sub = (name == 'الكسرة' and cap == 'نصب') or (name == 'الفتحة' and cap == 'جر')
+        return dict(carrier='حركة', visibility='ظاهرة', originality='فرعية (نيابة)' if sub else 'أصلية',
+                    reason=('جمع المؤنث السالم يُنصب بالكسرة' if name == 'الكسرة' else 'الممنوع من الصرف يُجرّ بالفتحة') if sub else None)
+    if name.startswith('حذف'):
+        return dict(carrier='حذف', visibility='—', originality='فرعية (نيابة)',
+                    reason='الأفعال الخمسة' if 'النون' in name else 'المضارع المعتلّ الآخر')
+    if name in ('الألف', 'الواو', 'الياء', 'ثبوت النون'):
+        return dict(carrier='حرف', visibility='ظاهرة', originality='فرعية (نيابة)',
+                    reason='الأفعال الخمسة' if name == 'ثبوت النون' else 'المثنى أو جمع المذكر السالم')
+    return dict(carrier=None, visibility=None, originality=None, reason='العلامة غير معيَّنة')
 
 
 ROLE_AR = {'ibtida': 'الابتداء', 'khabar': 'الخبرية للمبتدأ', 'nasikh': 'الخبرية للناسخ', 'idafa': 'الإضافة'}
@@ -307,7 +366,7 @@ def _madi_build(t):
 def _inflection(t, nxt=None):
     """محور البناء والإعراب: يُبنى على نوع الكلمة وحكم العامل، ثم يُطابَق بين ثلاثة: قدرة العامل (ما يقتضيه)، والعلامة المكتوبة
     مقروءةً بالصنف، والعبارة المولَّدة منهما. فلا تُقال العبارة إلا إذا اتفق الثلاثة؛ وما اختلف سُجّل CONFLICT، لا اختيار"""
-    out = dict(uid=t.uid, text=t.text, build=(None, 'غير محسوم'), governor=None, state=(None, 'غير محسوم'), mark=None,
+    out = dict(uid=t.uid, text=t.text, notes=[], build=(None, 'غير محسوم'), governor=None, state=(None, 'غير محسوم'), mark=None,
                mark_kind=None, cause=None, statement=None, agreement='N/A', conflicts=[],
                note='الاتفاق اتساقٌ بين العامل والعلامة والعبارة، لا إثباتٌ مستقل لوظيفة العامل: '
                     'العامل مقبولٌ في المرحلة ١١ بأدلته، والعلامة تُقرأ هنا من النص بصنف الكلمة')
@@ -379,23 +438,36 @@ def _inflection(t, nxt=None):
     if src['src'] == 'operator':
         o, r, op = src['o'], src['r'], src['op']
         cap = r.get('expected')
-        caps = set().union(*[_caps(x.get('effect')) for x in o.get('meanings') or []]) if o.get('meanings') else set()
+        capd = _capacity(o)
+        caps = set(capd['lafzi'])
+        cap_src = 'المعاني المرفقة في المرحلة ١١'
+        if not caps and not capd['mediated'] and cap in _cases_in(o.get('operator_class') or ''):
+            caps = {cap}                                # فئة العامل في الجرد تذكر أثره، والمعاني المرفقة لا تذكره
+            cap_src = f'فئة العامل «{o.get("operator_class")}»'
+            out['notes'] = [f'تعارضٌ داخلي في المرحلة ١١: المعاني المرفقة بالعامل '
+                            f'({"، ".join(str(x.get("id")) for x in o.get("meanings") or [])}) لا تذكر «{cap}»، وفئته تذكره']
         out['governor'] = dict(kind='عامل', operator=o['operator'], position=op.loc, group=o['group'], expected=cap,
                                observed=r.get('observed'), consistent=r.get('consistent'), role=r.get('role'),
                                target_uid=t.uid, operator_proof=list((o.get('judgement') or {}).get('proof') or []),
-                               capacity=sorted(set().union(*[_caps(x.get('effect')) for x in o.get('meanings') or []])
-                                               if o.get('meanings') else []))
-        gov_txt = f'بـ«{o["operator"]}»'
+                               capacity=sorted(caps), capacity_source=cap_src,
+                               capacity_mahall_of_complement=capd['mahall_of_complement'],
+                               capacity_mediated=capd['mediated'],
+                               relation='مباشر' if cap in caps else
+                               'بوساطة (في الجرد)' if cap in capd['mediated'] else 'غير مرخَّص في الجرد')
+        gov_txt = f'بـ«{o["operator"]}»' if cap not in capd['mediated'] or cap in caps else \
+            f'بـ«أن» مضمرةً بعد «{o["operator"]}» (وساطةٌ في الجرد)'
         obs = r.get('observed')
         obs_cases = {'حذف النون': {'نصب', 'جزم'}, 'جر أو نصب': {'جر', 'نصب'}, 'نصب أو جر': {'جر', 'نصب'}}.get(
             obs, {obs} if obs in STATE_ADJ else None)
         if obs_cases is not None and cap not in obs_cases:
             out['conflicts'].append(f'المرحلة ١١ سجّلت المشاهَد «{obs}» والمقتضى «{cap}»')
-        if caps and cap not in caps and cap:
-            out['conflicts'].append(f'قدرة العامل في الجرد {sorted(caps)} لا تشمل ما سُجّل له «{cap}»')
+        if cap and (caps or capd['mediated']) and cap not in caps and cap not in capd['mediated']:
+            out['conflicts'].append(f'قدرة العامل في الجرد {sorted(caps)} لا تشمل ما سُجّل له «{cap}»، ولا وساطة له في الجرد')
     else:
         cap = src['expected']
-        out['governor'] = dict(kind=ROLE_AR.get(src['src'], src['src']), relation_id=src['rid'], expected=cap, of=src.get('of'))
+        out['governor'] = dict(kind=ROLE_AR.get(src['src'], src['src']), relation_id=src['rid'], expected=cap, of=src.get('of'),
+                               relation={'ibtida': 'معنوي (الابتداء)', 'khabar': 'بالمبتدأ', 'nasikh': 'بالناسخ',
+                                         'idafa': 'بالمضاف'}.get(src['src']))
         gov_txt = {'ibtida': 'بالابتداء', 'khabar': f'خبراً للمبتدأ «{src.get("of")}»',
                    'nasikh': f'خبراً لـ«{src.get("of")}»', 'idafa': f'مضافاً إليه لـ«{src.get("of")}»'}.get(src['src'], '')
     if out['build'][0] == 'مبني':
@@ -404,33 +476,71 @@ def _inflection(t, nxt=None):
         bv = _build_vowel(t) if kw == 'ضمير' else None
         out['state'] = (f'في محلّ {cap}', f'مبني، ومحلّه بالعامل {gov_txt}')
         out['mark_kind'] = 'محلّي'
+        out['mark_dims'] = dict(carrier=None, visibility='محلّي', originality=None,
+                                reason='المبني لا تظهر عليه علامة إعراب؛ وحركة آخره حركة بناء')
         out['cause'] = f'{kw} مبني' + (f' على {bv}: حركة آخره حركة بناءٍ لا علامة إعراب' if bv else '') + \
             '؛ والحكم إعرابٌ محلّي'
         out['statement'] = f'{kw} مبني' + (f' على {bv}' if bv else '') + f' في محلّ {cap} {gov_txt}'
         if src['src'] == 'operator' and src['r'].get('observed') not in ('محلاً', None):
             out['conflicts'].append(f'المرحلة ١١ قرأت على المبني علامةً «{src["r"].get("observed")}»')
-        out['agreement'] = 'AGREE' if not out['conflicts'] else 'CONFLICT'
-        return out
+        out['effect'] = dict(lafzi=None, mahalli=cap, relation=out['governor'].get('relation'))
+        return _finish(out)
     name, cases, ev = _written_mark(t, nxt)
     out['mark'] = (name, ev) if name else None
     if t.pos == 'فعل' and cap == 'جر':
         out['conflicts'].append('العامل يقتضي الجرّ والمعمول فعل: الفعل لا يُجرّ')
+    out['mark_dims'] = _mark_dims(name, cap) if name else None
     if not name or not cases:
         out['state'] = (cap, f'مقتضى العامل {gov_txt}؛ والعلامة غير مقروءة بالصنف ({ev}): المطابقة غير مثبتة')
-        out['agreement'] = 'UNVERIFIED' if not out['conflicts'] else 'CONFLICT'
-        return out
+        if not out['conflicts']:
+            out['agreement'] = 'UNVERIFIED'
+            return out
+        return _finish(out)
     if cap not in cases:
         out['conflicts'].append(f'العلامة «{name}» تدلّ على {"، ".join(sorted(cases))} والعامل يقتضي {cap}')
     if out['conflicts']:
-        out['state'] = (None, 'تعارض: ' + '؛ '.join(out['conflicts']))
-        out['agreement'] = 'CONFLICT'
+        return _finish(out)
+    if (out['governor'] or {}).get('relation') == 'غير مرخَّص في الجرد':
+        out['state'] = (cap, f'قدرة «{out["governor"]["operator"]}» على «{cap}» غير مذكورة في الجرد (لا في معانيه ولا في فئته): '
+                             f'الاتفاق غير مثبت، والعلامة «{name}»')
+        out['agreement'] = 'UNVERIFIED'
         return out
     kind = 'فعل مضارع' if t.pos == 'فعل' else 'اسم'
     out['state'] = (cap, f'العامل {gov_txt} يقتضي {cap}، والعلامة «{name}» تدلّ عليه ({ev})')
     out['mark_kind'] = _mark_kind(name)
     out['cause'] = ev
     out['statement'] = f'{kind} {STATE_ADJ[cap]} {gov_txt} وعلامة {STATE_NOUN[cap]} {_mark_phrase(name, cap)}'
+    dims = out['mark_dims'] or {}
+    out['effect'] = dict(lafzi=cap if dims.get('visibility') != 'مقدّرة' else None,
+                         taqdiri=cap if dims.get('visibility') == 'مقدّرة' else None, mahalli=None,
+                         mahall_of_complement_in_inventory=(out['governor'] or {}).get('capacity_mahall_of_complement') or None,
+                         relation=(out['governor'] or {}).get('relation'))
     out['agreement'] = 'AGREE'
+    return out
+
+
+CONFLICT_NATURE = (
+    ('لا تشمل ما سُجّل', 'عاملٌ نُسب إليه في المرحلة ١١ أثرٌ لا يذكره الجرد له لفظاً ولا بوساطة',
+     ['وساطةٌ غير ممثَّلة في الجرد (أن مضمرة بعد لام التعليل مثلاً)', 'نسبة الأثر إلى غير عامله في المرحلة ١١']),
+    ('قرأت على المبني', 'المرحلة ١١ قرأت علامةً على وحدةٍ عُدّت مبنية',
+     ['تعرّف الوحدة (لفظ الجلالة بشدّة اللام، أو تقطيعٌ أنشأ وحدةً مبنية)', 'قراءة العلامة في المرحلة ١١']),
+    ('تدلّ على', 'العلامة المقروءة بصنف الكلمة تخالف مقتضى العامل',
+     ['تقطيع الوحدة', 'صنفها أو جذرها', 'قبول العامل في المرحلة ١١']),
+    ('الفعل لا يُجرّ', 'عاملٌ جارّ معموله فعل', ['قبول العامل', 'صنف المعمول']),
+    ('المشاهَد', 'ما شاهدته المرحلة ١١ يخالف ما قضت به', ['قراءة العلامة في المرحلة ١١']))
+
+
+def _finish(out):
+    """يُغلق السجل: اتفاق، أو تعارضٌ داخلي موصوفٌ بطبيعته ومرشّحات سببه (لا حكمٌ لغويٌّ بالخطأ)"""
+    if not out['conflicts']:
+        out['agreement'] = 'AGREE'
+        return out
+    out['state'] = (None, 'تعارض: ' + '؛ '.join(out['conflicts']))
+    out['statement'] = None
+    out['agreement'] = 'CONFLICT'
+    out['conflict_nature'] = [dict(kind='INTERNAL', what=w, candidate_causes=c,
+                                   note='تعارضٌ داخلي بين الطبقات أو مع الجرد: يُكشف ويُسجَّل، ولا يُعدّ خطأً لغوياً بذاته')
+                              for msg in out['conflicts'] for k, w, c in CONFLICT_NATURE if k in msg][:len(out['conflicts'])]
     return out
 
 
@@ -1005,7 +1115,8 @@ def check_inflection(axes, tokens=None):
         exp = g.get('expected')
         if g.get('target_uid') not in (None, uid):
             bad.append(f'{uid}: العامل معمولُه وحدةٌ أخرى ({g.get("target_uid")})')
-        if g.get('capacity') and exp not in g['capacity']:
+        if (g.get('capacity') or g.get('capacity_mediated')) and exp not in (g.get('capacity') or []) and \
+                exp not in (g.get('capacity_mediated') or []):
             if inf.get('agreement') != 'CONFLICT':
                 bad.append(f'{uid}: قدرة «{g.get("operator")}» {g["capacity"]} لا تشمل «{exp}» ولم يُسجَّل تعارض')
         if inf.get('agreement') == 'AGREE':

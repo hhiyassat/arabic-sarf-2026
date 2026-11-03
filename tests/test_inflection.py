@@ -185,12 +185,47 @@ check('M05 إفساد النص (دَيْنٍ ← دَيْنَ) يُكشف',
 check('M06 عبارة إعرابٍ على وحدةٍ بلا اتفاق تُكشف',
       bool(mutated(lambda m: m[unit(o, 'يَأْبَ')[0]]['inflection'].update(statement='فعل مضارع منصوب وعلامة نصبه الفتحة الظاهرة'))), '')
 
+# ٣ب فصل الأثر والمحلّ والعامل والوساطة، وأبعاد العلامة
+_, ax = unit(o, 'كُمْ') if False else (None, axes[[u for u, l, t in o['tokens'] if t == 'كُمْ' and l == '2:282:120'][0]])
+g = ax['inflection']['governor']
+check('I20 «بِكُمْ»: القدرة اللفظية «جر» منفصلةٌ عن محلّ المعمول الأصلي في الجرد (رفع، نصب) وعن الوساطة',
+      g['capacity'] == ['جر'] and set(g['capacity_mahall_of_complement']) == {'رفع', 'نصب'} and g['capacity_mediated'] == []
+      and g['relation'] == 'مباشر' and ax['inflection']['effect']['mahalli'] == 'جر' and ax['inflection']['effect']['lafzi'] is None,
+      (g['capacity'], g['capacity_mahall_of_complement'], g['relation'], ax['inflection']['effect']))
+DIMS = [('فِي ٱلۡبَيۡتِ', 'الْبَيْتِ', ('حركة', 'ظاهرة', 'أصلية')), ('فِي ٱلۡبَيۡتَيۡنِ', 'الْبَيْتَيْنِ', ('حرف', 'ظاهرة', 'فرعية (نيابة)')),
+        ('عَلَيۡهِ', 'هِ', (None, 'محلّي', None)), ('وَلۡيَتَّقِ ٱللَّهَ رَبَّهُۥ', 'يَتَّقِ', ('حذف', '—', 'فرعية (نيابة)')),
+        ('إِلَّآ أَن تَكُونَ تِجَٰرَةً حَاضِرَةࣰ', 'تَكُونَ', ('حركة', 'ظاهرة', 'أصلية'))]
+bad = []
+for txt_, w_, exp_ in DIMS:
+    _, _, _, oo = run(txt_)
+    d_ = unit(oo, w_)[1]['inflection']['mark_dims'] or {}
+    if (d_.get('carrier'), d_.get('visibility'), d_.get('originality')) != exp_:
+        bad.append((w_, d_))
+check('I21 أبعاد العلامة مستقلة (الحامل، الظهور، الأصالة) لشواهد الملحق', not bad, bad)
+_, _, _, o5 = run('وَلۡيُمۡلِلِ ٱلَّذِي عَلَيۡهِ ٱلۡحَقُّ')
+d5 = unit(o5, 'يُمْلِلِ')[1]['inflection']['mark_dims']
+check('I22 «وَلۡيُمۡلِلِ»: السكون غير ظاهر، والكسرة حركة تخلّص لا علامة', d5['carrier'] == 'سكون' and d5['visibility'] == 'غير ظاهرة', d5)
+_, _, _, o6 = run(verse_text(2, 102), '2:102')
+i6 = unit(o6, 'يَقُولَا')[1]['inflection']
+check('I23 «حَتَّىٰ يَقُولَآ»: النصب بوساطةٍ مذكورة في الجرد (أن مضمرة)، والعلاقة «بوساطة»',
+      i6['agreement'] == 'AGREE' and i6['governor']['relation'] == 'بوساطة (في الجرد)' and 'مضمرة' in i6['statement'], (i6['agreement'], i6['statement']))
+_, _, _, o7 = run(verse_text(2, 11), '2:11')
+i7 = unit(o7, 'هُمْ')[1]['inflection']
+check('I24 «لَهُمۡ»: القدرة من فئة العامل، ومعانيه المرفقة لا تذكرها: ملاحظة تعارضٍ داخلي ظاهرة',
+      i7['governor']['capacity_source'].startswith('فئة العامل') and i7['notes'], (i7['governor'].get('capacity_source'), i7['notes']))
+
 # ٤ تأجيلٌ ومانع: لام التعليل لا تنصب (قدرتها الجر)، فالتعارض يُسجَّل ولا تُقال العبارة
 _, _, _, o2 = run(verse_text(2, 143), '2:143')
 _, ax = unit(o2, 'نَعْلَمَ')
 i = ax['inflection']
-check('I15 لِنَعلمَ: قدرة «لِ» الجر، والمسجَّل نصب ← CONFLICT بلا عبارة', i['agreement'] == 'CONFLICT' and i['statement'] is None
-      and any('قدرة العامل' in c for c in i['conflicts']), (i['agreement'], i['conflicts']))
+check('I15 لِنَعلمَ: قدرة «لِ» الجر، والمسجَّل نصب ← CONFLICT بلا عبارة، موصوفٌ تعارضاً داخلياً بمرشّحات سببه لا خطأً لغوياً',
+      i['agreement'] == 'CONFLICT' and i['statement'] is None and any('قدرة العامل' in c for c in i['conflicts'])
+      and i['conflict_nature'] and i['conflict_nature'][0]['kind'] == 'INTERNAL' and len(i['conflict_nature'][0]['candidate_causes']) >= 2,
+      (i['agreement'], i['conflicts'], i.get('conflict_nature')))
+u6 = unit(o6, 'يَقُولَا')[0]
+m6 = copy.deepcopy(o6['axes'])
+m6[u6]['inflection']['governor']['capacity_mediated'] = []
+check('M07 إفساد الوساطة (حذفها من سجل «حَتَّىٰ») يُكشف', bool(check_inflection(m6, o6['tokens'])), '')
 
 print('ALL OK' if not FAIL else f'FAILED {len(FAIL)}: {FAIL}')
 sys.exit(1 if FAIL else 0)

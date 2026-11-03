@@ -501,15 +501,27 @@ for pv in per_verse:
         txt = next((t for u, _, t in rel['tokens'] if u == uid), '')
         inf = ax['inflection']
         g = inf.get('governor') or {}
-        gov = '—' if not g else (f"«{h(g['operator'])}» ({h(g.get('position'))}) يقتضي {h(g.get('expected'))}؛ قدرته في الجرد "
-                                 f"{h('، '.join(g.get('capacity') or []) or '—')}؛ المشاهَد في ١١: {h(g.get('observed'))}"
-                                 if g.get('kind') == 'عامل' else f"{h(g.get('kind'))} يقتضي {h(g.get('expected'))} "
+        gov = '—' if not g else (f"«{h(g['operator'])}» ({h(g.get('position'))}) يقتضي {h(g.get('expected'))}؛ العلاقة: {h(g.get('relation'))}"
+                                 f"<br>القدرة اللفظية: {h('، '.join(g.get('capacity') or []) or '—')} <sub>({h(g.get('capacity_source'))})</sub>"
+                                 f"؛ بوساطة: {h('، '.join(g.get('capacity_mediated') or []) or '—')}"
+                                 f"؛ محلّ المعمول الأصلي في الجرد: {h('، '.join(g.get('capacity_mahall_of_complement') or []) or '—')}"
+                                 f"<br>المشاهَد في ١١: {h(g.get('observed'))}"
+                                 if g.get('kind') == 'عامل' else f"{h(g.get('kind'))} يقتضي {h(g.get('expected'))}؛ العلاقة: {h(g.get('relation'))} "
                                  f"<sub><code>{h(g.get('relation_id'))}</code></sub>")
+        ef = inf.get('effect') or {}
+        eff = '—' if not ef else '؛ '.join(f'{k}: {h(v)}' for k, v in (('لفظي', ef.get('lafzi')), ('تقديري', ef.get('taqdiri')),
+                                                                       ('محلّي', ef.get('mahalli'))) if v) or '—'
+        dm = inf.get('mark_dims') or {}
+        dims = '—' if not dm else f"الحامل: {h(dm.get('carrier') or '—')}؛ الظهور: {h(dm.get('visibility') or '—')}؛ " \
+            f"الأصالة: {h(dm.get('originality') or '—')}" + (f"<br><sub>{h(dm.get('reason'))}</sub>" if dm.get('reason') else '')
+        nat = ''.join(f"<br><sub>{h(c['what'])}؛ مرشّحات السبب: {h('، '.join(c['candidate_causes']))} — {h(c['note'])}</sub>"
+                      for c in inf.get('conflict_nature') or [])
+        notes = ''.join(f'<br><sub>{h(n)}</sub>' for n in inf.get('notes') or [])
         mk = inf.get('mark')
         rows_x.append([h(loc_), f"<span class='ar'>{h(txt)}</span>", cell(ax['word_class']), cell(inf['build']), gov,
-                       cell(inf['state']), (f"{h(mk[0])} <sub>({h(inf.get('mark_kind') or '')})</sub>" if mk else
-                                            h(inf.get('mark_kind') or '—')), h(inf.get('cause') or (mk[1] if mk else '') or '—'),
-                       f"<b>{h(inf['agreement'])}</b>" + ''.join(f'<br>{h(c)}' for c in inf['conflicts']),
+                       cell(inf['state']) + f'<br><sub>الأثر: {eff}</sub>', (f"{h(mk[0])}" if mk else h(inf.get('mark_kind') or '—')) +
+                       f'<br><sub>{dims}</sub>', h(inf.get('cause') or (mk[1] if mk else '') or '—'),
+                       f"<b>{h(inf['agreement'])}</b>" + ''.join(f'<br>{h(c)}' for c in inf['conflicts']) + nat + notes,
                        h(inf['statement'] or '—'), cell(ax['protection']), cell(ax['operator'])])
     rows_x.append(['—', '—', '—', '—', '—', '—', '—', '—',
                    f'الفاحص المستقل للإعراب: {"سليم" if not ierrs else h("؛ ".join(ierrs))}', '', '', ''])
@@ -525,7 +537,7 @@ section('14ب', 'محاور الصنف المستقلة',
         'صنف الكلمة (اسم، فعل، حرف)، والبناء والإعراب، والحماية الدستورية، والعمل: محاور لا يُغني أحدها عن الآخر؛ '
         'و«مبني» ليس بديلاً عن «اسم»، و«عامل» ليس صنفاً رابعاً. وشكل التنوين وحده لا يثبت الاسمية في هذا المحور (العقد T19)، '
         'وسمة الصنف في المرحلة ١٣ باقيةٌ كما هي بدليلها',
-        rows_x, ['الموضع', 'الوحدة', 'صنف الكلمة', 'البناء', 'العامل وقدرته', 'الحالة', 'العلامة (نوعها)', 'سببها', 'الاتفاق',
+        rows_x, ['الموضع', 'الوحدة', 'صنف الكلمة', 'البناء', 'العامل وعلاقته وقدرته', 'الحالة والأثر', 'العلامة وأبعادها', 'سببها', 'الاتفاق',
                  'العبارة', 'الحماية', 'العمل'], tl_x)
 section(15, 'الوحدة الخطابية', 'المعرّفات (2,282,n) فهرسٌ داخلي يبدأ من 0 (internal_index_0_based): الكلمة n فيها هي الكلمة n+1 في المواضع الخارجية. الجمل المتصلة بحدودها وتعلّقها. ونهاية السورة تحدّ نطاق المصدر ولا تثبت وحدها اكتمال البنية: '
         'الإغلاق الخارجي لا يُحكم به إلا باستيفاء التزامات الوحدة', rows_d,

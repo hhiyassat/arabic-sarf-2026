@@ -31,7 +31,10 @@ def _one(t):
         g = inf.get('governor') or {}
         rows.append(dict(loc=loc, text=tx, build=inf['build'][0], agreement=inf['agreement'], statement=inf['statement'],
                          state=inf['state'][0], mark=inf['mark'] and inf['mark'][0], governor=g.get('operator') or g.get('kind'),
-                         expected=g.get('expected'), conflicts=inf['conflicts'], word_class=out['axes'][uid]['word_class'][0]))
+                         expected=g.get('expected'), conflicts=inf['conflicts'], word_class=out['axes'][uid]['word_class'][0],
+                         relation=g.get('relation'), effect=inf.get('effect'), mark_dims=inf.get('mark_dims'),
+                         conflict_nature=inf.get('conflict_nature'), uid=uid, notes=inf.get('notes') or [],
+                         capacity_source=g.get('capacity_source')))
     return dict(verse=f'{s}:{v}', rows=rows, check=check_inflection(out['axes']))
 
 
@@ -50,22 +53,39 @@ def main():
     with mp.get_context('fork').Pool(a.jobs) as P:
         res = P.map(_one, V, chunksize=20)
     C, K, conf, chk, verbs_jarr = collections.Counter(), collections.Counter(), [], [], 0
+    REL, EFF, DIM, SRC = collections.Counter(), collections.Counter(), collections.Counter(), collections.Counter()
+    noted, unlicensed = [], []
     for r in res:
         chk += [f"{r['verse']}: {e}" for e in r['check']]
         for x in r['rows']:
             C[x['agreement']] += 1
             if x['agreement'] == 'AGREE':
                 K[f"{x['word_class']}|{x['expected']}|{x['mark']}"] += 1
+                REL[str(x['relation'])] += 1
+                SRC[str(x['capacity_source'])] += 1
+                if x['notes']:
+                    noted.append(dict(loc=x['loc'], text=x['text'], uid=x['uid'], governor=x['governor'], notes=x['notes']))
+                e = x['effect'] or {}
+                EFF['لفظي' if e.get('lafzi') else 'تقديري' if e.get('taqdiri') else 'محلّي' if e.get('mahalli') else '—'] += 1
+                d = x['mark_dims'] or {}
+                DIM[f"{d.get('carrier')}|{d.get('visibility')}|{d.get('originality')}"] += 1
+            if x['agreement'] == 'UNVERIFIED' and x['relation'] == 'غير مرخَّص في الجرد':
+                unlicensed.append(dict(loc=x['loc'], text=x['text'], governor=x['governor'], expected=x['expected']))
             if x['agreement'] == 'CONFLICT':
                 conf.append(x)
             if x['word_class'] == 'فعل' and (x['state'] == 'جر' or 'مجرور' in (x['statement'] or '')):
                 verbs_jarr += 1
     os.makedirs(a.out, exist_ok=True)
     rep = dict(identity=provenance.identity('\n'.join(t[2] for t in V), 'محور البناء والإعراب v1'), verses=len(res), by_agreement=dict(C.most_common()),
-               agree_by_class_state_mark=dict(K.most_common()), verbs_with_jarr=verbs_jarr, checker_errors=chk,
+               agree_by_class_state_mark=dict(K.most_common()), agree_by_relation=dict(REL.most_common()),
+               agree_by_effect=dict(EFF.most_common()), agree_by_capacity_source=dict(SRC.most_common()),
+               agree_with_internal_note=noted, unverified_capacity_not_in_inventory=unlicensed, agree_by_mark_dims=dict(DIM.most_common()), verbs_with_jarr=verbs_jarr, checker_errors=chk,
                conflicts=conf)
     json.dump(rep, open(os.path.join(a.out, 'inflection_measurement.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
     print('verses', len(res), dict(C.most_common()))
+    print('relation', dict(REL.most_common()), '| effect', dict(EFF.most_common()))
+    print('mark dims', dict(DIM.most_common()))
+    print('capacity source', dict(SRC.most_common()), '| AGREE with internal note', len(noted))
     print('verbs with jarr', verbs_jarr, '| checker errors', len(chk), '| conflicts', len(conf))
     for k, n in K.most_common(30):
         print(' ', n, k)
