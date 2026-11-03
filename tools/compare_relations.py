@@ -23,7 +23,10 @@ def _one(t):
     out = verse_relations(a, U, unit_features(a, U), f'{s}:{v}')
     keep = ('relation_id', 'type', 'rule_id', 'rule_version', 'status', 'heads', 'positions', 'texts', 'reason', 'premises',
             'alternatives', 'container_id', 'search_status', 'nucleus_complete')
-    return json.dumps(dict(verse=f'{s}:{v}', records=[{k: r.get(k) for k in keep} for r in out['records']]), ensure_ascii=False)
+    ax = out.get('axes') or {}
+    cls = lambda r: {role: str((ax.get(uid) or {}).get('word_class', (None, ''))[1] or '') for role, uid in r['heads'].items()}
+    return json.dumps(dict(verse=f'{s}:{v}', records=[dict({k: r.get(k) for k in keep}, head_class=cls(r)) for r in out['records']]),
+                      ensure_ascii=False)
 
 
 _CAT = []
@@ -62,6 +65,7 @@ CAUSES = {
     'COORD': 'منافس العطف (إصلاح الإسناد الزائف داخل العطف)',
     'T19_CASCADE': 'تابعٌ لتغيّرٍ بـT19 في الآية نفسها يشاركه موضعاً (حاويةٌ أو شبه جملةٍ أُجِّلت فسقط ما بُني عليها)',
     'UNHIDE': 'مرشّح تعلّقٍ (A01) كان محجوباً بإسنادٍ مؤجَّل (N02) فظهر: المؤجَّل لا يحجب الوجه الآخر',
+    'HOST_ADDED': 'مضيفٌ محتمل أُضيف إلى بدائل A01 (وحدةٌ ثبتت اسميتها، كأَفْعَل بـE01)، ولم يُسقط مضيف',
     'ID': 'تغيّر المعرّف وحده بتغيّر الأعضاء: انظر سبب السجل المقابل',
     'OTHER': 'غير مصنَّف آلياً: يُراجع يدوياً',
 }
@@ -80,14 +84,19 @@ def cause(a, b, B):
             any(x['type'] == 'PREDICATIVE_PP' and x['status'] != 'LICENSED' and
                 set(x['positions'].get('predicate_pp', [])) & set(b['positions'].get('oblique', [])) for x in B.values()):
         return 'UNHIDE'
-    for mark, c in (('E01', 'E01'), ('T19', 'T19'), ('منافس العطف', 'COORD'), ('معطوفٌ على «', 'COORD')):
+    if b is not None and any(v.startswith('E01') for v in (b.get('head_class') or {}).values()) and \
+            not (a is not None and any(v.startswith('E01') for v in (a.get('head_class') or {}).values())):
+        return 'E01'                                # رأسٌ ثبتت اسميته بـE01 في «بعدُ» لا في «قبلُ»
+    for mark, c in (('E01', 'E01'), ('T19', 'T19'), ('منافس العطف', 'COORD'), ('معطوفٌ على «', 'COORD'), ('أَفْعَل', 'E01')):
         if _has(a, mark) != _has(b, mark):
             return c
     if a is not None and b is not None and a['type'] == 'ATTACH':
-        ha = {h['host_text'] for h in a.get('alternatives') or [] if isinstance(h, dict)}
-        hb = {h['host_text'] for h in b.get('alternatives') or [] if isinstance(h, dict)}
-        if ha - hb and all(set(t) & TANWIN for t in ha - hb) and not hb - ha:
+        ha = {(h['host_text'], h.get('host_kind')) for h in a.get('alternatives') or [] if isinstance(h, dict)}
+        hb = {(h['host_text'], h.get('host_kind')) for h in b.get('alternatives') or [] if isinstance(h, dict)}
+        if ha - hb and all(set(t[0]) & TANWIN for t in ha - hb) and not hb - ha:
             return 'T19_HOST'
+        if hb - ha and not ha - hb:
+            return 'HOST_ADDED'
     return 'OTHER'
 
 

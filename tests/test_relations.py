@@ -196,20 +196,24 @@ def t11():
 def t12():
     a, _, _, o = run('وَٱللَّهُ بِكُلِّ شَيۡءٍ عَلِيمٌ')
     n = one(o, 'PREDICATION', subject='اللَّهُ', predicate='عَلِيمٌ')
-    at = recs(o, 'ATTACH')
-    hosts = [h['host_text'] for x in at for h in x['alternatives']]
+    at = one(o, 'ATTACH', host='عَلِيمٌ')
     no_root = not any(m.get('status') == 'accepted' for m in a['morph'] if a['segments'][m['word_index']]['word'].endswith('للَّهُ'))
-    return ok(n and n['status'] == LICENSED and n['nucleus_complete'] and at and 'عَلِيمٌ' in hosts and
-              at[0]['status'] == DEFERRED and no_root, dict(nucleus=n and n['status'], hosts=hosts))
+    return ok(n and n['status'] == LICENSED and n['nucleus_complete'] and at and at['rule_id'] == 'A02' and
+              at['status'] == LICENSED and n['relation_id'] in at['premises'] and no_root,
+              dict(nucleus=n and n['status'], attach=at and (at['rule_id'], at['status'])))
 
 
 def t13():
+    # منافسة: الظرف بعد الخبر أَفْعَل (E01) يحتمل التعلّق به ووجه النعت، ولا مانع مكتوب من النعت: A01 مؤجَّل لا A02
     _, _, _, o = run('ذَٰلِكُمۡ أَقۡسَطُ عِندَ ٱللَّهِ')
     adv = one(o, 'ADVP', adverb='عِنْدَ')
     n = one(o, 'PREDICATION', subject='ذَٰلِكُمْ')
     at = recs(o, 'ATTACH')
-    return ok(adv and adv['status'] == LICENSED and not one(o, 'PP') and n and at and
-              n['relation_id'] != at[0]['relation_id'], dict(advp=adv and adv['status'], nucleus=n and (n['status'], n['reason'][:80])))
+    kinds = sorted(h['host_kind'] for x in at for h in x['alternatives'] if isinstance(h, dict) and h['host_text'] == 'أَقْسَطُ')
+    return ok(adv and adv['status'] == LICENSED and not one(o, 'PP') and n and n['status'] == LICENSED and
+              any(p.startswith('E01') for p in n['premises']) and len(at) == 1 and at[0]['rule_id'] == 'A01' and
+              at[0]['status'] == DEFERRED and len(kinds) == 2 and any('نعت' in k for k in kinds),
+              dict(advp=adv and adv['status'], nucleus=n and n['status'], attach=[(x['rule_id'], x['status']) for x in at], hosts=kinds))
 
 
 def t14():
@@ -355,6 +359,30 @@ def t33():
     return ok(n and n['status'] == DEFERRED and 'منافس العطف' in n['reason'], n and n['reason'])
 
 
+def t34():
+    # A02 موجب قبل الخبر؛ ويُمنع بفعلٍ في الإطار؛ وبعد الخبر يبقى A01 مؤجَّلاً بوجه النعت
+    _, _, _, o = run('ٱلرَّجُلُ فِي ٱلدَّارِ كَاتِبٌ')
+    at = one(o, 'ATTACH', host='كَاتِبٌ')
+    _, _, _, o2 = run('ٱلرَّجُلُ فِي ٱلدَّارِ كَاتِبٌ يَكۡتُبُ')
+    at2 = [x for x in recs(o2, 'ATTACH') if x['rule_id'] == 'A02']
+    _, _, _, o3 = run('ٱلرَّجُلُ كَاتِبٌ فِي ٱلدَّارِ')
+    at3 = recs(o3, 'ATTACH')
+    return ok(at and at['status'] == LICENSED and at['rule_id'] == 'A02' and at['search_status'] == 'SEARCH_COMPLETE' and not at2 and
+              len(at3) == 1 and at3[0]['rule_id'] == 'A01' and at3[0]['status'] == DEFERRED,
+              (at and (at['rule_id'], at['status']), len(at2), [(x['rule_id'], x['status']) for x in at3]))
+
+
+def t36():
+    # الموجب الثاني: ظرفٌ (لا جار) بين طرفي النواة قبل الخبر (24:15)
+    _, _, _, o = run('وَهُوَ عِندَ ٱللَّهِ عَظِيمٌ')
+    adv = one(o, 'ADVP', adverb='عِنْدَ')
+    n = one(o, 'PREDICATION', predicate='عَظِيمٌ')
+    at = one(o, 'ATTACH', host='عَظِيمٌ')
+    return ok(adv and adv['status'] == LICENSED and n and n['status'] == LICENSED and at and at['rule_id'] == 'A02' and
+              at['status'] == LICENSED and n['relation_id'] in at['premises'] and adv['relation_id'] in at['premises'],
+              dict(advp=adv and adv['status'], nucleus=n and n['status'], attach=at and (at['rule_id'], at['status'])))
+
+
 def t35():
     # الإسناد المؤجَّل لا يحجب الوجه الآخر: شبه الجملة في N02 المؤجَّل لها مرشّح تعلّقٍ ظاهر (A01)
     t = 'وَأُمَّهَٰتُكُمُ ٱلَّٰتِيٓ أَرۡضَعۡنَكُمۡ وَأَخَوَٰتُكُم مِّنَ ٱلرَّضَٰعَةِ'
@@ -378,7 +406,7 @@ for tid, inp, exp, fn in [
         ('T10', 'كان الذي عليه الحق سفيهًا', 'الصلة لا تبتلع سفيهًا؛ خبر كان', t10),
         ('T11', 'فليس عليكم جناح', 'وصلة ليس أو تأجيل محدد؛ لا إغلاق', t11),
         ('T12', 'والله بكل شيء عليم', 'نواة محلية، والتعلق مستقل؛ لا جذر للفظ الجلالة', t12),
-        ('T13', 'ذلكم أقسط عند الله', 'الإسناد غير التعلق؛ عند ظرف لا جار', t13),
+        ('T13', 'ذلكم أقسط عند الله', 'الإسناد غير التعلق؛ عند ظرف لا جار؛ منافسة: التعلّق بأقسط ووجه النعت (A01 مؤجَّل)', t13),
         ('T14', 'مررت برجل في الدار', 'حفظ بدائل التعلق والوصف', t14),
         ('T15', 'محمدٌ أخوه حاضرٌ', 'لا وصل آلي لأول اسمين', t15),
         ('T16', 'شهيدين / رجلين / امرأتان', 'مصالحة الاسمية مع سبب الإغلاق', t16),
@@ -399,7 +427,9 @@ for tid, inp, exp, fn in [
         ('T31', 'وليكتب بينكم كاتب', 'منافسة: فعلٌ ووصف في الإطار: لا تعلّق مرخَّص (A01 مؤجَّل)', t31),
         ('T32', 'هو أعلمُ بكم', 'تأجيل: أَفْعَل يلتبس بمضارع المتكلم (عَلِمَ يَعْلَمُ): لا E01 ولا A02', t32),
         ('T33', 'وأخواتكم من الرضاعة (4:23)', 'العطف: لا إسناد زائف؛ تأجيلٌ بمنافس العطف', t33),
-        ('T35', 'وأخواتكم من الرضاعة: التعلّق ظاهر', 'الإسناد المؤجَّل لا يحجب مرشّح التعلّق', t35)]:
+        ('T35', 'وأخواتكم من الرضاعة: التعلّق ظاهر', 'الإسناد المؤجَّل لا يحجب مرشّح التعلّق', t35),
+        ('T34', 'الرجل في الدار كاتبٌ / … يكتب / الرجل كاتبٌ في الدار', 'A02 موجب قبل الخبر، ويُمنع بفعلٍ في الإطار، ويُؤجَّل بعد الخبر', t34),
+        ('T36', 'وهو عند الله عظيم (24:15)', 'A02 موجب ثانٍ: ظرفٌ قبل الخبر', t36)]:
     case(tid, inp, exp, fn)
 
 os.makedirs(H + 'reports/nominal_nucleus_02', exist_ok=True)

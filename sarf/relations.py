@@ -70,14 +70,52 @@ class _Tok:
         # شكل التنوين وحده ليس شهادة اسمية في هذه الطبقة (العقد T19)؛ وسمة الصنف القائمة في sarf.features لا تُغيَّر
         self.shape_only = self.pos == 'اسم' and pe.strip() == 'التنوين'
         self.noun_ev = pe or None
+        self._elative = None
 
     def nounish(self):
-        """اسمٌ بدليلٍ غير شكل التنوين وحده: السمة المثبتة بدليلٍ آخر، أو لفظ الجلالة، أو اسمٌ ذهبي"""
-        return self.pos == 'اسم' and self.pos_st == 'مثبت' and not self.shape_only or self.divine or self.golden
+        """اسمٌ بدليلٍ غير شكل التنوين وحده: السمة المثبتة بدليلٍ آخر، أو لفظ الجلالة، أو اسمٌ ذهبي، أو أَفْعَل المثبت بنفي البدائل (E01)"""
+        return self.pos == 'اسم' and self.pos_st == 'مثبت' and not self.shape_only or self.divine or self.golden or \
+            bool(self.elative_proof())
+
+    def elative_proof(self):
+        """E01 v1 (مقترحة): «أَفْعَلُ» مختومٌ بضمة أو كسرة بلا تنوين ولا «أل» اسمٌ بنفي البدائل الثلاثة في مجالٍ معلن:
+        الماضي (الآخر غير مفتوح)، ومضارع المتكلم من أَفْعَلَ (الهمزة مفتوحة لا مضمومة)، ومضارع المتكلم من الثلاثي:
+        فَعَلَ لا يكون مضارعه يَفْعَلُ إلا وعينه أو لامه حرف حلق (سيبويه)، وفَعُلَ يُضمّ مضارعه، والأجوف لا يُكتب هكذا؛
+        والماضي من HFN. → نصّ الدليل أو None"""
+        if self._elative is not None:
+            return self._elative or None
+        self._elative = ''
+        t = letters(self.text)
+        from .chars import DAGGER_ALIF
+        if len(t) != 4 or t[0][0] != 'أ' or FATHA not in t[0][1] or SUKUN not in t[1][1] or FATHA not in t[2][1] or \
+                DAGGER_ALIF in t[2][1]:
+            return None                                 # والخنجرية بعد العين مدٌّ: أَفۡعَال (أَيۡمَٰن)، لا أَفۡعَل
+        last = t[3][1]
+        if last & {FATHATAN, DAMMATAN, KASRATAN} or not last & {DAMMA, KASRA}:
+            return None
+        R = ''.join('ء' if c in 'أإؤئ' else c for c in (t[1][0], t[2][0], t[3][0]))
+        from .root import hfn
+        H = hfn()
+        if H is None or R not in H.roots:
+            return None
+        pasts = [e['verb'] for e in H.index.get((R, 'I'), [])]
+        if R[1] in 'وي':
+            why = 'الأجوف لا يأتي مضارعه على أَفْعَلُ بعينٍ مفتوحة بعد ساكن'
+        else:
+            vs = set()
+            for pv in pasts:
+                pt = letters(pv)
+                if len(pt) >= 2:
+                    vs |= {x for x in (FATHA, DAMMA, KASRA) if x in pt[1][1]}
+            if not vs or KASRA in vs or (FATHA in vs and set(R[1:]) & set('ءهعحغخ')):
+                return None                             # فَعِلَ يَفْعَلُ، أو حرف حلق، أو لا ماضٍ في HFN: مضارع المتكلم باقٍ
+            why = 'ماضيه في HFN «' + '، '.join(pasts) + '» فَعَلَ أو فَعُلَ، ولا حرف حلق في عينه ولامه: فلا يكون مضارعه أَفْعَلُ'
+        self._elative = f'E01 (مقترحة): «{self.text}» آخره غير مفتوح فلا يكون ماضياً، وهمزته مفتوحة فلا يكون مضارع أَفْعَلَ، و{why}'
+        return self._elative
 
     def axes(self):
         """محاور مستقلة لا يُغني أحدها عن الآخر: صنف الكلمة، والبناء والإعراب، والحماية، والعمل؛ كلٌّ بدليله أو «غير محسوم»"""
-        wc = ('اسم', self.noun_ev or 'لفظ الجلالة' if self.divine else 'اسمٌ ذهبي' if self.golden else None) \
+        wc = ('اسم', self.noun_ev or 'لفظ الجلالة' if self.divine else 'اسمٌ ذهبي' if self.golden else self.elative_proof()) \
             if self.nounish() else \
             ('اسم', f'ملف المبنيات: {self.mcat}') if self.mcat in ('separate_pronoun', 'demonstrative', 'relative', 'attached_pronoun') else \
             ('فعل', (self.feats.get('pos') or {}).get('ev')) if self.pos == 'فعل' and self.pos_st == 'مثبت' else \
@@ -104,6 +142,8 @@ class _Tok:
             return True, 'التعريف مثبت'
         if self.defin == 'نكرة' and self.defin_st == 'مثبت':
             return False, 'التنكير مثبت (التنوين)'
+        if self.elative_proof() and 'أل' not in self.types:
+            return False, 'أَفْعَل بلا «أل» ولا إضافةٍ مكتوبة: نكرةٌ ممنوعة من الصرف'
         return None, 'التعريف والتنكير غير مثبتين'
 
     def nominative(self):
@@ -391,6 +431,7 @@ def verse_relations(a, units, F, ref):
             for u in us:
                 if u is not op_t:
                     bound[u.k] = rec['relation_id']
+    nuclei = []                                     # النوى المرخَّصة بـN01 وإطاراتها (لقاعدة A02)
 
     licensed_subjects = set()                       # المسند إليه في نواةٍ مرخَّصة: لا يكون منافس عطفٍ لما بعده
 
@@ -504,6 +545,8 @@ def verse_relations(a, units, F, ref):
             st_, why = DEFERRED, f'اسمية «{p.text}» غير مثبتة في هذا التحليل' + \
                 (' (أَفْعَل: اسم تفضيلٍ مرشّح، أو مضارع المتكلم)' if 'elative' in p.feats else '') + \
                 (': من شكل التنوين وحده (العقد T19)' if p.shape_only else '')
+        elif p.elative_proof() and j + 1 < fe and toks[j + 1].nounish() and toks[j + 1].case == 'جر':
+            st_, why = DEFERRED, f'«{p.text}» أَفْعَل بعده مجرور: مضافٌ محتمل، وتعريفه غير محسوم'
         elif p.case in ('نصب', 'جر') or p.case and p.case not in ('رفع',):
             st_, why = REJECTED, f'«{p.text}» {p.case} كتابةً: لا يُرخَّص خبراً مفرداً مرفوعاً في هذا الوجه (ولا يُحكم على النص كله)'
         elif p.case != 'رفع':
@@ -523,7 +566,9 @@ def verse_relations(a, units, F, ref):
                 alts.append('خبرٌ جملة اسمية')
             else:
                 st_, why = LICENSED, 'معرفةٌ مرفوعة في أول الكلام ومسندٌ نكرةٌ مرفوعٌ كتابةً'
-                prem.append(f'«{p.text}»: الرفع مكتوب، والتنكير مثبت')
+                prem.append(f'«{p.text}»: الرفع مكتوب، والتنكير مثبت' + (f' ({p.definite()[1]})' if p.elative_proof() else ''))
+                if p.elative_proof():
+                    prem.append(p.elative_proof())
         if mid:
             alts.append('شبه الجملة بين الطرفين خبرٌ أول أو متعلّقٌ بالمسند: انظر A01')
         R.append(_rec(ref, 'PREDICATION', 'N01', heads, members, st_, why, premises=prem,
@@ -533,6 +578,7 @@ def verse_relations(a, units, F, ref):
                       edges=[('PREDICATION', s.uid, p.uid)] if st_ == LICENSED else []))
         if st_ == LICENSED:
             R[-1]['roles'] = {'subject': 'مبتدأ', 'predicate': 'خبر'}
+            nuclei.append(dict(rec=R[-1], s=s, p=p, lo=i, hi=fe))
             licensed_subjects.add(s.k)
     # N02: شبه جملة في أول الكلام ثم نكرةٌ مرفوعة تختم الإطار (في الدار رجلٌ)
     for i, t in enumerate(toks):
@@ -600,6 +646,39 @@ def verse_relations(a, units, F, ref):
         if pv is not None and pv.nounish() and pv.definite()[0] is False and span_of.get(pv.k) != hk:
             hosts.append(dict(host=pv.uid, host_text=pv.text, host_position=pv.loc, host_kind='نعتٌ للنكرة قبله (متعلّقٌ بمحذوف)',
                               status=DEFERRED, reason='شبه الجملة بعد نكرة تحتمل الوصف؛ والمحذوف لا يُكتب ولا يُعيَّن لفظه'))
+        # A02 v1 (مقترحة): شبه الجملة أو الظرف بين طرفي نواةٍ مرخَّصة (N01)، قبل الخبر لا بعده، والإطار خالٍ من فعلٍ ولو محتمل،
+        # والخبر وصفٌ هو المضيف الوحيد الذي يولّده A01: تتعلّق به (وَٱللَّهُ بِكُلِّ شَيۡءٍ عَلِيمٌ، وَهُوَ عِندَ ٱللَّهِ عَظِيمٌ).
+        # والتقدّم على الخبر مانعٌ مكتوب من وجه النعت (النعت يتلو منعوته)؛ وما بعد الخبر يبقى في A01 لأن وجه النعت فيه قائمٌ بلا مانع
+        nuc = next((n for n in nuclei if n['lo'] <= i0 < n['hi']), None)
+        uidx = {t.uid: n for n, t in enumerate(toks)}
+        pre_p = nuc is not None and uidx[nuc['s'].uid] < i0 and uidx[ous[-1].uid] < uidx[nuc['p'].uid]
+        if nuc is not None and not cont and pre_p:
+            frame_verbs = [toks[j] for j in range(nuc['lo'], nuc['hi'])
+                           if toks[j].pos == 'فعل' or 'فعل' in ((toks[j].feats.get('pos') or {}).get('alt') or []) and
+                           not toks[j].nounish() and toks[j].k not in span_of]
+            # ما أُثبتت اسميته بنفي البدائل (E01)، وأعضاء شبه الجملة المرخَّصة (عِنْدَ)، ليست أفعالاً محتملة
+            others = [h for h in hosts if h['host'] != nuc['p'].uid and nuc['lo'] <= uidx[h['host']] < nuc['hi']]
+            p_is_host = any(h['host'] == nuc['p'].uid for h in hosts) or bool(nuc['p'].elative_proof())
+            pf = nuc['p'].feats
+            # الخبر وصفٌ بدليله: اسم فاعلٍ أو مفعولٍ مثبت، أو مرشّحات اشتقاقٍ وصفي (فَعِيل)، أو أَفْعَل بـE01؛ لا قالبٌ اسمي وحده (خِزْيٌ) ولا مصدر
+            p_wasf = (pf.get('derivation') or {}).get('v') in ('اسم فاعل', 'اسم مفعول') and pf['derivation'].get('st') == 'مثبت' or \
+                'derivation_candidates' in pf or bool(nuc['p'].elative_proof())
+            if not frame_verbs and not others and p_is_host and p_wasf:
+                pr = nuc['p']
+                R.append(_rec(ref, 'ATTACH', 'A02', {'oblique': ous[0], 'host': pr}, {'oblique': ous, 'host': [pr]}, LICENSED,
+                              f'شبه الجملة بين طرفي النواة المرخَّصة قبل الخبر، ولا فعل في الإطار، والخبر الوصف «{pr.text}» مضيفها الوحيد',
+                              premises=[nuc['rec']['relation_id'], orec['relation_id'],
+                                        f'الإطار {toks[nuc["lo"]].loc}–{toks[nuc["hi"] - 1].loc}: لا فعل ولا فعل محتمل',
+                                        f'مضيفو A01 في الإطار: «{pr.text}» وحده'] + ([pr.elative_proof()] if pr.elative_proof() else []),
+                              checked=['فعلٌ في الإطار (ولو محتمل)', 'وصفٌ آخر في الإطار', 'حدّ حاوية',
+                                       'وجه النعت: شبه الجملة قبل الخبر، والنعت لا يتقدّم منعوته'],
+                              alternatives=['شبه الجملة خبرٌ أول وتعدّد الخبر: خارج تغطية v1 (مؤجَّل لا مرفوض)',
+                                            'شبه الجملة حالٌ مقدَّمة من الخبر النكرة: خارج تغطية v1 (مؤجَّل لا مرفوض)'] +
+                              [dict(h, status=DEFERRED, reason='خارج إطار النواة: لا يُعبر إليه في A02') for h in hosts
+                               if h['host'] != pr.uid],
+                              search_status=SEARCH_COMPLETE, search_scope=dict(rule='A02 v1', frame=[toks[nuc['lo']].loc, toks[nuc['hi'] - 1].loc]),
+                              edges=[('ATTACH', ous[0].uid, pr.uid)]))
+                continue
         R.append(_rec(ref, 'ATTACH', 'A01', {'oblique': ous[0]}, {'oblique': ous}, DEFERRED,
                       ('لا مضيف ممكن في الإطار' if not hosts else f'{len(hosts)} مضيفاً ممكناً، ولا إطار تعلّقٍ مثبت لأيٍّ منها') +
                       '؛ والبحث غير مكتمل: لا جرد لأطر التعلّق',
