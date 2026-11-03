@@ -1,0 +1,1328 @@
+[
+ {
+  "category": "B",
+  "uid": "Q2:98.w3.u0",
+  "loc": "2:98:4",
+  "word": "لِّلَّهِ",
+  "segmentation": [
+   [
+    "عامل",
+    "لِّ"
+   ],
+   [
+    "جذع",
+    "لَّهِ"
+   ]
+  ],
+  "units": [
+   {
+    "id": "Q2:98.w3.u0",
+    "text": "لِّلَّهِ",
+    "lex": null,
+    "protected": {
+     "cls": "مبني",
+     "identity": "لَ",
+     "proclitics": [],
+     "enclitic": "هِ"
+    },
+    "root": null,
+    "root_status": "NOT_APPLICABLE",
+    "pos": "مبني",
+    "axis": {
+     "word_class": "حرف",
+     "protection": "مبني",
+     "agreement": "CONFLICT",
+     "statement": null
+    }
+   }
+  ],
+  "operators": [
+   {
+    "operator": "لِ",
+    "status": "accepted",
+    "expected": "جر",
+    "observed": "جر",
+    "target": "لَّهِ"
+   },
+   {
+    "operator": "لِ",
+    "status": "blocked",
+    "expected": null,
+    "observed": null,
+    "target": null
+   }
+  ],
+  "morph": [],
+  "relations": [
+   {
+    "id": "2:98:PP:P01:preposition=Q2:98.w3.u0",
+    "type": "PP",
+    "status": "LICENSED",
+    "texts": {
+     "preposition": "لِّلَّهِ"
+    }
+   },
+   {
+    "id": "2:98:ATTACH:A01:oblique=Q2:98.w3.u0",
+    "type": "ATTACH",
+    "status": "DEFERRED",
+    "texts": {
+     "oblique": "لِّلَّهِ"
+    }
+   }
+  ]
+ },
+ {
+  "category": "B",
+  "uid": "Q2:142.w12.u0",
+  "loc": "2:142:13",
+  "word": "لِّلَّهِ",
+  "segmentation": [
+   [
+    "عامل",
+    "لِّ"
+   ],
+   [
+    "جذع",
+    "لَّهِ"
+   ]
+  ],
+  "units": [
+   {
+    "id": "Q2:142.w12.u0",
+    "text": "لِّلَّهِ",
+    "lex": null,
+    "protected": {
+     "cls": "مبني",
+     "identity": "لَ",
+     "proclitics": [],
+     "enclitic": "هِ"
+    },
+    "root": null,
+    "root_status": "NOT_APPLICABLE",
+    "pos": "مبني",
+    "axis": {
+     "word_class": "حرف",
+     "protection": "مبني",
+     "agreement": "CONFLICT",
+     "statement": null
+    }
+   }
+  ],
+  "operators": [
+   {
+    "operator": "لِ",
+    "status": "accepted",
+    "expected": "جر",
+    "observed": "جر",
+    "target": "لَّهِ"
+   },
+   {
+    "operator": "لِ",
+    "status": "blocked",
+    "expected": null,
+    "observed": null,
+    "target": null
+   }
+  ],
+  "morph": [],
+  "relations": [
+   {
+    "id": "2:142:PP:P01:preposition=Q2:142.w12.u0",
+    "type": "PP",
+    "status": "LICENSED",
+    "texts": {
+     "preposition": "لِّلَّهِ"
+    }
+   },
+   {
+    "id": "2:142:ATTACH:A01:oblique=Q2:142.w12.u0",
+    "type": "ATTACH",
+    "status": "DEFERRED",
+    "texts": {
+     "oblique": "لِّلَّهِ"
+    }
+   }
+  ]
+ },
+ {
+  "category": "B",
+  "uid": "Q2:165.w15.u0",
+  "loc": "2:165:16",
+  "word": "لِّلَّهِ",
+  "segmentation": [
+   [
+    "عامل",
+    "لِّ"
+   ],
+   [
+    "جذع",
+    "لَّهِ"
+   ]
+  ],
+  "units": [
+   {
+    "id": "Q2:165.w15.u0",
+    "text": "لِّلَّهِ",
+    "lex": null,
+    "protected": {
+     "cls": "مبني",
+     "identity": "لَ",
+     "proclitics": [],
+     "enclitic": "هِ"
+    },
+    "root": null,
+    "root_status": "NOT_APPLICABLE",
+    "pos": "مبني",
+    "axis": {
+     "word_class": "حرف",
+     "protection": "مبني",
+     "agreement": "CONFLICT",
+     "statement": null
+    }
+   }
+  ],
+  "operators": [
+   {
+    "operator": "لِ",
+    "status": "accepted",
+    "expected": "جر",
+    "observed": "جر",
+    "target": "لَّهِ"
+   },
+   {
+    "operator": "لِ",
+    "status": "blocked",
+    "expected": null,
+    "observed": null,
+    "target": null
+   }
+  ],
+  "morph": [],
+  "relations": [
+   {
+    "id": "2:165:PP:P01:preposition=Q2:165.w15.u0",
+    "type": "PP",
+    "status": "LICENSED",
+    "texts": {
+     "preposition": "لِّلَّهِ"
+    }
+   },
+   {
+    "id": "2:165:ATTACH:A01:oblique=Q2:165.w15.u0",
+    "type": "ATTACH",
+    "status": "DEFERRED",
+    "texts": {
+     "oblique": "لِّلَّهِ"
+    }
+   }
+  ]
+ },
+ {
+  "category": "B",
+  "uid": "Q2:284.w0.u0",
+  "loc": "2:284:1",
+  "word": "لِّلَّهِ",
+  "segmentation": [
+   [
+    "عامل",
+    "لِّ"
+   ],
+   [
+    "جذع",
+    "لَّهِ"
+   ]
+  ],
+  "units": [
+   {
+    "id": "Q2:284.w0.u0",
+    "text": "لِّلَّهِ",
+    "lex": null,
+    "protected": {
+     "cls": "مبني",
+     "identity": "لَ",
+     "proclitics": [],
+     "enclitic": "هِ"
+    },
+    "root": null,
+    "root_status": "NOT_APPLICABLE",
+    "pos": "مبني",
+    "axis": {
+     "word_class": "حرف",
+     "protection": "مبني",
+     "agreement": "CONFLICT",
+     "statement": null
+    }
+   }
+  ],
+  "operators": [
+   {
+    "operator": "لِ",
+    "status": "accepted",
+    "expected": "جر",
+    "observed": "جر",
+    "target": "لَّهِ"
+   },
+   {
+    "operator": "لِ",
+    "status": "blocked",
+    "expected": null,
+    "observed": null,
+    "target": null
+   }
+  ],
+  "morph": [],
+  "relations": [
+   {
+    "id": "2:284:PP:P01:preposition=Q2:284.w0.u0",
+    "type": "PP",
+    "status": "LICENSED",
+    "texts": {
+     "preposition": "لِّلَّهِ"
+    }
+   },
+   {
+    "id": "2:284:ATTACH:A01:oblique=Q2:284.w0.u0",
+    "type": "ATTACH",
+    "status": "DEFERRED",
+    "texts": {
+     "oblique": "لِّلَّهِ"
+    }
+   }
+  ]
+ },
+ {
+  "category": "C",
+  "uid": "Q4:48.w5.u0",
+  "loc": "4:48:6",
+  "word": "يُشْرَكَ",
+  "segmentation": [
+   [
+    "جذع",
+    "يُشْرَ"
+   ],
+   [
+    "مبني",
+    "كَ"
+   ]
+  ],
+  "units": [
+   {
+    "id": "Q4:48.w5.u0",
+    "text": "يُشْرَ",
+    "lex": null,
+    "protected": null,
+    "root": "شري",
+    "root_status": null,
+    "pos": "فعل",
+    "axis": {
+     "word_class": "فعل",
+     "protection": null,
+     "agreement": "CONFLICT",
+     "statement": null
+    }
+   },
+   {
+    "id": "Q4:48.w5.u1",
+    "text": "كَ",
+    "lex": "مبني",
+    "protected": null,
+    "root": null,
+    "root_status": null,
+    "pos": "مبني",
+    "axis": {
+     "word_class": null,
+     "protection": "مبني أو عامل",
+     "agreement": "UNGOVERNED",
+     "statement": null
+    }
+   }
+  ],
+  "operators": [],
+  "morph": [
+   {
+    "slot": 0,
+    "status": "accepted",
+    "root": "شري",
+    "reason": null
+   }
+  ],
+  "relations": []
+ },
+ {
+  "category": "C",
+  "uid": "Q4:116.w5.u0",
+  "loc": "4:116:6",
+  "word": "يُشْرَكَ",
+  "segmentation": [
+   [
+    "جذع",
+    "يُشْرَ"
+   ],
+   [
+    "مبني",
+    "كَ"
+   ]
+  ],
+  "units": [
+   {
+    "id": "Q4:116.w5.u0",
+    "text": "يُشْرَ",
+    "lex": null,
+    "protected": null,
+    "root": "شري",
+    "root_status": null,
+    "pos": "فعل",
+    "axis": {
+     "word_class": "فعل",
+     "protection": null,
+     "agreement": "CONFLICT",
+     "statement": null
+    }
+   },
+   {
+    "id": "Q4:116.w5.u1",
+    "text": "كَ",
+    "lex": "مبني",
+    "protected": null,
+    "root": null,
+    "root_status": null,
+    "pos": "مبني",
+    "axis": {
+     "word_class": null,
+     "protection": "مبني أو عامل",
+     "agreement": "UNGOVERNED",
+     "statement": null
+    }
+   }
+  ],
+  "operators": [],
+  "morph": [
+   {
+    "slot": 0,
+    "status": "accepted",
+    "root": "شري",
+    "reason": null
+   }
+  ],
+  "relations": []
+ },
+ {
+  "category": "B",
+  "uid": "Q4:172.w6.u0",
+  "loc": "4:172:7",
+  "word": "لِّلَّهِ",
+  "segmentation": [
+   [
+    "عامل",
+    "لِّ"
+   ],
+   [
+    "جذع",
+    "لَّهِ"
+   ]
+  ],
+  "units": [
+   {
+    "id": "Q4:172.w6.u0",
+    "text": "لِّلَّهِ",
+    "lex": null,
+    "protected": {
+     "cls": "مبني",
+     "identity": "لَ",
+     "proclitics": [],
+     "enclitic": "هِ"
+    },
+    "root": null,
+    "root_status": "NOT_APPLICABLE",
+    "pos": "مبني",
+    "axis": {
+     "word_class": "حرف",
+     "protection": "مبني",
+     "agreement": "CONFLICT",
+     "statement": null
+    }
+   }
+  ],
+  "operators": [
+   {
+    "operator": "لِ",
+    "status": "accepted",
+    "expected": "جر",
+    "observed": "جر",
+    "target": "لَّهِ"
+   },
+   {
+    "operator": "لِ",
+    "status": "blocked",
+    "expected": null,
+    "observed": null,
+    "target": null
+   }
+  ],
+  "morph": [],
+  "relations": [
+   {
+    "id": "4:172:PP:P01:preposition=Q4:172.w6.u0",
+    "type": "PP",
+    "status": "LICENSED",
+    "texts": {
+     "preposition": "لِّلَّهِ"
+    }
+   },
+   {
+    "id": "4:172:ATTACH:A01:oblique=Q4:172.w6.u0",
+    "type": "ATTACH",
+    "status": "DEFERRED",
+    "texts": {
+     "oblique": "لِّلَّهِ"
+    }
+   }
+  ]
+ },
+ {
+  "category": "B",
+  "uid": "Q6:12.w7.u0",
+  "loc": "6:12:8",
+  "word": "لِّلَّهِ",
+  "segmentation": [
+   [
+    "عامل",
+    "لِّ"
+   ],
+   [
+    "جذع",
+    "لَّهِ"
+   ]
+  ],
+  "units": [
+   {
+    "id": "Q6:12.w7.u0",
+    "text": "لِّلَّهِ",
+    "lex": null,
+    "protected": {
+     "cls": "مبني",
+     "identity": "لَ",
+     "proclitics": [],
+     "enclitic": "هِ"
+    },
+    "root": null,
+    "root_status": "NOT_APPLICABLE",
+    "pos": "مبني",
+    "axis": {
+     "word_class": "حرف",
+     "protection": "مبني",
+     "agreement": "CONFLICT",
+     "statement": null
+    }
+   }
+  ],
+  "operators": [
+   {
+    "operator": "لِ",
+    "status": "accepted",
+    "expected": "جر",
+    "observed": "جر",
+    "target": "لَّهِ"
+   },
+   {
+    "operator": "لِ",
+    "status": "blocked",
+    "expected": null,
+    "observed": null,
+    "target": null
+   }
+  ],
+  "morph": [],
+  "relations": [
+   {
+    "id": "6:12:PP:P01:preposition=Q6:12.w7.u0",
+    "type": "PP",
+    "status": "LICENSED",
+    "texts": {
+     "preposition": "لِّلَّهِ"
+    }
+   },
+   {
+    "id": "6:12:ATTACH:A01:oblique=Q6:12.w7.u0",
+    "type": "ATTACH",
+    "status": "DEFERRED",
+    "texts": {
+     "oblique": "لِّلَّهِ"
+    }
+   }
+  ]
+ },
+ {
+  "category": "E",
+  "uid": "Q6:136.w24.u0",
+  "loc": "6:136:25",
+  "word": "فَهُوَ",
+  "segmentation": [
+   [
+    "جذع",
+    "فَهُوَ"
+   ]
+  ],
+  "units": [
+   {
+    "id": "Q6:136.w24.u0",
+    "text": "فَهُوَ",
+    "lex": null,
+    "protected": {
+     "cls": "مبني",
+     "identity": "هُوَ",
+     "proclitics": [
+      "فَ"
+     ],
+     "enclitic": null
+    },
+    "root": null,
+    "root_status": "NOT_APPLICABLE",
+    "pos": "مبني",
+    "axis": {
+     "word_class": "اسم",
+     "protection": "مبني",
+     "agreement": "CONFLICT",
+     "statement": null
+    }
+   }
+  ],
+  "operators": [],
+  "morph": [
+   {
+    "slot": 0,
+    "status": "not_applicable",
+    "root": null,
+    "reason": "CONSTITUTIONAL_PROTECTED_CLASS"
+   }
+  ],
+  "relations": [
+   {
+    "id": "6:136:NASIKH:V01:ism=Q6:136.w24.u0+nasikh=Q6:136.w22.u0",
+    "type": "NASIKH",
+    "status": "DEFERRED",
+    "texts": {
+     "nasikh": "كَانَ",
+     "ism": "فَهُوَ"
+    }
+   }
+  ]
+ },
+ {
+  "category": "B",
+  "uid": "Q9:114.w15.u0",
+  "loc": "9:114:16",
+  "word": "لِّلَّهِ",
+  "segmentation": [
+   [
+    "عامل",
+    "لِّ"
+   ],
+   [
+    "جذع",
+    "لَّهِ"
+   ]
+  ],
+  "units": [
+   {
+    "id": "Q9:114.w15.u0",
+    "text": "لِّلَّهِ",
+    "lex": null,
+    "protected": {
+     "cls": "مبني",
+     "identity": "لَ",
+     "proclitics": [],
+     "enclitic": "هِ"
+    },
+    "root": null,
+    "root_status": "NOT_APPLICABLE",
+    "pos": "مبني",
+    "axis": {
+     "word_class": "حرف",
+     "protection": "مبني",
+     "agreement": "CONFLICT",
+     "statement": null
+    }
+   }
+  ],
+  "operators": [
+   {
+    "operator": "لِ",
+    "status": "accepted",
+    "expected": "جر",
+    "observed": "جر",
+    "target": "لَّهِ"
+   },
+   {
+    "operator": "لِ",
+    "status": "blocked",
+    "expected": null,
+    "observed": null,
+    "target": null
+   }
+  ],
+  "morph": [],
+  "relations": [
+   {
+    "id": "9:114:PP:P01:preposition=Q9:114.w15.u0",
+    "type": "PP",
+    "status": "LICENSED",
+    "texts": {
+     "preposition": "لِّلَّهِ"
+    }
+   },
+   {
+    "id": "9:114:ATTACH:A01:oblique=Q9:114.w15.u0",
+    "type": "ATTACH",
+    "status": "DEFERRED",
+    "texts": {
+     "oblique": "لِّلَّهِ"
+    }
+   }
+  ]
+ },
+ {
+  "category": "B",
+  "uid": "Q13:31.w15.u0",
+  "loc": "13:31:16",
+  "word": "لِّلَّهِ",
+  "segmentation": [
+   [
+    "عامل",
+    "لِّ"
+   ],
+   [
+    "جذع",
+    "لَّهِ"
+   ]
+  ],
+  "units": [
+   {
+    "id": "Q13:31.w15.u0",
+    "text": "لِّلَّهِ",
+    "lex": null,
+    "protected": {
+     "cls": "مبني",
+     "identity": "لَ",
+     "proclitics": [],
+     "enclitic": "هِ"
+    },
+    "root": null,
+    "root_status": "NOT_APPLICABLE",
+    "pos": "مبني",
+    "axis": {
+     "word_class": "حرف",
+     "protection": "مبني",
+     "agreement": "CONFLICT",
+     "statement": null
+    }
+   }
+  ],
+  "operators": [
+   {
+    "operator": "لِ",
+    "status": "accepted",
+    "expected": "جر",
+    "observed": "جر",
+    "target": "لَّهِ"
+   },
+   {
+    "operator": "لِ",
+    "status": "blocked",
+    "expected": null,
+    "observed": null,
+    "target": null
+   }
+  ],
+  "morph": [],
+  "relations": [
+   {
+    "id": "13:31:PP:P01:preposition=Q13:31.w15.u0",
+    "type": "PP",
+    "status": "LICENSED",
+    "texts": {
+     "preposition": "لِّلَّهِ"
+    }
+   },
+   {
+    "id": "13:31:ATTACH:A01:oblique=Q13:31.w15.u0",
+    "type": "ATTACH",
+    "status": "DEFERRED",
+    "texts": {
+     "oblique": "لِّلَّهِ"
+    }
+   }
+  ]
+ },
+ {
+  "category": "B",
+  "uid": "Q16:48.w14.u0",
+  "loc": "16:48:15",
+  "word": "لِّلَّهِ",
+  "segmentation": [
+   [
+    "عامل",
+    "لِّ"
+   ],
+   [
+    "جذع",
+    "لَّهِ"
+   ]
+  ],
+  "units": [
+   {
+    "id": "Q16:48.w14.u0",
+    "text": "لِّلَّهِ",
+    "lex": null,
+    "protected": {
+     "cls": "مبني",
+     "identity": "لَ",
+     "proclitics": [],
+     "enclitic": "هِ"
+    },
+    "root": null,
+    "root_status": "NOT_APPLICABLE",
+    "pos": "مبني",
+    "axis": {
+     "word_class": "حرف",
+     "protection": "مبني",
+     "agreement": "CONFLICT",
+     "statement": null
+    }
+   }
+  ],
+  "operators": [
+   {
+    "operator": "لِ",
+    "status": "accepted",
+    "expected": "جر",
+    "observed": "جر",
+    "target": "لَّهِ"
+   },
+   {
+    "operator": "لِ",
+    "status": "blocked",
+    "expected": null,
+    "observed": null,
+    "target": null
+   }
+  ],
+  "morph": [],
+  "relations": [
+   {
+    "id": "16:48:PP:P01:preposition=Q16:48.w14.u0",
+    "type": "PP",
+    "status": "LICENSED",
+    "texts": {
+     "preposition": "لِّلَّهِ"
+    }
+   },
+   {
+    "id": "16:48:ATTACH:A01:oblique=Q16:48.w14.u0",
+    "type": "ATTACH",
+    "status": "DEFERRED",
+    "texts": {
+     "oblique": "لِّلَّهِ"
+    }
+   }
+  ]
+ },
+ {
+  "category": "B",
+  "uid": "Q16:120.w5.u0",
+  "loc": "16:120:6",
+  "word": "لِّلَّهِ",
+  "segmentation": [
+   [
+    "عامل",
+    "لِّ"
+   ],
+   [
+    "جذع",
+    "لَّهِ"
+   ]
+  ],
+  "units": [
+   {
+    "id": "Q16:120.w5.u0",
+    "text": "لِّلَّهِ",
+    "lex": null,
+    "protected": {
+     "cls": "مبني",
+     "identity": "لَ",
+     "proclitics": [],
+     "enclitic": "هِ"
+    },
+    "root": null,
+    "root_status": "NOT_APPLICABLE",
+    "pos": "مبني",
+    "axis": {
+     "word_class": "حرف",
+     "protection": "مبني",
+     "agreement": "CONFLICT",
+     "statement": null
+    }
+   }
+  ],
+  "operators": [
+   {
+    "operator": "لِ",
+    "status": "accepted",
+    "expected": "جر",
+    "observed": "جر",
+    "target": "لَّهِ"
+   },
+   {
+    "operator": "لِ",
+    "status": "blocked",
+    "expected": null,
+    "observed": null,
+    "target": null
+   }
+  ],
+  "morph": [],
+  "relations": [
+   {
+    "id": "16:120:PP:P01:preposition=Q16:120.w5.u0",
+    "type": "PP",
+    "status": "LICENSED",
+    "texts": {
+     "preposition": "لِّلَّهِ"
+    }
+   },
+   {
+    "id": "16:120:ATTACH:A01:oblique=Q16:120.w5.u0",
+    "type": "ATTACH",
+    "status": "DEFERRED",
+    "texts": {
+     "oblique": "لِّلَّهِ"
+    }
+   }
+  ]
+ },
+ {
+  "category": "B",
+  "uid": "Q22:56.w2.u0",
+  "loc": "22:56:3",
+  "word": "لِّلَّهِ",
+  "segmentation": [
+   [
+    "عامل",
+    "لِّ"
+   ],
+   [
+    "جذع",
+    "لَّهِ"
+   ]
+  ],
+  "units": [
+   {
+    "id": "Q22:56.w2.u0",
+    "text": "لِّلَّهِ",
+    "lex": null,
+    "protected": {
+     "cls": "مبني",
+     "identity": "لَ",
+     "proclitics": [],
+     "enclitic": "هِ"
+    },
+    "root": null,
+    "root_status": "NOT_APPLICABLE",
+    "pos": "مبني",
+    "axis": {
+     "word_class": "حرف",
+     "protection": "مبني",
+     "agreement": "CONFLICT",
+     "statement": null
+    }
+   }
+  ],
+  "operators": [
+   {
+    "operator": "لِ",
+    "status": "accepted",
+    "expected": "جر",
+    "observed": "جر",
+    "target": "لَّهِ"
+   },
+   {
+    "operator": "لِ",
+    "status": "blocked",
+    "expected": null,
+    "observed": null,
+    "target": null
+   }
+  ],
+  "morph": [],
+  "relations": [
+   {
+    "id": "22:56:PP:P01:preposition=Q22:56.w2.u0",
+    "type": "PP",
+    "status": "LICENSED",
+    "texts": {
+     "preposition": "لِّلَّهِ"
+    }
+   },
+   {
+    "id": "22:56:ATTACH:A01:oblique=Q22:56.w2.u0",
+    "type": "ATTACH",
+    "status": "DEFERRED",
+    "texts": {
+     "oblique": "لِّلَّهِ"
+    }
+   }
+  ]
+ },
+ {
+  "category": "B",
+  "uid": "Q39:44.w1.u0",
+  "loc": "39:44:2",
+  "word": "لِّلَّهِ",
+  "segmentation": [
+   [
+    "عامل",
+    "لِّ"
+   ],
+   [
+    "جذع",
+    "لَّهِ"
+   ]
+  ],
+  "units": [
+   {
+    "id": "Q39:44.w1.u0",
+    "text": "لِّلَّهِ",
+    "lex": null,
+    "protected": {
+     "cls": "مبني",
+     "identity": "لَ",
+     "proclitics": [],
+     "enclitic": "هِ"
+    },
+    "root": null,
+    "root_status": "NOT_APPLICABLE",
+    "pos": "مبني",
+    "axis": {
+     "word_class": "حرف",
+     "protection": "مبني",
+     "agreement": "CONFLICT",
+     "statement": null
+    }
+   }
+  ],
+  "operators": [
+   {
+    "operator": "لِ",
+    "status": "accepted",
+    "expected": "جر",
+    "observed": "جر",
+    "target": "لَّهِ"
+   },
+   {
+    "operator": "لِ",
+    "status": "blocked",
+    "expected": null,
+    "observed": null,
+    "target": null
+   }
+  ],
+  "morph": [],
+  "relations": [
+   {
+    "id": "39:44:PP:P01:preposition=Q39:44.w1.u0",
+    "type": "PP",
+    "status": "LICENSED",
+    "texts": {
+     "preposition": "لِّلَّهِ"
+    }
+   },
+   {
+    "id": "39:44:ATTACH:A01:oblique=Q39:44.w1.u0",
+    "type": "ATTACH",
+    "status": "DEFERRED",
+    "texts": {
+     "oblique": "لِّلَّهِ"
+    }
+   }
+  ]
+ },
+ {
+  "category": "B",
+  "uid": "Q42:49.w0.u0",
+  "loc": "42:49:1",
+  "word": "لِّلَّهِ",
+  "segmentation": [
+   [
+    "عامل",
+    "لِّ"
+   ],
+   [
+    "جذع",
+    "لَّهِ"
+   ]
+  ],
+  "units": [
+   {
+    "id": "Q42:49.w0.u0",
+    "text": "لِّلَّهِ",
+    "lex": null,
+    "protected": {
+     "cls": "مبني",
+     "identity": "لَ",
+     "proclitics": [],
+     "enclitic": "هِ"
+    },
+    "root": null,
+    "root_status": "NOT_APPLICABLE",
+    "pos": "مبني",
+    "axis": {
+     "word_class": "حرف",
+     "protection": "مبني",
+     "agreement": "CONFLICT",
+     "statement": null
+    }
+   }
+  ],
+  "operators": [
+   {
+    "operator": "لِ",
+    "status": "accepted",
+    "expected": "جر",
+    "observed": "جر",
+    "target": "لَّهِ"
+   },
+   {
+    "operator": "لِ",
+    "status": "blocked",
+    "expected": null,
+    "observed": null,
+    "target": null
+   }
+  ],
+  "morph": [],
+  "relations": [
+   {
+    "id": "42:49:PP:P01:preposition=Q42:49.w0.u0",
+    "type": "PP",
+    "status": "LICENSED",
+    "texts": {
+     "preposition": "لِّلَّهِ"
+    }
+   },
+   {
+    "id": "42:49:ATTACH:A01:oblique=Q42:49.w0.u0",
+    "type": "ATTACH",
+    "status": "DEFERRED",
+    "texts": {
+     "oblique": "لِّلَّهِ"
+    }
+   }
+  ]
+ },
+ {
+  "category": "D",
+  "uid": "Q54:43.w3.u0",
+  "loc": "54:43:4",
+  "word": "أُلَٰئِكُمْ",
+  "segmentation": [
+   [
+    "جذع",
+    "أُلَٰئِ"
+   ],
+   [
+    "مبني",
+    "كُمْ"
+   ]
+  ],
+  "units": [
+   {
+    "id": "Q54:43.w3.u0",
+    "text": "أُلَٰئِ",
+    "lex": null,
+    "protected": {
+     "cls": "مبني",
+     "identity": "أُولَاءِكُمْ",
+     "proclitics": [],
+     "enclitic": null
+    },
+    "root": null,
+    "root_status": "NOT_APPLICABLE",
+    "pos": "مبني",
+    "axis": {
+     "word_class": "اسم",
+     "protection": "مبني",
+     "agreement": "CONFLICT",
+     "statement": null
+    }
+   },
+   {
+    "id": "Q54:43.w3.u1",
+    "text": "كُمْ",
+    "lex": "مبني",
+    "protected": null,
+    "root": null,
+    "root_status": null,
+    "pos": "مبني",
+    "axis": {
+     "word_class": "اسم",
+     "protection": "مبني أو عامل",
+     "agreement": "UNGOVERNED",
+     "statement": null
+    }
+   }
+  ],
+  "operators": [],
+  "morph": [],
+  "relations": [
+   {
+    "id": "54:43:PP:P01:complement=Q54:43.w3.u0+preposition=Q54:43.w2.u0",
+    "type": "PP",
+    "status": "LICENSED",
+    "texts": {
+     "preposition": "مِّنْ",
+     "complement": "أُلَٰئِ"
+    }
+   },
+   {
+    "id": "54:43:ATTACH:A01:oblique=Q54:43.w2.u0",
+    "type": "ATTACH",
+    "status": "DEFERRED",
+    "texts": {
+     "oblique": "مِّنْ أُلَٰئِ"
+    }
+   }
+  ]
+ },
+ {
+  "category": "C",
+  "uid": "Q75:36.w3.u0",
+  "loc": "75:36:4",
+  "word": "يُتْرَكَ",
+  "segmentation": [
+   [
+    "جذع",
+    "يُتْرَ"
+   ],
+   [
+    "مبني",
+    "كَ"
+   ]
+  ],
+  "units": [
+   {
+    "id": "Q75:36.w3.u0",
+    "text": "يُتْرَ",
+    "lex": null,
+    "protected": null,
+    "root": "تري",
+    "root_status": null,
+    "pos": "فعل",
+    "axis": {
+     "word_class": "فعل",
+     "protection": null,
+     "agreement": "CONFLICT",
+     "statement": null
+    }
+   },
+   {
+    "id": "Q75:36.w3.u1",
+    "text": "كَ",
+    "lex": "مبني",
+    "protected": null,
+    "root": null,
+    "root_status": null,
+    "pos": "مبني",
+    "axis": {
+     "word_class": null,
+     "protection": "مبني أو عامل",
+     "agreement": "UNGOVERNED",
+     "statement": null
+    }
+   }
+  ],
+  "operators": [],
+  "morph": [
+   {
+    "slot": 0,
+    "status": "accepted",
+    "root": "تري",
+    "reason": "الجذر مسجَّل في HFN، والوزن بالقالب؛ ولا حدث مسجَّل بهذا الوزن، فالحدث ومعناه مؤجَّلان"
+   }
+  ],
+  "relations": []
+ },
+ {
+  "category": "B",
+  "uid": "Q82:19.w8.u0",
+  "loc": "82:19:9",
+  "word": "لِّلَّهِ",
+  "segmentation": [
+   [
+    "عامل",
+    "لِّ"
+   ],
+   [
+    "جذع",
+    "لَّهِ"
+   ]
+  ],
+  "units": [
+   {
+    "id": "Q82:19.w8.u0",
+    "text": "لِّلَّهِ",
+    "lex": null,
+    "protected": {
+     "cls": "مبني",
+     "identity": "لَ",
+     "proclitics": [],
+     "enclitic": "هِ"
+    },
+    "root": null,
+    "root_status": "NOT_APPLICABLE",
+    "pos": "مبني",
+    "axis": {
+     "word_class": "حرف",
+     "protection": "مبني",
+     "agreement": "CONFLICT",
+     "statement": null
+    }
+   }
+  ],
+  "operators": [
+   {
+    "operator": "لِ",
+    "status": "accepted",
+    "expected": "جر",
+    "observed": "جر",
+    "target": "لَّهِ"
+   },
+   {
+    "operator": "لِ",
+    "status": "blocked",
+    "expected": null,
+    "observed": null,
+    "target": null
+   }
+  ],
+  "morph": [],
+  "relations": [
+   {
+    "id": "82:19:PP:P01:preposition=Q82:19.w8.u0",
+    "type": "PP",
+    "status": "LICENSED",
+    "texts": {
+     "preposition": "لِّلَّهِ"
+    }
+   },
+   {
+    "id": "82:19:ATTACH:A01:oblique=Q82:19.w8.u0",
+    "type": "ATTACH",
+    "status": "DEFERRED",
+    "texts": {
+     "oblique": "لِّلَّهِ"
+    }
+   }
+  ]
+ }
+]

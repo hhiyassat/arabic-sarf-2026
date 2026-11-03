@@ -1,11 +1,11 @@
 {
  "identity": {
-  "commit": "d70a8f2368ad4817eafe761ad8154eeeb010730c",
+  "commit": "f02639cf98954aa806c77f10e8f6d75e6e4d7b5d",
   "branch": "nominal-nucleus-02",
-  "commit_date": "2026-11-03T11:10:54+00:00",
+  "commit_date": "2026-11-03T12:10:17+00:00",
   "dirty": [],
   "dirty_diff_sha": "—",
-  "code_sha": "4452068a76837b21",
+  "code_sha": "06490bd0d055ba69",
   "command": "tools/eval_relations.py --jobs 4 --out reports/nominal_nucleus_02/batch3_inflection",
   "python": "3.13.17",
   "hashseed": "0",
@@ -13,9 +13,9 @@
   "hfn_sha": "8f5dd3684b0f1f80",
   "data_sha": "95bd27743f566b6f",
   "input_sha": "d2700864f1a1abe9",
-  "started": "2026-11-03T11:17:01+00:00",
+  "started": "2026-11-03T12:22:06+00:00",
   "policy": "عقد النواة الاسمية والتعلّق v1",
-  "run_id": "e9946893b705"
+  "run_id": "fa94faa469cf"
  },
  "verses": 6236,
  "counts": {
