@@ -115,6 +115,10 @@ check('I17 القرآنِ ليس مثنى: العدد المرشّح لا يُق
 _, axd = unit(o, 'ذَٰلِكُمْ')
 check('I18 ذلكم: لا تُذكر حركة بناءٍ من ميم الخطاب', 'السكون' not in (axd['inflection']['statement'] or ''),
       axd['inflection']['statement'])
+_, _, _, o4 = run('إِنَّ ٱللَّهَ لَا يُحِبُّ ٱلظَّٰلِمِينَ')
+_, ax4 = unit(o4, 'الظَّٰلِمِينَ')
+check('I19 العدد المرشّح: العلامة غير معيَّنة، فلا AGREE ولا CONFLICT زائف', ax4['inflection']['agreement'] in ('UNGOVERNED', 'UNVERIFIED')
+      and ax4['inflection']['statement'] is None, (ax4['inflection']['agreement'], ax4['inflection']['mark']))
 _, ax = unit(o, 'يَأْبَ')
 check('I11 يأبَ: لا عامل مقبول، فلا عبارة نصب (F06 مؤجَّل لا مقلوب)', ax['inflection']['statement'] is None and
       ax['inflection']['agreement'] == 'UNGOVERNED', ax['inflection']['statement'])

@@ -262,6 +262,10 @@ def _written_mark(t, nxt=None):
         return None, frozenset(), 'لا علامة على الآخر'
     nf = t.feats.get('number') or {}
     num = nf.get('v') if nf.get('st') == 'مثبت' else None   # العدد المرشّح لا يُقرأ به حرف الإعراب (ٱلۡقُرۡءَانِ ليس مثنى)
+    cand = nf.get('v') if nf.get('st') != 'مثبت' else None
+    if L == 'ن' and p[0] in 'اي' and cand in ('dual', 'plural') and (FATHA in m or KASRA in m):
+        return ('الحرف أو الحركة', frozenset(),
+                f'العدد مرشّح ({cand}): الحرف قبل النون علامةٌ إن كان مثنى أو جمعاً، والحركة علامةٌ إن كان مفرداً؛ فلا تُعيَّن العلامة')
     if L == 'ن' and p[0] == 'ا' and KASRA in m and num == 'dual':
         return 'الألف', frozenset({'رفع'}), 'المثنى (العدد مثبت): الألف'
     if L == 'ن' and p[0] == 'ي' and SUKUN in p[1] and num == 'dual':
