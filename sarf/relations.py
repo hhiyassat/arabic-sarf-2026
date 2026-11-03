@@ -204,7 +204,7 @@ def _effect_parts(effect):
         return out
     out['lafzi'] = _cases_in(head)
     if 'محل' in tail:
-        out['mahall_of_complement'] = _cases_in(tail) or {'الأصلي'}
+        out['mahall_of_complement'] = {'الأصلي'} if 'الأصلي' in tail else (_cases_in(tail) or {'الأصلي'})
     elif 'محل' in head and 'لا محلي' not in head:
         out['mahall_of_complement'] = {'الأصلي'}
     return out
@@ -313,7 +313,8 @@ def _written_mark(t, nxt=None):
         if DAMMA in m:
             return 'الضمة', frozenset({'رفع'}), 'الضمة على الآخر'
         if FATHA in m:
-            return 'الفتحة', frozenset({'نصب'}), 'الفتحة على الآخر' + ('' if R else
+            known = R or (t.G.Theta.get('protected') or {}).get('identity')   # الصيغة المحمية معروفة الهوية (تَكُونَ ← كَانَ)
+            return 'الفتحة', frozenset({'نصب'}), 'الفتحة على الآخر' + ('' if known else
                                                                          '؛ والجذر غير مثبت: إن كانت لامه حرف علة محذوفاً فالفتحة '
                                                                          'حركة العين لا علامة النصب، فلا يُنفى الجزم بها')
         if KASRA in m:
@@ -440,7 +441,7 @@ def _inflection(t, nxt=None):
         cap = r.get('expected')
         capd = _capacity(o)
         caps = set(capd['lafzi'])
-        cap_src = 'المعاني المرفقة في المرحلة ١١'
+        cap_src = 'اتحاد المعاني المرفقة في المرحلة ١١' if len(o.get('meanings') or []) > 1 else 'المعنى المرفق في المرحلة ١١'
         if not caps and not capd['mediated'] and cap in _cases_in(o.get('operator_class') or ''):
             caps = {cap}                                # فئة العامل في الجرد تذكر أثره، والمعاني المرفقة لا تذكره
             cap_src = f'فئة العامل «{o.get("operator_class")}»'
@@ -508,7 +509,7 @@ def _inflection(t, nxt=None):
     kind = 'فعل مضارع' if t.pos == 'فعل' else 'اسم'
     out['state'] = (cap, f'العامل {gov_txt} يقتضي {cap}، والعلامة «{name}» تدلّ عليه ({ev})')
     out['mark_kind'] = _mark_kind(name)
-    out['cause'] = ev
+    out['cause'] = ev.split('؛ والجذر غير مثبت')[0]   # احتمال حذف اللام لا يخصّ وجهاً اتفق فيه العامل والعلامة
     out['statement'] = f'{kind} {STATE_ADJ[cap]} {gov_txt} وعلامة {STATE_NOUN[cap]} {_mark_phrase(name, cap)}'
     dims = out['mark_dims'] or {}
     out['effect'] = dict(lafzi=cap if dims.get('visibility') != 'مقدّرة' else None,

@@ -214,6 +214,13 @@ i7 = unit(o7, 'هُمْ')[1]['inflection']
 check('I24 «لَهُمۡ»: القدرة من فئة العامل، ومعانيه المرفقة لا تذكرها: ملاحظة تعارضٍ داخلي ظاهرة',
       i7['governor']['capacity_source'].startswith('فئة العامل') and i7['notes'], (i7['governor'].get('capacity_source'), i7['notes']))
 
+g55 = axes[[u for u, l, t in o['tokens'] if t == 'رِّجَالِ' and l == '2:282:55'][0]]['inflection']['governor']
+check('I25 «مِنۡ»: محلّ المعمول في الجرد «الأصلي» لا «جر» (لا يُقرأ «المجرور» من نصّ الأثر حالةً)',
+      g55['capacity_mahall_of_complement'] == ['الأصلي'], g55['capacity_mahall_of_complement'])
+i98 = unit(o, 'تَكُونَ')[1]['inflection']
+check('I26 «تَكُونَ»: لا ملاحظة «حركة العين» في وجهٍ متفق، والهوية المحمية تعرّف جذرها', 'حركة العين' not in (i98['cause'] or ''),
+      i98['cause'])
+
 # ٤ تأجيلٌ ومانع: لام التعليل لا تنصب (قدرتها الجر)، فالتعارض يُسجَّل ولا تُقال العبارة
 _, _, _, o2 = run(verse_text(2, 143), '2:143')
 _, ax = unit(o2, 'نَعْلَمَ')
