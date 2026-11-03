@@ -1,0 +1,2652 @@
+{
+ "identity": {
+  "commit": "d70a8f2368ad4817eafe761ad8154eeeb010730c",
+  "branch": "nominal-nucleus-02",
+  "commit_date": "2026-11-03T11:10:54+00:00",
+  "dirty": [],
+  "dirty_diff_sha": "—",
+  "code_sha": "4452068a76837b21",
+  "command": "tools/eval_inflection.py --jobs 4 --out reports/nominal_nucleus_02/batch3_inflection",
+  "python": "3.13.17",
+  "hashseed": "0",
+  "hfn_path": "release_v18",
+  "hfn_sha": "8f5dd3684b0f1f80",
+  "data_sha": "95bd27743f566b6f",
+  "input_sha": "6ab953568061c085",
+  "started": "2026-11-03T11:12:46+00:00",
+  "policy": "محور البناء والإعراب v1",
+  "run_id": "9f5e9b7268e0"
+ },
+ "verses": 6236,
+ "by_agreement": {
+  "UNGOVERNED": 41838,
+  "MABNI": 30582,
+  "N/A": 15404,
+  "AGREE": 14201,
+  "UNVERIFIED": 4350,
+  "CONFLICT": 173
+ },
+ "agree_by_class_state_mark": {
+  "اسم|جر|الكسرة": 5300,
+  "اسم|جر|None": 3163,
+  "None|جر|None": 1653,
+  "اسم|نصب|الفتحة": 638,
+  "اسم|رفع|الضمة": 623,
+  "اسم|نصب|None": 536,
+  "فعل|نصب|الفتحة": 378,
+  "فعل|جزم|السكون": 321,
+  "اسم|جر|الياء": 312,
+  "فعل|جزم|حذف النون": 308,
+  "None|نصب|None": 296,
+  "اسم|رفع|None": 193,
+  "None|جر|الكسرة": 175,
+  "فعل|نصب|حذف النون": 145,
+  "فعل|جزم|السكون (حُرِّك بالكسر لالتقاء الساكنين)": 69,
+  "None|رفع|None": 35,
+  "فعل|جزم|حذف حرف العلة": 19,
+  "اسم|نصب|الياء": 15,
+  "فعل|رفع|الضمة": 13,
+  "None|نصب|الفتحة": 4,
+  "حرف|نصب|None": 3,
+  "اسم|رفع|الواو": 2
+ },
+ "verbs_with_jarr": 0,
+ "checker_errors": [],
+ "conflicts": [
+  {
+   "loc": "2:98:4",
+   "text": "لِّلَّهِ",
+   "build": "مبني",
+   "agreement": "CONFLICT",
+   "statement": "اسم مبني في محلّ جر بـ«لِ»",
+   "state": "في محلّ جر",
+   "mark": null,
+   "governor": "لِ",
+   "expected": "جر",
+   "conflicts": [
+    "المرحلة ١١ قرأت على المبني علامةً «جر»"
+   ],
+   "word_class": "حرف"
+  },
+  {
+   "loc": "2:142:13",
+   "text": "لِّلَّهِ",
+   "build": "مبني",
+   "agreement": "CONFLICT",
+   "statement": "اسم مبني في محلّ جر بـ«لِ»",
+   "state": "في محلّ جر",
+   "mark": null,
+   "governor": "لِ",
+   "expected": "جر",
+   "conflicts": [
+    "المرحلة ١١ قرأت على المبني علامةً «جر»"
+   ],
+   "word_class": "حرف"
+  },
+  {
+   "loc": "2:143:20",
+   "text": "نَعْلَمَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "2:143:39",
+   "text": "يُضِيعَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "2:165:16",
+   "text": "لِّلَّهِ",
+   "build": "مبني",
+   "agreement": "CONFLICT",
+   "statement": "اسم مبني في محلّ جر بـ«لِ»",
+   "state": "في محلّ جر",
+   "mark": null,
+   "governor": "لِ",
+   "expected": "جر",
+   "conflicts": [
+    "المرحلة ١١ قرأت على المبني علامةً «جر»"
+   ],
+   "word_class": "حرف"
+  },
+  {
+   "loc": "2:205:6",
+   "text": "يُفْسِدَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "2:213:14",
+   "text": "يَحْكُمَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "2:284:1",
+   "text": "لِّلَّهِ",
+   "build": "مبني",
+   "agreement": "CONFLICT",
+   "statement": "اسم مبني في محلّ جر بـ«لِ»",
+   "state": "في محلّ جر",
+   "mark": null,
+   "governor": "لِ",
+   "expected": "جر",
+   "conflicts": [
+    "المرحلة ١١ قرأت على المبني علامةً «جر»"
+   ],
+   "word_class": "حرف"
+  },
+  {
+   "loc": "3:23:13",
+   "text": "يَحْكُمَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "3:127:1",
+   "text": "يَقْطَعَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "3:152:32",
+   "text": "يَبْتَلِيَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "3:156:24",
+   "text": "يَجْعَلَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "3:179:4",
+   "text": "يَذَرَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "3:179:18",
+   "text": "يُطْلِعَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "4:26:3",
+   "text": "يُبَيِّنَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "4:48:6",
+   "text": "يُشْرَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "حذف حرف العلة",
+   "governor": "أَنْ",
+   "expected": "نصب",
+   "conflicts": [
+    "العلامة «حذف حرف العلة» تدلّ على جزم والعامل يقتضي نصب"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "4:64:6",
+   "text": "يُطَاعَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "4:105:6",
+   "text": "تَحْكُمَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "4:116:6",
+   "text": "يُشْرَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "حذف حرف العلة",
+   "governor": "أَنْ",
+   "expected": "نصب",
+   "conflicts": [
+    "العلامة «حذف حرف العلة» تدلّ على جزم والعامل يقتضي نصب"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "4:137:16",
+   "text": "يَغْفِرَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "4:137:19",
+   "text": "يَهْدِيَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "4:168:8",
+   "text": "يَغْفِرَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "4:168:11",
+   "text": "يَهْدِيَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "4:172:7",
+   "text": "لِّلَّهِ",
+   "build": "مبني",
+   "agreement": "CONFLICT",
+   "statement": "اسم مبني في محلّ جر بـ«لِ»",
+   "state": "في محلّ جر",
+   "mark": null,
+   "governor": "لِ",
+   "expected": "جر",
+   "conflicts": [
+    "المرحلة ١١ قرأت على المبني علامةً «جر»"
+   ],
+   "word_class": "حرف"
+  },
+  {
+   "loc": "5:6:50",
+   "text": "يَجْعَلَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "5:6:56",
+   "text": "يُطَهِّرَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "5:28:5",
+   "text": "تَقْتُلَنِي",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": "نصب",
+   "mark": null,
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "5:28:11",
+   "text": "أَقْتُلَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "5:31:7",
+   "text": "يُرِيَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "5:48:37",
+   "text": "يَبْلُوَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "5:94:12",
+   "text": "يَعْلَمَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "5:95:35",
+   "text": "يَذُوقَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "6:12:8",
+   "text": "لِّلَّهِ",
+   "build": "مبني",
+   "agreement": "CONFLICT",
+   "statement": "اسم مبني في محلّ جر بـ«لِ»",
+   "state": "في محلّ جر",
+   "mark": null,
+   "governor": "لِ",
+   "expected": "جر",
+   "conflicts": [
+    "المرحلة ١١ قرأت على المبني علامةً «جر»"
+   ],
+   "word_class": "حرف"
+  },
+  {
+   "loc": "6:19:15",
+   "text": "أُنْذِرَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "6:71:37",
+   "text": "نُسْلِمَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "6:136:25",
+   "text": "فَهُوَ",
+   "build": "مبني",
+   "agreement": "CONFLICT",
+   "statement": "ضمير مبني على الفتح في محلّ نصب بـ«كَانَ»",
+   "state": "في محلّ نصب",
+   "mark": null,
+   "governor": "كَانَ",
+   "expected": "نصب",
+   "conflicts": [
+    "المرحلة ١١ قرأت على المبني علامةً «نصب»"
+   ],
+   "word_class": "اسم"
+  },
+  {
+   "loc": "6:144:31",
+   "text": "يُضِلَّ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "6:165:11",
+   "text": "يَبْلُوَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "7:2:10",
+   "text": "تُنْذِرَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "7:20:4",
+   "text": "يُبْدِيَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "7:27:14",
+   "text": "يُرِيَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "7:43:19",
+   "text": "نَهْتَدِيَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "7:63:10",
+   "text": "يُنْذِرَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "7:69:10",
+   "text": "يُنْذِرَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "7:70:3",
+   "text": "نَعْبُدَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "7:132:7",
+   "text": "تَسْحَرَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "7:189:10",
+   "text": "يَسْكُنَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "8:8:1",
+   "text": "يُحِقَّ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "8:11:11",
+   "text": "يُطَهِّرَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "8:33:4",
+   "text": "يُعَذِّبَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "8:37:1",
+   "text": "يَمِيزَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "8:42:17",
+   "text": "يَقْضِيَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "8:44:11",
+   "text": "يَقْضِيَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "9:33:8",
+   "text": "يُظْهِرَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "9:55:9",
+   "text": "يُعَذِّبَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "9:70:22",
+   "text": "يَظْلِمَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "9:90:5",
+   "text": "يُؤْذَنَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "9:92:7",
+   "text": "تَحْمِلَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "9:114:16",
+   "text": "لِّلَّهِ",
+   "build": "مبني",
+   "agreement": "CONFLICT",
+   "statement": "اسم مبني في محلّ جر بـ«لِ»",
+   "state": "في محلّ جر",
+   "mark": null,
+   "governor": "لِ",
+   "expected": "جر",
+   "conflicts": [
+    "المرحلة ١١ قرأت على المبني علامةً «جر»"
+   ],
+   "word_class": "حرف"
+  },
+  {
+   "loc": "9:115:4",
+   "text": "يُضِلَّ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "9:121:13",
+   "text": "يَجْزِيَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "10:4:12",
+   "text": "يَجْزِيَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "10:14:8",
+   "text": "نَنْظُرَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "10:78:3",
+   "text": "تَلْفِتَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "11:7:13",
+   "text": "يَبْلُوَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "12:21:17",
+   "text": "يُوسُفَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "اسم"
+  },
+  {
+   "loc": "12:24:12",
+   "text": "نَصْرِفَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "12:52:2",
+   "text": "يَعْلَمَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "12:56:3",
+   "text": "يُوسُفَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "اسم"
+  },
+  {
+   "loc": "12:73:7",
+   "text": "نُفْسِدَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "12:76:13",
+   "text": "يُوسُفَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "اسم"
+  },
+  {
+   "loc": "12:76:16",
+   "text": "يَأْخُذَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "13:14:17",
+   "text": "يَبْلُغَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "13:30:10",
+   "text": "تَتْلُوَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "13:31:16",
+   "text": "لِّلَّهِ",
+   "build": "مبني",
+   "agreement": "CONFLICT",
+   "statement": "اسم مبني في محلّ جر بـ«لِ»",
+   "state": "في محلّ جر",
+   "mark": null,
+   "governor": "لِ",
+   "expected": "جر",
+   "conflicts": [
+    "المرحلة ١١ قرأت على المبني علامةً «جر»"
+   ],
+   "word_class": "حرف"
+  },
+  {
+   "loc": "14:1:5",
+   "text": "تُخْرِجَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "14:4:8",
+   "text": "يُبَيِّنَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "14:10:10",
+   "text": "يَغْفِرَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "14:32:19",
+   "text": "تَجْرِيَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "14:46:10",
+   "text": "تَزُولَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "14:51:1",
+   "text": "يَجْزِيَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "15:33:4",
+   "text": "أَسْجُدَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "16:39:1",
+   "text": "يُبَيِّنَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "16:44:6",
+   "text": "تُبَيِّنَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "16:48:15",
+   "text": "لِّلَّهِ",
+   "build": "مبني",
+   "agreement": "CONFLICT",
+   "statement": "اسم مبني في محلّ جر بـ«لِ»",
+   "state": "في محلّ جر",
+   "mark": null,
+   "governor": "لِ",
+   "expected": "جر",
+   "conflicts": [
+    "المرحلة ١١ قرأت على المبني علامةً «جر»"
+   ],
+   "word_class": "حرف"
+  },
+  {
+   "loc": "16:64:6",
+   "text": "تُبَيِّنَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "16:102:8",
+   "text": "يُثَبِّتَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "16:120:6",
+   "text": "لِّلَّهِ",
+   "build": "مبني",
+   "agreement": "CONFLICT",
+   "statement": "اسم مبني في محلّ جر بـ«لِ»",
+   "state": "في محلّ جر",
+   "mark": null,
+   "governor": "لِ",
+   "expected": "جر",
+   "conflicts": [
+    "المرحلة ١١ قرأت على المبني علامةً «جر»"
+   ],
+   "word_class": "حرف"
+  },
+  {
+   "loc": "17:1:15",
+   "text": "نُرِيَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "17:73:8",
+   "text": "تَفْتَرِيَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "17:106:3",
+   "text": "تَقْرَأَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "18:2:2",
+   "text": "يُنْذِرَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "18:7:8",
+   "text": "نَبْلُوَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "18:12:3",
+   "text": "نَعْلَمَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "18:24:14",
+   "text": "أَقْرَبَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "18:71:10",
+   "text": "تُغْرِقَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "19:19:6",
+   "text": "أَهَبَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "19:97:4",
+   "text": "تُبَشِّرَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "20:23:1",
+   "text": "نُرِيَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "20:57:3",
+   "text": "تُخْرِجَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "20:73:4",
+   "text": "يَغْفِرَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "20:131:13",
+   "text": "نَفْتِنَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "21:80:5",
+   "text": "تُحْصِنَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "22:5:25",
+   "text": "نُبَيِّنَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "22:9:3",
+   "text": "يُضِلَّ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "22:53:1",
+   "text": "يَجْعَلَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "22:56:3",
+   "text": "لِّلَّهِ",
+   "build": "مبني",
+   "agreement": "CONFLICT",
+   "statement": "اسم مبني في محلّ جر بـ«لِ»",
+   "state": "في محلّ جر",
+   "mark": null,
+   "governor": "لِ",
+   "expected": "جر",
+   "conflicts": [
+    "المرحلة ١١ قرأت على المبني علامةً «جر»"
+   ],
+   "word_class": "حرف"
+  },
+  {
+   "loc": "24:31:66",
+   "text": "يُعْلَمَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "24:38:1",
+   "text": "يَجْزِيَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "24:48:6",
+   "text": "يَحْكُمَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "24:51:10",
+   "text": "يَحْكُمَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "25:32:11",
+   "text": "نُثَبِّتَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "25:49:1",
+   "text": "نُحْيِيَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "27:40:24",
+   "text": "يَبْلُوَنِي",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": "نصب",
+   "mark": null,
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "28:25:10",
+   "text": "يَجْزِيَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "28:46:11",
+   "text": "تُنْذِرَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "29:40:24",
+   "text": "يَظْلِمَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "30:9:28",
+   "text": "يَظْلِمَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "30:39:5",
+   "text": "يَرْبُوَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "30:41:10",
+   "text": "يُذِيقَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "30:45:1",
+   "text": "يَجْزِيَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "31:6:7",
+   "text": "يُضِلَّ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "31:31:10",
+   "text": "يُرِيَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "32:3:9",
+   "text": "تُنْذِرَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "33:8:1",
+   "text": "يَسْءَلَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "33:24:1",
+   "text": "يَجْزِيَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "33:33:19",
+   "text": "يُذْهِبَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "33:43:6",
+   "text": "يُخْرِجَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "33:73:1",
+   "text": "يُعَذِّبَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "34:4:1",
+   "text": "يَجْزِيَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "34:21:8",
+   "text": "نَعْلَمَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "35:30:1",
+   "text": "يُوَفِّيَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "35:44:19",
+   "text": "يُعْجِزَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "36:6:1",
+   "text": "تُنْذِرَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "36:70:1",
+   "text": "يُنْذِرَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "39:8:24",
+   "text": "يُضِلَّ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "39:35:1",
+   "text": "يُكَفِّرَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "39:44:2",
+   "text": "لِّلَّهِ",
+   "build": "مبني",
+   "agreement": "CONFLICT",
+   "statement": "اسم مبني في محلّ جر بـ«لِ»",
+   "state": "في محلّ جر",
+   "mark": null,
+   "governor": "لِ",
+   "expected": "جر",
+   "conflicts": [
+    "المرحلة ١١ قرأت على المبني علامةً «جر»"
+   ],
+   "word_class": "حرف"
+  },
+  {
+   "loc": "40:15:14",
+   "text": "يُنْذِرَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "40:42:2",
+   "text": "أَكْفُرَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "41:16:8",
+   "text": "نُذِيقَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "42:7:6",
+   "text": "تُنْذِرَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "42:15:17",
+   "text": "أَعْدِلَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "42:49:1",
+   "text": "لِّلَّهِ",
+   "build": "مبني",
+   "agreement": "CONFLICT",
+   "statement": "اسم مبني في محلّ جر بـ«لِ»",
+   "state": "في محلّ جر",
+   "mark": null,
+   "governor": "لِ",
+   "expected": "جر",
+   "conflicts": [
+    "المرحلة ١١ قرأت على المبني علامةً «جر»"
+   ],
+   "word_class": "حرف"
+  },
+  {
+   "loc": "43:32:17",
+   "text": "يَتَّخِذَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "45:12:6",
+   "text": "تَجْرِيَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "45:14:10",
+   "text": "يَجْزِيَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "46:12:12",
+   "text": "يُنْذِرَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "47:4:28",
+   "text": "يَبْلُوَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "48:2:1",
+   "text": "يَغْفِرَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "48:5:1",
+   "text": "يُدْخِلَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "48:25:27",
+   "text": "يُدْخِلَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "48:28:8",
+   "text": "يُظْهِرَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "48:29:42",
+   "text": "يَغِيظَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "51:33:1",
+   "text": "نُرْسِلَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "53:31:8",
+   "text": "يَجْزِيَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "54:43:4",
+   "text": "أُلَٰئِ",
+   "build": "مبني",
+   "agreement": "CONFLICT",
+   "statement": "اسم مبني في محلّ جر بـ«مِنْ»",
+   "state": "في محلّ جر",
+   "mark": null,
+   "governor": "مِنْ",
+   "expected": "جر",
+   "conflicts": [
+    "المرحلة ١١ قرأت على المبني علامةً «جر»"
+   ],
+   "word_class": "اسم"
+  },
+  {
+   "loc": "57:9:8",
+   "text": "يُخْرِجَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "57:25:9",
+   "text": "يَقُومَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "58:10:5",
+   "text": "يَحْزُنَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "61:9:8",
+   "text": "يُظْهِرَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "65:11:7",
+   "text": "يُخْرِجَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "67:2:5",
+   "text": "يَبْلُوَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "69:12:1",
+   "text": "نَجْعَلَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "71:7:4",
+   "text": "تَغْفِرَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "72:17:1",
+   "text": "نَفْتِنَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "72:28:1",
+   "text": "يَعْلَمَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "74:31:14",
+   "text": "يَسْتَيْقِنَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "75:5:4",
+   "text": "يَفْجُرَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "75:16:5",
+   "text": "تَعْجَلَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "75:36:4",
+   "text": "يُتْرَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "حذف حرف العلة",
+   "governor": "أَنْ",
+   "expected": "نصب",
+   "conflicts": [
+    "العلامة «حذف حرف العلة» تدلّ على جزم والعامل يقتضي نصب"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "78:15:1",
+   "text": "نُخْرِجَ",
+   "build": "معرب",
+   "agreement": "CONFLICT",
+   "statement": null,
+   "state": null,
+   "mark": "الفتحة",
+   "governor": "لِ",
+   "expected": "نصب",
+   "conflicts": [
+    "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»"
+   ],
+   "word_class": "فعل"
+  },
+  {
+   "loc": "82:19:9",
+   "text": "لِّلَّهِ",
+   "build": "مبني",
+   "agreement": "CONFLICT",
+   "statement": "اسم مبني في محلّ جر بـ«لِ»",
+   "state": "في محلّ جر",
+   "mark": null,
+   "governor": "لِ",
+   "expected": "جر",
+   "conflicts": [
+    "المرحلة ١١ قرأت على المبني علامةً «جر»"
+   ],
+   "word_class": "حرف"
+  }
+ ]
+}

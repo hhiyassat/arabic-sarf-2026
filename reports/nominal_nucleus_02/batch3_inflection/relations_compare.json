@@ -1,0 +1,298 @@
+{
+ "changes": 12,
+ "causes": {
+  "A02": "تعلّقٌ موجب جديد (A02)، ويحلّ محلّ A01 المؤجَّل للموضع نفسه",
+  "E01": "إثبات أَفْعَل بنفي البدائل (E01، مقترحة)",
+  "T19": "الاسمية من شكل التنوين وحده لا ترخّص (العقد T19)",
+  "T19_HOST": "مضيفٌ محتمل أُسقط من بدائل A01: اسميته من التنوين وحده (T19)",
+  "COORD": "منافس العطف (إصلاح الإسناد الزائف داخل العطف)",
+  "T19_CASCADE": "تابعٌ لتغيّرٍ بـT19 في الآية نفسها يشاركه موضعاً (حاويةٌ أو شبه جملةٍ أُجِّلت فسقط ما بُني عليها)",
+  "UNHIDE": "مرشّح تعلّقٍ (A01) كان محجوباً بإسنادٍ مؤجَّل (N02) فظهر: المؤجَّل لا يحجب الوجه الآخر",
+  "HOST_ADDED": "مضيفٌ محتمل أُضيف إلى بدائل A01 (وحدةٌ ثبتت اسميتها، كأَفْعَل بـE01)، ولم يُسقط مضيف",
+  "ID": "تغيّر المعرّف وحده بتغيّر الأعضاء: انظر سبب السجل المقابل",
+  "OTHER": "غير مصنَّف آلياً: يُراجع يدوياً"
+ },
+ "by_cause": {
+  "OTHER": 11,
+  "COORD": 1
+ },
+ "by_cause_type_status": {
+  "COORD|PREDICATION|LICENSED→LICENSED": 1,
+  "OTHER|PREDICATION|DEFERRED→DEFERRED": 6,
+  "OTHER|PREDICATION|None→DEFERRED": 5
+ },
+ "by_type_status": {
+  "PREDICATION|DEFERRED→DEFERRED": 6,
+  "PREDICATION|None→DEFERRED": 5,
+  "PREDICATION|LICENSED→LICENSED": 1
+ },
+ "rows": [
+  {
+   "change": "مضافة",
+   "relation_id": "10:42:PREDICATION:N01:predicate=Q10:42.w5.u0+subject=Q10:42.w4.u0",
+   "type": "PREDICATION",
+   "rule": "N01",
+   "positions": {
+    "subject": [
+     "10:42:5"
+    ],
+    "predicate": [
+     "10:42:6"
+    ]
+   },
+   "texts": {
+    "subject": "أَفَأَنْتَ",
+    "predicate": "تُسْمِعُ"
+   },
+   "before": null,
+   "after": "DEFERRED",
+   "reason_after": "اسمية «تُسْمِعُ» غير مثبتة في هذا التحليل",
+   "cause": "OTHER"
+  },
+  {
+   "change": "مضافة",
+   "relation_id": "10:43:PREDICATION:N01:predicate=Q10:43.w5.u0+subject=Q10:43.w4.u0",
+   "type": "PREDICATION",
+   "rule": "N01",
+   "positions": {
+    "subject": [
+     "10:43:5"
+    ],
+    "predicate": [
+     "10:43:6"
+    ]
+   },
+   "texts": {
+    "subject": "أَفَأَنْتَ",
+    "predicate": "تَهْدِي"
+   },
+   "before": null,
+   "after": "DEFERRED",
+   "reason_after": "اسمية «تَهْدِي» غير مثبتة في هذا التحليل",
+   "cause": "OTHER"
+  },
+  {
+   "change": "تغيّرت: reason، alternatives",
+   "relation_id": "22:19:PREDICATION:N01:predicate=Q22:19.w1.u0+subject=Q22:19.w0.u0",
+   "type": "PREDICATION",
+   "rule": "N01",
+   "positions": {
+    "subject": [
+     "22:19:1"
+    ],
+    "predicate": [
+     "22:19:2"
+    ]
+   },
+   "texts": {
+    "subject": "هَٰذَانِ",
+    "predicate": "خَصْمَانِ"
+   },
+   "before": "DEFERRED",
+   "after": "DEFERRED",
+   "reason_before": "رفع «خَصْمَانِ» غير مثبت كتابةً",
+   "reason_after": "الطرفان معرفتان أو تعريف المسند غير منفيّ: خبرٌ معرفة، أو نعت، أو بدل — خارج تغطية N01 v1",
+   "cause": "OTHER"
+  },
+  {
+   "change": "مضافة",
+   "relation_id": "25:43:PREDICATION:N01:predicate=Q25:43.w6.u0+subject=Q25:43.w5.u0",
+   "type": "PREDICATION",
+   "rule": "N01",
+   "positions": {
+    "subject": [
+     "25:43:6"
+    ],
+    "predicate": [
+     "25:43:7"
+    ]
+   },
+   "texts": {
+    "subject": "أَفَأَنْتَ",
+    "predicate": "تَكُونُ"
+   },
+   "before": null,
+   "after": "DEFERRED",
+   "reason_after": "اسمية «تَكُونُ» غير مثبتة في هذا التحليل",
+   "cause": "OTHER"
+  },
+  {
+   "change": "تغيّرت: reason، alternatives",
+   "relation_id": "2:229:PREDICATION:N01:predicate=Q2:229.w1.u0+subject=Q2:229.w0.u0",
+   "type": "PREDICATION",
+   "rule": "N01",
+   "positions": {
+    "subject": [
+     "2:229:1"
+    ],
+    "predicate": [
+     "2:229:2"
+    ]
+   },
+   "texts": {
+    "subject": "الطَّلَٰقُ",
+    "predicate": "مَرَّتَانِ"
+   },
+   "before": "DEFERRED",
+   "after": "DEFERRED",
+   "reason_before": "رفع «مَرَّتَانِ» غير مثبت كتابةً",
+   "reason_after": "الطرفان معرفتان أو تعريف المسند غير منفيّ: خبرٌ معرفة، أو نعت، أو بدل — خارج تغطية N01 v1",
+   "cause": "OTHER"
+  },
+  {
+   "change": "تغيّرت: alternatives",
+   "relation_id": "2:229:PREDICATION:N01:predicate=Q2:229.w4.u0+subject=Q2:229.w2.u1",
+   "type": "PREDICATION",
+   "rule": "N01",
+   "positions": {
+    "subject": [
+     "2:229:3"
+    ],
+    "predicate": [
+     "2:229:5"
+    ]
+   },
+   "texts": {
+    "subject": "إِمْسَاكٌ",
+    "predicate": "أَوْ"
+   },
+   "before": "DEFERRED",
+   "after": "DEFERRED",
+   "reason_before": "اسمية «أَوْ» غير مثبتة في هذا التحليل",
+   "reason_after": "اسمية «أَوْ» غير مثبتة في هذا التحليل",
+   "cause": "OTHER"
+  },
+  {
+   "change": "تغيّرت: premises",
+   "relation_id": "2:282:PREDICATION:N01:predicate=Q2:282.w61.u0+subject=Q2:282.w60.u1",
+   "type": "PREDICATION",
+   "rule": "N01",
+   "positions": {
+    "subject": [
+     "2:282:61"
+    ],
+    "predicate": [
+     "2:282:62"
+    ]
+   },
+   "texts": {
+    "subject": "امْرَأَتَانِ",
+    "predicate": "مِمَّنْ"
+   },
+   "before": "DEFERRED",
+   "after": "DEFERRED",
+   "reason_before": "اسمية «مِمَّنْ» غير مثبتة في هذا التحليل",
+   "reason_after": "اسمية «مِمَّنْ» غير مثبتة في هذا التحليل",
+   "cause": "OTHER"
+  },
+  {
+   "change": "مضافة",
+   "relation_id": "39:19:PREDICATION:N01:predicate=Q39:19.w6.u0+subject=Q39:19.w5.u0",
+   "type": "PREDICATION",
+   "rule": "N01",
+   "positions": {
+    "subject": [
+     "39:19:6"
+    ],
+    "predicate": [
+     "39:19:7"
+    ]
+   },
+   "texts": {
+    "subject": "أَفَأَنْتَ",
+    "predicate": "تُنْقِذُ"
+   },
+   "before": null,
+   "after": "DEFERRED",
+   "reason_after": "اسمية «تُنْقِذُ» غير مثبتة في هذا التحليل",
+   "cause": "OTHER"
+  },
+  {
+   "change": "مضافة",
+   "relation_id": "43:40:PREDICATION:N01:predicate=Q43:40.w1.u0+subject=Q43:40.w0.u0",
+   "type": "PREDICATION",
+   "rule": "N01",
+   "positions": {
+    "subject": [
+     "43:40:1"
+    ],
+    "predicate": [
+     "43:40:2"
+    ]
+   },
+   "texts": {
+    "subject": "أَفَأَنْتَ",
+    "predicate": "تُسْمِعُ"
+   },
+   "before": null,
+   "after": "DEFERRED",
+   "reason_after": "اسمية «تُسْمِعُ» غير مثبتة في هذا التحليل",
+   "cause": "OTHER"
+  },
+  {
+   "change": "تغيّرت: alternatives",
+   "relation_id": "4:7:PREDICATION:N01:predicate=Q4:7.w12.u0+subject=Q4:7.w11.u1",
+   "type": "PREDICATION",
+   "rule": "N01",
+   "positions": {
+    "subject": [
+     "4:7:12"
+    ],
+    "predicate": [
+     "4:7:13"
+    ]
+   },
+   "texts": {
+    "subject": "الْأَقْرَبُونَ",
+    "predicate": "مِمَّا"
+   },
+   "before": "DEFERRED",
+   "after": "DEFERRED",
+   "reason_before": "اسمية «مِمَّا» غير مثبتة في هذا التحليل",
+   "reason_after": "اسمية «مِمَّا» غير مثبتة في هذا التحليل",
+   "cause": "OTHER"
+  },
+  {
+   "change": "تغيّرت: premises",
+   "relation_id": "55:64:PREDICATION:N01:subject=Q55:64.w0.u0",
+   "type": "PREDICATION",
+   "rule": "N01",
+   "positions": {
+    "subject": [
+     "55:64:1"
+    ]
+   },
+   "texts": {
+    "subject": "مُدْهَامَّتَانِ"
+   },
+   "before": "DEFERRED",
+   "after": "DEFERRED",
+   "reason_before": "مسندٌ إليه محتمل بلا مسندٍ في إطاره: لا يُختلق خبر",
+   "reason_after": "مسندٌ إليه محتمل بلا مسندٍ في إطاره: لا يُختلق خبر",
+   "cause": "OTHER"
+  },
+  {
+   "change": "تغيّرت: alternatives",
+   "relation_id": "8:41:PREDICATION:N01:predicate=Q8:41.w32.u0+subject=Q8:41.w28.u1",
+   "type": "PREDICATION",
+   "rule": "N01",
+   "positions": {
+    "subject": [
+     "8:41:29"
+    ],
+    "predicate": [
+     "8:41:33"
+    ]
+   },
+   "texts": {
+    "subject": "اللَّهُ",
+    "predicate": "قَدِيرٌ"
+   },
+   "before": "LICENSED",
+   "after": "LICENSED",
+   "reason_before": "معرفةٌ مرفوعة في أول الكلام ومسندٌ نكرةٌ مرفوعٌ كتابةً",
+   "reason_after": "معرفةٌ مرفوعة في أول الكلام ومسندٌ نكرةٌ مرفوعٌ كتابةً",
+   "cause": "COORD"
+  }
+ ]
+}
