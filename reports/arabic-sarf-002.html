@@ -1,0 +1,34 @@
+<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>arabic-sarf-002</title><style>:root{--bg:#fff;--fg:#1b1b1b;--mut:#666;--line:#ddd;--hd:#f6f8fa;--acc:#0b5cad}@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0d1117;--fg:#e6edf3;--mut:#9da7b3;--line:#30363d;--hd:#161b22;--acc:#58a6ff}}body{background:var(--bg);color:var(--fg);font-family:system-ui,"Noto Naskh Arabic",sans-serif;max-width:1100px;margin:auto;padding:16px;line-height:1.8}h1{font-size:1.5rem}h2{font-size:1.25rem;border-bottom:1px solid var(--line);padding-bottom:4px;margin-top:2em}h3{font-size:1.05rem}table{border-collapse:collapse;width:100%;margin:8px 0;font-size:14px}td,th{border:1px solid var(--line);padding:4px 6px;vertical-align:top}th{background:var(--hd)}.wrap{overflow-x:auto}code{font-size:13px;background:var(--hd);padding:0 3px;border-radius:3px}pre{background:var(--hd);padding:8px;overflow-x:auto}blockquote{border-inline-start:3px solid var(--acc);margin:8px 0;padding:4px 12px;color:var(--mut)}.meta{color:var(--mut);font-size:13px}a{color:var(--acc)}</style><h1>arabic-sarf-002: مطابقة تشغيل المالك المحلي لقياس الدفعة ٣، وعيبا العرض</h1><p class="meta">الرقم التسلسلي 002 · 2026-11-03 · الالتزام <code>dd4f4ad</code></p><section><p class="meta">المصدر: <code>reports/nominal_nucleus_02/batch3_inflection/local_run_check.md</code></p><h1>مطابقة تشغيل المالك المحلي لقياس الدفعة ٣، وعيبا العرض</h1>
+<p><b>التشغيل على جهاز المالك:</b> الالتزام <code>8c8af4b</code>، والشيفرة مطابقة للالتزام. هوية التشغيل <code>d5f84ccd9adf</code>، وHFN <code>release_v18</code>.</p>
+<p><b>المقارنة:</b> مع القياس الملتزم في <code>inflection_measurement.json</code>، وهو تشغيل الالتزام <code>f02639c</code>. لم تتغيّر شيفرة التحليل بين الالتزامين.</p>
+<h2>النتائج</h2>
+<div class="wrap"><table><tr><th>الفحص</th><th>جهاز المالك</th><th>القياس الملتزم</th></tr><tr><td><code>test_inflection</code> (منها اختبارات الإفساد M01–M07)</td><td>ALL OK</td><td>ALL OK</td></tr><tr><td><code>test_relations</code></td><td>PASS 31، DIFFERS 5، FAIL 0</td><td>نفسها</td></tr><tr><td>AGREE</td><td>14200</td><td>14200</td></tr><tr><td>CONFLICT</td><td>173</td><td>173</td></tr><tr><td>UNVERIFIED</td><td>4351</td><td>4351</td></tr><tr><td>أفعال مجرورة</td><td>0</td><td>0</td></tr><tr><td>أخطاء الفاحص المستقل</td><td>0</td><td>0</td></tr><tr><td>اسم مجرور بالكسرة</td><td>5300</td><td>5300</td></tr><tr><td>اسم مرفوع بالضمة</td><td>623</td><td>623</td></tr><tr><td>اسم مجرور بالياء</td><td>312</td><td>312</td></tr><tr><td>فعل منصوب بالفتحة</td><td>377</td><td>377</td></tr><tr><td>فعل منصوب بحذف النون</td><td>145</td><td>145</td></tr><tr><td>علاقة العامل، والأثر، وأبعاد العلامة</td><td>نفسها</td><td>نفسها</td></tr></table></div>
+<p><b>بصمة الصفحة:</b> لا تُقارن، لأن الصفحة تحمل هوية التشغيل والالتزام. فالمطابقة تكون بنتائج الاختبارات والقياس.</p>
+<h2>عيبان في العرض كشفهما مخرج المالك</h2>
+<p><b>١. وصف القسم 14أ لم يطابق ما يُعرض تحته.</b></p>
+<ul>
+<li>الوصف كان يقول «والجار والمجرور والظرف المرخَّصان لا تُكرَّر صفوفهما هنا».</li>
+<li>لكن الصفوف معروضة تحته فعلاً.</li>
+<li>أُصلح الوصف.</li>
+</ul>
+<p><b>٢. ملخّص القسم 14ب في الطرفية كان فارغاً.</b></p>
+<ul>
+<li>صفحة HTML كانت كاملة، لكن سطور الطرفية لم تُملأ.</li>
+<li>صار الملخّص يعرض الموضع والوحدة والاتفاق والعبارة.</li>
+</ul>
+<p><b>الالتزام:</b> <code>dd4f4ad</code>. ولا أثر للإصلاحين في التحليل ولا في القياس.</p>
+<p><b>صفحة الدفعة ٣:</b> بقيت كما قُرئت، وبصمتها <code>d0156e939f02…</code>.</p>
+<p><b>لماذا فاتا:</b> قرأتُ صفحة HTML ولم أقرأ مخرج الطرفية.</p>
+<h2>ملفاتٌ تعدّلت عند المالك بالتشغيل</h2>
+<p><b>الملفات:</b></p>
+<ul>
+<li><code>reports/nominal_nucleus_01/index.html</code>؛</li>
+<li><code>reports/nominal_nucleus_01/measurement.json</code>؛</li>
+<li><code>reports/nominal_nucleus_02/tests.json</code>.</li>
+</ul>
+<p><b>السبب:</b> أعادت الأدوات كتابتها. فالاختبار وأداة القياس يكتبان مخرجهما في ملفات تقارير ملتزمة. هذا عيبٌ في الأدوات، لم يُصلح بعد.</p>
+<p><b>الإرجاع:</b></p>
+<pre>git checkout reports/nominal_nucleus_01/index.html reports/nominal_nucleus_01/measurement.json reports/nominal_nucleus_02/tests.json</pre>
+<h2>الحالة</h2>
+<p><b>الالتزام المحلي:</b> <code>dd4f4ad</code>، ولم يُدفع.</p>
+<p><b>اعتماد الدفعة ٣:</b> لصاحب النظرية.</p></section><h2>الملفات المرفقة</h2><ul><li><a href="arabic-sarf-001.html">reports/arabic-sarf-001.html</a></li></ul></html>
