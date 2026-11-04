@@ -29,6 +29,22 @@ REL_SPECIFIC = ('الَّذِي', 'الَّتِي', 'الَّذِينَ', 'ال�
 REL_AGR = {'الَّذِي': (3, 'singular', 'masc'), 'الَّتِي': (3, 'singular', 'fem'), 'الَّذِينَ': (3, 'plural', 'masc')}
 
 
+def _pron_ar(d):
+    """ضمير الصيغة بالعربية: الشخص والعدد والجنس (والقيمة غير المعيَّنة «—»)."""
+    if not isinstance(d, dict):
+        return str(d)
+    P = {1: 'متكلم', 2: 'مخاطب', 3: 'غائب'}
+    N = {'singular': 'مفرد', 'dual': 'مثنى', 'plural': 'جمع'}
+    G = {'masc': 'مذكر', 'fem': 'مؤنث'}
+    return '، '.join(m.get(d.get(k), '—' if d.get(k) is None else str(d.get(k)))
+                     for k, m in (('person', P), ('number', N), ('gender', G)))
+
+
+def _join_ar(x):
+    """قائمة قيمٍ نصية بفاصلةٍ عربية بدل تمثيل بايثون."""
+    return '، '.join(str(i) for i in x) if isinstance(x, (list, tuple)) else str(x)
+
+
 def _fv(F, k, key):
     r = (F.get(k) or {}).get(key) or {}
     return r.get('v'), r.get('st')
@@ -337,7 +353,7 @@ def _written_mark(t, nxt=None):
         sv = (t.feats.get('subject') or {}).get('v')
         sv = sv if isinstance(sv, dict) else {}
         five = sv.get('person') in (2, 3) and sv.get('number') in ('plural', 'dual') or sv.get('person') == 2 and sv.get('number') == 'singular' and sv.get('gender') == 'fem'
-        five_ev = f"ضمير الصيغة ({sv.get('person')}، {sv.get('number')}، {sv.get('gender')})"
+        five_ev = f"ضمير الصيغة ({_pron_ar(sv)})"
         if five and tl[0][0] in 'يتأن':
             if L == 'ن' and p[0] in 'اوي' and (FATHA in m or KASRA in m):
                 return 'ثبوت النون', frozenset({'رفع'}), f'الأفعال الخمسة ({five_ev}): النون ثابتة'
@@ -885,7 +901,7 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
             rec = _rec(ref, 'IDAFA', 'I03', {'mudaf': t, 'mudaf_ilayh': n}, {'mudaf': [t], 'mudaf_ilayh': [n]}, LICENSED,
                        'اسمٌ بكسرةٍ بلا تنوين ولا «أل»، يليه اسمٌ مجرور: إضافة', premises=prem,
                        checked=['«أل» في المضاف', 'التنوين', 'المثنى والجمع بالنون', 'الممنوع من الصرف (يُجرّ بالفتحة)', 'لفظ الجلالة مضافاً'],
-                       alternatives=[f'المرحلة ١٣: {(n.feats.get("idafa") or {}).get("alt")}'] if (n.feats.get('idafa') or {}).get('alt') else [],
+                       alternatives=[f'المرحلة ١٣: {_join_ar((n.feats.get("idafa") or {}).get("alt"))}'] if (n.feats.get('idafa') or {}).get('alt') else [],
                        edges=[('IDAFA', t.uid, n.uid)])
         R.append(rec)
         idafa_of[t.k] = rec
@@ -1401,7 +1417,7 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
         elif sf.get('st') == 'مثبت' and (sp.get('number') in ('plural', 'dual') or sp.get('person') in (1, 2) and
                                         not (tf.get('v') == 'مضارع' and sp.get('number') == 'singular')):
             subj = dict(kind='ضمير متصل مكتوب', role=srole, status=LICENSED,
-                        why=f'ضمير الصيغة المكتوب ({sp.get("person")}، {sp.get("number")}، {sp.get("gender")}): {sf.get("ev")}')
+                        why=f'ضمير الصيغة المكتوب ({_pron_ar(sp)}): {sf.get("ev")}')
         elif sf.get('st') == 'مثبت' and sp.get('person') in (1, 2) and sp.get('number') == 'singular' and tf.get('v') in ('مضارع', 'أمر'):
             subj = dict(kind='ضمير مستتر وجوباً (غير مكتوب)', role=srole, status=LICENSED,
                         why=f'المتكلم أو المخاطب المفرد في {tf.get("v")}: لا يكون فاعله اسماً ظاهراً ({sf.get("ev")})')
@@ -1478,7 +1494,8 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                   'سمات الفعل كلها مثبتة من تحليلٍ واحد' if coherent else
                   ('مرشّحاتٌ صرفية كاملة متنافسة' if cands else 'بعض سمات الفعل مرشّحة: لا تُجمع من مرشّحاتٍ متفرقة'),
                   premises=([f'الصنف: فعل — {(v.feats.get("pos") or {}).get("ev")}'] +
-                            [f'{n_}: {x.get("v")} ({x.get("st")})' for n_, x in (('الزمن', tf), ('البناء', vf), ('ضمير الصيغة', sf)) if x])
+                            [f'{n_}: {_pron_ar(x.get("v")) if isinstance(x.get("v"), dict) else x.get("v")} ({x.get("st")})'
+                             for n_, x in (('الزمن', tf), ('البناء', vf), ('ضمير الصيغة', sf)) if x])
                   if not cands else
                   ['الصنف: فعل في كل المرشّحات القائمة'] +
                   [f'المرشّح القائم {c_["id"]}: {c_["tense"]}، {c_["voice"]}، {c_["subject_role"]}' for c_ in cands if c_['status'] != REJECTED] +
@@ -1711,7 +1728,7 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
             heads[role], members[role] = u, [u]
             parts_st[role] = (LICENSED if pt['status'] == 'مرخّصة' and pt.get('owned') else DEFERRED,
                               pt.get('bound_text') or '')
-            prem.append(f'المرحلة ١٤ (LEGACY): {why} «{c["tool"]}» ← {pt.get("nucleus") or pt.get("word")} [{pt.get("premise")}] → {pt["status"]}'
+            prem.append(f'المرحلة ١٤ (LEGACY): {why} «{c["tool"]}» ← {pt.get("nucleus") or pt.get("word")}{f' [{pt.get("premise")}]' if pt.get("premise") else ''} → {pt["status"]}'
                         + ('' if pt.get('owned') else '؛ والموضع مملوكٌ لعلاقةٍ أخرى هناك'))
             if role == 'answer':
                 lk = next((t for t in toks if t.wi == wloc(pt.get('word')) and t.conj), None)

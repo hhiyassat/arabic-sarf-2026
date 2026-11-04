@@ -556,7 +556,7 @@ for pv in per_verse:
                                  f"؛ بوساطة: {h('، '.join(g.get('capacity_mediated') or []) or '—')}"
                                  f"؛ محلّ المعمول الأصلي في الجرد: {h('، '.join(g.get('capacity_mahall_of_complement') or []) or '—')}"
                                  f"<br>المشاهَد في ١١: {h(g.get('observed'))}"
-                                 + (f"<br><sub>بدائل معجمية لا تُثبت الاتفاق ولا تنفيه: {h('؛ '.join(str(x['meaning']) + ' ' + str(x['capacity']) for x in g.get('lexical_alternatives') or []))}</sub>"
+                                 + (f"<br><sub>بدائل معجمية لا تُثبت الاتفاق ولا تنفيه: {h('؛ '.join(str(x['meaning']) + (' (' + '، '.join(x['capacity']) + ')' if x.get('capacity') else ' (بلا أثرٍ إعرابي)') for x in g.get('lexical_alternatives') or []))}</sub>"
                                     if g.get('lexical_alternatives') else '')
                                  + (f"<br>الدور: {h(g.get('role_name'))} ({h(g.get('role_rule'))})" if g.get('role_name') else '')
                                  if g.get('kind') == 'عامل' else f"الدور «{h(g.get('role_name'))}» ({h(g.get('role_rule'))}، {h(g.get('relation_status'))}) يقتضي {h(g.get('expected'))}؛ العلاقة: {h(g.get('relation'))} "
@@ -586,7 +586,7 @@ for pv in per_verse:
             f"<br><sub>مقبول: «{h(u['operator'])}» (مج {h(u['group'])}) — الاستعمال: {h('، '.join(u.get('usage') or []) or '—')}؛ "
             f"أثره هنا: {h(u.get('effect_in_analysis') or '—')} في «{h(u.get('target_text') or '—')}» ({h(u.get('level') or '—')})"
             + (f"؛ بوساطة: {h(u['mediation'])}" if u.get('mediation') else '') +
-            (f"؛ بدائل معجمية: {h('؛ '.join(str(x['meaning']) + ' ' + str(x['capacity']) for x in u.get('lexical_alternatives') or []))}"
+            (f"؛ بدائل معجمية: {h('؛ '.join(str(x['meaning']) + (' (' + '، '.join(x['capacity']) + ')' if x.get('capacity') else ' (بلا أثرٍ إعرابي)') for x in u.get('lexical_alternatives') or []))}"
              if u.get('lexical_alternatives') else '') + '</sub>' for u in us.get('accepted', [])) + \
             (f"<br><sub>استعمالاتٌ أخرى للخانة: {h('؛ '.join(str(x['operator']) + ' (مج ' + str(x['group']) + ') ' + str(x['status']) for x in us.get('alternatives', [])))}</sub>"
              if us.get('alternatives') else '')
@@ -594,7 +594,7 @@ for pv in per_verse:
         pcell = cell(ax['protection']) + (f"<br><sub>النطاق: {h(pd.get('scope'))}؛ السبب: {h(pd.get('reason'))}؛ المصدر: {h(pd.get('source'))}</sub>"
                                           if pd.get('cls') else '')
         idn = ax.get('identity') or {}
-        wcell += f"<br><sub>الهوية: {h(idn.get('analysis_id'))}؛ الخانات {h(str(idn.get('slots')))}؛ المرحلة ١١: {h('، '.join(idn.get('stage11') or []))}</sub>"
+        wcell += f"<br><sub>الهوية: {h(idn.get('analysis_id'))}؛ الخانات {h('، '.join(str(x) for x in idn.get('slots') or []) or '—')}؛ المرحلة ١١: {h('، '.join(idn.get('stage11') or []))}</sub>"
         rows_x.append([h(loc_), f"<span class='ar'>{h(txt)}</span>", wcell, cell(inf['build']), role_cell, gov,
                        cell(inf['state']) + f'<br><sub>الأثر: {eff}</sub>', (f"{h(mk[0])}" if mk else h(inf.get('mark_kind') or '—')) +
                        f'<br><sub>{dims}</sub>', h(inf.get('cause') or (mk[1] if mk else '') or '—'),
