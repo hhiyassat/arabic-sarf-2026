@@ -133,6 +133,9 @@ def judge(cands, segs, rels):
                                  f"تخالف أثره ({r['expected']})"
             c['judgement'] = dict(proof=proof, deferred_because=[], blocked_by=c['reject_reason'])
             continue
+        if c.get('mood_faces') and not (r is not None and r.get('consistent') is True):
+            why.append('العلامة المكتوبة لا تعيّن الحالة (M01): ' + c['mood_faces']['why'] +
+                       '؛ والأوجه: ' + '، '.join(c['mood_faces']['faces']) + '؛ فلا يُقبل العامل بها ولا يُمنع')
         if r is not None and r.get('note') and 'حذف حرف العلة' in r['note'] and not r.get('consistent'):
             why.append('نقص تغطية: حذف حرف العلة جزماً لا يُفحص بعدُ بالجذر')
         c['status'] = DEFERRED if why else ACCEPTED

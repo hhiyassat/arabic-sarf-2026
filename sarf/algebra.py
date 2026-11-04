@@ -1871,7 +1871,8 @@ def words_text(words, p):
     return f'{words[p][0]}:{words[p][1]}:{words[p][2] + 1}'
 
 
-def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف المجمّع)', cross=(), checked_ends=frozenset(), mut_budget=400):
+def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف المجمّع)', cross=(), checked_ends=frozenset(), mut_budget=400,
+                     cond_out=None, rel_out=None):
     """الطبقة اللغوية على تيار الوحدات المتصل عبر حدود الآيات.
     - عند كل حدٍّ محتمل (علامة وقف، أو رأس آية، أو آخر سورة) يُسجَّل B(b | a, q, c) = ⟨F, L, M, W, I, E⟩
     - الوحدة الخطابية: ما بين حدّين أجاز الوقفَ عندهما دليلٌ (م، قلى، ج، صلى) أو آخرُ السورة؛ ورأس الآية وحده ليس حدّاً
@@ -1955,6 +1956,12 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
         chain = False                                 # الجملة الجارية معطوفة على جملةٍ تامّة قبلها
         # البنى والتزاماتها: الصلة (ثم الشرط والعطف)
         rels = relative_structs(feats, set(nuc_pos), starts)
+        if rel_out is not None:
+            for r_ in rels:
+                rel_out.append(dict(head=words_text(words, r_['head']), start=words_text(words, r_['start']),
+                                    last=words_text(words, max(r_['start'], r_['end'] - 1)), end_is_text_end=r_['end'] >= n,
+                                    end_word=wtext[r_['end']] if r_['end'] < n else None, silah=r_.get('silah'),
+                                    obligations=[[str(x) for x in o_] for o_ in r_['obligations']]))
         inner = {}
         for r in rels:
             for k in range(r['head'], r['end'] - 1):
@@ -2030,6 +2037,8 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
                                not c_['amb'] and all(o_[1] and 'مرشَّح' not in str(o_[2]) and 'محتمل' not in str(o_[2])
                                                      for o_ in c_['obligations'])))
             roles.setdefault(c_['head'], f'أداة شرط «{c_["tool"]}»')
+            c_rec = dict(tool=c_['tool'], head=words_text(words, c_['head']), amb=bool(c_['amb']), q_kind=c_.get('q_kind'),
+                         obligations=[[str(x) for x in o_] for o_ in c_['obligations']], parts={}) if cond_out is not None else None
             for k, why in ((c_['s_pos'], 'فعل الشرط'), (c_['q_pos'], 'جواب الشرط')):
                 if k is not None:
                     if why == 'جواب الشرط':
@@ -2061,6 +2070,15 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
                             (why == 'فعل الشرط' or any(x in q_ev for x in ('فاءٌ رابطة', 'لامٌ مفتوحة', 'مجزوم')))
                         if bound[kk].startswith(why):
                             bound_status[kk] = 'مرخّصة' if licensed_ else 'مرشّحة'
+                        if c_rec is not None:
+                            c_rec['parts'][why] = dict(word=words_text(words, k), nucleus=words_text(words, kk), premise=prem,
+                                                       status='مرخّصة' if licensed_ else 'مرشّحة', owned=bound[kk].startswith(why),
+                                                       bound_text=bound[kk])
+                    elif c_rec is not None:
+                        c_rec['parts'][why] = dict(word=words_text(words, k), nucleus=None, premise='', status='مرشّحة',
+                                                   owned=False, bound_text=roles.get(k, ''))
+            if c_rec is not None:
+                cond_out.append(c_rec)
             if len(cond_samples) < 40:
                 cond_samples.append(dict(location=words_text(words, c_['head']),
                                          text=' '.join(wtext[c_['head']:(c_['q_pos'] or c_['head']) + 4]),

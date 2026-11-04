@@ -64,6 +64,8 @@ class _Tok:
         self.case_written = self.case
         self.roles = []                                 # مصادر العمل فيه: عاملٌ مقبول، أو دورٌ في علاقةٍ مرخَّصة
         self.adverb = None
+        self.mabni_state = None                         # حالة المبني بلا دور: NO_MAHALL، MAHALL_UNRESOLVED، ROLE_RULE_NOT_IMPLEMENTED، EVIDENCE_NOT_ADOPTED
+        self.usage = None                               # استعمال العامل في هذا التحليل (للوحدة العاملة)
 
         prot = G.Theta.get('protected') or {}
         self.golden = prot.get('cls') == 'اسم ذهبي'
@@ -125,10 +127,15 @@ class _Tok:
         return self._elative
 
     def axes(self, nxt=None):
-        """محاور مستقلة لا يُغني أحدها عن الآخر: صنف الكلمة، والبناء والإعراب، والحماية، والعمل؛ كلٌّ بدليله أو «غير محسوم»"""
+        """محاور مستقلة لا يُغني أحدها عن الآخر، كلٌّ بدليله أو «غير محسوم»:
+        صنف الكلمة، والبناء والإعراب، والدور النحوي (بعلاقته وحالة دليلها)، والحالة أو المحلّ، والحماية (نطاقها وسببها ومصدرها)،
+        والعمل (واستعمال العامل في هذا التحليل). فـ«مبني» وصف البناء، وAGREE وUNGOVERNED وصفا العلاقة: لا يتنافسان على محورٍ واحد"""
         wc = ('اسم', self.noun_ev or 'لفظ الجلالة' if self.divine else 'اسمٌ ذهبي' if self.golden else self.elative_proof()) \
             if self.nounish() else \
             ('اسم', f'ملف المبنيات: {self.mcat}') if self.mcat in ('separate_pronoun', 'demonstrative', 'relative', 'attached_pronoun') else \
+            ('اسم', f'ظرفٌ من جرد المشروع (sarf.algebra.ZURUF_V) في علاقة P02 مرخَّصة: الظرف اسم') if self.adverb == 'P02:LICENSED' else \
+            ('اسم', '«أيّ» منادى في V02 (و«ها» حرف تنبيه في الوحدة نفسها)') if any(r['src'] == 'munada' for r in self.roles) else \
+            ('حرف + اسم', 'وحدةٌ مكتوبة مندمجة (sarf.protected.MERGED): حرف جرٍّ واسمٌ مبني، P03') if any(r['src'] == 'merged_pp' for r in self.roles) else \
             ('فعل', (self.feats.get('pos') or {}).get('ev')) if self.pos == 'فعل' and self.pos_st == 'مثبت' else \
             ('حرف', f'ملف المبنيات: {self.mcat}') if self.mcat == 'particle' else \
             (None, 'الاسمية من شكل التنوين وحده: غير محسوم في هذه الطبقة (العقد T19)؛ وسمة المرحلة ١٣ «اسم» بدليل التنوين '
@@ -138,19 +145,35 @@ class _Tok:
         prot = th.get('protected') or {}
         if prot.get('cls'):
             pr = (prot['cls'], f"الجرد المعتمد: «{prot.get('identity')}» (root_status={th.get('root_status')})")
+            src = 'sarf/protected.py: ' + ('GOLDEN' if prot.get('cls') == 'اسم ذهبي' else 'MERGED أو VERBAL أو جرد العوامل')
         elif self.divine or th.get('lex') == 'لفظ الجلالة':
-            pr = ('لفظ الجلالة', 'sarf/divine.py: لا جذر')
+            pr, src = ('لفظ الجلالة', 'sarf/divine.py: لا جذر'), 'sarf/divine.py'
         elif self.golden:
-            pr = ('اسم ذهبي', 'الجرد GOLDEN: لا جذر')
+            pr, src = ('اسم ذهبي', 'الجرد GOLDEN: لا جذر'), 'sarf/protected.py: GOLDEN'
         elif (self.lex or '') in ('مبني', 'عامل', 'مبني+عامل'):
             pr = ('مبني أو عامل' if self.lex != 'عامل' else 'عامل من العوامل المائة',
                   f'وحدةٌ معجمية مغلقة (lex={self.lex}) قبل توليد الجذر: CONSTITUTIONAL_PROTECTED_CLASS')
+            src = {'مبني': 'lexicon/mabniyat_lexicon.jsonl', 'عامل': 'operators_catalog.jsonl'}.get(
+                self.lex, 'lexicon/mabniyat_lexicon.jsonl وoperators_catalog.jsonl')
         else:
-            pr = (None, 'غير محمية: يُستخرج جذرها')
+            pr, src = (None, 'غير محمية: يُستخرج جذرها'), None
         op = (self.lex or '').startswith('عامل') or 'عامل' in (self.lex or '')
+        g = inf.get('governor') or {}
+        role = (g.get('role_name'), f"{g.get('role_rule') or ''} {g.get('relation_id') or ''}".strip() or g.get('relation')) \
+            if g.get('role_name') else (None, (self.mabni_state or {}).get('text') or
+                                        ('لا دور نحوي مرخَّص في هذا التحليل' if inf['build'][0] else 'غير محسوم'))
+        st = inf.get('state') or (None, '')
+        mk = inf.get('mark_kind')
+        case_axis = (st[0], 'محلّي' if mk == 'محلّي' else 'تقديري' if mk == 'مقدّرة' else 'لفظي') if st[0] and \
+            inf['agreement'] == 'AGREE' else (None, (self.mabni_state or {}).get('text') or st[1])
         return dict(word_class=wc, build=inf['build'], inflection=inf,
+                    role=role, role_status=g.get('relation_status') if g.get('role_name') else None,
+                    case_axis=case_axis, mabni_state=self.mabni_state,
                     protection=(pr[0], pr[1] + ('؛ والحماية من الجذر لا تمنع التحليل النحوي' if pr[0] else '')),
-                    operator=(True, f'خانة {self.lex}') if op else (False, '—'))
+                    protection_detail=dict(scope='لا جذر ولا وزن؛ والهوية والرسم محفوظان؛ ولا تُمنع الوظيفة النحوية' if pr[0] else None,
+                                           reason='CONSTITUTIONAL_PROTECTED_CLASS' if pr[0] else None, source=src, cls=pr[0]),
+                    operator=(True, f'خانة {self.lex}') if op else (False, '—'), operator_usage=self.usage,
+                    parts=getattr(self, 'parts', None))
 
     def definite(self):
         """→ (معرفة؟، الدليل) من السمات القائمة؛ وNone إن لم يثبت"""
@@ -173,7 +196,13 @@ class _Tok:
     def nominative(self):
         """→ (مرفوعٌ أو في محلّ رفع؟، الدليل)"""
         if self.case == 'رفع':
-            return True, 'الرفع مكتوب (الضمة)'
+            # مصدر العلامة واحد: قارئ المحور نفسه (_written_mark)؛ فإن خالفت قراءتُه الحالةَ المسجَّلة فالرفع غير مثبت والتعارض معلن
+            nm, cs, _ = _written_mark(self)
+            if 'رفع' in cs:
+                return True, f'الرفع مكتوب ({nm})'
+            return None, (f'تعارض قارئين: الحالة المسجَّلة «رفع» (sarf.algebra.word_case)، والعلامة المقروءة بالصنف «{nm}» تدلّ على '
+                          f'{"، ".join(sorted(cs))}: الرفع غير مثبت' if cs else
+                          f'الحالة المسجَّلة «رفع»، والعلامة المقروءة بالصنف «{nm or "—"}» لا تعيّن حالة: الرفع غير مثبت')
         if self.case in ('نصب', 'جر', 'نصب أو جر', 'جر أو نصب'):
             return False, f'العلامة المكتوبة {self.case}'
         if self.lex == 'مبني' or self.mcat or self.dkind in ('معرفة: ضمير', 'معرفة: اسم إشارة', 'معرفة: اسم موصول'):
@@ -250,7 +279,8 @@ def _mark_dims(name, cap=None):
     return dict(carrier=None, visibility=None, originality=None, reason='العلامة غير معيَّنة')
 
 
-ROLE_AR = {'ibtida': 'الابتداء', 'khabar': 'الخبرية للمبتدأ', 'nasikh': 'الخبرية للناسخ', 'idafa': 'الإضافة'}
+ROLE_AR = {'ibtida': 'الابتداء', 'khabar': 'الخبرية للمبتدأ', 'nasikh': 'الخبرية للناسخ', 'idafa': 'الإضافة', 'object': 'المفعولية',
+           'subject': 'الفاعلية', 'zarf': 'الظرفية', 'voc_follower': 'التبعية في النداء'}
 HARAKA_OF = {'رفع': 'الضمة', 'نصب': 'الفتحة', 'جر': 'الكسرة'}
 BUILD_VOWEL = {FATHA: 'الفتح', DAMMA: 'الضم', KASRA: 'الكسر', SUKUN: 'السكون'}
 
@@ -303,6 +333,12 @@ def _written_mark(t, nxt=None):
                 return 'حذف النون', frozenset({'نصب', 'جزم'}), f'الأفعال الخمسة ({five_ev}): النون محذوفة'
         if len(R) == 3 and R[2] in 'وي' and L not in 'اويى' and L == R[1] and tl[0][0] in 'يتأن':
             return 'حذف حرف العلة', frozenset({'جزم'}), f'لام الجذر «{R[2]}» محذوفة من آخر المضارع ({R})'
+        from .evidence import jazm_faces
+        jf = jazm_faces(t.text) if not (len(R) == 3 and R[2] in 'وي') else None
+        if jf and jf['rule'] == 'M01.2':
+            return 'حذف حرف العلة', frozenset({'جزم'}), 'M01: ' + jf['why']
+        if jf and jf['rule'] == 'M01.1' and not (len(R) == 3 and R[1] == R[2]):
+            return 'الفتحة', frozenset({'نصب', 'جزم'}), 'M01: ' + jf['why'] + '؛ والفتحة علامة النصب'
         if len(R) == 3 and R[1] == R[2] and L == R[2] and SHADDA in m and FATHA in m:
             return 'الفتحة', frozenset({'نصب', 'جزم'}), f'المضعّف المدغم ({R}): يُحرَّك آخره بالفتح في الجزم، والفتحة علامة النصب'
         if SUKUN in m:
@@ -323,7 +359,7 @@ def _written_mark(t, nxt=None):
     nf = t.feats.get('number') or {}
     num = nf.get('v') if nf.get('st') == 'مثبت' else None   # العدد المرشّح لا يُقرأ به حرف الإعراب (ٱلۡقُرۡءَانِ ليس مثنى)
     cand = nf.get('v') if nf.get('st') != 'مثبت' else None
-    if L == 'ن' and p[0] in 'اي' and cand in ('dual', 'plural') and (FATHA in m or KASRA in m):
+    if L == 'ن' and p[0] in 'اوي' and cand in ('dual', 'plural') and (FATHA in m or KASRA in m):
         return ('الحرف أو الحركة', frozenset(),
                 f'العدد مرشّح ({cand}): الحرف قبل النون علامةٌ إن كان مثنى أو جمعاً، والحركة علامةٌ إن كان مفرداً؛ فلا تُعيَّن العلامة')
     if L == 'ن' and p[0] == 'ا' and KASRA in m and num == 'dual':
@@ -374,6 +410,35 @@ def _inflection(t, nxt=None):
     tense = (t.feats.get('tense') or {})
     lex = t.lex or ''
     mabni_unit = lex in ('مبني', 'مبني+عامل') or t.mcat is not None or t.enclitic
+    mpp = next((r for r in t.roles if r['src'] == 'merged_pp'), None)
+    if mpp is not None:
+        # P03: الوحدة المكتوبة = حرف جرٍّ + اسمٌ مبني؛ والمحلّ للجزء الثاني، والبناء والدور لكلٍّ من الجزأين
+        p0, p1 = mpp['parts']
+        out['build'] = ('مبني', f'«{p0}» حرفٌ مبني، و«{p1}» اسمٌ مبني (ملف المبنيات)')
+        out['governor'] = dict(kind='عامل', operator=p0, expected='جر', role_name='مجرور بحرف الجر', role_rule='P03',
+                               relation_id=mpp['rid'], relation_status=LICENSED, target_uid=t.uid, relation='مباشر',
+                               capacity=['جر'], capacity_mediated=[], capacity_source='حرف الجر في الجرد المعتمد (MERGED)')
+        out['state'] = ('في محلّ جر', f'«{p1}» مبني في محلّ جر بـ«{p0}» (P03)')
+        out['mark_kind'] = 'محلّي'
+        out['mark_dims'] = dict(carrier=None, visibility='محلّي', originality=None, reason='المبني لا تظهر عليه علامة إعراب')
+        out['cause'] = f'«{p1}» مبني على السكون؛ والحكم إعرابٌ محلّي'
+        out['statement'] = (f'«{p0}» حرف جر، و«{p1}» اسم مبني على السكون في محلّ جر بـ«{p0}»، مجرور بحرف الجر'
+                            f'؛ ونوعه ({"، ".join(mpp["kinds"])}) غير مختار')
+        out['effect'] = dict(lafzi=None, mahalli='جر', relation='مباشر')
+        return _finish(out)
+    mun = next((r for r in t.roles if r['src'] == 'munada'), None)
+    if mun is not None:
+        # V02: «أيّ» المنادى في وحدة «أَيُّهَا» مع «ها» التنبيه؛ البناء على الضم وصفُ بناء، والمحلّ بالنداء وصفُ علاقة
+        out['build'] = ('مبني', '«أيّ» منادى نكرةٌ مقصودة: مبني على الضم (V02)')
+        out['governor'] = dict(kind='النداء', relation_id=mun['rid'], expected='نصب', role_name='منادى', role_rule='V02',
+                               relation_status=mun.get('status', LICENSED), target_uid=t.uid, relation='بحرف النداء')
+        out['state'] = ('في محلّ نصب', 'مبني على الضم، ومحلّه النصب بالنداء (V02)')
+        out['mark_kind'] = 'محلّي'
+        out['mark_dims'] = dict(carrier=None, visibility='محلّي', originality=None, reason='المنادى المبني لا تظهر عليه علامة النصب')
+        out['cause'] = '«أيّ» مبني على الضم: الضمة حركة بناء لا علامة رفع؛ والحكم إعرابٌ محلّي'
+        out['statement'] = '«أيّ» منادى مبني على الضم في محلّ نصب، و«ها» حرف تنبيه'
+        out['effect'] = dict(lafzi=None, mahalli='نصب', relation='بحرف النداء')
+        return _finish(out)
     # ١ البناء: من نوع الكلمة وزمن الفعل
     opsrc = next((r for r in t.roles if r['src'] == 'operator'), None)
     mood_op = opsrc is not None and opsrc['r'].get('expected') in ('نصب', 'جزم') and \
@@ -408,7 +473,7 @@ def _inflection(t, nxt=None):
         out['build'] = ('معرب', 'لفظ الجلالة أو اسمٌ ذهبي: معرب' + ('، والوحدة تضمّ عامله' if 'عامل' in lex or len(t.types) > 1 else ''))
     elif (lex == 'عامل' or 'عامل' in str(t.pos or '')) and t.pos != 'اسم':
         out['build'] = ('مبني', 'أداةٌ أو فعلٌ جامد من جرد العوامل: مبني')
-        out['state'] = (None, 'أداةٌ مبنية؛ ومحلّها (إن كان) لا يُعيَّن في هذا المحور')
+        out['state'] = (None, (t.mabni_state or {}).get('text') or 'أداةٌ مبنية؛ ومحلّها (إن كان) لا يُعيَّن في هذا المحور')
         out['agreement'] = 'MABNI'
         return out
     elif mabni_unit:
@@ -429,7 +494,8 @@ def _inflection(t, nxt=None):
         out['mark'] = (name, ev) if name else None
         out['mark_kind'] = _mark_kind(name)
         if out['build'][0] == 'مبني':
-            out['state'] = (None, 'مبني: المحلّ يُعيَّن بالعامل، ولا عامل مثبت فيه')
+            ms = t.mabni_state or {}
+            out['state'] = (None, ms.get('text') or 'مبني: المحلّ يُعيَّن بالعامل أو بدورٍ في علاقة، ولا عامل مثبت فيه ولا دور مرخَّص')
         elif cases:
             out['state'] = (None, f'العلامة المكتوبة «{name}» تحتمل: {"، ".join(sorted(cases))}؛ ولا عامل مقبول ولا دور مرخَّص: لا يُقال')
         else:
@@ -439,20 +505,27 @@ def _inflection(t, nxt=None):
     if src['src'] == 'operator':
         o, r, op = src['o'], src['r'], src['op']
         cap = r.get('expected')
-        capd = _capacity(o)
+        capd, usage, alts_ = _usage_capacity(o, cap)
         caps = set(capd['lafzi'])
-        cap_src = 'اتحاد المعاني المرفقة في المرحلة ١١' if len(o.get('meanings') or []) > 1 else 'المعنى المرفق في المرحلة ١١'
+        cap_src = ('الاستعمال المتّسق مع العلاقة المقبولة: ' + '، '.join(f'«{u}»' for u in usage)) if usage else \
+            ('المعنى المرفق في المرحلة ١١' if len(o.get('meanings') or []) <= 1 else 'لا معنى مرفقٌ يذكر هذا الأثر')
         if not caps and not capd['mediated'] and cap in _cases_in(o.get('operator_class') or ''):
             caps = {cap}                                # فئة العامل في الجرد تذكر أثره، والمعاني المرفقة لا تذكره
             cap_src = f'فئة العامل «{o.get("operator_class")}»'
             out['notes'] = [f'تعارضٌ داخلي في المرحلة ١١: المعاني المرفقة بالعامل '
                             f'({"، ".join(str(x.get("id")) for x in o.get("meanings") or [])}) لا تذكر «{cap}»، وفئته تذكره']
+        g_ = str(o['group'])
+        role_name, rule_ = None, None
+        if g_ == NASIKH_KANA and cap == 'رفع' or g_ == NASIKH_INNA and cap == 'نصب':
+            role_name, rule_ = f'اسم «{o["operator"]}»', f'حكم الناسخ في المرحلة ١١ (مج {g_})'
         out['governor'] = dict(kind='عامل', operator=o['operator'], position=op.loc, group=o['group'], expected=cap,
                                observed=r.get('observed'), consistent=r.get('consistent'), role=r.get('role'),
                                target_uid=t.uid, operator_proof=list((o.get('judgement') or {}).get('proof') or []),
                                capacity=sorted(caps), capacity_source=cap_src,
                                capacity_mahall_of_complement=capd['mahall_of_complement'],
-                               capacity_mediated=capd['mediated'],
+                               capacity_mediated=capd['mediated'], lexical_alternatives=alts_,
+                               level='محلّي' if r.get('observed') == 'محلاً' else 'لفظي',
+                               role_name=role_name, role_rule=rule_, relation_status=LICENSED if role_name else None,
                                relation='مباشر' if cap in caps else
                                'بوساطة (في الجرد)' if cap in capd['mediated'] else 'غير مرخَّص في الجرد')
         gov_txt = f'بـ«{o["operator"]}»' if cap not in capd['mediated'] or cap in caps else \
@@ -467,24 +540,33 @@ def _inflection(t, nxt=None):
     else:
         cap = src['expected']
         out['governor'] = dict(kind=ROLE_AR.get(src['src'], src['src']), relation_id=src['rid'], expected=cap, of=src.get('of'),
-                               relation={'ibtida': 'معنوي (الابتداء)', 'khabar': 'بالمبتدأ', 'nasikh': 'بالناسخ',
-                                         'idafa': 'بالمضاف'}.get(src['src']))
+                               role_name=src.get('role_name') or ROLE_NAME.get(src['src']), role_rule=src.get('rule'),
+                               relation_status=src.get('status', LICENSED), target_uid=t.uid,
+                               relation=ROLE_REL.get(src['src']))
         gov_txt = {'ibtida': 'بالابتداء', 'khabar': f'خبراً للمبتدأ «{src.get("of")}»',
                    'nasikh': f'خبراً لـ«{src.get("of")}»', 'idafa': f'مضافاً إليه لـ«{src.get("of")}»'}.get(src['src'], '')
+    g = out['governor']
     if out['build'][0] == 'مبني':
-        kw = 'ضمير' if t.enclitic or t.mcat in ('separate_pronoun', 'attached_pronoun') else 'اسم'
-        # حركة البناء تُذكر للضمير وحده: آخر الوحدة في غيره قد يكون لاحقةً لا آخر المبني (ذَٰلِكُمْ: الميم حرف خطاب)
-        bv = _build_vowel(t) if kw == 'ضمير' else None
-        out['state'] = (f'في محلّ {cap}', f'مبني، ومحلّه بالعامل {gov_txt}')
+        kw = MCAT_KW.get('attached_pronoun' if t.enclitic else t.mcat, 'اسم')
+        # حركة البناء تُذكر للضمير والموصول المختصّ وحدهما: آخر الوحدة في غيرهما قد يكون لاحقةً لا آخر المبني (ذَٰلِكُمْ: الميم حرف خطاب)
+        bv = _build_vowel(t) if kw.startswith('ضمير') or t.text in REL_AGR else None
+        out['state'] = (f'في محلّ {cap}', f'مبني، ومحلّه ' + (f'بالعامل {gov_txt}' if g.get('kind') == 'عامل' or not g.get('role_name')
+                                                            else f'بدوره «{g["role_name"]}» في علاقةٍ مرخَّصة ({g.get("role_rule")})'))
         out['mark_kind'] = 'محلّي'
         out['mark_dims'] = dict(carrier=None, visibility='محلّي', originality=None,
                                 reason='المبني لا تظهر عليه علامة إعراب؛ وحركة آخره حركة بناء')
         out['cause'] = f'{kw} مبني' + (f' على {bv}: حركة آخره حركة بناءٍ لا علامة إعراب' if bv else '') + \
             '؛ والحكم إعرابٌ محلّي'
-        out['statement'] = f'{kw} مبني' + (f' على {bv}' if bv else '') + f' في محلّ {cap} {gov_txt}'
+        role_part = g.get('role_name') or ''
+        if g.get('kind') == 'عامل' and not role_part:
+            tail = f' {gov_txt}'
+        else:
+            tail = f' {role_part}' + (f'، والمضاف «{src.get("of")}»' if src.get('src') in ('idafa',) and src.get('of') else
+                                      f' لـ«{src.get("of")}»' if src.get('src') == 'object' and src.get('of') else '')
+        out['statement'] = f'{kw} مبني' + (f' على {bv}' if bv else '') + f' في محلّ {cap}' + tail
         if src['src'] == 'operator' and src['r'].get('observed') not in ('محلاً', None):
             out['conflicts'].append(f'المرحلة ١١ قرأت على المبني علامةً «{src["r"].get("observed")}»')
-        out['effect'] = dict(lafzi=None, mahalli=cap, relation=out['governor'].get('relation'))
+        out['effect'] = dict(lafzi=None, mahalli=cap, relation=g.get('relation'))
         return _finish(out)
     name, cases, ev = _written_mark(t, nxt)
     out['mark'] = (name, ev) if name else None
@@ -501,23 +583,67 @@ def _inflection(t, nxt=None):
         out['conflicts'].append(f'العلامة «{name}» تدلّ على {"، ".join(sorted(cases))} والعامل يقتضي {cap}')
     if out['conflicts']:
         return _finish(out)
-    if (out['governor'] or {}).get('relation') == 'غير مرخَّص في الجرد':
-        out['state'] = (cap, f'قدرة «{out["governor"]["operator"]}» على «{cap}» غير مذكورة في الجرد (لا في معانيه ولا في فئته): '
+    if g.get('relation') == 'غير مرخَّص في الجرد':
+        out['state'] = (cap, f'قدرة «{g["operator"]}» على «{cap}» غير مذكورة في الجرد (لا في معانيه ولا في فئته): '
                              f'الاتفاق غير مثبت، والعلامة «{name}»')
         out['agreement'] = 'UNVERIFIED'
         return out
     kind = 'فعل مضارع' if t.pos == 'فعل' else 'اسم'
-    out['state'] = (cap, f'العامل {gov_txt} يقتضي {cap}، والعلامة «{name}» تدلّ عليه ({ev})')
+    out['state'] = (cap, f'العامل {gov_txt} يقتضي {cap}، والعلامة «{name}» تدلّ عليه ({ev})' if g.get('kind') == 'عامل' else
+                    f'الدور «{g.get("role_name")}» يقتضي {cap}، والعلامة «{name}» تدلّ عليه ({ev})')
     out['mark_kind'] = _mark_kind(name)
     out['cause'] = ev.split('؛ والجذر غير مثبت')[0]   # احتمال حذف اللام لا يخصّ وجهاً اتفق فيه العامل والعلامة
-    out['statement'] = f'{kind} {STATE_ADJ[cap]} {gov_txt} وعلامة {STATE_NOUN[cap]} {_mark_phrase(name, cap)}'
+    mp = _mark_phrase(name, cap)
+    rn = g.get('role_name')
+    if rn and src['src'] == 'operator':
+        out['statement'] = f'{rn} {STATE_ADJ[cap]} وعلامة {STATE_NOUN[cap]} {mp}'
+    elif rn:
+        lead = {'ibtida': f'{rn} {STATE_ADJ[cap]} بالابتداء', 'zarf': f'{rn} {STATE_ADJ[cap]} على الظرفية'}.get(
+            src['src'], f'{rn} {STATE_ADJ[cap]}')
+        tail = {'khabar': f'، والمبتدأ «{src.get("of")}»', 'idafa': f'، والمضاف «{src.get("of")}»',
+                'object': f'، والفعل «{src.get("of")}»', 'subject': f'، والفعل «{src.get("of")}»',
+                'nasikh': ''}.get(src['src'], '')
+        out['statement'] = f'{lead} وعلامة {STATE_NOUN[cap]} {mp}{tail}'
+    else:
+        out['statement'] = f'{kind} {STATE_ADJ[cap]} {gov_txt} وعلامة {STATE_NOUN[cap]} {mp}'
     dims = out['mark_dims'] or {}
     out['effect'] = dict(lafzi=cap if dims.get('visibility') != 'مقدّرة' else None,
                          taqdiri=cap if dims.get('visibility') == 'مقدّرة' else None, mahalli=None,
-                         mahall_of_complement_in_inventory=(out['governor'] or {}).get('capacity_mahall_of_complement') or None,
-                         relation=(out['governor'] or {}).get('relation'))
+                         mahall_of_complement_in_inventory=g.get('capacity_mahall_of_complement') or None,
+                         relation=g.get('relation'))
     out['agreement'] = 'AGREE'
     return out
+
+
+CAT_AR = {'relative': 'اسم موصول', 'conditional_noun': 'اسم شرط', 'interrogative_noun': 'اسم استفهام', 'particle': 'حرف',
+          'adverb': 'ظرف', 'demonstrative': 'اسم إشارة', 'attached_pronoun': 'ضمير متصل', 'separate_pronoun': 'ضمير منفصل',
+          'verb_name': 'اسم فعل'}
+MCAT_KW = {'relative': 'اسم موصول', 'demonstrative': 'اسم إشارة', 'separate_pronoun': 'ضمير منفصل', 'attached_pronoun': 'ضمير متصل'}
+ROLE_NAME = {'ibtida': 'مبتدأ', 'khabar': 'خبر', 'idafa': 'مضاف إليه', 'object': 'مفعول به', 'subject': 'فاعل',
+             'zarf': 'ظرف', 'voc_follower': 'تابعٌ لـ«أيّ» في النداء (نعتٌ أو عطف بيانٍ أو بدل)'}
+ROLE_REL = {'ibtida': 'معنوي (الابتداء)', 'khabar': 'بالمبتدأ', 'nasikh': 'بالناسخ', 'idafa': 'بالمضاف', 'object': 'بالفعل',
+            'subject': 'بالفعل', 'zarf': 'على الظرفية (ومتعلَّقه غير مثبت)', 'voc_follower': 'بالتبعية للفظ «أيّ»'}
+
+
+def _usage_capacity(o, cap):
+    """قدرة العامل في استعماله في هذا التحليل، لا اتحاد معانيه: المعاني المرفقة التي يذكر أثرُها ما سُجّل له (cap)
+    هي الاستعمال المتّسق مع العلاقة المقبولة؛ والبقية بدائل معجمية بقدراتها، لا تُثبت الاتفاق ولا تنفيه.
+    → (القدرة {lafzi, mahall_of_complement, mediated}، أسماء الاستعمال، البدائل [{meaning, capacity}])"""
+    ms = o.get('meanings') or []
+    use, alts = [], []
+    for x in ms:
+        pt = _effect_parts(x.get('effect'))
+        (use if cap and (cap in pt['lafzi'] or cap in pt['mediated']) else alts).append((x, pt))
+    if not use:
+        return _capacity(o), [], [dict(meaning=x.get('label') or x.get('id'), effect=x.get('effect'),
+                                       capacity=sorted(pt['lafzi'] | pt['mediated'])) for x, pt in alts]
+    cap_ = dict(lafzi=set(), mahall_of_complement=set(), mediated=set())
+    for _, pt in use:
+        for k in cap_:
+            cap_[k] |= pt[k]
+    return ({k: sorted(v) for k, v in cap_.items()}, [x.get('label') or x.get('id') for x, _ in use],
+            [dict(meaning=x.get('label') or x.get('id'), effect=x.get('effect'), capacity=sorted(pt['lafzi'] | pt['mediated']))
+             for x, pt in alts])
 
 
 CONFLICT_NATURE = (
@@ -592,8 +718,9 @@ def _rec(ref, typ, rule, heads, members, status, reason, premises=(), checked=()
     return out
 
 
-def verse_relations(a, units, F, ref):
-    """→ dict(records=[…], tokens=[(uid، الموضع، النص)]) لآيةٍ واحدة"""
+def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
+    """→ dict(records=[…], tokens=[(uid، الموضع، النص)]، axes) لآيةٍ واحدة.
+    legacy_cond: سجلات الشرط من الطبقة القديمة (sarf.algebra.linguistic_layer(cond_out=…)) لهذه الآية، تُنقل بقاعدة C01 بهوياتها"""
     from .algebra import ZURUF_V, is_form
     toks = [_Tok(a, units[k], k, F, a['segments'][k[0]], ref) for k in sorted(units)]
     idx = {t.k: i for i, t in enumerate(toks)}
@@ -628,6 +755,111 @@ def verse_relations(a, units, F, ref):
                 return j
         return len(toks)
 
+    # استعمال العامل في هذا التحليل: المقبول بأثره في معموله المعيَّن ومستواه، والبدائل المعجمية بقدراتها (لا اتحادها)
+    for o in a['operators']:
+        sl = o.get('slot') or {}
+        ot = by_k.get((o['word_index'], sl.get('unit')))
+        if ot is None:
+            continue
+        if ot.usage is None:
+            ot.usage = dict(accepted=[], alternatives=[])
+        r = o.get('relation') or {}
+        tg = r.get('target') or {}
+        tk = None
+        if tg:
+            seg_ = a['segments'][tg['word_index']]
+            ui_ = next((i for i, u in enumerate(seg_['units']) if tg['slot'] in u.get('slots', [])), None)
+            tk = by_k.get((tg['word_index'], ui_))
+        if o.get('status') == 'accepted':
+            capd, use, alts_ = _usage_capacity(o, r.get('expected'))
+            ot.usage['accepted'].append(dict(
+                operator=o['operator'], group=o['group'], operator_class=o.get('operator_class'), usage=use,
+                effect_in_analysis=r.get('expected'), target=tk.uid if tk else None, target_text=tk.text if tk else None,
+                target_role=r.get('role'), level='محلّي' if r.get('observed') == 'محلاً' else 'لفظي' if r.get('expected') else None,
+                mediation=capd['mediated'] or None, lexical_alternatives=alts_))
+        else:
+            ot.usage['alternatives'].append(dict(operator=o['operator'], group=o['group'], status=o.get('status'),
+                                                 capacity=_capacity(o), reason=o.get('reject_reason') or
+                                                 '؛ '.join((o.get('judgement') or {}).get('deferred_because') or [])))
+    idafa_of = {}                                   # المضاف ← سجل الإضافة (I01، I03)
+
+    # I01 v1 (مقترحة): الضمير المتصل باسمٍ مثبت الاسمية في كلمته مضافٌ إليه في محلّ جر؛ دليل المرحلة ١٣ (محلّ الضمير) يُوصَل هنا
+    # بقاعدةٍ تعيد فحص المضيف في هذه الطبقة (الاسمية بغير شكل التنوين، وليس عاملاً، وليس ظرفاً تتولّاه P02)، لا بنقل الحكم
+    # O01 v1 (مقترحة): ضمير النصب المتصل بفعلٍ مثبت غير ناسخ مفعولٌ به في محلّ نصب؛ و«نَا» لا تُعيَّن (فاعلٌ أو مفعول)
+    from .features_ext import OBJ_PRON
+    for i, t in enumerate(toks):
+        if not t.enclitic or i == 0:
+            continue
+        h_ = toks[i - 1]
+        if h_.wi != t.wi:
+            continue
+        ec = t.feats.get('enclitic_case') or {}
+        nasikh_host = any(str(o_['group']) in (NASIKH_KANA, NASIKH_INNA) and o_.get('status') == 'accepted'
+                          and o_['word_index'] == h_.wi for o_ in a['operators'])
+        if is_form(h_.text, ZURUF_V, i3rab=True):
+            continue                                # الظرف ومضافه: P02
+        if 'عامل' in (h_.lex or '') or h_.pos == 'عامل' or str(h_.pos or '').startswith('عامل'):
+            continue                                # الضمير بعد عامله (عَلَيْهِ، إِنَّهُ): معموله في المرحلة ١١
+        prem = [f'«{t.text}» ضميرٌ متصل (ملف المبنيات) في كلمة «{h_.text}»']
+        if ec.get('v'):
+            prem.append(f'المرحلة ١٣ (sarf.features_ext.enclitic_case): {ec.get("v")} {ec.get("st")} — {ec.get("ev")}')
+        if h_.nounish():
+            st_, why = LICENSED, f'ضميرٌ متصل باسمٍ مثبت الاسمية «{h_.text}» ({h_.noun_ev or "اسم"}): مضافٌ إليه'
+            rec = _rec(ref, 'IDAFA', 'I01', {'mudaf': h_, 'mudaf_ilayh': t}, {'mudaf': [h_], 'mudaf_ilayh': [t]}, st_, why,
+                       premises=prem + [f'«{h_.text}»: {h_.noun_ev}'], checked=['المضيف ليس عاملاً ولا ظرفاً', 'المضيف ليس فعلاً'],
+                       edges=[('IDAFA', h_.uid, t.uid)])
+            R.append(rec)
+            idafa_of[h_.k] = rec
+        elif h_.pos == 'فعل' and h_.pos_st == 'مثبت':
+            if nasikh_host:
+                R.append(_rec(ref, 'OBJECT', 'O01', {'verb': h_, 'object': t}, {'verb': [h_], 'object': [t]}, DEFERRED,
+                              f'المضيف «{h_.text}» ناسخٌ مقبول: الضمير اسمه أو خبره لا مفعوله', premises=prem))
+            elif t.text in OBJ_PRON:
+                R.append(_rec(ref, 'OBJECT', 'O01', {'verb': h_, 'object': t}, {'verb': [h_], 'object': [t]}, LICENSED,
+                              f'ضمير نصبٍ متصل «{t.text}» بفعلٍ مثبت غير ناسخ: مفعولٌ به',
+                              premises=prem + [f'«{h_.text}»: فعل مثبت ({(h_.feats.get("pos") or {}).get("ev")})'],
+                              checked=['المضيف ناسخٌ مقبول', 'الضمير من ضمائر الرفع (تُ، وا، نَ…)', '«نَا» تحتمل الرفع والنصب'],
+                              edges=[('OBJECT', h_.uid, t.uid)]))
+            else:
+                R.append(_rec(ref, 'OBJECT', 'O01', {'verb': h_, 'object': t}, {'verb': [h_], 'object': [t]}, DEFERRED,
+                              f'«{t.text}» بعد الفعل لا تعيّنه الكتابة مفعولاً (ليس من ضمائر النصب المعتمدة، أو «نَا»)', premises=prem))
+        elif ec.get('v'):
+            # دليلٌ سابق غير موصول: المرحلة ١٣ تحكم بالمحلّ، والمضيف غير مثبت الصنف في هذه الطبقة
+            R.append(_rec(ref, 'IDAFA' if ec.get('v') == 'جر' else 'OBJECT', 'I01' if ec.get('v') == 'جر' else 'O01',
+                          {'host': h_, 'pronoun': t}, {'host': [h_], 'pronoun': [t]}, DEFERRED,
+                          f'دليلٌ سابق غير موصول: المرحلة ١٣ تجعل «{t.text}» في محلّ {ec.get("v")}، وصنف مضيفه «{h_.text}» غير مثبت في '
+                          f'هذه الطبقة' + (' (اسميته من شكل التنوين وحده، العقد T19)' if h_.shape_only else ''), premises=prem))
+
+    # I03 v1 (مقترحة): الإضافة اللفظية بين اسمين: اسمٌ معرب مثبت الاسمية آخره كسرةٌ بلا تنوين ولا «أل» (ولا هو مثنى ولا جمع بالنون)،
+    # تليه كلمةٌ اسمٌ مجرورٌ كتابةً: سقوط التنوين مع الكسرة لا يكون إلا بالإضافة (الممنوع من الصرف يُجرّ بالفتحة، و«أل» غائبة)
+    for i, t in enumerate(toks):
+        n = nxt(i)
+        if n is None or n.wi != t.wi + 1 or not word_start(n) or n.conj or t.k in idafa_of:
+            continue
+        tl_ = letters(t.text)
+        if not tl_ or 'أل' in t.types or t.tanwin or t.divine or not t.nounish() or t.mcat or t.lex == 'مبني':
+            continue
+        L_, m_ = tl_[-1]
+        if KASRA not in m_ or m_ & {KASRATAN, SHADDA} and L_ == 'ن' or L_ in 'يى' or \
+                L_ == 'ن' and len(tl_) > 1 and tl_[-2][0] in 'اوي':
+            continue
+        if not (n.case in ('جر', 'جر أو نصب') or n.divine and n.case == 'جر'):
+            continue
+        prem = [f'«{t.text}»: آخره كسرةٌ بلا تنوين ولا «أل»، واسميته بغير شكل التنوين ({t.noun_ev or "اسم"})',
+                f'«{n.text}» مجرورٌ كتابةً بعده بلا جار']
+        if n.shape_only:
+            rec = _rec(ref, 'IDAFA', 'I03', {'mudaf': t}, {'mudaf': [t], 'mudaf_ilayh_candidate': [n]}, DEFERRED,
+                       f'المضاف إليه «{n.text}» اسميته من شكل التنوين وحده (العقد T19): الإضافة مرشّحة', premises=prem,
+                       alternatives=[f'«{n.text}» مضافٌ إليه'])
+        else:
+            rec = _rec(ref, 'IDAFA', 'I03', {'mudaf': t, 'mudaf_ilayh': n}, {'mudaf': [t], 'mudaf_ilayh': [n]}, LICENSED,
+                       'اسمٌ بكسرةٍ بلا تنوين ولا «أل»، يليه اسمٌ مجرور: إضافة', premises=prem,
+                       checked=['«أل» في المضاف', 'التنوين', 'المثنى والجمع بالنون', 'الممنوع من الصرف (يُجرّ بالفتحة)', 'لفظ الجلالة مضافاً'],
+                       alternatives=[f'المرحلة ١٣: {(n.feats.get("idafa") or {}).get("alt")}'] if (n.feats.get('idafa') or {}).get('alt') else [],
+                       edges=[('IDAFA', t.uid, n.uid)])
+        R.append(rec)
+        idafa_of[t.k] = rec
+
     # P01 الجار والمجرور
     obliques = {}
     for k, (op_t, o, r) in governed.items():
@@ -636,28 +868,44 @@ def verse_relations(a, units, F, ref):
         comp = [by_k[k]] if by_k[k] is not op_t else []   # الجار والمجرور في وحدةٍ واحدة (لِلشَّهَٰدَةِ): الوحدة نفسها
         i = idx[k]
         if not comp:
-            rec = _rec(ref, 'PP', 'P01', {'preposition': op_t}, {'preposition': [op_t]}, LICENSED,
-                       'حرف جرٍّ مقبول ومعموله في وحدةٍ واحدة', premises=[f'حكم العامل «{o["operator"]}» (مج 1): مقبول',
-                                                                          f'العلامة في المعمول: {r.get("observed")}'],
-                       merged_unit=True, attachment='غير مثبت: انظر A01')
+            parts = _parts_map(op_t, a['segments'][op_t.wi])
+            op_t.parts = parts
+            rec = _rec(ref, 'PP', 'P01', {'preposition': op_t, 'complement': op_t},
+                       {'preposition': [op_t], 'complement': [op_t]}, LICENSED,
+                       'حرف جرٍّ مقبول ومعموله في وحدةٍ مكتوبةٍ واحدة: الجار جزءٌ منها والمجرور جزءٌ آخر',
+                       premises=[f'حكم العامل «{o["operator"]}» (مج 1): مقبول', f'العلامة في المعمول: {r.get("observed")}'],
+                       merged_unit=True, attachment='غير مثبت: انظر A01', parts=parts,
+                       part_heads=dict(preposition=next((p_['part_id'] for p_ in parts if p_['part'] == 'حرف جر'), None),
+                                       complement=next((p_['part_id'] for p_ in parts if p_['part'] == 'اسم مجرور'), None)),
+                       phrase=dict(kind='شبه جملة (جار ومجرور)', unit=op_t.uid, text=op_t.text))
+            rec['texts'] = dict(preposition=next((p_['text'] for p_ in parts if p_['part'] == 'حرف جر'), op_t.text),
+                                complement=''.join(p_['text'] for p_ in parts if p_['part'] in ('أداة تعريف', 'اسم مجرور')) or op_t.text)
             R.append(rec)
             obliques[op_t.k] = (rec, [op_t])
             continue
         ext = []
         if nxt(i) is not None and nxt(i).wi == comp[0].wi and nxt(i).enclitic and comp[0].nounish():
             comp.append(nxt(i))                      # المضاف إلى ضميرٍ متصل في كلمته (رِجَالِكُمْ)
-        elif nxt(i) is not None and nxt(i).wi == comp[0].wi + 1 and (nxt(i).feats.get('idafa') or {}).get('v') == 'مضاف إليه' and \
-                (comp[0].feats.get('idafa') or {}).get('v') == 'مضاف':
-            ext = [nxt(i)]                           # مضافٌ إليه مرشّح (بِكُلِّ شَيْءٍ): جزءٌ من المكمّل، وحالته مرشّحة
+        ext_rec = idafa_of.get(comp[0].k)
+        if ext_rec is not None and ext_rec['rule_id'] != 'I03':
+            ext_rec = None                           # الضمير المتصل (I01) داخل المكمّل نفسه، لا امتدادٌ له
+        if ext_rec is not None and ext_rec['status'] == LICENSED and 'mudaf_ilayh' in ext_rec['heads'] and \
+                nxt(i) is not None and nxt(i).uid == ext_rec['heads']['mudaf_ilayh']:
+            ext = [nxt(i)]                           # امتداد المكمّل بإضافةٍ مرخَّصة (I03): دليله سجلّها، لا الموضع
         members = {'preposition': [op_t], 'complement': comp}
         if ext:
             members['complement_ext'] = ext
         rec = _rec(ref, 'PP', 'P01', {'preposition': op_t, 'complement': comp[0]},
-                   members, LICENSED, 'حرف جرٍّ مقبول ومعموله' + ('، ومضافٌ إليه مرشّح يمدّ المكمّل' if ext else ''),
-                   premises=[f'حكم العامل «{o["operator"]}» (مج 1): مقبول — ' + str((o.get('judgement') or {}).get('proof') or '')[:120],
+                   members, LICENSED, 'حرف جرٍّ مقبول ومعموله' + ('، ومضافٌ إليه مرخَّص (I03) يمدّ المكمّل' if ext else ''),
+                   premises=[f'حكم العامل «{o["operator"]}» (مج 1): مقبول — ' + '؛ '.join((o.get('judgement') or {}).get('proof') or []),
                              f'العلامة في المعمول: {r.get("observed")}'],
+                   core=[op_t.uid, comp[0].uid], span_proof=(ext_rec['relation_id'] if ext else None),
+                   span_premises=([ext_rec['relation_id']] if ext else []),
+                   ext_candidate=(ext_rec['relation_id'] if ext_rec is not None and not ext else None),
                    checked=['R6 المرفوع بعد الجار (في حكم العامل)'],
                    edges=[('GOVERN', op_t.uid, comp[0].uid)], attachment='غير مثبت: انظر A01')
+        if ext:
+            rec['premises'].append(ext_rec['relation_id'])  # امتداد العبارة مقدّمةٌ مرخَّصة بسجلّها
         R.append(rec)
         obliques[op_t.k] = (rec, [op_t] + comp + ext)
     # P02 الظرف
@@ -666,6 +914,10 @@ def verse_relations(a, units, F, ref):
             continue
         n = nxt(i)
         comp = None
+        tl_a = letters(t.text)
+        cut = bool(tl_a) and DAMMA in tl_a[-1][1] and not tl_a[-1][1] & {DAMMATAN}
+        if cut:
+            n = None                                # الظرف المبني على الضم مقطوعٌ عن الإضافة لفظاً (مِن بَعۡدُ): لا مضاف إليه بعده
         if n is not None and n.wi == t.wi and n.enclitic:
             comp, why = [n], f'ضميرٌ متصل «{n.text}» مضافٌ إليه'
         elif n is not None and n.wi == t.wi + 1 and word_start(n) and not n.conj and (n.divine or n.nounish()) and \
@@ -684,7 +936,7 @@ def verse_relations(a, units, F, ref):
             rec = _rec(ref, 'ADVP', 'P02', {'adverb': t}, {'adverb': [t]}, DEFERRED, 'ظرفٌ بلا مضافٍ إليه مثبت بعده',
                        premises=['جرد الظروف sarf.algebra.ZURUF_V'], phrase_kind='OBL/ADVP')
         R.append(rec)
-        t.adverb = 'P02'
+        t.adverb = 'P02:' + rec['status']
         obliques[t.k] = (rec, [t] + (comp or rec['members'].get('complement_candidate') and [n] or []))
     span_of = {}                                    # وحدة ← شبه الجملة التي تضمّها
     for hk, (rec, us) in obliques.items():
@@ -702,6 +954,35 @@ def verse_relations(a, units, F, ref):
     bound = {}                                      # وحدة ← السجل الذي جعلها طرفاً في ناسخ أو صلة (تمنع N01)
     used_as_pred = set()                            # شبه جملةٍ صارت خبراً في وجهٍ مرخَّص: لا تُرسل إلى A01 في هذا الوجه
     containers = {}
+    # V02 v1 (مقترحة): النداء بـ«أيّ»: «يا» ثم «أيّها/أيّهَ» ثم تابعٌ معرَّف بـ«أل» أو موصولٌ مختصّ أو اسم إشارة.
+    # «أيّ» نكرةٌ مقصودة منادى مبني على الضم في محلّ نصب، و«ها» للتنبيه؛ ولا بدّ لها من تابعٍ مرفوعٍ تبعاً للفظها (ابن مالك وابن عقيل).
+    # ونوع التابع (نعتٌ أو عطف بيانٍ أو بدل) بدائل محفوظة لا يُختار منها؛ والتبعية نفسها مرخَّصة بهذه القاعدة
+    for i, t in enumerate(toks[:-1]):
+        if t.text not in ('يَٰ', 'يَا', 'يَٰا') or toks[i + 1].text not in ('أَيُّهَا', 'أَيُّهَ'):
+            continue
+        ay = toks[i + 1]
+        f_ = toks[i + 2] if i + 2 < len(toks) else None
+        nida = _rec(ref, 'VOCATIVE', 'V02', {'particle': t, 'munada': ay}, {'particle': [t], 'munada': [ay]}, LICENSED,
+                    '«يا» حرف نداء، و«أيّ» بعدها منادى نكرةٌ مقصودة مبني على الضم في محلّ نصب، و«ها» للتنبيه',
+                    premises=[f'«{t.text}» عامل النداء (الجرد: مج {next((o_["group"] for o_ in a["operators"] if o_["word_index"] == t.wi and o_["operator"].startswith("يَ")), "?")})',
+                              f'«{ay.text}» في الجرد المعتمد «يَٰٓأَيُّهَا» (الحماية لا تمنع الوظيفة)'],
+                    checked=['«أيّ» لا تكون هنا استفهاماً ولا شرطاً ولا موصولاً: تليها «ها» التنبيه بعد حرف النداء'])
+        R.append(nida)
+        ay.roles.append(dict(src='munada', expected='نصب', rid=nida['relation_id'], role_name='منادى', rule='V02',
+                             status=LICENSED))
+        if f_ is None or not word_start(f_):
+            continue
+        ok_f = f_.mcat in ('relative', 'demonstrative') or 'أل' in f_.types and (f_.nounish() or f_.shape_only)
+        why_f = (f'«{f_.text}» موصولٌ أو إشارة' if f_.mcat in ('relative', 'demonstrative') else f'«{f_.text}» معرَّفٌ بـ«أل»')
+        R.append(_rec(ref, 'VOC_FOLLOWER', 'V02', {'munada': ay, 'follower': f_}, {'munada': [ay], 'follower': [f_]},
+                      LICENSED if ok_f else DEFERRED,
+                      ('تابعٌ لـ«أيّ» في النداء، مرفوعٌ تبعاً للفظها: ' + why_f) if ok_f else
+                      f'ما بعد «أيّ» «{f_.text}» ليس معرَّفاً بأل ولا موصولاً ولا إشارةً في هذه الطبقة: التابع غير مثبت',
+                      premises=[nida['relation_id'], why_f], container=None,
+                      alternatives=['نعتٌ لـ«أيّ»', 'عطف بيان', 'بدل'], kind_status=DEFERRED,
+                      kind_note='نوع التابع غير مختار: البدائل الثلاثة محفوظة، ولا يتوقف عليها المحلّ'))
+        if ok_f:
+            bound[f_.k] = R[-1]['relation_id']
     # R01 إطار الصلة المحدود، وفيه نواة N02
     for i, t in enumerate(toks):
         if t.lex != 'مبني' or not is_form(t.text, REL_SPECIFIC):
@@ -999,6 +1280,147 @@ def verse_relations(a, units, F, ref):
                       display_convention='شبه الجملة خبرٌ مقدَّم (أو متعلّقٌ بخبرٍ محذوف)؛ ولا يُكتب المحذوف'))
         if st_ == LICENSED:
             used_as_pred.add(ob[0]['relation_id'])
+    # F01 v1 (مقترحة): إطار الفعل — عقدةٌ لكل فعلٍ مثبت الصنف، بسماتٍ من تحليلٍ واحد (لا يُجمع زمنٌ من مرشّحٍ وبناءٌ من آخر):
+    # الهوية والصيغة، والزمن والبناء للمعلوم أو المجهول بدرجتيهما، والاستعمال (ناسخ بحكم المرحلة ١١ أو غير ناسخ)، ومتطلبات الإسناد
+    # والتعدية المثبتة، والضمائر المتصلة، والالتزامات المفتوحة بمصادرها. ويُبنى منه:
+    # S01 الفاعل (أو نائبه): الضمير المتصل المكتوب، أو المستتر وجوباً (المتكلم والمخاطب المفرد)، أو اسمٌ ظاهرٌ مرفوعٌ كتابةً هو المرشّح
+    #     الوحيد في إطار الفعل بعده (لا يُختار أقرب مرفوع إذا نافسه آخر)؛ وما سوى ذلك مرشّحاتٌ مؤجَّلة
+    # O02 المفعول الظاهر: اسمٌ معرفةٌ منصوبٌ كتابةً بعد فعلٍ مثبت التعدّي غير ناسخ، ولا مفعول متصل قبله؛ والنكرة المنصوبة مؤجَّلة (حال، تمييز، مفعول مطلق)
+    frames = {}
+    by_uid_ = {t.uid: t for t in toks}
+    for i, v in enumerate(toks):
+        if v.pos != 'فعل' or v.pos_st != 'مثبت':
+            continue
+        fe_ = frame_end(i)
+        tf, vf, sf, trf = (v.feats.get(k) or {} for k in ('tense', 'voice', 'subject', 'transitivity'))
+        nas = next((o_ for o_ in a['operators'] if o_['word_index'] == v.wi and str(o_['group']) == NASIKH_KANA and
+                    o_.get('status') == 'accepted' and (o_.get('slot') or {}).get('unit') == v.ui), None)
+        usage = f'ناسخ «{nas["operator"]}» (مج 10، حكم المرحلة ١١)' if nas else 'غير ناسخ في حكم المرحلة ١١'
+        coherent = all(x.get('st') == 'مثبت' for x in (tf, vf, sf))
+        cands = []
+        tl_ = letters(v.text)
+        if len(tl_) == 4 and DAMMA in tl_[0][1] and DAMMA in tl_[1][1] and tl_[2][0] == 'و' and tl_[3][0] == 'ا' and \
+                tl_[0][0] not in 'يتنأ':
+            # الماضي المبني للمجهول من الناقص مع واو الجماعة (دُعُوا): فُعِلُوا ← دُعِيُوا/دُعِوُوا ← دُعُوا
+            from .root import hfn
+            H = hfn()
+            rts = [tl_[0][0] + tl_[1][0] + w for w in 'وي' if H is not None and tl_[0][0] + tl_[1][0] + w in H.roots]
+            hz = H is not None and 'ء' + tl_[0][0] + tl_[1][0] in H.roots
+            cands.append(dict(id='F01.c1', tense='ماضٍ', voice='مجهول', subject=dict(person=3, number='plural', gender='masc'),
+                              subject_role='نائب فاعل', subject_unit='واو الجماعة (في الوحدة)', roots=rts,
+                              realization=f'فُعِلُوا من الناقص: لام الفعل حُذفت قبل واو الجماعة وضُمّ ما قبلها ({v.text})',
+                              status=DEFERRED if rts else REJECTED,
+                              reason='مرشّحٌ كامل بزمنه وبنائه وضميره ودوره وتحقيقه؛ ولا يُختار بإطار الشرط ولا بترتيب المرشّحات' if rts
+                              else 'لا جذر ناقص «' + tl_[0][0] + tl_[1][0] + 'و/ي» في HFN'))
+            cands.append(dict(id='F01.c2', tense=tf.get('v'), voice=vf.get('v'), subject=sf.get('v'), subject_role='فاعل',
+                              source='المرحلة ٨ والسمات (مرشّح)',
+                              status=DEFERRED,
+                              reason=('أمر الثلاثي ساكن الفاء يُبدأ بهمزة وصل ولا همزة مكتوبة؛ وأمر مهموز الفاء بلا همزة (خُذُوا) يقتضي جذراً «ء' +
+                                      tl_[0][0] + tl_[1][0] + '»: ' + ('موجودٌ في HFN، فالوجه قائم' if hz else 'غير موجود في HFN، فالوجه ممنوعٌ في نطاق HFN'))
+                              if tf.get('v') == 'أمر' else 'وجه المرحلة ٨'))
+            if not hz and tf.get('v') == 'أمر':
+                cands[-1]['status'] = REJECTED
+            coherent = False
+        opn = []
+        subj = None
+        sp = sf.get('v') if isinstance(sf.get('v'), dict) else {}
+        passive = vf.get('v') == 'مجهول' and vf.get('st') == 'مثبت'
+        srole = 'نائب فاعل' if passive else 'فاعل'
+        if nas:
+            opn.append('اسم الناسخ وخبره: تُربطان بـV01 لا بالفاعل')
+        elif sf.get('st') == 'مثبت' and (sp.get('number') in ('plural', 'dual') or sp.get('person') in (1, 2) and
+                                        not (tf.get('v') == 'مضارع' and sp.get('number') == 'singular')):
+            subj = dict(kind='ضمير متصل مكتوب', role=srole, status=LICENSED,
+                        why=f'ضمير الصيغة المكتوب ({sp.get("person")}، {sp.get("number")}، {sp.get("gender")}): {sf.get("ev")}')
+        elif sf.get('st') == 'مثبت' and sp.get('person') in (1, 2) and sp.get('number') == 'singular' and tf.get('v') in ('مضارع', 'أمر'):
+            subj = dict(kind='ضمير مستتر وجوباً (غير مكتوب)', role=srole, status=LICENSED,
+                        why=f'المتكلم أو المخاطب المفرد في {tf.get("v")}: لا يكون فاعله اسماً ظاهراً ({sf.get("ev")})')
+        elif sf.get('st') == 'مثبت' and sp.get('person') == 3 and sp.get('number') == 'singular' and not cands:
+            ov = []
+            j = i + 1
+            while j < fe_:
+                u = toks[j]
+                if u.wi == v.wi or u.k in span_of or u.enclitic or u.k in bound and ov:
+                    j += 1
+                    continue                        # وما في صلة المرشّح الأول أو حاويةٍ مرخَّصة ليس منافساً
+                if u.conj or (u.lex or '').startswith('عامل') and not u.nounish():
+                    break
+                if word_start(u) and (u.nounish() or u.divine or u.mcat in ('relative', 'demonstrative', 'separate_pronoun')) \
+                        and u.k not in governed and u.case not in ('نصب', 'جر', 'نصب أو جر', 'جر أو نصب'):
+                    ov.append(u)                    # المنصوب والمجرور كتابةً لا يكونان فاعلاً
+                j += 1
+            raf = [u for u in ov if u.nominative()[0] is True and (u.nounish() or u.divine)]   # الرفع من مصدر العلامة الواحد
+            if len(raf) == 1 and ov and ov[0] is raf[0] and raf[0].k not in bound and raf[0].k not in licensed_subjects:
+                u = raf[0]
+                subj = dict(kind='اسم ظاهر', role=srole, status=LICENSED, unit=u,
+                            why=f'«{u.text}» المرشّح الاسمي الأول بعد الفعل في إطاره، مرفوعٌ كتابةً ({u.nominative()[1]})، ولا منافس مرفوعٌ غيره',
+                            mark=_written_mark(u)[0])
+            else:
+                subj = dict(kind='غير معيَّن', role=srole, status=DEFERRED,
+                            why=('المرشّحات: ' + '، '.join(f'«{u.text}» ({u.loc})' for u in ov) + '، أو ضميرٌ مستتر'
+                                 if ov else 'لا اسم ظاهر بعده في إطاره: مستترٌ جوازاً، أو الفاعل متقدّمٌ مبتدأً') +
+                            ('؛ ومنافسٌ مرفوعٌ آخر' if len(raf) > 1 else ''), candidates=[u.uid for u in ov])
+        else:
+            subj = dict(kind='غير معيَّن', role=srole, status=DEFERRED,
+                        why=f'ضمير الصيغة غير مثبت ({sf.get("st")}): {sf.get("ev")}')
+        objs = [r_ for r_ in R if r_['type'] == 'OBJECT' and r_['heads'].get('verb') == v.uid]
+        obj2 = None
+        if not nas and trf.get('st') == 'مثبت' and trf.get('v') == 'متعدٍّ' and not any(o_['status'] == LICENSED for o_ in objs):
+            j = i + 1
+            start = idx[subj['unit'].k] + 1 if subj and subj.get('unit') else i + 1
+            j = start
+            while j < fe_ and (toks[j].wi == v.wi or toks[j].k in span_of or toks[j].enclitic):
+                j += 1
+            u = toks[j] if j < fe_ else None
+            if u is not None and word_start(u) and not u.conj and u.nounish() and u.k not in governed and u.k not in bound \
+                    and u.case == 'نصب':
+                df = u.definite()[0]
+                obj2 = _rec(ref, 'OBJECT', 'O02', {'verb': v, 'object': u}, {'verb': [v], 'object': [u]},
+                            LICENSED if df is True else DEFERRED,
+                            f'«{u.text}» معرفةٌ منصوبة كتابةً بعد فعلٍ مثبت التعدّي: مفعولٌ به' if df is True else
+                            f'«{u.text}» نكرةٌ منصوبة أو تعريفها غير مثبت: مفعولٌ به أو حالٌ أو تمييزٌ أو مفعولٌ مطلق',
+                            premises=[f'«{v.text}»: التعدّي {trf.get("v")} {trf.get("st")} — {trf.get("ev")}',
+                                      f'«{u.text}»: النصب مكتوب ({_written_mark(u)[0]})', f'«{u.text}»: {u.definite()[1]}'],
+                            checked=['الفعل ناسخ', 'مفعولٌ متصل قبله', 'العامل المقبول في المنصوب'],
+                            alternatives=[] if df is True else ['حال', 'تمييز', 'مفعول مطلق'],
+                            mark_fact=dict(uid=u.uid, mark=_written_mark(u)[0]), edges=[('OBJECT', v.uid, u.uid)])
+                R.append(obj2)
+        elif trf.get('v') == 'متعدٍّ' and not objs:
+            opn.append(f'المفعول به غير مربوط (التعدّي {trf.get("st")}): ظاهرٌ لم تغطّه O02، أو محذوفٌ جائز؛ ولا يُحكم بنقصٍ')
+        heads = {'verb': v}
+        members = {'verb': [v]}
+        if subj and subj.get('unit') and subj['status'] == LICENSED:
+            heads['subject'] = subj['unit']
+            members['subject'] = [subj['unit']]
+        fr = _rec(ref, 'VERB_FRAME', 'F01', heads, members, LICENSED if coherent else DEFERRED,
+                  'سمات الفعل كلها مثبتة من تحليلٍ واحد' if coherent else
+                  ('مرشّحاتٌ صرفية كاملة متنافسة' if cands else 'بعض سمات الفعل مرشّحة: لا تُجمع من مرشّحاتٍ متفرقة'),
+                  premises=[f'الصنف: فعل — {(v.feats.get("pos") or {}).get("ev")}'] +
+                  [f'{n_}: {x.get("v")} ({x.get("st")})' for n_, x in (('الزمن', tf), ('البناء', vf), ('ضمير الصيغة', sf)) if x],
+                  frame=dict(identity=v.text, root=v.G.Theta.get('R'), pattern=v.G.Theta.get('P'),
+                             tense=(tf.get('v'), tf.get('st'), tf.get('alt')), voice=(vf.get('v'), vf.get('st'), vf.get('alt')),
+                             usage=usage, subject_requirement=srole if not nas else 'اسم الناسخ',
+                             transitivity=(trf.get('v'), trf.get('st'), trf.get('ev')),
+                             subject=dict({k: x for k, x in (subj or {}).items() if k != 'unit'},
+                                          unit=(subj or {}).get('unit').uid if (subj or {}).get('unit') else None) if subj else None,
+                             objects=[o_['relation_id'] for o_ in objs] + ([obj2['relation_id']] if obj2 else []),
+                             candidates=cands, open=opn))
+        R.append(fr)
+        frames[v.k] = fr
+        if subj and subj['status'] != LICENSED and subj.get('candidates'):
+            cu = [by_uid_[u_] for u_ in subj['candidates']]
+            R.append(_rec(ref, 'SUBJECT', 'S01', {'verb': v}, {'verb': [v], 'subject_candidate': cu}, DEFERRED, subj['why'],
+                          premises=[f'«{v.text}»: ضمير الصيغة غائبٌ مفرد ({sf.get("st")})'], role_name=srole,
+                          alternatives=[f'«{u_.text}» {srole}' for u_ in cu] + ['ضميرٌ مستتر']))
+        if subj and subj.get('unit') and subj['status'] == LICENSED:
+            u = subj['unit']
+            R.append(_rec(ref, 'SUBJECT', 'S01', {'verb': v, 'subject': u}, {'verb': [v], 'subject': [u]}, LICENSED, subj['why'],
+                          premises=[fr['relation_id'] if coherent else f'«{v.text}»: ضمير الصيغة غائبٌ مفرد مثبت ({sf.get("ev")})',
+                                    f'«{u.text}»: {u.nominative()[1]}'],
+                          checked=['منافسٌ مرفوعٌ في الإطار', 'عاملٌ مقبول في المرفوع', 'طرفٌ في علاقةٍ أخرى'],
+                          role_name=srole, mark_fact=dict(uid=u.uid, mark=subj.get('mark')), edges=[('SUBJECT', v.uid, u.uid)]))
+            bound[u.k] = R[-1]['relation_id']
+
     # A01 توليد مرشّحات التعلّق
     for hk, (orec, ous) in obliques.items():
         if orec['status'] != LICENSED or orec['relation_id'] in used_as_pred:
@@ -1075,27 +1497,253 @@ def verse_relations(a, units, F, ref):
                       '؛ والبحث غير مكتمل: لا جرد لأطر التعلّق',
                       premises=[orec['relation_id']], alternatives=hosts, container=cont, search_status=SEARCH_INCOMPLETE,
                       search_scope=dict(frame=[toks[lo].loc, toks[hi - 1].loc] if hi > lo else [], container=cont)))
-    # أدوار العمل من العلاقات المرخَّصة وحدها (لا من المؤجَّل): الابتداء، والخبر، وخبر الناسخ
+    # P03 v1 (مقترحة): المندمج رسماً من حرف جرٍّ واسمٍ مبني (مِمَّنْ = مِنْ + مَنْ، مِمَّا، عَمَّا، فِيمَا…) في الجرد المعتمد MERGED:
+    # الوحدة المكتوبة محفوظة، والجزءان بهويتيهما؛ والاسم مجرورٌ محلاً بالحرف (كل مداخله في ملف المبنيات أسماء)، ونوعه (موصول،
+    # استفهام، شرط) بدائل لا يُختار منها؛ والصلة إن كان موصولاً علاقةٌ مؤجَّلة
+    from .protected import MERGED
+    for i, t in enumerate(toks):
+        mg = MERGED.get((t.G.Theta.get('protected') or {}).get('identity') or t.text)
+        if not mg or len(mg) != 2 or mg[0] not in ('مِنْ', 'عَنْ', 'فِي', 'بِ', 'لِ') or mg[1] not in ('مَنْ', 'مَا'):
+            continue
+        if not _LEX:
+            from .lexicon import MabniLexicon
+            _LEX.append(MabniLexicon())
+        kinds = sorted({CAT_AR.get(e.get('category'), e.get('category')) for e in (_LEX[0].lookup(mg[1]) or [])})
+        nominal = bool(kinds) and all(k_ != CAT_AR['particle'] for k_ in kinds)
+        t.parts = [dict(part='حرف جر', text=mg[0], part_id=f'{t.uid}/p0', unit=t.uid, source='sarf.protected.MERGED'),
+                   dict(part='اسم مبني', text=mg[1], part_id=f'{t.uid}/p1', unit=t.uid, kinds=kinds, source='sarf.protected.MERGED')]
+        R.append(_rec(ref, 'PP', 'P03', {'preposition': t, 'complement': t}, {'preposition': [t], 'complement': [t]},
+                      LICENSED if nominal else DEFERRED,
+                      f'«{t.text}» = «{mg[0]}» + «{mg[1]}» في الجرد المعتمد: حرف جرٍّ ومجروره المبني في محلّ جر' if nominal else
+                      f'«{mg[1]}» له في ملف المبنيات مدخلٌ حرفي: الجرّ المحلّي غير مثبت',
+                      premises=[f'sarf.protected.MERGED: «{t.text}» = {" + ".join(mg)}', f'ملف المبنيات: «{mg[1]}» ← {"، ".join(kinds) or "—"}'],
+                      alternatives=[f'«{mg[1]}» {k_}' for k_ in kinds], merged_unit=True, parts=t.parts,
+                      part_heads=dict(preposition=t.parts[0]['part_id'], complement=t.parts[1]['part_id']),
+                      kind_status=DEFERRED if len(kinds) > 1 else LICENSED,
+                      kind_note='نوع الاسم المبني غير مختار: البدائل محفوظة، ولا يتوقف عليها الجرّ المحلّي'))
+        if nominal:
+            t.roles.append(dict(src='merged_pp', expected='جر', rid=R[-1]['relation_id'], role_name='مجرور بحرف الجر', rule='P03',
+                                status=LICENSED, parts=mg, kinds=kinds))
+        n_ = nxt(i)
+        if CAT_AR['relative'] in kinds and n_ is not None and n_.pos == 'فعل':
+            R.append(_rec(ref, 'SILAH', 'R02', {'relative': t, 'silah_head': n_}, {'relative': [t], 'silah_head': [n_]}, DEFERRED,
+                          f'إن كانت «{mg[1]}» موصولة فصلتها الجملة الفعلية «{n_.text}» بعدها؛ ونوعها غير مختار (البدائل: {"، ".join(kinds)})',
+                          premises=[R[-1]['relation_id']], alternatives=[f'«{mg[1]}» {k_}' for k_ in kinds if k_ != CAT_AR['relative']],
+                          resumptive=dict(status=DEFERRED, note='العائد إن كانت موصولة: مفعولٌ منصوب محذوف بعد «' + n_.text +
+                                          '» أو ضمير؛ ولا يُكتب المحذوف')))
+
+    # R02 (جسر): الصلة الفعلية والاسمية من الطبقة القديمة (sarf.algebra.relative_structs) بنطاقها ودليلها، والعائد التزامٌ يُفحص:
+    # المطابقة شرطٌ لا يثبت المرجع وحده، فالعائد مؤجَّل إلا أن يكون فاعلاً مكتوباً للغائب في فعل الصلة الأول ولا ضمير غيره في نطاقها
+    for c in legacy_rel or []:
+        if not c['head'].startswith(ref + ':'):
+            continue
+        wloc = lambda l: int(l.split(':')[2]) - 1
+        rel_t = next((t for t in toks if t.wi == wloc(c['head']) and t.mcat == 'relative'), None)
+        if rel_t is None:
+            continue
+        span = [t for t in toks if wloc(c['start']) <= t.wi <= wloc(c['last'])]
+        if not span:
+            continue
+        sil = {o_[0]: o_ for o_ in c['obligations']}
+        s_ok = sil.get('صلة', [None, 'False'])[1] == 'True'
+        rh = sil.get('عائد', [None, 'False', ''])
+        head_ = next((t for t in span if t.pos == 'فعل'), span[0])
+        st_ = LICENSED if s_ok else DEFERRED
+        bnd = 'آخر الآية (حدّ مصدر)' if c['end_is_text_end'] else f'قبل «{c["end_word"]}»'
+        prons = [t for t in span if t.enclitic]
+        rv = DEFERRED
+        rnote = (rh[2] if len(rh) > 2 else '') or 'لم يُكشف'
+        if rh[1] == 'True' and 'فاعل' in rnote and not prons and head_.pos == 'فعل':
+            rv, rnote = LICENSED, rnote + '؛ ولا ضمير غيره في نطاق الصلة: هو العائد بالحصر'
+        R.append(_rec(ref, 'SILAH', 'R02', {'relative': rel_t, 'silah_head': head_}, {'relative': [rel_t], 'silah_head': [head_], 'silah': span}, st_,
+                      (f'صلة «{rel_t.text}» {c["silah"]} من «{span[0].text}» إلى «{span[-1].text}» (الحدّ: {bnd})' if s_ok else
+                       'الصلة غير مكشوفة في الطبقة القديمة'),
+                      premises=[f'المرحلة ١٤ (LEGACY، sarf.algebra.relative_structs): {o_[0]} — {o_[2]} → {"مستوفى" if o_[1] == "True" else "مفتوح"}'
+                                for o_ in c['obligations']],
+                      extent=[t.uid for t in [rel_t] + span], boundary_proven=bool(c['end_is_text_end']),
+                      resumptive=dict(status=rv, note=rnote, rule='المطابقة شرط، والحصر دليل'),
+                      alternatives=[] if rv == LICENSED else ['العائد ضميرٌ آخر في النطاق', 'العائد محذوفٌ بقاعدة']))
+
+    # C01 (جسر): علاقات الشرط من الطبقة القديمة (المرحلة ١٤) تُنقل بهوياتها ومقدّماتها، لا يُعاد اشتقاقها ولا تُرفع رتبتها:
+    # الأداة، وفعل الشرط، والجواب ورابطه، وملكية الجواب؛ ومرخّصة هناك ← LICENSED، ومرشّحة ← DEFERRED
+    for c in legacy_cond or []:
+        if not c['head'].startswith(ref + ':'):
+            continue
+        wloc = lambda l: int(l.split(':')[2]) - 1 if l else None
+        hw = wloc(c['head'])
+        tool = next((t for t in toks if t.wi == hw and 'عامل' in (t.lex or '') and t.text.endswith(c['tool'][-1:]) or
+                     t.wi == hw and t.text == c['tool']), None) or next((t for t in toks if t.wi == hw and not t.conj), None)
+        if tool is None:
+            continue
+        heads, members, prem, parts_st = {'tool': tool}, {'tool': [tool]}, [], {}
+        for why, role in (('فعل الشرط', 'condition_verb'), ('جواب الشرط', 'answer')):
+            pt = c['parts'].get(why)
+            if not pt:
+                parts_st[role] = ('غائب', 'لم يُكشف في الطبقة القديمة')
+                continue
+            nw = wloc(pt.get('nucleus') or pt.get('word'))
+            u = next((t for t in toks if t.wi == nw and t.pos == 'فعل'), None) or \
+                next((t for t in toks if t.wi == nw and not t.conj and not t.enclitic), None)
+            if u is None:
+                continue
+            heads[role], members[role] = u, [u]
+            parts_st[role] = (LICENSED if pt['status'] == 'مرخّصة' and pt.get('owned') else DEFERRED,
+                              pt.get('bound_text') or '')
+            prem.append(f'المرحلة ١٤ (LEGACY): {why} «{c["tool"]}» ← {pt.get("nucleus") or pt.get("word")} [{pt.get("premise")}] → {pt["status"]}'
+                        + ('' if pt.get('owned') else '؛ والموضع مملوكٌ لعلاقةٍ أخرى هناك'))
+            if role == 'answer':
+                lk = next((t for t in toks if t.wi == wloc(pt.get('word')) and t.conj), None)
+                if lk is not None and 'فاء' in str(c.get('q_kind') or ''):
+                    heads['linker'], members['linker'] = lk, [lk]
+        ok = all(parts_st.get(r_, ('',))[0] == LICENSED for r_ in ('condition_verb', 'answer')) and not c['amb']
+        R.append(_rec(ref, 'CONDITION', 'C01', heads, members, LICENSED if ok else DEFERRED,
+                      ('الأداة وفعل الشرط والجواب مرخَّصةٌ في الطبقة القديمة بأدلتها، والجواب مملوكٌ للأداة' if ok else
+                       'بعض أجزاء الشرط مرشّحةٌ أو غائبة في الطبقة القديمة: ' +
+                       '، '.join(f'{k_}={v_[0]}' for k_, v_ in parts_st.items() if v_[0] != LICENSED)) +
+                      ('؛ والأداة ملتبسة (شرطية أو موصولة أو استفهامية)' if c['amb'] else ''),
+                      premises=prem or [f'المرحلة ١٤: أداة شرط «{c["tool"]}» ({c["head"]})'],
+                      parts_status={k_: v_[0] for k_, v_ in parts_st.items()}, legacy=dict(head=c['head'], q_kind=c.get('q_kind'),
+                                                                                         obligations=c.get('obligations')),
+                      alternatives=(['«إذا» ظرفٌ لما يُستقبل من الزمان متضمّنٌ معنى الشرط، وجوابه متعلَّقه أو دليله']
+                                    if c['tool'].startswith('إِذَا') else [])))
+
+    # رتبة المقدّمات: العلاقة المرخَّصة لا تقوم على مقدّمةٍ غير مرخَّصة؛ وما قام عليها يُنزَّل إلى التأجيل بسببه (إلى الثبات)
+    ids = {r_['relation_id']: r_ for r_ in R}
+    changed = True
+    while changed:
+        changed = False
+        for r_ in R:
+            if r_['status'] != LICENSED:
+                continue
+            bad = [p_ for p_ in r_['premises'] if p_ in ids and ids[p_]['status'] != LICENSED]
+            if bad:
+                r_['reason_before_rank'] = r_['reason']
+                r_['status'] = DEFERRED
+                r_['reason'] = 'مقدّمةٌ غير مرخَّصة: ' + '، '.join(f'{p_} ({ids[p_]["status"]})' for p_ in bad) + \
+                    ' — والعلاقة تحمل رتبة مقدّماتها'
+                changed = True
+
+    # أدوار العمل من العلاقات المرخَّصة وحدها (لا من المؤجَّل)
     by_uid = {t.uid: t for t in toks}
     for rec in R:
         if rec['status'] != LICENSED:
             continue
         hd = rec['heads']
+        rid = rec['relation_id']
         if rec['type'] in ('PREDICATION', 'PREDICATIVE_PP') and hd.get('subject') in by_uid:
-            by_uid[hd['subject']].roles.append(dict(src='ibtida', expected='رفع', rid=rec['relation_id']))
+            by_uid[hd['subject']].roles.append(dict(src='ibtida', expected='رفع', rid=rid, role_name='مبتدأ', rule=rec['rule_id']))
         if rec['type'] == 'PREDICATION' and hd.get('predicate') in by_uid:
-            by_uid[hd['predicate']].roles.append(dict(src='khabar', expected='رفع', rid=rec['relation_id'],
+            by_uid[hd['predicate']].roles.append(dict(src='khabar', expected='رفع', rid=rid, role_name='خبر', rule=rec['rule_id'],
                                                       of=by_uid[hd['subject']].text))
         if rec['type'] == 'ADVP' and hd.get('complement') in by_uid:
-            by_uid[hd['complement']].roles.append(dict(src='idafa', expected='جر', rid=rec['relation_id'],
+            by_uid[hd['complement']].roles.append(dict(src='idafa', expected='جر', rid=rid, role_name='مضاف إليه', rule='P02',
                                                        of=by_uid[hd['adverb']].text))
+        if rec['type'] == 'ADVP' and hd.get('adverb') in by_uid and 'نصب' in _written_mark(by_uid[hd['adverb']])[1]:
+            # الظرفية دورٌ للظرف المنصوب كتابةً؛ والمجرور بجارٍّ قبله (مِن بَيۡنِ) اسمٌ مجرور لا ظرف
+            by_uid[hd['adverb']].roles.append(dict(src='zarf', expected='نصب', rid=rid, role_name='ظرف', rule='P02'))
+        if rec['type'] == 'IDAFA' and hd.get('mudaf_ilayh') in by_uid:
+            by_uid[hd['mudaf_ilayh']].roles.append(dict(src='idafa', expected='جر', rid=rid, role_name='مضاف إليه', rule=rec['rule_id'],
+                                                        of=by_uid[hd['mudaf']].text))
+        if rec['type'] == 'OBJECT' and hd.get('object') in by_uid:
+            by_uid[hd['object']].roles.append(dict(src='object', expected='نصب', rid=rid, role_name='مفعول به', rule=rec['rule_id'],
+                                                   of=by_uid[hd['verb']].text))
+        if rec['type'] == 'SUBJECT' and hd.get('subject') in by_uid:
+            by_uid[hd['subject']].roles.append(dict(src='subject', expected='رفع', rid=rid, role_name=rec.get('role_name') or 'فاعل',
+                                                    rule='S01', of=by_uid[hd['verb']].text))
+        if rec['type'] == 'VOC_FOLLOWER' and hd.get('follower') in by_uid:
+            by_uid[hd['follower']].roles.append(dict(src='voc_follower', expected='رفع', rid=rid, rule='V02',
+                                                     role_name=ROLE_NAME['voc_follower']))
         if rec['type'] == 'NASIKH' and hd.get('khabar') in by_uid and rec.get('members', {}).get('khabar') == [hd['khabar']]:
             kt = by_uid[hd['khabar']]
             if kt.k not in span_of:
-                kt.roles.append(dict(src='nasikh', expected='نصب' if rec.get('nasikh_group') == NASIKH_KANA else 'رفع',
-                                     rid=rec['relation_id'], of=by_uid[hd['nasikh']].text))
+                kt.roles.append(dict(src='nasikh', expected='نصب' if rec.get('nasikh_group') == NASIKH_KANA else 'رفع', rule='V01',
+                                     rid=rid, of=by_uid[hd['nasikh']].text, role_name=f'خبر «{by_uid[hd["nasikh"]].text}»'))
+    # المبني بلا دور: أربع حالاتٍ لا تُخلط — لا محلّ مثبت (حرفٌ أو فعل)، ومحلٌّ غير محسوم (علاقةٌ مؤجَّلة تسمّيه)،
+    # وقاعدة الدور غير منفّذة، ودليلٌ سابق غير موصول (سمةٌ مثبتة في المرحلة ١٣ لم تستوفِ قاعدة هذه الطبقة)
+    ROLE_BEARING = ('SUBJECT', 'OBJECT', 'IDAFA', 'NASIKH', 'PREDICATION', 'PREDICATIVE_PP', 'VOC_FOLLOWER', 'ADVP')
+    for t in toks:
+        mabni = (t.lex or '') in ('مبني', 'مبني+عامل') or t.mcat is not None or t.enclitic
+        op_unit = ('عامل' in (t.lex or '') or str(t.pos or '').startswith('عامل')) and not t.nounish() and t.pos != 'فعل'
+        if not (mabni or op_unit) or t.roles:
+            continue
+        kw = MCAT_KW.get('attached_pronoun' if t.enclitic else t.mcat, 'مبني')
+        pend = [r_ for r_ in R if r_['status'] != LICENSED and r_['type'] in ROLE_BEARING and
+                any(t.uid in us for k_, us in r_['members'].items() if k_ not in ('relative',))]
+        ec = t.feats.get('enclitic_case') or {}
+        if op_unit or t.mcat == 'particle' or t.conj:
+            us_ = t.usage or {}
+            from .protected import MERGED
+            mg = MERGED.get((t.G.Theta.get('protected') or {}).get('identity') or t.text)
+            ids_ = list(mg) if mg else [s_['text'] for s_ in t.slots if s_['type'] == 'مبني'] + \
+                sorted({u['operator'] for u in us_.get('accepted', [])} or
+                       {u['operator'] for u in us_.get('alternatives', []) if u.get('status') != 'blocked'}) or [t.text]
+            acc = [u['group'] for u in (t.usage or {}).get('accepted', [])]
+            if not _LEX:
+                from .lexicon import MabniLexicon
+                _LEX.append(MabniLexicon())
+            cats = [{e.get('category') for e in (_LEX[0].lookup(x) or [])} for x in ids_]
+            if all(c_ == {'particle'} for c_ in cats):
+                t.mabni_state = dict(code='NO_MAHALL', text='حرفٌ مبني لا محلّ له من الإعراب (ملف المبنيات: كل مداخل «' +
+                                     '»، «'.join(ids_) + '» حروف)', evidence='lexicon/mabniyat_lexicon.jsonl')
+            elif all('particle' in c_ for c_ in cats) and acc and all(str(g_) == JARR for g_ in acc):
+                t.mabni_state = dict(code='NO_MAHALL', text=f'حرف جرٍّ في استعماله المقبول (مج 1)، وله في ملف المبنيات مدخلٌ حرفي: لا محلّ له',
+                                     evidence='المرحلة ١١ + ملف المبنيات')
+            elif any(c_ - {'particle'} for c_ in cats):
+                t.mabni_state = dict(code='ROLE_RULE_NOT_IMPLEMENTED',
+                                     text='للأداة في ملف المبنيات مداخل اسمية (' + '، '.join(sorted(set().union(*cats) - {'particle'})) +
+                                     '): محلّها إن كانت اسماً لم يُعيَّن، وقاعدة تعيينه غير منفّذة', evidence=None)
+            else:
+                t.mabni_state = dict(code='LEXICAL_ENTRY_MISSING', text='لا مدخل لها في ملف المبنيات: صنفها ومحلّها غير معيَّنين (مدخلٌ معجمي ناقص)',
+                                     evidence=None)
+        elif ec.get('v') and ec.get('st') == 'مثبت':
+            t.mabni_state = dict(code='EVIDENCE_NOT_ADOPTED',
+                                 text=f'دليلٌ سابق غير موصول: المرحلة ١٣ تحكم بمحلّ {ec["v"]} ({ec.get("ev")})، ولم تستوفِ قاعدة هذه الطبقة: ' +
+                                 ('؛ '.join(r_['reason'] for r_ in pend) or 'لا قاعدة تربط مضيفه'),
+                                 evidence=[r_['relation_id'] for r_ in pend])
+        elif pend:
+            t.mabni_state = dict(code='MAHALL_UNRESOLVED', text='المحلّ غير محسوم: علاقةٌ مؤجَّلة تسمّيه — ' +
+                                 '؛ '.join(f'{r_["rule_id"]}: {r_["reason"]}' for r_ in pend[:2]), evidence=[r_['relation_id'] for r_ in pend])
+        else:
+            t.mabni_state = dict(code='ROLE_RULE_NOT_IMPLEMENTED',
+                                 text=f'{kw} مبني؛ دوره ومحلّه في هذا التركيب لم يُرخَّصا بعد في النظام (قاعدة الدور غير منفّذة)', evidence=None)
     return dict(records=R, tokens=[(t.uid, t.loc, t.text) for t in toks],
                 axes={t.uid: t.axes(toks[i + 1] if i + 1 < len(toks) else None) for i, t in enumerate(toks)})
+
+
+def _parts_map(t, seg):
+    """أجزاء الوحدة المكتوبة الواحدة (لِلشَّهَٰدَةِ = لِ + ال + شَّهَٰدَةِ): لكلّ جزءٍ هويته (الوحدة/الخانة)، ونصّه، ومجاله في محارف الكلمة،
+    ونوعه، ومقاطعه بأرقامها في الوحدة. ولام «أل» قبل الحرف الشمسي المشدَّد مدغمةٌ فيه: لا مقطع لها، ويُذكر ذلك"""
+    kinds = {'عامل': 'حرف جر', 'أل': 'أداة تعريف', 'جذع': 'اسم مجرور', 'لفظ الجلالة': 'اسم مجرور', 'مبني': 'مبني'}
+    sl = t.slots
+    syl = (seg['units'][t.ui].get('syllables') or [])
+    # محاذاة الحروف بالمقاطع: الحرف الشمسي المشدَّد يُعدّ مرتين (ساكنٌ في آخر المقطع، ومتحرّكٌ في أول ما بعده)
+    lt = letters(t.text)
+    pos_syl, si, k = [], 0, 0
+    sylL = [[c for c, _ in letters(x['syl'])] for x in syl]
+    flat = [(n, c) for n, cs in enumerate(sylL) for c in cs]
+    out_map = []
+    fi = 0
+    for n, (c, m) in enumerate(lt):
+        hit = []
+        if c == 'ل' and n + 1 < len(lt) and SHADDA in lt[n + 1][1] and not m - {SUKUN} and n > 0:
+            out_map.append([])                      # لام «أل» الشمسية: لا تُنطق
+            continue
+        reps = 2 if SHADDA in m else 1
+        for _ in range(reps):
+            while fi < len(flat) and flat[fi][1] != c and c not in 'اوىي':
+                fi += 1
+            if fi < len(flat) and flat[fi][1] == c:
+                hit.append(flat[fi][0])
+                fi += 1
+        out_map.append(sorted(set(hit)))
+    parts = []
+    for x in sl:
+        a0, a1 = x.get('span') or (0, 0)
+        sy = sorted({s_ for n in range(a0, min(a1, len(out_map))) for s_ in out_map[n]})
+        parts.append(dict(part=kinds.get(x['type'], x['type']), text=x.get('text'), slot=x['index'], unit=t.uid, span=[a0, a1],
+                          part_id=f'{t.uid}/s{x["index"]}', syllables=sy,
+                          note='لام «أل» مدغمةٌ في الحرف الشمسي بعدها: لا مقطع لها، وأثرها الشدّة' if x['type'] == 'أل' and not sy else None))
+    return parts
 
 
 def check_inflection(axes, tokens=None):
@@ -1120,6 +1768,12 @@ def check_inflection(axes, tokens=None):
                 exp not in (g.get('capacity_mediated') or []):
             if inf.get('agreement') != 'CONFLICT':
                 bad.append(f'{uid}: قدرة «{g.get("operator")}» {g["capacity"]} لا تشمل «{exp}» ولم يُسجَّل تعارض')
+        if inf.get('agreement') == 'AGREE' and g.get('kind') == 'عامل' and exp not in (g.get('capacity') or []) and \
+                exp not in (g.get('capacity_mediated') or []):
+            bad.append(f'{uid}: AGREE و«{exp}» خارج قدرة استعمال «{g.get("operator")}» (لفظاً {g.get("capacity")}، '
+                       f'وبوساطة {g.get("capacity_mediated")})')
+        if inf.get('agreement') == 'AGREE' and g.get('relation') == 'بوساطة (في الجرد)' and exp not in (g.get('capacity_mediated') or []):
+            bad.append(f'{uid}: العلاقة «بوساطة» ولا وساطة في سجل العامل')
         if inf.get('agreement') == 'AGREE':
             if inf.get('mark_kind') == 'محلّي':
                 if not st or f'في محلّ {exp}' not in st:
@@ -1149,6 +1803,13 @@ def check_inflection(axes, tokens=None):
                 bad.append(f'{uid}: المشاهَد في المرحلة ١١ «{g.get("observed")}» يخالف المقتضى «{exp}» مع AGREE')
             if ax.get('word_class', (None,))[0] == 'فعل' and exp == 'جر' or 'فعل' in (st or '') and 'مجرور' in (st or ''):
                 bad.append(f'{uid}: فعلٌ مجرور')
+            if g.get('kind') == 'عامل' and not g.get('role_name') and g.get('operator') and \
+                    f'«{g["operator"]}»' not in (st or '') and 'مضمرةً بعد' not in (st or ''):
+                bad.append(f'{uid}: العبارة «{st}» لا تسمّي العامل المسجَّل «{g["operator"]}»')
+            if g.get('role_name') and g['role_name'] not in (st or ''):
+                bad.append(f'{uid}: العبارة «{st}» لا تذكر الدور المرخَّص «{g["role_name"]}»')
+            if g.get('role_name') and g.get('relation_status') not in (None, LICENSED):
+                bad.append(f'{uid}: دورٌ من علاقةٍ غير مرخَّصة ({g.get("relation_status")}) مع AGREE')
         elif st and any(w in st for w in STATE_ADJ.values()) and 'محلّ' not in st:
             bad.append(f'{uid}: عبارة إعرابٍ بلا اتفاق ({inf.get("agreement")})')
     return bad
@@ -1204,6 +1865,57 @@ def check_records(records, tokens):
     for n in graph:
         dfs(n, [])
     for r in records:
+        if r['status'] == LICENSED:
+            for p in r['premises']:
+                if p in ids and ids[p]['status'] != LICENSED:
+                    errs.append(f"{r['relation_id']}: مرخَّصٌ ومقدّمته {p} غير مرخَّصة ({ids[p]['status']}): رتبة العلاقة فوق رتبة مقدّمتها")
+    for r in records:
         if r['status'] == LICENSED and r['premises'] and all(p in ids for p in r['premises']):
             errs.append(f"{r['relation_id']}: مقدّماته كلها علاقاتٌ بلا حقيقةٍ مصدرية مستقلة")
+    return errs
+
+
+def check_cross(records, axes):
+    """فاحصٌ عابرٌ للطبقات بهوية التحليل نفسها: → [الخلل].
+    ١ العلامة في مقدّمة العلاقة (mark_fact، أو «الرفع مكتوب (X)») هي العلامة نفسها في محور الوحدة المسمّاة.
+    ٢ دور المحور (role_name) مصدره علاقةٌ موجودة مرخَّصة، والوحدة من أعضائها.
+    ٣ امتداد شبه الجملة (complement_ext) لا يكون بلا سجلّ إضافةٍ مرخَّص في مقدّماتها"""
+    import re
+    errs = []
+    ids = {r['relation_id']: r for r in records}
+    txt_uid = {}
+    for r in records:
+        for role, us in r['members'].items():
+            for u, tx in zip(us, (r['texts'].get(role) or '').split(' ')):
+                txt_uid.setdefault((r['relation_id'], tx), u)
+    for r in records:
+        facts = []
+        if r.get('mark_fact'):
+            facts.append((r['mark_fact']['uid'], r['mark_fact']['mark'], 'mark_fact'))
+        for p in r['premises']:
+            m = re.match(r'^«(.+?)»: الرفع مكتوب \((.+?)\)', str(p))
+            if m:
+                u = txt_uid.get((r['relation_id'], m.group(1)))
+                if u:
+                    facts.append((u, m.group(2), p))
+        for u, mk, src in facts:
+            inf = (axes.get(u) or {}).get('inflection') or {}
+            am = inf.get('mark')
+            if u not in axes:
+                errs.append(f"{r['relation_id']}: مقدّمةٌ تسمّي وحدةً غير موجودة {u}")
+            elif am and mk and am[0] != mk:
+                errs.append(f"{r['relation_id']}: العلامة في المقدّمة «{mk}» غير علامة المحور «{am[0]}» للوحدة {u} ({src})")
+        if r['members'].get('complement_ext') and not any(p in ids and ids[p]['type'] == 'IDAFA' and ids[p]['status'] == LICENSED
+                                                           for p in r['premises']):
+            errs.append(f"{r['relation_id']}: امتداد المكمّل بلا إضافةٍ مرخَّصة في مقدّماته")
+    for u, ax in axes.items():
+        g = (ax.get('inflection') or {}).get('governor') or {}
+        if g.get('role_name') and g.get('relation_id'):
+            r = ids.get(g['relation_id'])
+            if r is None:
+                errs.append(f'{u}: الدور «{g["role_name"]}» من علاقةٍ غير موجودة {g["relation_id"]}')
+            elif r['status'] != LICENSED:
+                errs.append(f'{u}: الدور «{g["role_name"]}» من علاقةٍ {r["status"]}')
+            elif not any(u in us for us in r['members'].values()):
+                errs.append(f'{u}: الدور «{g["role_name"]}» من علاقةٍ ليست الوحدة من أعضائها')
     return errs

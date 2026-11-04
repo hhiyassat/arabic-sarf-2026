@@ -55,7 +55,7 @@ else:                                   # حكم المالك: التقرير ص
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     import report_serial
     OUT = os.path.join('reports', f'arabic-sarf-{report_serial.next_serial():03d}.html')
-h = html.escape
+h = lambda x, quote=True: html.escape('—' if x is None else x if isinstance(x, str) else str(x), quote)
 SECTIONS = []          # (رقم، عنوان، شرح، html، نصّ للطرفية)
 
 
@@ -109,7 +109,9 @@ for pv in per_verse:
         cross += cross_ayah_links(lambda t_: analyze(cat, t_, 'auto' if args.text else quran_source.uthmani_mode()), prev, cur)
         ends.add((prev['s'], prev['v']))
     prev = cur
-LT, lstats, _ = linguistic_layer(items, Trace(), 'trace', cross=cross, checked_ends=frozenset(ends))
+COND, RELS = [], []
+LT, lstats, _ = linguistic_layer(items, Trace(), 'trace', cross=cross, checked_ends=frozenset(ends), cond_out=COND,
+                                rel_out=RELS)
 
 loc = lambda pv, wi: f"{pv['s']}:{pv['v']}:{wi + 1}"
 N = args.words
@@ -494,11 +496,37 @@ from sarf.relations import verse_relations, check_records
 rows_r, tl_r, rows_x, tl_x = [], [], [], []
 for pv in per_verse:
     ref = f"{pv['s']}:{pv['v']}"
-    rel = verse_relations(pv['a'], pv['units'], pv['F'], ref)
+    rel = verse_relations(pv['a'], pv['units'], pv['F'], ref, legacy_cond=COND, legacy_rel=RELS)
     errs = check_records(rel['records'], rel['tokens'])
+    from sarf.relations import check_cross
+    errs += check_cross(rel['records'], rel['axes'])
     for r in rel['records']:
         alts = '<br>'.join(h(a if isinstance(a, str) else f"{a['host_kind']}: «{a['host_text']}» ({a['host_position']}) — {a['status']}")
                            for a in r['alternatives']) or '—'
+        fr = r.get('frame')
+        if fr:
+            sb = fr.get('subject') or {}
+            alts = (f"الهوية: {h(fr['identity'])} (الجذر {h(fr.get('root') or '—')}، الوزن {h(fr.get('pattern') or '—')})"
+                    f"<br>الزمن: {h(fr['tense'][0])} ({h(fr['tense'][1])})؛ البناء: {h(fr['voice'][0])} ({h(fr['voice'][1])})"
+                    f"<br>الاستعمال: {h(fr['usage'])}؛ متطلَّب الإسناد: {h(fr['subject_requirement'])}"
+                    f"<br>التعدّي: {h(fr['transitivity'][0] or '—')} ({h(fr['transitivity'][1] or '—')})"
+                    f"<br>الإسناد: {h(sb.get('role') or '—')} — {h(sb.get('kind') or '—')} [{h(sb.get('status') or '—')}]: {h(sb.get('why') or '')}"
+                    f"<br>المفاعيل: {h('، '.join(fr.get('objects') or []) or '—')}"
+                    + ''.join(f"<br>مرشّح {h(c['id'])}: {h(c.get('tense'))}، {h(c.get('voice'))}، {h(c.get('subject_role'))} "
+                              f"[{h(c['status'])}] {h(c.get('realization') or '')} {h(c.get('reason') or '')}" for c in fr.get('candidates') or [])
+                    + ''.join(f"<br>التزامٌ مفتوح: {h(x)}" for x in fr.get('open') or []))
+        if r.get('parts'):
+            alts += ''.join(f"<br>جزء {h(p_['part'])}: «<span class='ar'>{h(p_['text'])}</span>» <code>{h(p_['part_id'])}</code> "
+                            f"المحارف {h(str(p_.get('span') or '—'))}، المقاطع {h(str(p_.get('syllables') or '—'))}" + (f" — {h(p_['note'])}" if p_.get('note') else '')
+                            for p_ in r['parts'])
+        if r.get('parts_status'):
+            alts += '<br>' + h('، '.join(f'{k}={v}' for k, v in r['parts_status'].items()))
+        if r.get('resumptive'):
+            alts += f"<br>العائد: {h(r['resumptive'].get('status'))} — {h(r['resumptive'].get('note'))}"
+        if r.get('kind_status'):
+            alts += f"<br>نوع التابع: {h(r['kind_status'])} — {h(r.get('kind_note') or '')}"
+        if r.get('reason_before_rank'):
+            alts += f"<br>قبل الرتبة: {h(r['reason_before_rank'])}"
         rows_r.append([h(r['type']), f"{h(r['rule_id'])} {h(r['rule_version'])}", f"<span class='st {'p' if r['status'] == 'LICENSED' else 'c'}'>{h(r['status'])}</span>",
                        '<br>'.join(f"{h(k)}: <span class='ar'>{h(v)}</span> <sub>{h('، '.join(r['positions'][k]))}</sub>" for k, v in r['texts'].items()),
                        h(r['reason']), '<br>'.join(h(str(x)) for x in r['premises']) or '—', alts,
@@ -521,7 +549,10 @@ for pv in per_verse:
                                  f"؛ بوساطة: {h('، '.join(g.get('capacity_mediated') or []) or '—')}"
                                  f"؛ محلّ المعمول الأصلي في الجرد: {h('، '.join(g.get('capacity_mahall_of_complement') or []) or '—')}"
                                  f"<br>المشاهَد في ١١: {h(g.get('observed'))}"
-                                 if g.get('kind') == 'عامل' else f"{h(g.get('kind'))} يقتضي {h(g.get('expected'))}؛ العلاقة: {h(g.get('relation'))} "
+                                 + (f"<br><sub>بدائل معجمية لا تُثبت الاتفاق ولا تنفيه: {h('؛ '.join(str(x['meaning']) + ' ' + str(x['capacity']) for x in g.get('lexical_alternatives') or []))}</sub>"
+                                    if g.get('lexical_alternatives') else '')
+                                 + (f"<br>الدور: {h(g.get('role_name'))} ({h(g.get('role_rule'))})" if g.get('role_name') else '')
+                                 if g.get('kind') == 'عامل' else f"الدور «{h(g.get('role_name'))}» ({h(g.get('role_rule'))}، {h(g.get('relation_status'))}) يقتضي {h(g.get('expected'))}؛ العلاقة: {h(g.get('relation'))} "
                                  f"<sub><code>{h(g.get('relation_id'))}</code></sub>")
         ef = inf.get('effect') or {}
         eff = '—' if not ef else '؛ '.join(f'{k}: {h(v)}' for k, v in (('لفظي', ef.get('lafzi')), ('تقديري', ef.get('taqdiri')),
@@ -535,12 +566,32 @@ for pv in per_verse:
         mk = inf.get('mark')
         if len(tl_x) < N:
             tl_x.append(f"{loc_:<10} {txt:<14} {inf['agreement']:<10} " + (inf['statement'] or (inf['state'][1] or '')[:70]))
-        rows_x.append([h(loc_), f"<span class='ar'>{h(txt)}</span>", cell(ax['word_class']), cell(inf['build']), gov,
+        rl = ax.get('role') or (None, '')
+        role_cell = (f"{h(rl[0])} [{h(ax.get('role_status') or '—')}]<br><sub>{h(str(rl[1] or ''))}</sub>" if rl[0] else
+                     f"غير مرخَّص<br><sub>{h(str(rl[1] or ''))}</sub>") + \
+            (f"<br><sub>حالة المبني: {h((ax.get('mabni_state') or {}).get('code'))}</sub>" if ax.get('mabni_state') else '')
+        ca = ax.get('case_axis') or (None, '')
+        role_cell += f"<br>الحالة أو المحلّ: {h(ca[0] or 'غير محسوم')}" + (f" ({h(ca[1])})" if ca[0] else '')
+        wcell = cell(ax['word_class']) + ''.join(f"<br><sub>جزء {h(p_['part'])}: «{h(p_['text'])}» {h(p_['part_id'])} م{h(str(p_.get('span') or '—'))} مق{h(str(p_.get('syllables') or '—'))}</sub>"
+                                                 for p_ in ax.get('parts') or [])
+        us = ax.get('operator_usage') or {}
+        ucell = cell(ax['operator']) + ''.join(
+            f"<br><sub>مقبول: «{h(u['operator'])}» (مج {h(u['group'])}) — الاستعمال: {h('، '.join(u.get('usage') or []) or '—')}؛ "
+            f"أثره هنا: {h(u.get('effect_in_analysis') or '—')} في «{h(u.get('target_text') or '—')}» ({h(u.get('level') or '—')})"
+            + (f"؛ بوساطة: {h(u['mediation'])}" if u.get('mediation') else '') +
+            (f"؛ بدائل معجمية: {h('؛ '.join(str(x['meaning']) + ' ' + str(x['capacity']) for x in u.get('lexical_alternatives') or []))}"
+             if u.get('lexical_alternatives') else '') + '</sub>' for u in us.get('accepted', [])) + \
+            (f"<br><sub>استعمالاتٌ أخرى للخانة: {h('؛ '.join(str(x['operator']) + ' (مج ' + str(x['group']) + ') ' + str(x['status']) for x in us.get('alternatives', [])))}</sub>"
+             if us.get('alternatives') else '')
+        pd = ax.get('protection_detail') or {}
+        pcell = cell(ax['protection']) + (f"<br><sub>النطاق: {h(pd.get('scope'))}؛ السبب: {h(pd.get('reason'))}؛ المصدر: {h(pd.get('source'))}</sub>"
+                                          if pd.get('cls') else '')
+        rows_x.append([h(loc_), f"<span class='ar'>{h(txt)}</span>", wcell, cell(inf['build']), role_cell, gov,
                        cell(inf['state']) + f'<br><sub>الأثر: {eff}</sub>', (f"{h(mk[0])}" if mk else h(inf.get('mark_kind') or '—')) +
                        f'<br><sub>{dims}</sub>', h(inf.get('cause') or (mk[1] if mk else '') or '—'),
                        f"<b>{h(inf['agreement'])}</b>" + ''.join(f'<br>{h(c)}' for c in inf['conflicts']) + nat + notes,
-                       h(inf['statement'] or '—'), cell(ax['protection']), cell(ax['operator'])])
-    rows_x.append(['—', '—', '—', '—', '—', '—', '—', '—',
+                       h(inf['statement'] or '—'), pcell, ucell])
+    rows_x.append(['—', '—', '—', '—', '—', '—', '—', '—', '—',
                    f'الفاحص المستقل للإعراب: {"سليم" if not ierrs else h("؛ ".join(ierrs))}', '', '', ''])
 section('14أ', 'العلاقات المحلية بأدلتها (عقد النواة الاسمية والتعلّق v1)',
         'سجلات sarf.relations: لكل علاقةٍ قاعدتها وإصدارها، وأطرافها بمواضعها، وسببها، ومقدّماتها (حقائق مصدرية أو علاقاتٌ قبلها)، '
@@ -554,7 +605,7 @@ section('14ب', 'محاور الصنف المستقلة',
         'صنف الكلمة (اسم، فعل، حرف)، والبناء والإعراب، والحماية الدستورية، والعمل: محاور لا يُغني أحدها عن الآخر؛ '
         'و«مبني» ليس بديلاً عن «اسم»، و«عامل» ليس صنفاً رابعاً. وشكل التنوين وحده لا يثبت الاسمية في هذا المحور (العقد T19)، '
         'وسمة الصنف في المرحلة ١٣ باقيةٌ كما هي بدليلها',
-        rows_x, ['الموضع', 'الوحدة', 'صنف الكلمة', 'البناء', 'العامل وعلاقته وقدرته', 'الحالة والأثر', 'العلامة وأبعادها', 'سببها', 'الاتفاق',
+        rows_x, ['الموضع', 'الوحدة', 'صنف الكلمة', 'البناء', 'الدور النحوي ودليله', 'العامل وعلاقته وقدرته', 'الحالة والأثر', 'العلامة وأبعادها', 'سببها', 'الاتفاق',
                  'العبارة', 'الحماية', 'العمل'], tl_x)
 section(15, 'الوحدة الخطابية', 'المعرّفات (2,282,n) فهرسٌ داخلي يبدأ من 0 (internal_index_0_based): الكلمة n فيها هي الكلمة n+1 في المواضع الخارجية. الجمل المتصلة بحدودها وتعلّقها. ونهاية السورة تحدّ نطاق المصدر ولا تثبت وحدها اكتمال البنية: '
         'الإغلاق الخارجي لا يُحكم به إلا باستيفاء التزامات الوحدة', rows_d,

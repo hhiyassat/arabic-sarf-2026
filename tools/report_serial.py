@@ -20,7 +20,11 @@ PAT = re.compile(r'^arabic-sarf-(\d+)\.html$')
 
 
 def next_serial():
+    """الرقم التالي من الموجود: ملفات reports/ والمسجَّل في الفهرس (ومنه ما وُلّد على جهاز المالك ولم يدخل المستودع): لا يُعاد رقم"""
     nums = [int(m.group(1)) for _, _, fs in os.walk(R) for f in fs for m in [PAT.match(f)] if m]
+    idx = os.path.join(R, 'arabic-sarf-index.md')
+    if os.path.exists(idx):
+        nums += [int(m.group(1)) for l in open(idx, encoding='utf-8') for m in [re.match(r'^\|\s*(\d{3})\s*\|', l)] if m]
     return max(nums, default=0) + 1
 
 

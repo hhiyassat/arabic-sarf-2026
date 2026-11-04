@@ -113,6 +113,36 @@ def _licence(f, tgt, found, lex):
     return None
 
 
+def jazm_faces(tgt):
+    """M01 v1 (مقترحة): الحركة على آخر المضارع ليست وحدها مانعاً من الجزم إذا كانت بنيته تُبقيه وجهاً قائماً:
+    ١ المضعّف المدغم (يُضَارَّ): آخره مشدَّدٌ مفتوح؛ والفتح في الجزم تحريكٌ للتخلّص من التقاء الساكنين، وفي النصب علامة.
+    ٢ الناقص المحذوف اللام (يَأۡبَ، يَدۡعُ): حرف المضارعة ثم حرفان، أولهما ساكن (فاء الثلاثي) والثاني متحرّك؛ فالمكتوب أصلان،
+       والساكنُ الفاء يمنع أن يكون المحذوف عيناً (الأجوف: يَقُلۡ) أو فاءً (المثال: يَعِدَ)، فالمحذوف اللام، وحركة الآخر حركة العين.
+       ويُذكر الجذر المرشّح من HFN شاهداً إن وُجد، ولا يُشترط.
+    → dict(faces، why، rule) أو None. وليس قبولاً للعامل: الوجهان يبقيان، والحكم بعده لـsarf.judge"""
+    toks = match_letters(tgt)
+    if not toks or toks[0][0] not in 'يتأن':
+        return None
+    L, m = toks[-1]
+    if len(toks) >= 3 and SHADDA in m and FATHA in m and L != 'ن' and not m & {FATHATAN, DAMMATAN, KASRATAN}:
+        return dict(rule='M01.1', faces=['جزم (السكون، وحُرِّك المدغم بالفتح للتخلّص)', 'نصب (الفتحة)'],
+                    why=f'«{L}» مشدَّدٌ مفتوح في آخر المضارع: المضعّف المدغم يُفتح في الجزم تخلّصاً، فالفتحة لا تنفي الجزم')
+    if len(toks) == 3 and SUKUN in toks[1][1] and m & {FATHA, DAMMA, KASRA} and not m & {SHADDA, FATHATAN, DAMMATAN, KASRATAN}:
+        c1, c2 = ('ء' if toks[1][0] in 'أإؤئ' else toks[1][0]), ('ء' if L in 'أإؤئ' else L)
+        roots = []
+        try:
+            from .root import hfn
+            H = hfn()
+            roots = [c1 + c2 + w for w in 'وي' if H is not None and c1 + c2 + w in H.roots]
+        except Exception:
+            roots = []
+        return dict(rule='M01.2', faces=['جزم (حذف حرف العلة، وحركة الآخر حركة العين)'],
+                    roots=roots,
+                    why='حرف المضارعة ثم أصلان أولهما ساكن: المحذوف لام الفعل، والحركة على الآخر حركة العين لا علامة' +
+                        (f'؛ والجذر المرشّح في HFN: {"، ".join(roots)}' if roots else '؛ ولا جذر مرشّح في HFN'))
+    return None
+
+
 def reject_candidates(found, words, lex=None):
     for f in found:
         f['status'], f['reject_reason'], f['checked'] = DEFERRED, None, []
@@ -160,8 +190,14 @@ def reject_candidates(found, words, lex=None):
             elif info['kind'] != 'mudari':
                 reason = 'ما بعدها ليس فعلاً مضارعاً'
             elif info['mood'] in CASE:
-                why = 'ثبوت النون' if info['suffix'] == 'نون الرفع' else CASE[info['mood']]
-                reason = f'الفعل بعدها غير مجزوم كتابةً ({why})'
+                faces = jazm_faces(tgt) if info['suffix'] != 'نون الرفع' else None
+                if faces:
+                    # الحركة الأخيرة وحدها ليست مانعاً: بنية الفعل تُبقي وجه الجزم قائماً، فلا يُمنع ولا يُقبل هنا
+                    f['checked'].append('R1/R2: ' + faces['why'])
+                    f['mood_faces'] = faces
+                else:
+                    why = 'ثبوت النون' if info['suffix'] == 'نون الرفع' else CASE[info['mood']]
+                    reason = f'الفعل بعدها غير مجزوم كتابةً ({why})'
         # R3: اسم الفعل الناصب للمفعول — ما بعده مرفوع
         elif f['group'] == '9' and vform_match(op, ('رُوَيْدَ', 'بَلْهَ', 'دُونَكَ', 'عَلَيْكَ')):
             f['checked'].append('R3 المنصوب بعده')
