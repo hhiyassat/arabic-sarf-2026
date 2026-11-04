@@ -274,5 +274,19 @@ check('X33 «مِمَّنْ» = «مِنْ» + «مَنْ»: جزآن بهويت
       p3 and p3['rule_id'] == 'P03' and len(p3['parts']) == 2 and ax62['case_axis'][0] == 'في محلّ جر' and p3['kind_status'] == 'DEFERRED'
       and any(r['type'] == 'SILAH' and r['heads'].get('relative') == u62 and r['status'] == 'DEFERRED' for r in o['records']), p3)
 
+# ١٥ أخطاءٌ كشفتها مراجعة عينة المصحف (بعد 010)، وحدودها
+_, oq = run(verse_text(2, 193), '2:193')
+uq, _ = at(oq, '2:193:1', 'هُمْ')
+check('X34 «وَقَٰتِلُوهُمۡ» (2:193): «ـُو + ضمير» فعلٌ بواو الجماعة أو جمعٌ مضاف — I01 مؤجَّل لا مضافٌ إليه مرخَّص',
+      not any(r['type'] == 'IDAFA' and r['status'] == 'LICENSED' and uq in sum(r['members'].values(), []) for r in oq['records']))
+_, oq = run(verse_text(19, 20), '19:20')
+ug, _ = at(oq, '19:20:5', 'غُلَٰمٌ')
+check('X35 «قَالَتۡ أَنَّىٰ يَكُونُ لِي غُلَٰمٌ» (19:20): لا يُعبر فعلٌ آخر إلى مرشّح الفاعل',
+      not any(r['type'] == 'SUBJECT' and r['status'] == 'LICENSED' and r['heads'].get('subject') == ug for r in oq['records']))
+_, oq = run(verse_text(6, 73), '6:73')
+ua, _ = at(oq, '6:73:19', 'عَٰلِمُ')
+check('X36 «يُنفَخُ فِي ٱلصُّورِ … عَٰلِمُ» (6:73): شبه الجملة بعد المبني للمجهول قد تكون نائب الفاعل، فلا يُرخَّص الاسم بعدها',
+      not any(r['type'] == 'SUBJECT' and r['status'] == 'LICENSED' and r['heads'].get('subject') == ua for r in oq['records']))
+
 print('ALL OK' if not FAIL else f'FAILED {len(FAIL)}: {FAIL}')
 sys.exit(1 if FAIL else 0)

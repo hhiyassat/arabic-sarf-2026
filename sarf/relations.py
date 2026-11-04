@@ -807,7 +807,15 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
         prem = [f'«{t.text}» ضميرٌ متصل (ملف المبنيات) في كلمة «{h_.text}»']
         if ec.get('v'):
             prem.append(f'المرحلة ١٣ (sarf.features_ext.enclitic_case): {ec.get("v")} {ec.get("st")} — {ec.get("ev")}')
-        if h_.nounish():
+        hl = letters(h_.text)
+        waw_host = len(hl) >= 2 and hl[-1][0] == 'و' and not (hl[-1][1] - {SUKUN}) and DAMMA in hl[-2][1]
+        if h_.nounish() and waw_host:
+            # «ـُو + ضمير» (قَٰتِلُوهُمۡ): واو الجماعة وضمير المفعول، أو جمعٌ مذكر سالم مضاف حُذفت نونه؛ والكتابة لا تفصل
+            R.append(_rec(ref, 'IDAFA', 'I01', {'host': h_, 'pronoun': t}, {'host': [h_], 'pronoun': [t]}, DEFERRED,
+                          f'«{h_.text}» آخره واوٌ بعد ضمة قبل الضمير: فعلٌ بواو الجماعة وضميرُ مفعول، أو جمعٌ مذكر مضاف؛ والاسمية '
+                          f'({h_.noun_ev}) قالبٌ يشمل الوجهين', premises=prem,
+                          alternatives=['فعل بواو الجماعة، والضمير مفعولٌ به (O01)', 'جمع مذكر سالم مضاف، والضمير مضافٌ إليه']))
+        elif h_.nounish():
             st_, why = LICENSED, f'ضميرٌ متصل باسمٍ مثبت الاسمية «{h_.text}» ({h_.noun_ev or "اسم"}): مضافٌ إليه'
             rec = _rec(ref, 'IDAFA', 'I01', {'mudaf': h_, 'mudaf_ilayh': t}, {'mudaf': [h_], 'mudaf_ilayh': [t]}, st_, why,
                        premises=prem + [f'«{h_.text}»: {h_.noun_ev}'], checked=['المضيف ليس عاملاً ولا ظرفاً', 'المضيف ليس فعلاً'],
@@ -1362,12 +1370,18 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                     continue                        # وما في صلة المرشّح الأول أو حاويةٍ مرخَّصة ليس منافساً
                 if u.conj or (u.lex or '').startswith('عامل') and not u.nounish():
                     break
+                if u.pos == 'فعل' or 'فعل' in ((u.feats.get('pos') or {}).get('alt') or []) and not u.nounish():
+                    break                           # فعلٌ آخر قبل المرشّح: ما بعده في إسناده لا في إسناد هذا الفعل (قَالَتۡ أَنَّىٰ يَكُونُ … غُلَٰمٌ)
                 if word_start(u) and (u.nounish() or u.divine or u.mcat in ('relative', 'demonstrative', 'separate_pronoun')) \
                         and u.k not in governed and u.case not in ('نصب', 'جر', 'نصب أو جر', 'جر أو نصب'):
                     ov.append(u)                    # المنصوب والمجرور كتابةً لا يكونان فاعلاً
                 j += 1
             raf = [u for u in ov if u.nominative()[0] is True and (u.nounish() or u.divine)]   # الرفع من مصدر العلامة الواحد
-            if len(raf) == 1 and ov and ov[0] is raf[0] and raf[0].k not in bound and raf[0].k not in licensed_subjects:
+            pp_between = bool(ov) and any(toks[j_].k in span_of for j_ in range(i + 1, idx[ov[0].k]))
+            if passive and pp_between and len(raf) == 1:
+                subj = dict(kind='غير معيَّن', role=srole, status=DEFERRED,
+                            why=f'بين الفعل المبني للمجهول و«{raf[0].text}» شبه جملة: قد تكون هي نائب الفاعل', candidates=[raf[0].uid])
+            elif len(raf) == 1 and ov and ov[0] is raf[0] and raf[0].k not in bound and raf[0].k not in licensed_subjects:
                 u = raf[0]
                 subj = dict(kind='اسم ظاهر', role=srole, status=LICENSED, unit=u,
                             why=f'«{u.text}» المرشّح الاسمي الأول بعد الفعل في إطاره، مرفوعٌ كتابةً ({u.nominative()[1]})، ولا منافس مرفوعٌ غيره',
