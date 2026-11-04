@@ -288,5 +288,11 @@ ua, _ = at(oq, '6:73:19', 'عَٰلِمُ')
 check('X36 «يُنفَخُ فِي ٱلصُّورِ … عَٰلِمُ» (6:73): شبه الجملة بعد المبني للمجهول قد تكون نائب الفاعل، فلا يُرخَّص الاسم بعدها',
       not any(r['type'] == 'SUBJECT' and r['status'] == 'LICENSED' and r['heads'].get('subject') == ua for r in oq['records']))
 
+_, oq = run(verse_text(17, 20), '17:20')
+ukk, _ = at(oq, '17:20:7', 'كَ')
+check('X37 حدّ المكوّن: امتداد شبه الجملة بالإضافة يضمّ ضمير المضاف إليه من كلمته (عَطَآءِ رَبِّكَ)، فلا يُجعل الضمير مسنداً',
+      not any(r['type'] == 'PREDICATION' and r['heads'].get('predicate') == ukk for r in oq['records']) and
+      any(r['type'] == 'PP' and ukk in r['members'].get('complement_ext', []) for r in oq['records']))
+
 print('ALL OK' if not FAIL else f'FAILED {len(FAIL)}: {FAIL}')
 sys.exit(1 if FAIL else 0)

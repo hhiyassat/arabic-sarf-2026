@@ -904,6 +904,10 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
         if ext_rec is not None and ext_rec['status'] == LICENSED and 'mudaf_ilayh' in ext_rec['heads'] and \
                 nxt(i) is not None and nxt(i).uid == ext_rec['heads']['mudaf_ilayh']:
             ext = [nxt(i)]                           # امتداد المكمّل بإضافةٍ مرخَّصة (I03): دليله سجلّها، لا الموضع
+            j_ = i + 2
+            while j_ < len(toks) and toks[j_].wi == ext[0].wi and toks[j_].enclitic:
+                ext.append(toks[j_])                # والضمير المتصل بالمضاف إليه من كلمته (عَطَآءِ رَبِّكَ): حدّ المكوّن آخر الكلمة
+                j_ += 1
         members = {'preposition': [op_t], 'complement': comp}
         if ext:
             members['complement_ext'] = ext
