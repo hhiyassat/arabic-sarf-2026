@@ -76,5 +76,22 @@ check('Q13 لا حماية زائفة لـ«آ» أول الكلمة في الر
 keep = protected('آلْآنَ')
 check('Q14 «آلْآنَ» تبقى: الاستفهام فوق همزة وصل «ال»', bool(keep) and keep.get('proclitics') == ['أَ'], keep)
 
+# حكم المالك (4 نوفمبر 2026): تنوين الفتح على الألف يُنقل إلى ما قبلها في التمثيل التحليلي وحده
+from sarf.normalize_trace import normalize_traced, restore_source
+nt = normalize_traced('صَغِيراً أَوْ كَبِيراً', implicit_sukun=True)
+check('Q15 «كَبِيراً» ← «كَبِيرًا» تحليلاً، بلا سكونٍ زائف، والعرض والمصدر كما وردا',
+      nt['analysis'] == 'صَغِيرًا أَوْ كَبِيرًا' and nt['display'] == 'صَغِيراً أَوْ كَبِيراً'
+      and sum(o['rule_id'] == 'N-TANWIN-ALIF' for o in nt['ops_analysis']) == 2, (nt['analysis'], nt['display']))
+rec_, fails_ = restore_source(nt)
+check('Q16 المصدر يُستعاد حرفياً بعد نقل التنوين، بلا إخفاق', rec_ == 'صَغِيراً أَوْ كَبِيراً' and not fails_, (rec_, fails_))
+a2 = analyze(CAT, D[(2, 282)], Q.uthmani_mode())
+ws = [sg['word'] for sg in a2['segments']]
+check('Q17 2:282: «شَيْئًا» و«كَبِيرًا» كلمتان سليمتان (لا «كَ» + «بِيرْاً»)', 'شَيْئًا' in ws and 'كَبِيرًا' in ws
+      and not any('\u0652\u0627\u064b' in w or '\u0652\u064b' in w for w in ws), [w for w in ws if 'يرًا' in w or 'ئ' in w][:4])
+# إذن المالك: صور الرسم الإملائي لمداخل قائمة في الجرد
+pr = {w: protected(w) for w in ('ذَلِكُمْ', 'وَمِيكَالَ', 'وَمَنَاةَ', 'ذَلِكُمَا')}
+check('Q18 الجرد: «ذَلِكُمْ» و«مِيكَال» و«مَنَاة» صورٌ إملائية لمداخل قائمة، و«ذَلِكُمَا» ليست مدخلاً فلا تُضاف',
+      pr['ذَلِكُمْ'] and pr['وَمِيكَالَ'] and pr['وَمَنَاةَ'] and not pr['ذَلِكُمَا'], {k: bool(v) for k, v in pr.items()})
+
 print('ALL OK' if not FAIL else f'FAILED {len(FAIL)}: {FAIL}')
 sys.exit(1 if FAIL else 0)
