@@ -497,7 +497,7 @@ rows_r, tl_r, rows_x, tl_x = [], [], [], []
 for pv in per_verse:
     ref = f"{pv['s']}:{pv['v']}"
     rel = verse_relations(pv['a'], pv['units'], pv['F'], ref, legacy_cond=COND, legacy_rel=RELS)
-    errs = check_records(rel['records'], rel['tokens'])
+    errs = check_records(rel['records'], rel['tokens'], rel.get('parts'))
     from sarf.relations import check_cross
     errs += check_cross(rel['records'], rel['axes'])
     for r in rel['records']:
@@ -514,7 +514,9 @@ for pv in per_verse:
                     f"<br>المفاعيل: {h('، '.join(fr.get('objects') or []) or '—')}"
                     + ''.join(f"<br>مرشّح {h(c['id'])}: {h(c.get('tense'))}، {h(c.get('voice'))}، {h(c.get('subject_role'))} "
                               f"[{h(c['status'])}] {h(c.get('realization') or '')} {h(c.get('reason') or '')}" for c in fr.get('candidates') or [])
-                    + ''.join(f"<br>التزامٌ مفتوح: {h(x)}" for x in fr.get('open') or []))
+                    + ''.join(f"<br>التزامٌ مفتوح: {h(x)}" for x in fr.get('open') or [])
+                    + (f"<br>سمات المرحلة ٨: {h(fr['stage8'].get('tense'))}، {h(fr['stage8'].get('voice'))} — {h(fr['stage8'].get('note'))}"
+                       if fr.get('stage8') else ''))
         if r.get('parts'):
             alts += ''.join(f"<br>جزء {h(p_['part'])}: «<span class='ar'>{h(p_['text'])}</span>» <code>{h(p_['part_id'])}</code> "
                             f"المحارف {h(str(p_.get('span') or '—'))}، المقاطع {h(str(p_.get('syllables') or '—'))}" + (f" — {h(p_['note'])}" if p_.get('note') else '')
@@ -523,6 +525,11 @@ for pv in per_verse:
             alts += '<br>' + h('، '.join(f'{k}={v}' for k, v in r['parts_status'].items()))
         if r.get('resumptive'):
             alts += f"<br>العائد: {h(r['resumptive'].get('status'))} — {h(r['resumptive'].get('note'))}"
+            alts += ''.join(f"<br>مرشّح العائد: «{h(x.get('candidate'))}» [{h(x.get('status'))}] {h(x.get('source'))}" for x in r['resumptive'].get('candidates') or [])
+        if r.get('silah_kinds'):
+            alts += ''.join(f"<br>وجه الصلة: {h(x['kind'])} [{h(x['status'])}] ← {h(x['source'])}" for x in r['silah_kinds'])
+        if r.get('head_parts'):
+            alts += '<br>أجزاء الأطراف: ' + h('، '.join(f'{k}={v}' for k, v in r['head_parts'].items()))
         if r.get('kind_status'):
             alts += f"<br>النوع: {h(r['kind_status'])} — {h(r.get('kind_note') or '')}"
         if r.get('reason_before_rank'):
@@ -586,6 +593,8 @@ for pv in per_verse:
         pd = ax.get('protection_detail') or {}
         pcell = cell(ax['protection']) + (f"<br><sub>النطاق: {h(pd.get('scope'))}؛ السبب: {h(pd.get('reason'))}؛ المصدر: {h(pd.get('source'))}</sub>"
                                           if pd.get('cls') else '')
+        idn = ax.get('identity') or {}
+        wcell += f"<br><sub>الهوية: {h(idn.get('analysis_id'))}؛ الخانات {h(str(idn.get('slots')))}؛ المرحلة ١١: {h('، '.join(idn.get('stage11') or []))}</sub>"
         rows_x.append([h(loc_), f"<span class='ar'>{h(txt)}</span>", wcell, cell(inf['build']), role_cell, gov,
                        cell(inf['state']) + f'<br><sub>الأثر: {eff}</sub>', (f"{h(mk[0])}" if mk else h(inf.get('mark_kind') or '—')) +
                        f'<br><sub>{dims}</sub>', h(inf.get('cause') or (mk[1] if mk else '') or '—'),

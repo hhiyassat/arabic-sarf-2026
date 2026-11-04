@@ -66,6 +66,7 @@ class _Tok:
         self.adverb = None
         self.mabni_state = None                         # حالة المبني بلا دور: NO_MAHALL، MAHALL_UNRESOLVED، ROLE_RULE_NOT_IMPLEMENTED، EVIDENCE_NOT_ADOPTED
         self.usage = None                               # استعمال العامل في هذا التحليل (للوحدة العاملة)
+        self.frame_cands = None                         # مرشّحات إطار الفعل القائمة والممنوعة (F01)
 
         prot = G.Theta.get('protected') or {}
         self.golden = prot.get('cls') == 'اسم ذهبي'
@@ -136,6 +137,9 @@ class _Tok:
             ('اسم', f'ظرفٌ من جرد المشروع (sarf.algebra.ZURUF_V) في علاقة P02 مرخَّصة: الظرف اسم') if self.adverb == 'P02:LICENSED' else \
             ('اسم', '«أيّ» منادى في V02 (و«ها» حرف تنبيه في الوحدة نفسها)') if any(r['src'] == 'munada' for r in self.roles) else \
             ('حرف + اسم', 'وحدةٌ مكتوبة مندمجة (sarf.protected.MERGED): حرف جرٍّ واسمٌ مبني، P03') if any(r['src'] == 'merged_pp' for r in self.roles) else \
+            ('فعل', 'فعلٌ في كل المرشّحات القائمة (F01): ' + '، '.join(f"{c_['id']} {c_['tense']} {c_['voice']}" for c_ in self.frame_cands['live']) +
+             ('؛ وصيغة المرحلة ١٣ «' + str((self.feats.get('pos') or {}).get('ev')) + '» من وجهٍ ممنوع' if self.frame_cands['rejected'] else '')) \
+            if self.pos == 'فعل' and self.pos_st == 'مثبت' and self.frame_cands else \
             ('فعل', (self.feats.get('pos') or {}).get('ev')) if self.pos == 'فعل' and self.pos_st == 'مثبت' else \
             ('حرف', f'ملف المبنيات: {self.mcat}') if self.mcat == 'particle' else \
             ('حرف', (self.mabni_state or {}).get('text')) if (self.mabni_state or {}).get('code') == 'NO_MAHALL' and self.pos != 'فعل' else \
@@ -170,7 +174,11 @@ class _Tok:
             ('لا محلّ له (غير منطبق)', (self.mabni_state or {}).get('text') or 'الفعل المبني وحده لا محلّ له من الإعراب') \
             if (self.mabni_state or {}).get('code') == 'NO_MAHALL' or self.pos == 'فعل' and inf['build'][0] == 'مبني' else \
             (None, (self.mabni_state or {}).get('text') or st[1])
-        return dict(word_class=wc, build=inf['build'], inflection=inf,
+        ident = dict(analysis_id=f'{self.uid}@{VERSION}', unit=self.uid, loc=self.loc, text=self.text,
+                     slots=[s_['index'] for s_ in self.slots],
+                     stage11=[f"A{self.loc.rsplit(':', 1)[0]}:{self.wi + 1}.{s_['index']}" for s_ in self.slots],
+                     parts=[p_['part_id'] for p_ in (getattr(self, 'parts', None) or [])])
+        return dict(identity=ident, word_class=wc, build=inf['build'], inflection=inf,
                     role=role, role_status=g.get('relation_status') if g.get('role_name') else None,
                     case_axis=case_axis, mabni_state=self.mabni_state,
                     protection=(pr[0], pr[1] + ('؛ والحماية من الجذر لا تمنع التحليل النحوي' if pr[0] else '')),
@@ -452,6 +460,15 @@ def _inflection(t, nxt=None):
         if tst != 'مثبت' and mood_op:
             out['build'] = ('معرب', f'العامل «{opsrc["o"]["operator"]}» مقبولٌ عاملاً في المضارع: المعمول مضارع معرب '
                                     f'(وسمة الزمن في المرحلة ١٣ «{tv}» مرشّحة: تُصالَح بهذا العامل)')
+        elif tst != 'مثبت' and getattr(t, 'frame_cands', None):
+            fc = t.frame_cands
+            out['build'] = (None, 'زمن الفعل غير مثبت: المرشّح القائم ' + '، '.join(
+                f"{c_['id']} ({c_['tense']}، {c_['voice']})" for c_ in fc['live']) + (
+                '؛ والممنوع: ' + '، '.join(f"{c_['id']} ({c_['tense']})" for c_ in fc['rejected']) if fc['rejected'] else '') +
+                ' (F01): البناء يتبعه')
+            out['state'] = (None, 'زمن الفعل غير مثبت؛ والمرشّح القائم ' + '، '.join(c_['id'] for c_ in fc['live']))
+            out['agreement'] = 'UNVERIFIED'
+            return out
         elif tst != 'مثبت':
             out['build'] = (None, f'زمن الفعل غير مثبت ({tv}، {tst}): البناء يتبعه')
             name, cases, ev = _written_mark(t, nxt)
@@ -528,6 +545,7 @@ def _inflection(t, nxt=None):
                                capacity=sorted(caps), capacity_source=cap_src,
                                capacity_mahall_of_complement=capd['mahall_of_complement'],
                                capacity_mediated=capd['mediated'], lexical_alternatives=alts_,
+                               target_slot=(r.get('target') or {}).get('slot'), target_word=(r.get('target') or {}).get('word_index'),
                                level='محلّي' if r.get('observed') == 'محلاً' else 'لفظي',
                                role_name=role_name, role_rule=rule_, relation_status=LICENSED if role_name else None,
                                relation='مباشر' if cap in caps else
@@ -889,6 +907,8 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                        merged_unit=True, attachment='غير مثبت: انظر A01', parts=parts,
                        part_heads=dict(preposition=next((p_['part_id'] for p_ in parts if p_['part'] == 'حرف جر'), None),
                                        complement=next((p_['part_id'] for p_ in parts if p_['part'] == 'اسم مجرور'), None)),
+                       head_parts=dict(preposition=next((p_['part_id'] for p_ in parts if p_['part'] == 'حرف جر'), None),
+                                       complement=next((p_['part_id'] for p_ in parts if p_['part'] == 'اسم مجرور'), None)),
                        phrase=dict(kind='شبه جملة (جار ومجرور)', unit=op_t.uid, text=op_t.text))
             rec['texts'] = dict(preposition=next((p_['text'] for p_ in parts if p_['part'] == 'حرف جر'), op_t.text),
                                 complement=''.join(p_['text'] for p_ in parts if p_['part'] in ('أداة تعريف', 'اسم مجرور')) or op_t.text)
@@ -978,11 +998,14 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
             continue
         ay = toks[i + 1]
         f_ = toks[i + 2] if i + 2 < len(toks) else None
+        ay.parts = [dict(part='منادى', text='أَيُّ', part_id=f'{ay.uid}/p0', unit=ay.uid, source='sarf.protected.MERGED («أَيُّهَا» = أَيُّ + هَا)'),
+                    dict(part='حرف تنبيه', text='هَا', part_id=f'{ay.uid}/p1', unit=ay.uid, source='sarf.protected.MERGED')]
         nida = _rec(ref, 'VOCATIVE', 'V02', {'particle': t, 'munada': ay}, {'particle': [t], 'munada': [ay]}, LICENSED,
                     '«يا» حرف نداء، و«أيّ» بعدها منادى نكرةٌ مقصودة مبني على الضم في محلّ نصب، و«ها» للتنبيه',
                     premises=[f'«{t.text}» عامل النداء (الجرد: مج {next((o_["group"] for o_ in a["operators"] if o_["word_index"] == t.wi and o_["operator"].startswith("يَ")), "?")})',
                               f'«{ay.text}» في الجرد المعتمد «يَٰٓأَيُّهَا» (الحماية لا تمنع الوظيفة)'],
-                    checked=['«أيّ» لا تكون هنا استفهاماً ولا شرطاً ولا موصولاً: تليها «ها» التنبيه بعد حرف النداء'])
+                    checked=['«أيّ» لا تكون هنا استفهاماً ولا شرطاً ولا موصولاً: تليها «ها» التنبيه بعد حرف النداء'],
+                    head_parts=dict(munada=ay.parts[0]['part_id']), parts=ay.parts)
         R.append(nida)
         ay.roles.append(dict(src='munada', expected='نصب', rid=nida['relation_id'], role_name='منادى', rule='V02',
                              status=LICENSED))
@@ -996,7 +1019,7 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                       ('تابعٌ لـ«أيّ» في النداء، مرفوعٌ تبعاً للفظها: ' + why_f) if ok_f else
                       f'ما بعد «أيّ» «{f_.text}» ليس معرَّفاً بأل ولا موصولاً ولا إشارةً في هذه الطبقة: التابع غير مثبت',
                       premises=[nida['relation_id'], why_f], container=None,
-                      alternatives=['نعتٌ لـ«أيّ»', 'عطف بيان', 'بدل'], kind_status=DEFERRED,
+                      alternatives=['نعتٌ لـ«أيّ»', 'عطف بيان', 'بدل'], kind_status=DEFERRED, head_parts=dict(munada=ay.parts[0]['part_id']),
                       kind_note='نوع التابع غير مختار: البدائل الثلاثة محفوظة، ولا يتوقف عليها المحلّ'))
         if ok_f:
             bound[f_.k] = R[-1]['relation_id']
@@ -1034,6 +1057,7 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                     'الموصول المختصّ تليه شبه جملة ثم مرفوع: صلةٌ اسمية (خبرها شبه الجملة المقدَّمة)',
                     premises=[f'«{t.text}» موصولٌ مختصّ (ملف المبنيات)', prec['relation_id'], f'«{s.text}» مرفوعٌ كتابةً'],
                     checked=[f'حدّ الصلة بعد «{s.text}»: {stop_why}'], container=None,
+                    alternatives=[f'صلةٌ شبه جملة متعلّقها محذوف، و«{s.text}» فاعله (وجه الطبقة القديمة): وجهٌ لا يُسقطه هذا الترخيص'],
                     extent=[u.uid for u in members])
         R.append(crec)
         cid = crec['relation_id']
@@ -1344,19 +1368,36 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
             if not hz and tf.get('v') == 'أمر':
                 cands[-1]['status'] = REJECTED
             coherent = False
+            live = [c_ for c_ in cands if c_['status'] != REJECTED]
+            v.frame_cands = dict(live=live, rejected=[c_ for c_ in cands if c_['status'] == REJECTED])
         opn = []
         subj = None
         sp = sf.get('v') if isinstance(sf.get('v'), dict) else {}
         passive = vf.get('v') == 'مجهول' and vf.get('st') == 'مثبت'
         srole = 'نائب فاعل' if passive else 'فاعل'
         if nas:
-            opn.append('اسم الناسخ وخبره: تُربطان بـV01 لا بالفاعل')
-            subj = dict(kind='اسم الناسخ (V01)', role='اسم الناسخ', status='V01', why='يُربط بقاعدة الناسخ V01، لا بالفاعل')
+            # التزامات الناسخ تُسوّى بسجلّ V01 نفسه: ما رخّصه لا يبقى مفتوحاً، وما نقص يُسمّى بسببه
+            v01 = next((r_ for r_ in R if r_['type'] == 'NASIKH' and r_['heads'].get('nasikh') == v.uid), None)
+            if v01 is None:
+                opn.append('اسم الناسخ وخبره: لا سجلّ V01 لهذا الناسخ')
+                subj = dict(kind='اسم الناسخ', role='اسم الناسخ', status=DEFERRED, why='لا سجلّ V01')
+            else:
+                has_k = 'khabar' in v01['heads']
+                if v01['status'] != LICENSED or not has_k:
+                    opn.append(f'الخبر غير مرخَّص في V01 ({v01["status"]}): {v01["reason"]}')
+                subj = dict(kind='اسم الناسخ (V01)', role='اسم الناسخ', status=v01['status'] if 'ism' in v01['heads'] else DEFERRED,
+                            why=f'V01 {v01["status"]}: الاسم «{v01["texts"].get("ism", "—")}»' +
+                                (f'، والخبر «{v01["texts"].get("khabar")}»' if has_k else '، والخبر غير مربوط'),
+                            v01=v01['relation_id'])
         elif vb:
             subj = dict(kind='ضمير الصيغة أو اسمٌ ظاهر', role='اسم الناسخ أو فاعل التامّ', status=DEFERRED,
                         why=f'«{v.text}» من صيغ «{vb}» ولم يُقبل ناسخاً في المرحلة ١١: ضميره اسم الناسخ إن كان ناقصاً، وفاعلٌ إن كان تامّاً؛ '
                             'فلا يُسمّى فاعلاً قبل حسم الاستعمال')
-            opn.append('الاستعمال (ناسخ أو تامّ) غير محسوم: الخبر إن كان ناقصاً غير مربوط')
+            nk = next((toks[j_] for j_ in range(i + 1, fe_) if toks[j_].wi != v.wi and word_start(toks[j_]) and not toks[j_].conj
+                       and (toks[j_].nounish() or toks[j_].shape_only)), None)
+            kc = nk is not None and (nk.case in ('نصب', 'جر أو نصب', 'نصب أو جر'))
+            opn.append('الاستعمال (ناسخ أو تامّ) غير محسوم: ' + (f'«{nk.text}» ({nk.loc}) منصوبٌ أو محتمل النصب كتابةً، خبرٌ مرشّح إن كان ناقصاً'
+                                                              if kc else 'لا خبرَ مرشّحٌ منصوبٌ بعده في الإطار'))
         elif sf.get('st') == 'مثبت' and (sp.get('number') in ('plural', 'dual') or sp.get('person') in (1, 2) and
                                         not (tf.get('v') == 'مضارع' and sp.get('number') == 'singular')):
             subj = dict(kind='ضمير متصل مكتوب', role=srole, status=LICENSED,
@@ -1422,6 +1463,12 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                 R.append(obj2)
         elif trf.get('v') == 'متعدٍّ' and not objs:
             opn.append(f'المفعول به غير مربوط (التعدّي {trf.get("st")}): ظاهرٌ لم تغطّه O02، أو محذوفٌ جائز؛ ولا يُحكم بنقصٍ')
+        if cands:
+            live = [c_ for c_ in cands if c_['status'] != REJECTED]
+            subj = dict(kind='من المرشّح القائم' if len(live) == 1 else 'مرشّحات متنافسة',
+                        role='، '.join(sorted({c_['subject_role'] for c_ in live})) or srole, status=DEFERRED,
+                        why='؛ '.join(f"{c_['id']}: {c_['subject_role']} ({c_.get('subject_unit') or 'ضمير الصيغة'})" for c_ in live) +
+                        ('؛ والممنوع: ' + '، '.join(c_['id'] for c_ in cands if c_['status'] == REJECTED) if len(live) < len(cands) else ''))
         heads = {'verb': v}
         members = {'verb': [v]}
         if subj and subj.get('unit') and subj['status'] == LICENSED:
@@ -1433,7 +1480,13 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                   premises=[f'الصنف: فعل — {(v.feats.get("pos") or {}).get("ev")}'] +
                   [f'{n_}: {x.get("v")} ({x.get("st")})' for n_, x in (('الزمن', tf), ('البناء', vf), ('ضمير الصيغة', sf)) if x],
                   frame=dict(identity=v.text, root=v.G.Theta.get('R'), pattern=v.G.Theta.get('P'),
-                             tense=(tf.get('v'), tf.get('st'), tf.get('alt')), voice=(vf.get('v'), vf.get('st'), vf.get('alt')),
+                             tense=(tf.get('v'), tf.get('st'), tf.get('alt')) if not cands else
+                             ('، '.join(sorted({c_['tense'] for c_ in cands if c_['status'] != REJECTED} - {None})) or None, 'مرشّح', None),
+                             voice=(vf.get('v'), vf.get('st'), vf.get('alt')) if not cands else
+                             ('، '.join(sorted({c_['voice'] for c_ in cands if c_['status'] != REJECTED} - {None})) or None, 'مرشّح', None),
+                             stage8=dict(tense=tf.get('v'), voice=vf.get('v'), subject=sf.get('v'),
+                                         note='سمات المرحلة ٨ والسمات: ' + ('وجهٌ ممنوعٌ في F01، لا يدخل الإطار' if any(
+                                             c_['status'] == REJECTED and c_.get('tense') == tf.get('v') for c_ in cands) else 'كما هي')) if cands else None,
                              usage=usage, subject_requirement='اسم الناسخ' if nas else 'اسم الناسخ أو الفاعل' if vb else srole,
                              transitivity=(trf.get('v'), trf.get('st'), trf.get('ev')),
                              subject=dict({k: x for k, x in (subj or {}).items() if k != 'unit'},
@@ -1554,6 +1607,7 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                       premises=[f'sarf.protected.MERGED: «{t.text}» = {" + ".join(mg)}', f'ملف المبنيات: «{mg[1]}» ← {"، ".join(kinds) or "—"}'],
                       alternatives=[f'«{mg[1]}» {k_}' for k_ in kinds], merged_unit=True, parts=t.parts,
                       part_heads=dict(preposition=t.parts[0]['part_id'], complement=t.parts[1]['part_id']),
+                      head_parts=dict(preposition=t.parts[0]['part_id'], complement=t.parts[1]['part_id']),
                       kind_status=DEFERRED if len(kinds) > 1 else LICENSED,
                       kind_note='نوع الاسم المبني غير مختار: البدائل محفوظة، ولا يتوقف عليها الجرّ المحلّي'))
         if nominal:
@@ -1596,14 +1650,36 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
             else:
                 rnote += f'؛ لكن ضمير الصيغة في «{head_.text}» {sf_.get("st") or "غير مثبت"} (الشخص {sp_.get("person")}): ' \
                          'المطابقة على مرشّحٍ لا تثبت العائد'
+        # المصالحة مع R01: إن بنى R01 للموصول نفسه حاويةً اسمية، فنوع الصلة وجهان (اسمية بـR01، أو شبه جملة متعلّقها محذوف في
+        # الطبقة القديمة)؛ والربط بين الموصول وصلته مرخَّص، والنوع مؤجَّلٌ بوجهيه؛ ومرشّحات العائد سجلٌّ واحد من الطبقتين
+        cont_ = next((r_ for r_ in R if r_['type'] == 'CONTAINER_RELATIVE' and r_['heads'].get('relative') == rel_t.uid), None)
+        res01 = [r_ for r_ in R if r_['type'] == 'RESUMPTIVE' and r_['heads'].get('relative') == rel_t.uid]
+        kinds_ = [dict(kind=c['silah'], source='المرحلة ١٤ (sarf.algebra.relative_structs)', status=DEFERRED if cont_ else st_)]
+        if cont_:
+            kinds_.insert(0, dict(kind='جملة اسمية: شبه الجملة خبرٌ مقدَّم، والمرفوع مبتدأ', source=cont_['relation_id'],
+                                  status=cont_['status']))
+        kind_status = DEFERRED if len({k_['kind'] for k_ in kinds_}) > 1 else st_
+        cands_ = []
+        for r_ in res01:
+            cands_.append(dict(candidate=r_['texts'].get('pronoun'), unit=r_['heads'].get('pronoun'), source=r_['relation_id'],
+                               status=r_['status'], why=r_['reason']))
+        if rh[2:3] and rh[2]:
+            cands_.append(dict(candidate=rnote.split('؛')[0], unit=None, source='المرحلة ١٤ (sarf.algebra.relative_structs)',
+                               status=rv, why='وجه الطبقة القديمة'))
+        if len(cands_) > 1 and rv == LICENSED:
+            rv = DEFERRED                               # مرشّحان للعائد من طبقتين: لا يُرخَّص أحدهما بإسقاط الآخر
         R.append(_rec(ref, 'SILAH', 'R02', {'relative': rel_t, 'silah_head': head_}, {'relative': [rel_t], 'silah_head': [head_], 'silah': span}, st_,
-                      (f'صلة «{rel_t.text}» {c["silah"]} من «{span[0].text}» إلى «{span[-1].text}» (الحدّ: {bnd})' if s_ok else
-                       'الصلة غير مكشوفة في الطبقة القديمة'),
+                      (f'صلة «{rel_t.text}» من «{span[0].text}» إلى «{span[-1].text}» (الحدّ: {bnd})؛ ونوعها ' +
+                       ('مؤجَّلٌ بوجهين: ' + ' / '.join(k_['kind'] for k_ in kinds_) if kind_status == DEFERRED and len(kinds_) > 1 else c['silah'])
+                       if s_ok else 'الصلة غير مكشوفة في الطبقة القديمة'),
                       premises=[f'المرحلة ١٤ (LEGACY، sarf.algebra.relative_structs): {o_[0]} — {o_[2]} → {"مستوفى" if o_[1] == "True" else "مفتوح"}'
-                                for o_ in c['obligations']],
+                                for o_ in c['obligations']] + ([cont_['relation_id']] if cont_ and cont_['status'] == LICENSED else []),
                       extent=[t.uid for t in [rel_t] + span], boundary_proven=bool(c['end_is_text_end']),
-                      resumptive=dict(status=rv, note=rnote, rule='المطابقة شرط، والحصر دليل'),
-                      alternatives=[] if rv == LICENSED else ['العائد ضميرٌ آخر في النطاق', 'العائد محذوفٌ بقاعدة']))
+                      silah_kinds=kinds_, kind_status=kind_status,
+                      kind_note='نوع الصلة غير مختار: الوجهان محفوظان، ولا يتوقف عليهما ربط الموصول بصلته' if kind_status == DEFERRED and len(kinds_) > 1 else None,
+                      resumptive=dict(status=rv, note=rnote, rule='المطابقة شرط، والحصر دليل', candidates=cands_),
+                      alternatives=[] if rv == LICENSED else [f'العائد «{x["candidate"]}» ({x["status"]})' for x in cands_] or
+                      ['العائد ضميرٌ آخر في النطاق', 'العائد محذوفٌ بقاعدة']))
 
     # C01 (جسر): علاقات الشرط من الطبقة القديمة (المرحلة ١٤) تُنقل بهوياتها ومقدّماتها، لا يُعاد اشتقاقها ولا تُرفع رتبتها:
     # الأداة، وفعل الشرط، والجواب ورابطه، وملكية الجواب؛ ومرخّصة هناك ← LICENSED، ومرشّحة ← DEFERRED
@@ -1637,6 +1713,12 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                 if lk is not None and 'فاء' in str(c.get('q_kind') or ''):
                     heads['linker'], members['linker'] = lk, [lk]
         ok = all(parts_st.get(r_, ('',))[0] == LICENSED for r_ in ('condition_verb', 'answer')) and not c['amb']
+        cv = heads.get('condition_verb')
+        fc = getattr(cv, 'frame_cands', None) if cv is not None else None
+        if fc:
+            prem.append('المصالحة مع F01: ' + ('المرشّح القائم ' + '، '.join(f"{c_['id']} ({c_['tense']}، {c_['voice']})" for c_ in fc['live'])) +
+                        ('؛ ووجه ' + '، '.join(f"{c_['id']} ({c_['tense']})" for c_ in fc['rejected']) + ' ممنوعٌ في F01، فلا يُبنى عليه' if fc['rejected'] else '') +
+                        '؛ ولا تُرفع رتبة الشرط بهذه المصالحة')
         R.append(_rec(ref, 'CONDITION', 'C01', heads, members, LICENSED if ok else DEFERRED,
                       ('الأداة وفعل الشرط والجواب مرخَّصةٌ في الطبقة القديمة بأدلتها، والجواب مملوكٌ للأداة' if ok else
                        'بعض أجزاء الشرط مرشّحةٌ أو غائبة في الطبقة القديمة: ' +
@@ -1747,7 +1829,9 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
         else:
             t.mabni_state = dict(code='ROLE_RULE_NOT_IMPLEMENTED',
                                  text=f'{kw} مبني؛ دوره ومحلّه في هذا التركيب لم يُرخَّصا بعد في النظام (قاعدة الدور غير منفّذة)', evidence=None)
-    return dict(records=R, tokens=[(t.uid, t.loc, t.text) for t in toks],
+    parts_reg = {p_['part_id']: dict(unit=t.uid, text=p_['text'], part=p_['part'], slot=p_.get('slot'))
+                 for t in toks for p_ in (getattr(t, 'parts', None) or [])}
+    return dict(records=R, tokens=[(t.uid, t.loc, t.text) for t in toks], parts=parts_reg,
                 axes={t.uid: t.axes(toks[i + 1] if i + 1 < len(toks) else None) for i, t in enumerate(toks)})
 
 
@@ -1856,7 +1940,7 @@ def check_inflection(axes, tokens=None):
     return bad
 
 
-def check_records(records, tokens):
+def check_records(records, tokens, parts=None):
     """فاحصٌ بنيوي مستقل: → [الخلل]. الرأس من طرفه، والوحدات موجودةٌ ومواضعها توافقها، والمعرّفات فريدة،
     والمقبول له مقدّمات، والمقدّمات المشيرة إلى علاقاتٍ موجودةٌ بلا دوران، وأعضاء الحاوية داخل امتدادها"""
     errs = []
@@ -1879,6 +1963,13 @@ def check_records(records, tokens):
                     errs.append(f'{rid}: موضع {u} المسجَّل {p} لا يوافق المصدر {loc[u]}')
         if r['status'] == LICENSED and not r['premises']:
             errs.append(f'{rid}: مرخَّصٌ بلا مقدّمات')
+        for role, pid in (r.get('head_parts') or {}).items():
+            if parts is None:
+                continue
+            if pid not in parts:
+                errs.append(f'{rid}: جزء الطرف «{role}» {pid} غير مسجَّل في أجزاء الوحدات')
+            elif parts[pid]['unit'] != r['heads'].get(role):
+                errs.append(f'{rid}: جزء الطرف «{role}» {pid} من وحدةٍ غير رأس الطرف ({parts[pid]["unit"]} ≠ {r["heads"].get(role)})')
         if r.get('container_id'):
             c = ids.get(r['container_id'])
             if c is None:
@@ -1951,6 +2042,19 @@ def check_cross(records, axes):
             errs.append(f"{r['relation_id']}: امتداد المكمّل بلا إضافةٍ مرخَّصة في مقدّماته")
     for u, ax in axes.items():
         g = (ax.get('inflection') or {}).get('governor') or {}
+        idn = ax.get('identity') or {}
+        if idn and idn.get('unit') != u:
+            errs.append(f'{u}: هوية المحور لوحدةٍ أخرى ({idn.get("unit")})')
+        if idn and g.get('kind') == 'عامل' and g.get('target_slot') is not None and g['target_slot'] not in idn.get('slots', []):
+            errs.append(f'{u}: معمول العامل في المرحلة ١١ الخانة {g["target_slot"]}، وليست من خانات الوحدة {idn.get("slots")}')
+        if idn and g.get('kind') == 'عامل' and g.get('target_word') is not None and \
+                not any(x.startswith(f"A{idn['loc'].rsplit(':', 1)[0]}:{g['target_word'] + 1}.") for x in idn.get('stage11', [])):
+            errs.append(f'{u}: معمول العامل في المرحلة ١١ في كلمةٍ أخرى ({g["target_word"] + 1})')
+        if g.get('role_name') and g.get('relation_id') and g['relation_id'] in ids and idn:
+            r_ = ids[g['relation_id']]
+            if idn['analysis_id'] not in (r_.get('analysis_id') or '') and \
+                    not any(u in us for k_, us in r_['members'].items()):
+                errs.append(f'{u}: هوية التحليل {idn["analysis_id"]} غائبةٌ عن علاقة دوره')
         if g.get('role_name') and g.get('relation_id'):
             r = ids.get(g['relation_id'])
             if r is None:

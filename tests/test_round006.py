@@ -294,5 +294,46 @@ check('X37 حدّ المكوّن: امتداد شبه الجملة بالإضا�
       not any(r['type'] == 'PREDICATION' and r['heads'].get('predicate') == ukk for r in oq['records']) and
       any(r['type'] == 'PP' and ukk in r['members'].get('complement_ext', []) for r in oq['records']))
 
+# ١٦ إصلاحات ما قبل الاعتماد (بعد 013): نوع الصلة والعائد، وتسرّب المرشّح الممنوع، والتزامات الناسخ، وأجزاء الأطراف، وهوية التحليل
+u25 = at(o, '2:282:25', 'الَّذِي')[0]
+s25 = next(r for r in o['records'] if r['type'] == 'SILAH' and r['heads'].get('relative') == u25)
+c25 = next(r for r in o['records'] if r['type'] == 'CONTAINER_RELATIVE' and r['heads'].get('relative') == u25)
+check('X38 «الذي عليه الحق»: نوع الصلة مؤجَّلٌ بوجهيه (اسمية بـR01، وشبه جملة في الطبقة القديمة)، والربط مرخَّص، وR01 يحفظ الوجه الآخر بديلاً',
+      s25['status'] == 'LICENSED' and s25['kind_status'] == 'DEFERRED' and len(s25['silah_kinds']) == 2 and c25['alternatives'], s25.get('silah_kinds'))
+cands25 = s25['resumptive']['candidates']
+check('X39 العائد سجلٌّ واحد بمرشّحي الطبقتين («هِ» من R01، والمستتر من الطبقة القديمة)، مؤجَّل، ولا يُسقط أحدهما الآخر',
+      s25['resumptive']['status'] == 'DEFERRED' and len(cands25) == 2 and any(x['unit'] for x in cands25), cands25)
+f77 = rec(o, 'VERB_FRAME', verb=u77)
+_, ax77 = at(o, '2:282:77', 'دُعُوا')
+check('X40 «دُعُوا»: المرشّح الممنوع (الأمر) لا يتسرّب — زمن الإطار وبناؤه من القائم، وصنف المحور وبناؤه يسمّيانه ممنوعاً، والشرط يُصالَح به بلا رفع رتبة',
+      f77['frame']['tense'][0] == 'ماضٍ' and f77['frame']['voice'][0] == 'مجهول' and 'ممنوع' in f77['frame']['stage8']['note']
+      and 'F01.c1' in ax77['word_class'][1] and 'أمر' not in ax77['inflection']['build'][1].split('الممنوع')[0]
+      and any('المصالحة مع F01' in p for r in o['records'] if r['type'] == 'CONDITION' and r['heads'].get('condition_verb') == u77
+              for p in r['premises']), (f77['frame']['tense'], ax77['word_class'], ax77['inflection']['build']))
+f36c = rec(o, 'VERB_FRAME', verb=u36)['frame']
+u103 = at(o, '2:282:103', 'لَيْسَ')[0]
+f103 = rec(o, 'VERB_FRAME', verb=u103)['frame']
+check('X41 التزامات الناسخ تُسوّى بسجلّ V01: «كان» و«ليس» المرخَّصان باسمهما وخبرهما لا التزام مفتوحاً لهما، و«يكونا» يسمّي خبره المرشّح',
+      f36c['open'] == [] and f103['open'] == [] and f36c['subject'].get('v01') and 'رَجُلَيْنِ' in ' '.join(rec(o, 'VERB_FRAME', verb=u58)['frame']['open']), (f36c['open'], f103['open']))
+pp92 = rec(o, 'PP', preposition=u92)
+vo1 = next(r for r in o['records'] if r['type'] == 'VOCATIVE')
+check('X42 الأطراف بهويات أجزائها: «لِ» و«الشَّهَٰدَةِ» جزآن من وحدة «لِلشَّهَٰدَةِ»، و«أيّ» جزءٌ من «أَيُّهَا»، وكلها في سجلّ الأجزاء',
+      pp92['head_parts']['preposition'] != pp92['head_parts']['complement'] and all(pid in o['parts'] for pid in pp92['head_parts'].values())
+      and vo1['head_parts']['munada'] in o['parts'] and o['parts'][vo1['head_parts']['munada']]['text'] == 'أَيُّ', (pp92['head_parts'], vo1['head_parts']))
+m = copy.deepcopy(o)
+next(r for r in m['records'] if r['relation_id'] == pp92['relation_id'])['head_parts']['complement'] = vo1['head_parts']['munada']
+check('M09 إفساد جزء الطرف (جزءٌ من وحدةٍ أخرى) يكشفه الفاحص البنيوي', bool(check_records(m['records'], m['tokens'], m['parts'])))
+idn = o['axes'][u2]['identity']
+check('X43 هوية التحليل واحدة في المحاور: لكل وحدةٍ analysis_id وخاناتها ومعرّفات المرحلة ١١، وعلاقة دورها تحمل الهوية نفسها',
+      idn['analysis_id'] == f'{u2}@v1' and idn['stage11'] and idn['analysis_id'] in fol['analysis_id'], idn)
+m = copy.deepcopy(o)
+m['axes'][ut]['inflection']['governor']['target_slot'] = 99
+check('M10 إفساد هوية المعمول في المرحلة ١١ (خانةٌ ليست من الوحدة) يكشفه الفاحص العابر للطبقات', bool(check_cross(m['records'], m['axes'])))
+m = copy.deepcopy(o)
+r_ = next(r for r in m['records'] if r['relation_id'] == fol['relation_id'])
+r_['analysis_id'] = 'X@v1'
+r_['members'] = {k: [x for x in v if x != u2] for k, v in r_['members'].items()}
+check('M11 إفساد هوية التحليل في علاقة الدور يكشفه الفاحص العابر للطبقات', bool(check_cross(m['records'], m['axes'])))
+
 print('ALL OK' if not FAIL else f'FAILED {len(FAIL)}: {FAIL}')
 sys.exit(1 if FAIL else 0)
