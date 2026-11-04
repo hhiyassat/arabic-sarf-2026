@@ -336,20 +336,43 @@ r_['analysis_id'] = 'X@v1'
 r_['members'] = {k: [x for x in v if x != u2] for k, v in r_['members'].items()}
 check('M11 إفساد هوية التحليل في علاقة الدور يكشفه الفاحص العابر للطبقات', bool(check_cross(m['records'], m['axes'])))
 
-# ١٧ بعد قراءة 016: دور المرفوع في صلةٍ نوعها مؤجَّل، وعبارة العائد، وأجزاء الشرط، والسمات بالعربية
+# ١٧ إدارة الأوجه: ترخيص الوجه غير اختياره، وكل وجهٍ ومرشّحٍ بحالة دليله، وربط المقدّمات بمرشّحها وعلاقتها؛ وأجزاء الشرط، والسمات بالعربية
 u27 = at(o, '2:282:27', 'الْحَقُّ')[0]
 n27 = next(r for r in o['records'] if r['type'] == 'PREDICATIVE_PP' and r['heads'].get('subject') == u27)
 ax27 = o['axes'][u27]
 v36 = rec(o, 'NASIKH', nasikh=u36)
-check('X44 «الحق» في صلةٍ نوعها مؤجَّل: الإسناد مؤجَّلٌ بوجهيه (مبتدأ مؤخَّر أو فاعل)، فلا دور مرخَّص ولا عبارة تقريرية؛ وحدّ الصلة باقٍ، و«كان» V01 مرخَّص',
-      n27['status'] == 'DEFERRED' and 'فاعل' in ' '.join(n27['alternatives']) and not ax27['role'][0] and not ax27['inflection']['statement']
-      and c25['status'] == 'LICENSED' and 'مؤجَّل' in c25['reason'] and v36['status'] == 'LICENSED', (n27['status'], ax27['role'], ax27['inflection']['statement']))
+check('X44 ترخيص الوجه غير اختياره: «الحق» مبتدأٌ مرخَّص في وجه R01 (N02 LICENSED، والاختيار مؤجَّل)، وحكم الرفع AGREE بعبارةٍ تسمّي الوجه؛ وحدّ الصلة و«كان» V01 مرخَّصان',
+      n27['status'] == 'LICENSED' and n27.get('selection') == 'DEFERRED' and n27.get('face') == 'R01' and n27.get('nucleus_complete') is True
+      and ax27['role'][0] == 'مبتدأ' and 'غير مختار' in ax27['role'][1] and ax27['inflection']['agreement'] == 'AGREE'
+      and 'في وجه R01 المرخَّص، والوجه غير مختار' in ax27['inflection']['statement']
+      and c25['status'] == 'LICENSED' and c25.get('selection') == 'DEFERRED' and v36['status'] == 'LICENSED',
+      (n27['status'], n27.get('selection'), ax27['role'], ax27['inflection']['statement']))
+k25 = {k['layer']: k for k in s25['silah_kinds']}
+check('X49 كل وجهٍ بحالة دليله لا بوجود منافسه: K1 (R01) LICENSED كحاويته، وK2 (الطبقة القديمة) مؤجَّلٌ لأنه لا يذكر المرفوع «الحق»؛ '
+      'والبديل المحفوظ لا يُنسب إليه ما لم يقله (لا «الحق فاعله»)',
+      k25['R01']['status'] == c25['status'] == 'LICENSED' and k25['LEGACY']['status'] == 'DEFERRED' and 'لا يذكر هذا الوجه دور المرفوع' in k25['LEGACY']['why']
+      and not any('فاعله (وجه الطبقة القديمة)' in a_ for a_ in c25['alternatives'] + n27['alternatives'])
+      and any('وجه الطبقة القديمة' in a_ and 'لا يذكر دور المرفوع' in a_ for a_ in c25['alternatives']), (k25, c25['alternatives']))
 m = copy.deepcopy(o)
-next(r for r in m['records'] if r['relation_id'] == n27['relation_id'])['status'] = 'LICENSED'
-check('M12 إفساد رتبة الإسناد داخل الصلة المؤجَّلة النوع (LICENSED) يكشفه الفاحص العابر للطبقات', bool(check_cross(m['records'], m['axes'])))
-check('X45 عبارة العائد تسمّي المرشّحين كليهما، ومقدّمة الطبقة القديمة «مستوفى» تُنسب إليها مع حالته هنا',
-      '«هِ»' in s25['resumptive']['note'] and 'مستتر' in s25['resumptive']['note']
-      and any(p.startswith('المرحلة ١٤') and 'عائد' in p and 'في الطبقة القديمة؛ وهو هنا DEFERRED' in p for p in s25['premises']), s25['resumptive']['note'])
+next(r for r in m['records'] if r['relation_id'] == n27['relation_id']).pop('selection')
+check('M12 إفساد الاختيار (إسنادٌ مرخَّص في وجهٍ غير مختار بلا اختيارٍ مؤجَّل) يكشفه الفاحص العابر للطبقات', bool(check_cross(m['records'], m['axes'])))
+m = copy.deepcopy(o)
+next(k for r in m['records'] if r['relation_id'] == s25['relation_id'] for k in r['silah_kinds'] if k['layer'] == 'R01')['status'] = 'DEFERRED'
+check('M13 إفساد ترخيص الوجه (تنزيل وجه R01 لوجود منافسه، وحاويته مرخَّصة) يكشفه الفاحص العابر للطبقات', bool(check_cross(m['records'], m['axes'])))
+cands25 = s25['resumptive']['candidates']
+lk25 = s25['premise_links']
+check('X45 العائد: لكل مرشّحٍ ترخيصه من دليله ووجهه («هِ» في K1، والمستتر في K2)، والاختيار مؤجَّل؛ وكل مقدّمةٍ مربوطةٌ بمرشّحها وعلاقتها الفعلية وحالتها',
+      s25['resumptive']['status'] == 'DEFERRED' and {x['face'] for x in cands25} == {'K1', 'K2'}
+      and all(any(l_['premise'] == p_ for l_ in lk25) for p_ in s25['premises'])
+      and any(l_['relation'] == c25['relation_id'] and l_['candidate'] == 'K1' and l_['status'] == 'LICENSED' for l_ in lk25)
+      and any(l_['layer'] == 'LEGACY' and l_['candidate'] == 'K2' for l_ in lk25)
+      and all('في الطبقة القديمة' in p_ for p_ in s25['premises'] if p_.startswith('المرحلة ١٤')), (cands25, lk25))
+m = copy.deepcopy(o)
+next(l_ for r in m['records'] if r['relation_id'] == n27['relation_id'] for l_ in r['premise_links'] if l_['relation'])['relation'] = s25['relation_id']
+check('M14 إفساد ربط المقدّمة (مقدّمةٌ مربوطة بعلاقةٍ غير علاقتها) يكشفه الفاحص العابر للطبقات', bool(check_cross(m['records'], m['axes'])))
+m = copy.deepcopy(o)
+next(l_ for r in m['records'] if r['relation_id'] == s25['relation_id'] for l_ in r['premise_links'] if l_['relation'])['status'] = 'DEFERRED'
+check('M15 إفساد حالة المقدّمة المربوطة (غير حالة علاقتها الفعلية) يكشفه الفاحص العابر للطبقات', bool(check_cross(m['records'], m['axes'])))
 cr = [r for r in o['records'] if r['type'] == 'CONDITION' and r['status'] == 'DEFERRED']
 check('X46 أجزاء الشرط في السبب بأسمائها العربية (فعل الشرط، الجواب)، بلا مفاتيح داخلية',
       cr and all('=' not in r['reason'] and 'answer' not in r['reason'] and 'condition_verb' not in r['reason'] for r in cr), [r['reason'] for r in cr])

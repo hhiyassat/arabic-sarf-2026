@@ -181,7 +181,8 @@ class _Tok:
             pr, src = (None, 'غير محمية: يُستخرج جذرها'), None
         op = (self.lex or '').startswith('عامل') or 'عامل' in (self.lex or '')
         g = inf.get('governor') or {}
-        role = (g.get('role_name'), f"{g.get('role_rule') or ''} {g.get('relation_id') or ''}".strip() or g.get('relation')) \
+        role = (g.get('role_name'), (f"{g.get('role_rule') or ''} {g.get('relation_id') or ''}".strip() or g.get('relation')) +
+                (f"؛ {g['face_note']}" if g.get('face_note') else '')) \
             if g.get('role_name') else (None, (self.mabni_state or {}).get('text') or
                                         ('لا دور نحوي مرخَّص في هذا التحليل' if inf['build'][0] else 'غير محسوم'))
         st = inf.get('state') or (None, '')
@@ -581,6 +582,7 @@ def _inflection(t, nxt=None):
         out['governor'] = dict(kind=ROLE_AR.get(src['src'], src['src']), relation_id=src['rid'], expected=cap, of=src.get('of'),
                                role_name=src.get('role_name') or ROLE_NAME.get(src['src']), role_rule=src.get('rule'),
                                relation_status=src.get('status', LICENSED), target_uid=t.uid,
+                               face=src.get('face'), face_note=src.get('face_note'),
                                relation=ROLE_REL.get(src['src']))
         gov_txt = {'ibtida': 'بالابتداء', 'khabar': f'خبراً للمبتدأ «{src.get("of")}»',
                    'nasikh': f'خبراً لـ«{src.get("of")}»', 'idafa': f'مضافاً إليه لـ«{src.get("of")}»'}.get(src['src'], '')
@@ -642,7 +644,8 @@ def _inflection(t, nxt=None):
         tail = {'khabar': f'، والمبتدأ «{src.get("of")}»', 'idafa': f'، والمضاف «{src.get("of")}»',
                 'object': f'، والفعل «{src.get("of")}»', 'subject': f'، والفعل «{src.get("of")}»',
                 'nasikh': ''}.get(src['src'], '')
-        out['statement'] = f'{lead} وعلامة {STATE_NOUN[cap]} {mp}{tail}'
+        out['statement'] = f'{lead} وعلامة {STATE_NOUN[cap]} {mp}{tail}' + \
+            (f' — في وجه {src["face"]} المرخَّص، والوجه غير مختار (بديله محفوظ)' if src.get('face') else '')
     else:
         out['statement'] = f'{kind} {STATE_ADJ[cap]} {gov_txt} وعلامة {STATE_NOUN[cap]} {mp}'
     dims = out['mark_dims'] or {}
@@ -1075,7 +1078,7 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                     'الموصول المختصّ تليه شبه جملة ثم مرفوع: صلةٌ اسمية (خبرها شبه الجملة المقدَّمة)',
                     premises=[f'«{t.text}» موصولٌ مختصّ (ملف المبنيات)', prec['relation_id'], f'«{s.text}» مرفوعٌ كتابةً'],
                     checked=[f'حدّ الصلة بعد «{s.text}»: {stop_why}'], container=None,
-                    alternatives=[f'صلةٌ شبه جملة متعلّقها محذوف، و«{s.text}» فاعله (وجه الطبقة القديمة): وجهٌ لا يُسقطه هذا الترخيص'],
+                    face='R01', selection=None,
                     extent=[u.uid for u in members])
         R.append(crec)
         cid = crec['relation_id']
@@ -1086,7 +1089,7 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                     'في إطار الصلة: شبه الجملة المقدَّمة خبر، والمرفوع بعدها مسندٌ إليه',
                     premises=[crec['relation_id'], prec['relation_id'], f'«{s.text}»: {s.nominative()[1]}'],
                     checked=['الصلة لا تكون مفرداً: فالمرفوع بعد شبه الجملة ليس معطوفاً عليها ولا مضافاً إليها'],
-                    container=cid, nucleus_complete=True,
+                    container=cid, nucleus_complete=True, face='R01', selection=None,
                     display_convention='شبه الجملة خبرٌ في هذا الوجه (أو متعلّقٌ بخبرٍ محذوف)؛ ولا يُكتب المحذوف')
         R.append(nrec)
         for u in members:
@@ -1678,51 +1681,72 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
         # الطبقة القديمة)؛ والربط بين الموصول وصلته مرخَّص، والنوع مؤجَّلٌ بوجهيه؛ ومرشّحات العائد سجلٌّ واحد من الطبقتين
         cont_ = next((r_ for r_ in R if r_['type'] == 'CONTAINER_RELATIVE' and r_['heads'].get('relative') == rel_t.uid), None)
         res01 = [r_ for r_ in R if r_['type'] == 'RESUMPTIVE' and r_['heads'].get('relative') == rel_t.uid]
-        kinds_ = [dict(kind=c['silah'], source='المرحلة ١٤ (sarf.algebra.relative_structs)', status=DEFERRED if cont_ else st_)]
+        LEG = 'المرحلة ١٤ (sarf.algebra.relative_structs)'
+        # الأوجه: ترخيص كل وجهٍ من دليله هو، والاختيار بينها مستقلٌّ عنه. فوجود وجهٍ قديم لا يُسقط وجهاً مرخَّصاً،
+        # ولا يُرقّى وجهٌ بما لم يقله مصدره
+        kinds_ = []
         if cont_:
-            kinds_.insert(0, dict(kind='جملة اسمية: شبه الجملة خبرٌ مقدَّم، والمرفوع مبتدأ', source=cont_['relation_id'],
-                                  status=cont_['status']))
-        kind_status = DEFERRED if len({k_['kind'] for k_ in kinds_}) > 1 else st_
+            kinds_.append(dict(id='K1', kind='جملة اسمية: شبه الجملة خبرٌ مقدَّم، والمرفوع مبتدأٌ مؤخَّر', source=cont_['relation_id'],
+                               layer='R01', status=cont_['status'], why=cont_['reason']))
+        unacc = [t for t in span if t.case == 'رفع' and t.pos == 'اسم' and not t.enclitic] if cont_ else []
+        leg_st = st_
+        leg_why = f'{LEG}: الصلة {c["silah"]}' + (f'، والعائد {rnote.split("؛")[0]}' if rh[2:3] and rh[2] else '')
+        if unacc and 'شبه جملة' in c['silah']:
+            leg_st = DEFERRED
+            leg_why += ('؛ ولا يذكر هذا الوجه دور المرفوع «' + '»، «'.join(t.text for t in unacc) +
+                        '» في الصلة: دليله ناقصٌ عنه (لا مانعٌ مثبت يرفضه)')
+        kinds_.append(dict(id='K2' if cont_ else 'K1', kind=c['silah'], source=LEG, layer='LEGACY', status=leg_st, why=leg_why))
+        if len({k_['kind'] for k_ in kinds_}) > 1:
+            kind_status = DEFERRED                          # الاختيار: لا يُختار وجهٌ ومنافسه غير مرفوضٍ بمانعٍ مثبت
+        else:
+            kind_status = kinds_[0]['status']
+        if cont_ and kind_status == DEFERRED:
+            # الحاوية ونواتها مرخَّصتان في وجههما، والاختيار مؤجَّل؛ ويُحفظ الوجه الآخر بديلاً بما يقوله مصدره وحده
+            for r_ in [cont_] + [n2 for n2 in R if n2['type'] == 'PREDICATIVE_PP' and n2.get('container_id') == cont_['relation_id']]:
+                r_['selection'] = DEFERRED
+                r_['face_note'] = 'وجه R01 مرخَّصٌ في وجهه، والوجه غير مختار: الاختيار بين وجهَي الصلة مؤجَّل (R02)'
+                alt_ = f'صلةٌ شبه جملة متعلّقها محذوف، والعائد {rnote.split("؛")[0]} — وجه الطبقة القديمة ({LEG})؛ ولا يذكر دور المرفوع'
+                if alt_ not in (r_.get('alternatives') or []):
+                    r_['alternatives'] = list(r_.get('alternatives') or []) + [alt_]
         cands_ = []
         for r_ in res01:
-            cands_.append(dict(candidate=r_['texts'].get('pronoun'), unit=r_['heads'].get('pronoun'), source=r_['relation_id'],
-                               status=r_['status'], why=r_['reason']))
+            cands_.append(dict(id=f'C{len(cands_) + 1}', candidate=r_['texts'].get('pronoun'), unit=r_['heads'].get('pronoun'),
+                               source=r_['relation_id'], face='K1', status=r_['status'], why=r_['reason']))
         if rh[2:3] and rh[2]:
-            cands_.append(dict(candidate=rnote.split('؛')[0], unit=None, source='المرحلة ١٤ (sarf.algebra.relative_structs)',
-                               status=rv, why='وجه الطبقة القديمة'))
-        if len(cands_) > 1 and rv == LICENSED:
-            rv = DEFERRED                               # مرشّحان للعائد من طبقتين: لا يُرخَّص أحدهما بإسقاط الآخر
+            cands_.append(dict(id=f'C{len(cands_) + 1}', candidate=rnote.split('؛')[0], unit=None, source=LEG,
+                               face=kinds_[-1]['id'], status=rv, why='وجه الطبقة القديمة'))
+        # ترخيص كل مرشّحٍ للعائد من دليله؛ والاختيار بينها مؤجَّل ما تعدّدت ولم يُرفض أحدها بمانعٍ مثبت
+        res_sel = cands_[0]['status'] if len(cands_) == 1 else DEFERRED if cands_ else rv
         if len(cands_) > 1:
-            rnote = ('مرشّحان من طبقتين: ' + '، و'.join(f'«{x["candidate"]}» ({x["source"]})' for x in cands_) +
-                     '؛ ولا يُسقط أحدهما الآخر حتى يُعيَّن نوع الصلة')
-        if cont_ and kind_status == DEFERRED and len(kinds_) > 1:
-            # نوع الصلة مؤجَّل: فدور المرفوع فيها (مبتدأ مؤخَّر في وجه R01، أو فاعلٌ لمتعلَّق شبه الجملة في وجه الطبقة القديمة)
-            # غير مثبت؛ وحدّ الصلة (الذي يقوم عليه ما بعدها) مثبتٌ في الوجهين، فلا تُنزَّل الحاوية
-            cont_['reason_before_kind'] = cont_['reason']
-            cont_['reason'] = ('الموصول المختصّ تليه شبه جملة ثم مرفوع: حدّ الصلة مثبت في الوجهين؛ '
-                               'ونوعها (اسمية، أو شبه جملة متعلّقها محذوف) مؤجَّلٌ في R02')
-            for n2 in R:
-                if n2['type'] == 'PREDICATIVE_PP' and n2.get('container_id') == cont_['relation_id'] and n2['status'] == LICENSED:
-                    sj = n2['texts'].get('subject')
-                    n2['reason_before_kind'] = n2['reason']
-                    n2['status'] = DEFERRED
-                    n2['reason'] = (f'نوع الصلة مؤجَّلٌ بوجهيه (R02): «{sj}» مبتدأٌ مؤخَّر وشبه الجملة خبرٌ مقدَّم في وجه R01، '
-                                    'أو فاعلٌ لمتعلَّق شبه الجملة المحذوف في وجه الطبقة القديمة؛ فلا يُثبت أحد الدورين')
-                    n2['alternatives'] = list(n2.get('alternatives') or []) + [
-                        f'«{sj}» فاعلٌ لمتعلَّق شبه الجملة المحذوف (وجه الطبقة القديمة، sarf.algebra.relative_structs)']
-                    n2['nucleus_complete'] = None
+            rnote = ('مرشّحان من وجهين: ' + '، و'.join(f'«{x["candidate"]}» ({x["face"]}، {x["status"]})' for x in cands_) +
+                     '؛ والاختيار مؤجَّلٌ بتأجيل نوع الصلة')
+        prem_ = []
+        links_ = []
+        for o_ in c['obligations']:
+            p_ = f'{LEG}: {o_[0]} — {o_[2]} → {"مستوفى" if o_[1] == "True" else "مفتوح"} في الطبقة القديمة'
+            prem_.append(p_)
+            links_.append(dict(premise=p_, candidate=kinds_[-1]['id'] if o_[0] == 'صلة' else
+                               next((x['id'] for x in cands_ if x['source'] == LEG), None), relation=None, layer='LEGACY'))
+        if cont_ and cont_['status'] == LICENSED:
+            prem_.append(cont_['relation_id'])
+            links_.append(dict(premise=cont_['relation_id'], candidate='K1', relation=cont_['relation_id'], layer='R01'))
+        for x in cands_:
+            if x['source'] != LEG:
+                links_.append(dict(premise=None, candidate=x['id'], relation=x['source'], layer='R01'))
         R.append(_rec(ref, 'SILAH', 'R02', {'relative': rel_t, 'silah_head': head_}, {'relative': [rel_t], 'silah_head': [head_], 'silah': span}, st_,
                       (f'صلة «{rel_t.text}» من «{span[0].text}» إلى «{span[-1].text}» (الحدّ: {bnd})؛ ونوعها ' +
-                       ('مؤجَّلٌ بوجهين: ' + ' / '.join(k_['kind'] for k_ in kinds_) if kind_status == DEFERRED and len(kinds_) > 1 else c['silah'])
+                       ('غير مختار بين وجهين: ' + ' / '.join(f'{k_["kind"]} ({k_["layer"]}، {k_["status"]})' for k_ in kinds_)
+                        if kind_status == DEFERRED and len(kinds_) > 1 else c['silah'])
                        if s_ok else 'الصلة غير مكشوفة في الطبقة القديمة'),
-                      premises=[f'المرحلة ١٤ (LEGACY، sarf.algebra.relative_structs): {o_[0]} — {o_[2]} → {"مستوفى" if o_[1] == "True" else "مفتوح"}'
-                                + (f' في الطبقة القديمة؛ وهو هنا {rv} بمرشّحيه' if o_[0] == 'عائد' and o_[1] == 'True' and rv != LICENSED else '')
-                                for o_ in c['obligations']] + ([cont_['relation_id']] if cont_ and cont_['status'] == LICENSED else []),
+                      premises=prem_, premise_links=links_,
                       extent=[t.uid for t in [rel_t] + span], boundary_proven=bool(c['end_is_text_end']),
                       silah_kinds=kinds_, kind_status=kind_status,
-                      kind_note='نوع الصلة غير مختار: الوجهان محفوظان، ولا يتوقف عليهما ربط الموصول بصلته' if kind_status == DEFERRED and len(kinds_) > 1 else None,
-                      resumptive=dict(status=rv, note=rnote, rule='المطابقة شرط، والحصر دليل', candidates=cands_),
-                      alternatives=[] if rv == LICENSED else [f'العائد «{x["candidate"]}» ({x["status"]})' for x in cands_] or
+                      kind_note='ترخيص الوجه غير اختياره: الوجهان محفوظان كلٌّ بحالة دليله، ولا يتوقف عليهما ربط الموصول بصلته'
+                      if kind_status == DEFERRED and len(kinds_) > 1 else None,
+                      shared=dict(boundary=f'من «{span[0].text}» إلى «{span[-1].text}»', members=[t.uid for t in span],
+                                  note='حدّ الصلة وأعضاؤها مشتركةٌ بين الأوجه، مثبتةٌ بربط R02') if len(kinds_) > 1 else None,
+                      resumptive=dict(status=res_sel, note=rnote, rule='المطابقة شرط، والحصر دليل', candidates=cands_),
+                      alternatives=[] if res_sel == LICENSED else [f'العائد «{x["candidate"]}» ({x["face"]}، {x["status"]})' for x in cands_] or
                       ['العائد ضميرٌ آخر في النطاق', 'العائد محذوفٌ بقاعدة']))
 
     # C01 (جسر): علاقات الشرط من الطبقة القديمة (المرحلة ١٤) تُنقل بهوياتها ومقدّماتها، لا يُعاد اشتقاقها ولا تُرفع رتبتها:
@@ -1790,6 +1814,16 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                     ' — والعلاقة تحمل رتبة مقدّماتها'
                 changed = True
 
+    # ربط كل مقدّمةٍ بمرشّحها وعلاقتها الفعلية وحالتها (بعد رتبة المقدّمات): ما لم يربطه سجلُّه صراحةً يُربط بالسجل نفسه
+    ids = {r_['relation_id']: r_ for r_ in R}
+    for r_ in R:
+        lk = r_.get('premise_links')
+        if lk is None:
+            lk = r_['premise_links'] = [dict(premise=p_, candidate='self', relation=p_ if p_ in ids else None,
+                                             layer=None) for p_ in r_['premises']]
+        for l_ in lk:
+            if l_.get('relation') in ids:
+                l_['status'] = ids[l_['relation']]['status']
     # أدوار العمل من العلاقات المرخَّصة وحدها (لا من المؤجَّل)
     by_uid = {t.uid: t for t in toks}
     for rec in R:
@@ -1798,7 +1832,9 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
         hd = rec['heads']
         rid = rec['relation_id']
         if rec['type'] in ('PREDICATION', 'PREDICATIVE_PP') and hd.get('subject') in by_uid:
-            by_uid[hd['subject']].roles.append(dict(src='ibtida', expected='رفع', rid=rid, role_name='مبتدأ', rule=rec['rule_id']))
+            by_uid[hd['subject']].roles.append(dict(src='ibtida', expected='رفع', rid=rid, role_name='مبتدأ', rule=rec['rule_id'],
+                                                    face=rec.get('face') if rec.get('selection') == DEFERRED else None,
+                                                    face_note=rec.get('face_note') if rec.get('selection') == DEFERRED else None))
         if rec['type'] == 'PREDICATION' and hd.get('predicate') in by_uid:
             by_uid[hd['predicate']].roles.append(dict(src='khabar', expected='رفع', rid=rid, role_name='خبر', rule=rec['rule_id'],
                                                       of=by_uid[hd['subject']].text))
@@ -2107,11 +2143,38 @@ def check_cross(records, axes):
                 errs.append(f'{u}: الدور «{g["role_name"]}» من علاقةٍ {r["status"]}')
             elif not any(u in us for us in r['members'].values()):
                 errs.append(f'{u}: الدور «{g["role_name"]}» من علاقةٍ ليست الوحدة من أعضائها')
-    # ٥ نوع الصلة المؤجَّل: لا يُرخَّص إسنادٌ داخل حاويتها يفترض أحد الوجهين
+    # ٥ ترخيص الوجه غير اختياره: الإسناد المرخَّص داخل صلةٍ نوعها غير مختار يحمل وجهه واختياره المؤجَّل،
+    #   ودور محوره يسمّي الوجه؛ ولا يُنزَّل وجهٌ مرخَّص لوجود منافس، ولا يُرقّى وجهٌ فوق دليله
     for r in records:
         if r['type'] == 'SILAH' and r.get('kind_status') == DEFERRED and len(r.get('silah_kinds') or []) > 1:
             for k_ in r['silah_kinds']:
+                src_ = ids.get(k_.get('source'))
+                if src_ is not None and src_['status'] != k_['status']:
+                    errs.append(f'{r["relation_id"]}: ترخيص الوجه {k_.get("id")} ({k_["status"]}) غير حالة علاقته {src_["relation_id"]} ({src_["status"]})')
                 for n2 in records:
-                    if n2['type'] == 'PREDICATIVE_PP' and n2.get('container_id') == k_.get('source') and n2['status'] == LICENSED:
-                        errs.append(f'{n2["relation_id"]}: إسنادٌ مرخَّص في صلةٍ نوعها مؤجَّل ({r["relation_id"]})')
+                    if n2['type'] == 'PREDICATIVE_PP' and n2.get('container_id') == k_.get('source') and n2['status'] == LICENSED \
+                            and n2.get('selection') != DEFERRED:
+                        errs.append(f'{n2["relation_id"]}: إسنادٌ مرخَّص في وجهٍ غير مختار بلا اختيارٍ مؤجَّل ({r["relation_id"]})')
+    for u, ax in axes.items():
+        g = (ax.get('inflection') or {}).get('governor') or {}
+        r = ids.get(g.get('relation_id'))
+        if r is not None and r.get('selection') == DEFERRED and g.get('role_name') and not g.get('face'):
+            errs.append(f'{u}: الدور «{g["role_name"]}» من وجهٍ غير مختار ({r["relation_id"]}) بلا تسمية وجهه')
+    # ٦ ربط المقدّمات: كل رابطٍ يسمّي علاقةً موجودة، ومقدّمته (إن كانت معرّف علاقة) هي العلاقة نفسها،
+    #   وحالته المسجّلة حالتها الفعلية؛ ومرشّحه من مرشّحات السجل أو أوجهه
+    for r in records:
+        for l_ in r.get('premise_links') or []:
+            rel_ = l_.get('relation')
+            if rel_ is not None and rel_ not in ids:
+                errs.append(f'{r["relation_id"]}: رابط مقدّمةٍ إلى علاقةٍ غير موجودة {rel_}')
+            elif rel_ is not None and l_.get('premise') is not None and l_['premise'] != rel_:
+                errs.append(f'{r["relation_id"]}: المقدّمة {l_["premise"]} مربوطةٌ بعلاقةٍ أخرى {rel_}')
+            elif rel_ is not None and l_.get('status') is not None and l_['status'] != ids[rel_]['status']:
+                errs.append(f'{r["relation_id"]}: حالة المقدّمة {rel_} المسجّلة {l_["status"]} غير حالتها {ids[rel_]["status"]}')
+            cids = {x.get('id') for x in (r.get('silah_kinds') or []) + ((r.get('resumptive') or {}).get('candidates') or [])} | {'self'}
+            if l_.get('candidate') is not None and l_['candidate'] not in cids:
+                errs.append(f'{r["relation_id"]}: مقدّمةٌ مربوطة بمرشّحٍ غير موجود {l_["candidate"]}')
+        for p_ in r['premises']:
+            if r.get('premise_links') is not None and not any(l_.get('premise') == p_ for l_ in r['premise_links']):
+                errs.append(f'{r["relation_id"]}: مقدّمةٌ بلا رابط: {str(p_)[:60]}')
     return errs

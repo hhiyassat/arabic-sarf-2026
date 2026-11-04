@@ -525,18 +525,27 @@ for pv in per_verse:
             alts += '<br>' + h('، '.join(f'{k}={v}' for k, v in r['parts_status'].items()))
         if r.get('resumptive'):
             alts += f"<br>العائد: {h(r['resumptive'].get('status'))} — {h(r['resumptive'].get('note'))}"
-            alts += ''.join(f"<br>مرشّح العائد: «{h(x.get('candidate'))}» [{h(x.get('status'))}] {h(x.get('source'))}" for x in r['resumptive'].get('candidates') or [])
+            alts += ''.join(f"<br>مرشّح العائد {h(x.get('id') or '')}: «{h(x.get('candidate'))}» في الوجه {h(x.get('face') or '—')}، ترخيصه [{h(x.get('status'))}] ← {h(x.get('source'))}"
+                            for x in r['resumptive'].get('candidates') or [])
         if r.get('silah_kinds'):
-            alts += ''.join(f"<br>وجه الصلة: {h(x['kind'])} [{h(x['status'])}] ← {h(x['source'])}" for x in r['silah_kinds'])
+            alts += ''.join(f"<br>وجه الصلة {h(x.get('id') or '')}: {h(x['kind'])}، ترخيصه [{h(x['status'])}] ← {h(x['source'])}"
+                            + (f" — {h(x['why'])}" if x.get('why') and x.get('layer') == 'LEGACY' else '') for x in r['silah_kinds'])
+        if r.get('shared'):
+            alts += f"<br>المشترك بين الأوجه: الحدّ {h(r['shared'].get('boundary'))} — {h(r['shared'].get('note'))}"
+        if r.get('face') and r.get('selection'):
+            alts += f"<br>الوجه: {h(r['face'])}، ترخيصه [{h(r['status'])}]؛ الاختيار: {h(r['selection'])} — {h(r.get('face_note') or '')}"
         if r.get('head_parts'):
             alts += '<br>أجزاء الأطراف: ' + h('، '.join(f'{k}={v}' for k, v in r['head_parts'].items()))
         if r.get('kind_status'):
-            alts += f"<br>النوع: {h(r['kind_status'])}" + (f" — {h(r['kind_note'])}" if r.get('kind_note') else '')
+            alts += f"<br>اختيار النوع: {h(r['kind_status'])}" + (f" — {h(r['kind_note'])}" if r.get('kind_note') else '')
         if r.get('reason_before_rank'):
             alts += f"<br>قبل الرتبة: {h(r['reason_before_rank'])}"
         rows_r.append([h(r['type']), f"{h(r['rule_id'])} {h(r['rule_version'])}", f"<span class='st {'p' if r['status'] == 'LICENSED' else 'c'}'>{h(r['status'])}</span>",
                        '<br>'.join(f"{h(k)}: <span class='ar'>{h(v)}</span> <sub>{h('، '.join(r['positions'][k]))}</sub>" for k, v in r['texts'].items()),
-                       h(r['reason']), '<br>'.join(h(str(x)) for x in r['premises']) or '—', alts,
+                       h(r['reason']), '<br>'.join(h(str(x)) + ''.join(
+                           f" <sub>← المرشّح {h(l_['candidate'])}" + (f"، العلاقة [{h(l_.get('status'))}]" if l_.get('relation') else '') + '</sub>'
+                           for l_ in r.get('premise_links') or [] if l_.get('premise') == x and l_.get('candidate') not in (None, 'self'))
+                           for x in r['premises']) or '—', alts,
                        h(' / '.join(f'{k}={r.get(k)}' for k in ('nucleus_complete', 'clause_complete', 'boundary_proven', 'sentence_closed'))) +
                        (f"<br>{h(r.get('search_status'))}" if r.get('search_status') else ''),
                        f"<code>{h(r['relation_id'])}</code>"])
