@@ -126,8 +126,9 @@ for pv in per_verse:
             rows.append([f"{pv['s']}:{pv['v']} (المصدر)", f"<span class='ar'>{h(src_line)}</span>", '—',
                          '<code>' + hashlib.sha256(src_line.encode()).hexdigest()[:16] + '</code>'])
 section(1, 'المدخل', ('النص المحلَّل، بحركاته ورسمه، من ' + (quran_source.tsv_path() if not args.text else '--text') +
-                     ' (المصحف المعتمد: ' + (quran_source.name() if not args.text else 'نصّ حرّ') + '). وصفّ «المصدر» سطر الملف كما ورد: '
-                     'البسملة الملصقة بالآية الأولى مفصولةٌ عن التحليل، و«<sel>» وقفٌ غير محدَّد النوع خارج التحليل (حكم المالك، 3 نوفمبر 2026)'),
+                     ' (المصحف المعتمد: ' + (quran_source.name() if not args.text else 'نصّ حرّ') + ')' +
+                     ('. وصفّ «المصدر» سطر الملف كما ورد: البسملة الملصقة بالآية الأولى مفصولةٌ عن التحليل، و«<sel>» وقفٌ غير '
+                      'محدَّد النوع خارج التحليل (حكم المالك، 3 نوفمبر 2026)' if not args.text and quran_source.name() == 'quran_simple' else '')),
         rows, ['الموضع', 'النص', 'الكلمات', 'البصمة'], tl)
 
 # ٢ التطبيع: محاذاةٌ بمجالات محارف المصدر، لا بترتيب القائمتين
