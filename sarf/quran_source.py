@@ -2,19 +2,20 @@
 """
 sarf/quran_source.py — نصّ المصحف المدخل: منفذٌ واحد تقرؤه الأدوات والاختبارات كلها.
 
-حكم المالك (3 نوفمبر 2026): المدخل من الآن «quran-simple-enhanced» (data/quran-simple-enhanced.txt، خارج git)،
+حكم المالك (4 نوفمبر 2026): المدخل مصحف المجمّع data/quran_hafs.tsv (رواية حفص، الرسم العثماني)، والتنفيذ عليه.
+وكان المدخل يومي 3–4 نوفمبر «quran-simple-enhanced» (data/quran-simple-enhanced.txt، خارج git)؛ وهو باقٍ يُختار صراحةً بـSARF_QURAN=quran_simple،
 يُحوَّل بـtools/import_quran_simple.py إلى data/quran_simple.tsv بأحكامٍ ثلاثة معتمدة:
   ١ البسملة الملصقة بالآية الأولى (112 سورة) تُفصل عنها، وتُحفظ في المصدر وفي سجل العمليات؛
   ٢ «<sel>» وقفٌ غير محدَّد النوع: يُخرج من النص المحلَّل، ويُحفظ موضعه في سجل العمليات وفي عمود المصدر؛
   ٣ المواضع تتبع كلمات الملف الجديد بمسافاته (يَا أَيُّهَا كلمتان).
 
-والنصّ القديم (مصحف المجمّع، data/quran_hafs.tsv) يُختار صراحةً بـSARF_QURAN=hafs_kfgqpc للقياس التاريخي وحده.
+والمصحف الافتراضي مصحف المجمّع (SARF_QURAN=hafs_kfgqpc).
 TSV: سورة، آية، النص المحلَّل، [سطر المصدر كما ورد].
 """
 import os
 
 H = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DEFAULT = 'quran_simple'
+DEFAULT = 'hafs_kfgqpc'   # حكم المالك (4 نوفمبر 2026): العودة إلى مصحف المجمّع والتقيّد بالتنفيذ عليه
 SOURCES = {'quran_simple': os.path.join('data', 'quran_simple.tsv'), 'hafs_kfgqpc': os.path.join('data', 'quran_hafs.tsv')}
 # قراءة الرسم في التطبيع: الحرف العاري غير المدّي في هذا الرسم ساكنٌ مُخفى أو مدغم (تَدَايَنتُم، أَنتُمْ)، فالسكون الضمني «on»؛
 # ورسم المجمّع يُكشف بعلاماته («auto»). وكل قارئٍ للمصحف يمرّر هذا الوضع صراحةً إلى analyze؛ ولا يُطبَّق على النصوص الحرّة.

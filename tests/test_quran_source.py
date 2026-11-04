@@ -10,6 +10,8 @@ H = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/'
 sys.path.insert(0, H)
 os.environ.pop('SARF_QURAN', None)
 from sarf import quran_source as Q
+DEFAULT_NAME = Q.name()                 # المصحف المدخل (حكم المالك 4 نوفمبر 2026: مصحف المجمّع)
+os.environ['SARF_QURAN'] = 'quran_simple'   # هذا الملف يختبر مصحف quran-simple-enhanced صراحةً
 
 FAIL = []
 
@@ -27,7 +29,8 @@ if not os.path.exists(H + 'data/quran_simple.tsv'):
 R = Q.rows()
 D = {(s, v): t for s, v, t in R}
 ops = json.load(open(H + 'data/quran_simple_ops.json', encoding='utf-8'))
-check('Q01 المصدر الافتراضي quran_simple، ووضع قراءته «on»', Q.name() == 'quran_simple' and Q.uthmani_mode() == 'on', (Q.name(), Q.uthmani_mode()))
+check('Q01 المصحف المدخل الافتراضي مصحف المجمّع، وquran_simple يُختار صراحةً ووضع قراءته «on»',
+      DEFAULT_NAME == 'hafs_kfgqpc' and Q.name() == 'quran_simple' and Q.uthmani_mode() == 'on', (DEFAULT_NAME, Q.name(), Q.uthmani_mode()))
 check('Q02 6236 آية بالترتيب على أعداد حفص', len(R) == 6236 and R[0][:2] == (1, 1) and R[-1][:2] == (114, 6), (len(R), R[-1][:2]))
 check('Q03 البسملة مفصولةٌ في 112 سورة (غير الفاتحة والتوبة)، ومحفوظةٌ في سجل العمليات وفي سطر المصدر',
       ops['counts']['basmala_separated'] == 112 and ops['counts']['untouched_first_verses'] == 0 and D[(2, 1)] == 'الم'
@@ -63,7 +66,7 @@ check('Q10 الفاحص المستقل نظيف على 2:282 من المصحف �
 with tempfile.TemporaryDirectory() as d:
     out = os.path.join(d, 't.html')
     subprocess.run([sys.executable, H + 'tools/pipeline_trace.py', '2:282', '-o', out, '--quiet'], check=True, capture_output=True,
-                   env={k: v for k, v in os.environ.items() if k != 'SARF_QURAN'})
+                   env=dict(os.environ, SARF_QURAN='quran_simple'))
     page = open(out, encoding='utf-8').read()
 miss = [st for u, _, _ in o['tokens'] for st in [o['axes'][u]['inflection']['statement']] if st and html.escape(st) not in page]
 check('Q11 عابر: صفحة المسار مبنيةٌ على المصحف المعتمد، وكل عبارةٍ في المحور فيها', not miss and 'quran_simple' in page, miss[:3])
