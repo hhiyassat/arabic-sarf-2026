@@ -358,5 +358,9 @@ leak = [p for r in o['records'] for p in r['premises'] + [r['reason']] + list(r.
         if isinstance(p, str) and _re.search(r"\b(singular|dual|plural|masc|fem)\b|\{'|\['", p)]
 check('X47 لا سماتٌ بالإنجليزية ولا تمثيل بايثون في سبب العلاقات ومقدّماتها وبدائلها', not leak, leak[:3])
 
+noev = [(o['tokens'][i][1], o['tokens'][i][2]) for i, (u, l, t) in enumerate(o['tokens'])
+        if o['axes'][u]['word_class'][0] and not o['axes'][u]['word_class'][1]]
+check('X48 لا صنفَ بلا دليل: دليل الاسم من أساس الحكم نفسه (سمة المرحلة ١٣ المثبتة، أو لفظ الجلالة، أو الاسم الذهبي، أو E01)', not noev, noev[:5])
+
 print('ALL OK' if not FAIL else f'FAILED {len(FAIL)}: {FAIL}')
 sys.exit(1 if FAIL else 0)

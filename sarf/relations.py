@@ -147,7 +147,8 @@ class _Tok:
         """محاور مستقلة لا يُغني أحدها عن الآخر، كلٌّ بدليله أو «غير محسوم»:
         صنف الكلمة، والبناء والإعراب، والدور النحوي (بعلاقته وحالة دليلها)، والحالة أو المحلّ، والحماية (نطاقها وسببها ومصدرها)،
         والعمل (واستعمال العامل في هذا التحليل). فـ«مبني» وصف البناء، وAGREE وUNGOVERNED وصفا العلاقة: لا يتنافسان على محورٍ واحد"""
-        wc = ('اسم', self.noun_ev or 'لفظ الجلالة' if self.divine else 'اسمٌ ذهبي' if self.golden else self.elative_proof()) \
+        wc = ('اسم', self.noun_ev if (self.pos == 'اسم' and self.pos_st == 'مثبت' and not self.shape_only or self.divine) and self.noun_ev else
+                   'لفظ الجلالة' if self.divine else 'اسمٌ ذهبي' if self.golden else self.elative_proof()) \
             if self.nounish() else \
             ('اسم', f'ملف المبنيات: {self.mcat}') if self.mcat in ('separate_pronoun', 'demonstrative', 'relative', 'attached_pronoun') else \
             ('اسم', f'ظرفٌ من جرد المشروع (sarf.algebra.ZURUF_V) في علاقة P02 مرخَّصة: الظرف اسم') if self.adverb == 'P02:LICENSED' else \
