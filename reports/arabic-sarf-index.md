@@ -6,3 +6,4 @@
 | 002 | `arabic-sarf-002.html` (صفحة ملخّص بقالبٍ غير المعتمد) | 2026-11-03 | `dd4f4ad` | مطابقة تشغيل المالك المحلي لقياس الدفعة ٣، وعيبا العرض | `reports/nominal_nucleus_02/batch3_inflection/local_run_check.md` |
 | 003 | `arabic-sarf-003.html` | 2026-11-03 | `4d4da83` | مسار التحليل: 2:282 — هوية التشغيل cfeacbe5066e | `tools/pipeline_trace.py 2:282` |
 | 004 | `arabic-sarf-004.html` | 2026-11-04 | `dffa16a` | مسار التحليل: 2:282 — هوية التشغيل 4d53b044fe5e | `tools/pipeline_trace.py 2:282` |
+| 005 | `arabic-sarf-005.html` | 2026-11-04 | `5810dfb` | مسار التحليل: 2:282 — هوية التشغيل f4e2790a2192 | `tools/pipeline_trace.py 2:282` |
