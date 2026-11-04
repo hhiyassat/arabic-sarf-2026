@@ -138,6 +138,7 @@ class _Tok:
             ('حرف + اسم', 'وحدةٌ مكتوبة مندمجة (sarf.protected.MERGED): حرف جرٍّ واسمٌ مبني، P03') if any(r['src'] == 'merged_pp' for r in self.roles) else \
             ('فعل', (self.feats.get('pos') or {}).get('ev')) if self.pos == 'فعل' and self.pos_st == 'مثبت' else \
             ('حرف', f'ملف المبنيات: {self.mcat}') if self.mcat == 'particle' else \
+            ('حرف', (self.mabni_state or {}).get('text')) if (self.mabni_state or {}).get('code') == 'NO_MAHALL' and self.pos != 'فعل' else \
             (None, 'الاسمية من شكل التنوين وحده: غير محسوم في هذه الطبقة (العقد T19)؛ وسمة المرحلة ١٣ «اسم» بدليل التنوين '
                    'قديمةٌ (LEGACY) لم تُغيَّر، وهذا المحور يصحّحها إلى التأجيل' if self.shape_only else 'غير محسوم')
         inf = _inflection(self, nxt)
@@ -165,7 +166,10 @@ class _Tok:
         st = inf.get('state') or (None, '')
         mk = inf.get('mark_kind')
         case_axis = (st[0], 'محلّي' if mk == 'محلّي' else 'تقديري' if mk == 'مقدّرة' else 'لفظي') if st[0] and \
-            inf['agreement'] == 'AGREE' else (None, (self.mabni_state or {}).get('text') or st[1])
+            inf['agreement'] == 'AGREE' else \
+            ('لا محلّ له (غير منطبق)', (self.mabni_state or {}).get('text') or 'الفعل المبني وحده لا محلّ له من الإعراب') \
+            if (self.mabni_state or {}).get('code') == 'NO_MAHALL' or self.pos == 'فعل' and inf['build'][0] == 'مبني' else \
+            (None, (self.mabni_state or {}).get('text') or st[1])
         return dict(word_class=wc, build=inf['build'], inflection=inf,
                     role=role, role_status=g.get('relation_status') if g.get('role_name') else None,
                     case_axis=case_axis, mabni_state=self.mabni_state,
@@ -1709,7 +1713,7 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                                      evidence='المرحلة ١١ + ملف المبنيات')
             elif any(c_ - {'particle'} for c_ in cats):
                 t.mabni_state = dict(code='ROLE_RULE_NOT_IMPLEMENTED',
-                                     text='للأداة في ملف المبنيات مداخل اسمية (' + '، '.join(sorted(set().union(*cats) - {'particle'})) +
+                                     text='للأداة في ملف المبنيات مداخل اسمية (' + '، '.join(sorted(CAT_AR.get(c_, c_) for c_ in set().union(*cats) - {'particle'})) +
                                      '): محلّها إن كانت اسماً لم يُعيَّن، وقاعدة تعيينه غير منفّذة', evidence=None)
             else:
                 t.mabni_state = dict(code='LEXICAL_ENTRY_MISSING', text='لا مدخل لها في ملف المبنيات: صنفها ومحلّها غير معيَّنين (مدخلٌ معجمي ناقص)',

@@ -524,7 +524,7 @@ for pv in per_verse:
         if r.get('resumptive'):
             alts += f"<br>العائد: {h(r['resumptive'].get('status'))} — {h(r['resumptive'].get('note'))}"
         if r.get('kind_status'):
-            alts += f"<br>نوع التابع: {h(r['kind_status'])} — {h(r.get('kind_note') or '')}"
+            alts += f"<br>النوع: {h(r['kind_status'])} — {h(r.get('kind_note') or '')}"
         if r.get('reason_before_rank'):
             alts += f"<br>قبل الرتبة: {h(r['reason_before_rank'])}"
         rows_r.append([h(r['type']), f"{h(r['rule_id'])} {h(r['rule_version'])}", f"<span class='st {'p' if r['status'] == 'LICENSED' else 'c'}'>{h(r['status'])}</span>",
@@ -571,7 +571,7 @@ for pv in per_verse:
                      f"غير مرخَّص<br><sub>{h(str(rl[1] or ''))}</sub>") + \
             (f"<br><sub>حالة المبني: {h((ax.get('mabni_state') or {}).get('code'))}</sub>" if ax.get('mabni_state') else '')
         ca = ax.get('case_axis') or (None, '')
-        role_cell += f"<br>الحالة أو المحلّ: {h(ca[0] or 'غير محسوم')}" + (f" ({h(ca[1])})" if ca[0] else '')
+        role_cell += f"<br>الحالة أو المحلّ: {h(ca[0] or 'غير محسوم')}" + (f" ({h(ca[1])})" if ca[0] and not ca[0].startswith('لا محلّ') else '')
         wcell = cell(ax['word_class']) + ''.join(f"<br><sub>جزء {h(p_['part'])}: «{h(p_['text'])}» {h(p_['part_id'])} م{h(str(p_.get('span') or '—'))} مق{h(str(p_.get('syllables') or '—'))}</sub>"
                                                  for p_ in ax.get('parts') or [])
         us = ax.get('operator_usage') or {}
