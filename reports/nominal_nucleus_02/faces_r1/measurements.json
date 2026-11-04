@@ -1,0 +1,1471 @@
+{
+ "task": "إدارة الأوجه: ترخيص الوجه غير اختياره",
+ "code": "86434ca",
+ "page": {
+  "file": "reports/arabic-sarf-019.html",
+  "sha256": "5ec25cdce839b5764a746097b35ab19174588f4ce2c44fb1f4cd17cd55273241",
+  "run": "c25b44c781b6",
+  "commit": "c6baddf"
+ },
+ "compared_pages": {
+  "p013": {
+   "commit": "ac585b7",
+   "sha256": "bd7497a42a38c1642c9352d50e20e62dccc3a5ec6151595b9a25de04e91f5ea5",
+   "rel_2282": {
+    "LICENSED": 69,
+    "DEFERRED": 39
+   },
+   "agree_14b": 62
+  },
+  "p018": {
+   "commit": "5539274",
+   "sha256": "fa6bc4a1107a8645d7b73f024bd4042023a74bb551af45eb71068278a14fd11c",
+   "rel_2282": {
+    "LICENSED": 67,
+    "DEFERRED": 41
+   },
+   "agree_14b": 60
+  },
+  "p019": {
+   "commit": "86434ca",
+   "rel_2282": {
+    "LICENSED": 69,
+    "DEFERRED": 39
+   },
+   "agree_14b": 62
+  }
+ },
+ "source": {
+  "file": "data/quran_hafs.tsv",
+  "input_fingerprint": "a6dc1c01d94bd67f",
+  "hfn": "release_v18"
+ },
+ "code_freeze": {
+  "sarf/__init__.py": "edd5388de9bb4e3ccfc3fa837245720a95911e299551d2253005220ab386dbbd",
+  "sarf/affix.py": "2c5652d5eb956c41da4ca703059aa54ec99cedbd49330cbdb0390d025e88dd30",
+  "sarf/agreement.py": "d04a472477753337be561ec36b0fabf361ed007179e81cbad22777760dab74aa",
+  "sarf/algebra.py": "985a6af248d31c7f571a8fb02abf72d1902f5da1afc238189de745704b76345d",
+  "sarf/align.py": "a62ddb1a6ef0d5c7edf96f13c1feee08ca0250ed879aad0b986db5f82494ba4c",
+  "sarf/analyze.py": "8e6886c97f0be081e5f02a4dacc4955ea0b71d4f2a1f3a6373c05021d710c629",
+  "sarf/analyze_cache.py": "e6855b3238f6595b045a97c5feade159ada8977b68ce6d7e22e827484e1c1085",
+  "sarf/catalog.py": "e8e6eba9632d11d4816ec9b8b2807cae95ce0f4842083c2d3e75e595d484e896",
+  "sarf/cells.py": "4f6751906d9d3a4a4d4861dfbc770491e867ae135cebcd8556ee128a81b47261",
+  "sarf/chars.py": "b031461b1ffc19d02f76945d5b2001ddf2d7b040466bf542fec00c78dff5621a",
+  "sarf/checker.py": "fa464538e7c576ebf59e51ebac1cff1c8400cd20364c91a51e39f01ec65f6cb9",
+  "sarf/coord.py": "aca11a35a2585966fcc5986f29ef1fb0fc7c438a2d7eeadb597155cf36b11301",
+  "sarf/core.py": "c51701faa23dcdb6942d9cde052b49a4152326abf3863b9db602a772878d87f4",
+  "sarf/divine.py": "e83e252673ea0f98d31bfd98516b4e5e0128178e14566115c86e86265f6f686b",
+  "sarf/evidence.py": "ef52865712cbc60239f5b983c62fe7351d5ca2a336dff5659e307e61aa654135",
+  "sarf/features.py": "0f72dca6ce9820176774fc89a6a01003e57cdd085bca6fd854e89e174877af21",
+  "sarf/features_ext.py": "63202aa6622eed286c59740f1d94eacb941afda55681f8c5c78538033dd58f9c",
+  "sarf/judge.py": "f62a7908677e7811ad0d5ceadbab9779f322500085084777420384ef2394eff6",
+  "sarf/lexicon.py": "caf8d3dc265e01a58cee3a3e50723dbc6997759959fcb7cd1153ac92a296e755",
+  "sarf/match.py": "79907b72ccae2e8b58d4f2cfdd8720a5f8f1f7e89ebc7efd2fcd3793bef51f69",
+  "sarf/mood.py": "26d0231cde6aa97fd29f7bb63a396458acb1a7f11ba1ce875816ddb852f89989",
+  "sarf/normalize.py": "1febe1eaa33627b53ea365597371f0c564cf59d0d91db2a1bdf84a17dadb90a4",
+  "sarf/normalize_trace.py": "64b6dcfab145c60c8fe7d4ef814957842cae8bfdc82f76d6f0c49b281848b22b",
+  "sarf/numbering.py": "eabf0034d0cee9aa26a92761756936a7be236a849016de6828cda077be674d65",
+  "sarf/output_html.py": "4c02cad55f6f98c76d7fdf2b512d25e89e676e7e9cc6bcee57c57b9e48ebc455",
+  "sarf/output_schema.py": "95cc7a8517bcbf06d273482cfc4ea81928039fcdec158e18023f050646306e7c",
+  "sarf/output_text.py": "6d6767946721ce6787d3e25fd7569e3f8c55e2c84d80c7f65d60492d9e9c2209",
+  "sarf/pipeline.py": "127168dae619a69aa1148e8519d7bbd3ed369a6135c44baa687577b0228e7533",
+  "sarf/protected.py": "cce283f7ae9527f97841bff63d087145a07b041f41d83ee7971ebc73ccb6099e",
+  "sarf/quran_source.py": "5b04f681fc62613c48fec1866eda9cb97bc6e2577ac08ab7b6af49004fa0da41",
+  "sarf/relations.py": "10c10bb8ad7856317cb496ea8c215d54cb751d5bdfe739020855d134c7e85b51",
+  "sarf/root.py": "0d7d6a3e5c5b04218ae5d6729f7d64c885d5d731d6765f19f04044bb62e836da",
+  "sarf/segment.py": "525997d962023e8bd556e6fb4b8607ca40ad6df4a430abe2969b6f05905170d6",
+  "sarf/status.py": "ca95af4ae76cb6597a7bfa936a4253f7b32d6b3c670e4c0fff3cd07153efebb2",
+  "sarf/syllabify.py": "e570ea49d4d33cdbe7523fc15b74992d4ad6cf50d34c82bae3ae22c73c8576dd",
+  "sarf/syllables.py": "29087d1682f08cda391abf122a69857d3afd92051f459eff5f4495b3f82ac89a",
+  "tools/algebra_quran.py": "3b5c3c887c3ca38b9832b2282466828faf731c1327813b3728fef9378af6120d",
+  "tools/algebra_report.py": "aa1f29e445e67333e0a5ee40e2a61ac92ec85a6e3f56554c0b2da9bd96610fd5",
+  "tools/approve_surah.py": "eaeec7f65d0daf78d1b14d987b35d8b6c941fb377600ea190ee72a4b5bf0e1de",
+  "tools/audit_judgments.py": "f332a8daf449bf560fcd20f6d185a09db4756c6195ec3791265609c7bc41c022",
+  "tools/audit_protected.py": "8d38764fb58966bcca4cdc565e42831250ff79834ef31903c165cefd410d7de0",
+  "tools/check_coverage.py": "6c60b7371e8fbb3722dc49fc8d538b5b96e891a5e7d28bd108f129715692c64b",
+  "tools/compare_normalization_packages.py": "4620ecc3b45f735a86d49d6622619d75150677ee467f95f6c900c9d5aae5013c",
+  "tools/compare_relations.py": "73b3b560fb77a90865249098e4dee31238441204708e8643ec6a830610fa27de",
+  "tools/compare_runs.py": "a1a1f9612447ee0bcae2a85a5e924110ca4443c3b2c63acb8670236f739762e1",
+  "tools/compare_tool_tests.py": "a7ebe4986cab0327613424c80651f982e1a0f0c7786bd145006cf94820fbb1fb",
+  "tools/corruption_tests.py": "fd38c59380c3303b83677e825bd063914f0e9feb17f8783e8c99b722d04ba467",
+  "tools/dump_operators.py": "28fa0d1d410f9e367473798e303bd7783e1921c01575f6e9ce6c3514ae031cd1",
+  "tools/eval_algebra.py": "c3974a81b0b8bb41d2c0adb7234970464c0c6fa7f8c1eb584bcd6c203b09a365",
+  "tools/eval_case.py": "c0826cd2ed0c8e97734d15f3a7ecc9c8f51d7f4fe4333cfc34989e10a4bea158",
+  "tools/eval_coverage_additions.py": "1d632560c247df13a625ead0d323967d454ef1f87686b9f80e9f315f3a796361",
+  "tools/eval_features.py": "4080f27ca04734f36a75cb3d739da6253ef0f4a66b1466067e10ed38b7decc81",
+  "tools/eval_inflection.py": "058a36e6c8f9fd044d5768c53dacbb1fa3a9f3eb0d91f46fcb13dffc5573dfc3",
+  "tools/eval_protected.py": "439d94f666d827f881ca5cec1b391afeb543e1a130e7656b1e469eec482fa5cc",
+  "tools/eval_qac.py": "bf9e9fd42d94cac1f3e1b05212d24c2017f9aba720ae4cc6d2abadf38d21cdc2",
+  "tools/eval_relations.py": "ddae366dffca49e7920f1302be193c2440b4d37629db5ae5228c8e7683f54f01",
+  "tools/eval_root.py": "08db9f1f897e55f554c99def19e9fab10a210fa3fb7c0e1fc5eb7dabe6de3271",
+  "tools/features_verse.py": "9b87a6d2f140afc11ee2fb6b117550a7a3c7f25516cfa8f50adce9742358572e",
+  "tools/import_quran_simple.py": "96c41883122a160511235aa6a429c4396a10bed359694ea5d871de06bd28d4e1",
+  "tools/measure_coverage.py": "f06fae2cc663175ae31df14acd2cbdc94f490a8c0e1346a5e5ee0212b3730886",
+  "tools/normalization_report.py": "a4fdc27cd64afdbcfdf466bfb2e6076417db4a75eca4ce3349c3061e6b3744a9",
+  "tools/pipeline_trace.py": "c1332e0c26ff43b72c8ac6c10471df6749dc4419664bc7fe29d404fb90b18be5",
+  "tools/provenance.py": "f60b4294064b367bcd96ac61edc9771c455bbbe9d3059996cca105b8aee0a01f",
+  "tools/reconcile_roots.py": "443d2b8135b6524e7aee0a594ee85da482309382de371011e0ad92aecbdc8f88",
+  "tools/report_serial.py": "4c3ac6f965b041ef8abe613955f123015782b5f497ff5428ddf48011aa488630",
+  "tools/round4_report.py": "d3be6c646dc4cab5e3160a1ab70ab3cd24608e835b40068f6d12231108390bc3",
+  "tools/snapshot_outputs.py": "378f5db11f105e021daac2afdaf5c9764f37d99054fa8d4227dbc007a54e1926",
+  "tools/verify_normalization_package.py": "fb4747fa212b50f93ccf95a3a695423aacc6a6f8e0c2c5a01d22100276021355"
+ },
+ "tests": {
+  "test_round006": {
+   "passed": 78,
+   "failed": 0,
+   "last": "ALL OK"
+  }
+ },
+ "bridged": {
+  "vs_013": {
+   "checker": [
+    0,
+    0
+   ],
+   "units": [
+    106551,
+    106551
+   ],
+   "rels": [
+    49228,
+    49228
+   ],
+   "agreement_prev": {
+    "N/A": 15406,
+    "UNGOVERNED": 38118,
+    "AGREE": 18307,
+    "MABNI": 30189,
+    "UNVERIFIED": 4364,
+    "CONFLICT": 167
+   },
+   "agreement_final": {
+    "N/A": 15406,
+    "UNGOVERNED": 38118,
+    "AGREE": 18307,
+    "MABNI": 30189,
+    "UNVERIFIED": 4364,
+    "CONFLICT": 167
+   },
+   "unit_transitions": {},
+   "unit_moves": [],
+   "empty_class_evidence": [
+    17663,
+    0
+   ],
+   "relation_status_changes": {},
+   "relation_moves": [],
+   "relation_status_final": {
+    "PP|LICENSED": 11518,
+    "ATTACH|DEFERRED": 11920,
+    "PREDICATION|DEFERRED": 1962,
+    "IDAFA|LICENSED": 1589,
+    "VERB_FRAME|LICENSED": 7780,
+    "SILAH|LICENSED": 1031,
+    "ADVP|LICENSED": 842,
+    "OBJECT|LICENSED": 1294,
+    "NASIKH|DEFERRED": 1906,
+    "VERB_FRAME|DEFERRED": 5300,
+    "PREDICATIVE_PP|LICENSED": 79,
+    "CONDITION|DEFERRED": 1307,
+    "SILAH|DEFERRED": 435,
+    "VOCATIVE|LICENSED": 143,
+    "VOC_FOLLOWER|LICENSED": 143,
+    "CONDITION|LICENSED": 174,
+    "ADVP|DEFERRED": 382,
+    "NASIKH|LICENSED": 295,
+    "PREDICATION|LICENSED": 207,
+    "ATTACH|LICENSED": 36,
+    "OBJECT|DEFERRED": 68,
+    "PREDICATIVE_PP|DEFERRED": 90,
+    "SUBJECT|DEFERRED": 186,
+    "SUBJECT|LICENSED": 409,
+    "PREDICATION|REJECTED": 61,
+    "IDAFA|DEFERRED": 40,
+    "CONTAINER_RELATIVE|LICENSED": 16,
+    "RESUMPTIVE|DEFERRED": 13,
+    "CONTAINER_RELATIVE|DEFERRED": 2
+   },
+   "relation_text_only": 14645,
+   "english_or_python_leaks": [
+    12051,
+    0
+   ]
+  },
+  "vs_018": {
+   "checker": [
+    0,
+    0
+   ],
+   "units": [
+    106551,
+    106551
+   ],
+   "rels": [
+    49228,
+    49228
+   ],
+   "agreement_prev": {
+    "N/A": 15406,
+    "UNGOVERNED": 38134,
+    "AGREE": 18291,
+    "MABNI": 30189,
+    "UNVERIFIED": 4364,
+    "CONFLICT": 167
+   },
+   "agreement_final": {
+    "N/A": 15406,
+    "UNGOVERNED": 38118,
+    "AGREE": 18307,
+    "MABNI": 30189,
+    "UNVERIFIED": 4364,
+    "CONFLICT": 167
+   },
+   "unit_transitions": {
+    "UNGOVERNED→AGREE": 16
+   },
+   "unit_moves": [
+    {
+     "loc": "2:237:21",
+     "text": "عُقْدَةُ",
+     "before": [
+      "UNGOVERNED",
+      null,
+      null
+     ],
+     "after": [
+      "AGREE",
+      "مبتدأ",
+      "مبتدأ مرفوع بالابتداء وعلامة رفعه الضمة الظاهرة — في وجه R01 المرخَّص، والوجه غير مختار (بديله محفوظ)"
+     ],
+     "wc": [
+      "اسم",
+      "اسم"
+     ],
+     "build": [
+      "معرب",
+      "معرب"
+     ]
+    },
+    {
+     "loc": "2:282:27",
+     "text": "الْحَقُّ",
+     "before": [
+      "UNGOVERNED",
+      null,
+      null
+     ],
+     "after": [
+      "AGREE",
+      "مبتدأ",
+      "مبتدأ مرفوع بالابتداء وعلامة رفعه الضمة الظاهرة — في وجه R01 المرخَّص، والوجه غير مختار (بديله محفوظ)"
+     ],
+     "wc": [
+      "اسم",
+      "اسم"
+     ],
+     "build": [
+      "معرب",
+      "معرب"
+     ]
+    },
+    {
+     "loc": "2:282:39",
+     "text": "الْحَقُّ",
+     "before": [
+      "UNGOVERNED",
+      null,
+      null
+     ],
+     "after": [
+      "AGREE",
+      "مبتدأ",
+      "مبتدأ مرفوع بالابتداء وعلامة رفعه الضمة الظاهرة — في وجه R01 المرخَّص، والوجه غير مختار (بديله محفوظ)"
+     ],
+     "wc": [
+      "اسم",
+      "اسم"
+     ],
+     "build": [
+      "معرب",
+      "معرب"
+     ]
+    },
+    {
+     "loc": "3:7:18",
+     "text": "زَيْغٌ",
+     "before": [
+      "UNGOVERNED",
+      null,
+      null
+     ],
+     "after": [
+      "AGREE",
+      "مبتدأ",
+      "مبتدأ مرفوع بالابتداء وعلامة رفعه الضمة الظاهرة — في وجه R01 المرخَّص، والوجه غير مختار (بديله محفوظ)"
+     ],
+     "wc": [
+      "اسم",
+      "اسم"
+     ],
+     "build": [
+      "معرب",
+      "معرب"
+     ]
+    },
+    {
+     "loc": "5:52:5",
+     "text": "مَّرَضٌ",
+     "before": [
+      "UNGOVERNED",
+      null,
+      null
+     ],
+     "after": [
+      "AGREE",
+      "مبتدأ",
+      "مبتدأ مرفوع بالابتداء وعلامة رفعه الضمة الظاهرة — في وجه R01 المرخَّص، والوجه غير مختار (بديله محفوظ)"
+     ],
+     "wc": [
+      "اسم",
+      "اسم"
+     ],
+     "build": [
+      "معرب",
+      "معرب"
+     ]
+    },
+    {
+     "loc": "8:49:7",
+     "text": "مَّرَضٌ",
+     "before": [
+      "UNGOVERNED",
+      null,
+      null
+     ],
+     "after": [
+      "AGREE",
+      "مبتدأ",
+      "مبتدأ مرفوع بالابتداء وعلامة رفعه الضمة الظاهرة — في وجه R01 المرخَّص، والوجه غير مختار (بديله محفوظ)"
+     ],
+     "wc": [
+      "اسم",
+      "اسم"
+     ],
+     "build": [
+      "معرب",
+      "معرب"
+     ]
+    },
+    {
+     "loc": "9:125:5",
+     "text": "مَّرَضٌ",
+     "before": [
+      "UNGOVERNED",
+      null,
+      null
+     ],
+     "after": [
+      "AGREE",
+      "مبتدأ",
+      "مبتدأ مرفوع بالابتداء وعلامة رفعه الضمة الظاهرة — في وجه R01 المرخَّص، والوجه غير مختار (بديله محفوظ)"
+     ],
+     "wc": [
+      "اسم",
+      "اسم"
+     ],
+     "build": [
+      "معرب",
+      "معرب"
+     ]
+    },
+    {
+     "loc": "27:40:4",
+     "text": "عِلْمٌ",
+     "before": [
+      "UNGOVERNED",
+      null,
+      null
+     ],
+     "after": [
+      "AGREE",
+      "مبتدأ",
+      "مبتدأ مرفوع بالابتداء وعلامة رفعه الضمة الظاهرة — في وجه R01 المرخَّص، والوجه غير مختار (بديله محفوظ)"
+     ],
+     "wc": [
+      "اسم",
+      "اسم"
+     ],
+     "build": [
+      "معرب",
+      "معرب"
+     ]
+    },
+    {
+     "loc": "33:12:7",
+     "text": "مَّرَضٌ",
+     "before": [
+      "UNGOVERNED",
+      null,
+      null
+     ],
+     "after": [
+      "AGREE",
+      "مبتدأ",
+      "مبتدأ مرفوع بالابتداء وعلامة رفعه الضمة الظاهرة — في وجه R01 المرخَّص، والوجه غير مختار (بديله محفوظ)"
+     ],
+     "wc": [
+      "اسم",
+      "اسم"
+     ],
+     "build": [
+      "معرب",
+      "معرب"
+     ]
+    },
+    {
+     "loc": "33:32:16",
+     "text": "مَرَضٌ",
+     "before": [
+      "UNGOVERNED",
+      null,
+      null
+     ],
+     "after": [
+      "AGREE",
+      "مبتدأ",
+      "مبتدأ مرفوع بالابتداء وعلامة رفعه الضمة الظاهرة — في وجه R01 المرخَّص، والوجه غير مختار (بديله محفوظ)"
+     ],
+     "wc": [
+      "اسم",
+      "اسم"
+     ],
+     "build": [
+      "معرب",
+      "معرب"
+     ]
+    },
+    {
+     "loc": "33:60:8",
+     "text": "مَّرَضٌ",
+     "before": [
+      "UNGOVERNED",
+      null,
+      null
+     ],
+     "after": [
+      "AGREE",
+      "مبتدأ",
+      "مبتدأ مرفوع بالابتداء وعلامة رفعه الضمة الظاهرة — في وجه R01 المرخَّص، والوجه غير مختار (بديله محفوظ)"
+     ],
+     "wc": [
+      "اسم",
+      "اسم"
+     ],
+     "build": [
+      "معرب",
+      "معرب"
+     ]
+    },
+    {
+     "loc": "43:84:5",
+     "text": "إِلَٰهٌ",
+     "before": [
+      "UNGOVERNED",
+      null,
+      null
+     ],
+     "after": [
+      "AGREE",
+      "مبتدأ",
+      "مبتدأ مرفوع بالابتداء وعلامة رفعه الضمة الظاهرة — في وجه R01 المرخَّص، والوجه غير مختار (بديله محفوظ)"
+     ],
+     "wc": [
+      "اسم",
+      "اسم"
+     ],
+     "build": [
+      "معرب",
+      "معرب"
+     ]
+    },
+    {
+     "loc": "47:20:18",
+     "text": "مَّرَضٌ",
+     "before": [
+      "UNGOVERNED",
+      null,
+      null
+     ],
+     "after": [
+      "AGREE",
+      "مبتدأ",
+      "مبتدأ مرفوع بالابتداء وعلامة رفعه الضمة الظاهرة — في وجه R01 المرخَّص، والوجه غير مختار (بديله محفوظ)"
+     ],
+     "wc": [
+      "اسم",
+      "اسم"
+     ],
+     "build": [
+      "معرب",
+      "معرب"
+     ]
+    },
+    {
+     "loc": "47:29:6",
+     "text": "مَّرَضٌ",
+     "before": [
+      "UNGOVERNED",
+      null,
+      null
+     ],
+     "after": [
+      "AGREE",
+      "مبتدأ",
+      "مبتدأ مرفوع بالابتداء وعلامة رفعه الضمة الظاهرة — في وجه R01 المرخَّص، والوجه غير مختار (بديله محفوظ)"
+     ],
+     "wc": [
+      "اسم",
+      "اسم"
+     ],
+     "build": [
+      "معرب",
+      "معرب"
+     ]
+    },
+    {
+     "loc": "67:1:4",
+     "text": "الْمُلْكُ",
+     "before": [
+      "UNGOVERNED",
+      null,
+      null
+     ],
+     "after": [
+      "AGREE",
+      "مبتدأ",
+      "مبتدأ مرفوع بالابتداء وعلامة رفعه الضمة الظاهرة — في وجه R01 المرخَّص، والوجه غير مختار (بديله محفوظ)"
+     ],
+     "wc": [
+      "اسم",
+      "اسم"
+     ],
+     "build": [
+      "معرب",
+      "معرب"
+     ]
+    },
+    {
+     "loc": "74:31:32",
+     "text": "مَّرَضٌ",
+     "before": [
+      "UNGOVERNED",
+      null,
+      null
+     ],
+     "after": [
+      "AGREE",
+      "مبتدأ",
+      "مبتدأ مرفوع بالابتداء وعلامة رفعه الضمة الظاهرة — في وجه R01 المرخَّص، والوجه غير مختار (بديله محفوظ)"
+     ],
+     "wc": [
+      "اسم",
+      "اسم"
+     ],
+     "build": [
+      "معرب",
+      "معرب"
+     ]
+    }
+   ],
+   "empty_class_evidence": [
+    0,
+    0
+   ],
+   "relation_status_changes": {
+    "PREDICATIVE_PP|N02|DEFERRED→LICENSED": 16
+   },
+   "relation_moves": [
+    {
+     "id": "2:237:PREDICATIVE_PP:N02:predicate_pp=Q2:237.w19.u0+subject=Q2:237.w20.u0",
+     "type": "PREDICATIVE_PP",
+     "before": "DEFERRED",
+     "after": "LICENSED",
+     "reason": "في إطار الصلة: شبه الجملة المقدَّمة خبر، والمرفوع بعدها مسندٌ إليه"
+    },
+    {
+     "id": "2:282:PREDICATIVE_PP:N02:predicate_pp=Q2:282.w25.u0+subject=Q2:282.w26.u0",
+     "type": "PREDICATIVE_PP",
+     "before": "DEFERRED",
+     "after": "LICENSED",
+     "reason": "في إطار الصلة: شبه الجملة المقدَّمة خبر، والمرفوع بعدها مسندٌ إليه"
+    },
+    {
+     "id": "2:282:PREDICATIVE_PP:N02:predicate_pp=Q2:282.w37.u0+subject=Q2:282.w38.u0",
+     "type": "PREDICATIVE_PP",
+     "before": "DEFERRED",
+     "after": "LICENSED",
+     "reason": "في إطار الصلة: شبه الجملة المقدَّمة خبر، والمرفوع بعدها مسندٌ إليه"
+    },
+    {
+     "id": "3:7:PREDICATIVE_PP:N02:predicate_pp=Q3:7.w15.u0+subject=Q3:7.w17.u0",
+     "type": "PREDICATIVE_PP",
+     "before": "DEFERRED",
+     "after": "LICENSED",
+     "reason": "في إطار الصلة: شبه الجملة المقدَّمة خبر، والمرفوع بعدها مسندٌ إليه"
+    },
+    {
+     "id": "5:52:PREDICATIVE_PP:N02:predicate_pp=Q5:52.w2.u0+subject=Q5:52.w4.u0",
+     "type": "PREDICATIVE_PP",
+     "before": "DEFERRED",
+     "after": "LICENSED",
+     "reason": "في إطار الصلة: شبه الجملة المقدَّمة خبر، والمرفوع بعدها مسندٌ إليه"
+    },
+    {
+     "id": "8:49:PREDICATIVE_PP:N02:predicate_pp=Q8:49.w4.u0+subject=Q8:49.w6.u0",
+     "type": "PREDICATIVE_PP",
+     "before": "DEFERRED",
+     "after": "LICENSED",
+     "reason": "في إطار الصلة: شبه الجملة المقدَّمة خبر، والمرفوع بعدها مسندٌ إليه"
+    },
+    {
+     "id": "9:125:PREDICATIVE_PP:N02:predicate_pp=Q9:125.w2.u0+subject=Q9:125.w4.u0",
+     "type": "PREDICATIVE_PP",
+     "before": "DEFERRED",
+     "after": "LICENSED",
+     "reason": "في إطار الصلة: شبه الجملة المقدَّمة خبر، والمرفوع بعدها مسندٌ إليه"
+    },
+    {
+     "id": "27:40:PREDICATIVE_PP:N02:predicate_pp=Q27:40.w2.u0+subject=Q27:40.w3.u0",
+     "type": "PREDICATIVE_PP",
+     "before": "DEFERRED",
+     "after": "LICENSED",
+     "reason": "في إطار الصلة: شبه الجملة المقدَّمة خبر، والمرفوع بعدها مسندٌ إليه"
+    },
+    {
+     "id": "33:12:PREDICATIVE_PP:N02:predicate_pp=Q33:12.w4.u0+subject=Q33:12.w6.u0",
+     "type": "PREDICATIVE_PP",
+     "before": "DEFERRED",
+     "after": "LICENSED",
+     "reason": "في إطار الصلة: شبه الجملة المقدَّمة خبر، والمرفوع بعدها مسندٌ إليه"
+    },
+    {
+     "id": "33:32:PREDICATIVE_PP:N02:predicate_pp=Q33:32.w13.u0+subject=Q33:32.w15.u0",
+     "type": "PREDICATIVE_PP",
+     "before": "DEFERRED",
+     "after": "LICENSED",
+     "reason": "في إطار الصلة: شبه الجملة المقدَّمة خبر، والمرفوع بعدها مسندٌ إليه"
+    },
+    {
+     "id": "33:60:PREDICATIVE_PP:N02:predicate_pp=Q33:60.w5.u0+subject=Q33:60.w7.u0",
+     "type": "PREDICATIVE_PP",
+     "before": "DEFERRED",
+     "after": "LICENSED",
+     "reason": "في إطار الصلة: شبه الجملة المقدَّمة خبر، والمرفوع بعدها مسندٌ إليه"
+    },
+    {
+     "id": "43:84:PREDICATIVE_PP:N02:predicate_pp=Q43:84.w2.u0+subject=Q43:84.w4.u0",
+     "type": "PREDICATIVE_PP",
+     "before": "DEFERRED",
+     "after": "LICENSED",
+     "reason": "في إطار الصلة: شبه الجملة المقدَّمة خبر، والمرفوع بعدها مسندٌ إليه"
+    },
+    {
+     "id": "47:20:PREDICATIVE_PP:N02:predicate_pp=Q47:20.w15.u0+subject=Q47:20.w17.u0",
+     "type": "PREDICATIVE_PP",
+     "before": "DEFERRED",
+     "after": "LICENSED",
+     "reason": "في إطار الصلة: شبه الجملة المقدَّمة خبر، والمرفوع بعدها مسندٌ إليه"
+    },
+    {
+     "id": "47:29:PREDICATIVE_PP:N02:predicate_pp=Q47:29.w3.u0+subject=Q47:29.w5.u0",
+     "type": "PREDICATIVE_PP",
+     "before": "DEFERRED",
+     "after": "LICENSED",
+     "reason": "في إطار الصلة: شبه الجملة المقدَّمة خبر، والمرفوع بعدها مسندٌ إليه"
+    },
+    {
+     "id": "67:1:PREDICATIVE_PP:N02:predicate_pp=Q67:1.w2.u0+subject=Q67:1.w3.u0",
+     "type": "PREDICATIVE_PP",
+     "before": "DEFERRED",
+     "after": "LICENSED",
+     "reason": "في إطار الصلة: شبه الجملة المقدَّمة خبر، والمرفوع بعدها مسندٌ إليه"
+    },
+    {
+     "id": "74:31:PREDICATIVE_PP:N02:predicate_pp=Q74:31.w29.u0+subject=Q74:31.w31.u0",
+     "type": "PREDICATIVE_PP",
+     "before": "DEFERRED",
+     "after": "LICENSED",
+     "reason": "في إطار الصلة: شبه الجملة المقدَّمة خبر، والمرفوع بعدها مسندٌ إليه"
+    }
+   ],
+   "relation_status_final": {
+    "PP|LICENSED": 11518,
+    "ATTACH|DEFERRED": 11920,
+    "PREDICATION|DEFERRED": 1962,
+    "IDAFA|LICENSED": 1589,
+    "VERB_FRAME|LICENSED": 7780,
+    "SILAH|LICENSED": 1031,
+    "ADVP|LICENSED": 842,
+    "OBJECT|LICENSED": 1294,
+    "NASIKH|DEFERRED": 1906,
+    "VERB_FRAME|DEFERRED": 5300,
+    "PREDICATIVE_PP|LICENSED": 79,
+    "CONDITION|DEFERRED": 1307,
+    "SILAH|DEFERRED": 435,
+    "VOCATIVE|LICENSED": 143,
+    "VOC_FOLLOWER|LICENSED": 143,
+    "CONDITION|LICENSED": 174,
+    "ADVP|DEFERRED": 382,
+    "NASIKH|LICENSED": 295,
+    "PREDICATION|LICENSED": 207,
+    "ATTACH|LICENSED": 36,
+    "OBJECT|DEFERRED": 68,
+    "PREDICATIVE_PP|DEFERRED": 90,
+    "SUBJECT|DEFERRED": 186,
+    "SUBJECT|LICENSED": 409,
+    "PREDICATION|REJECTED": 61,
+    "IDAFA|DEFERRED": 40,
+    "CONTAINER_RELATIVE|LICENSED": 16,
+    "RESUMPTIVE|DEFERRED": 13,
+    "CONTAINER_RELATIVE|DEFERRED": 2
+   },
+   "relation_text_only": 1309,
+   "english_or_python_leaks": [
+    0,
+    0
+   ]
+  }
+ },
+ "unbridged": {
+  "relations_status_changes_vs_013": 0,
+  "relations_status_changes_vs_018": 0,
+  "inflection": {
+   "UNGOVERNED": 38118,
+   "MABNI": 30189,
+   "AGREE": 18307,
+   "N/A": 15406,
+   "UNVERIFIED": 4364,
+   "CONFLICT": 167
+  },
+  "judgments": {
+   "accepted": 14935,
+   "deferred": 18368,
+   "blocked": 16976
+  }
+ },
+ "coverage": {
+  "p013": {
+   "M1_class": {
+    "unit": "وحدة التحليل",
+    "scope": "كل الوحدات",
+    "exclusions": [],
+    "total": 106551,
+    "resolved": 78261,
+    "by_value": {
+     "None": 28290,
+     "اسم": 33211,
+     "فعل": 13055,
+     "حرف": 31741,
+     "حرف + اسم": 254
+    }
+   },
+   "M2_build": {
+    "unit": "وحدة التحليل",
+    "scope": "كل الوحدات",
+    "exclusions": [],
+    "total": 106551,
+    "resolved": 87157,
+    "by_value": {
+     "None": 19394,
+     "معرب": 28029,
+     "مبني": 59128
+    }
+   },
+   "M3_irab": {
+    "unit": "وحدة التحليل",
+    "scope": "(أ) المعرب، (ب) المبني غير الحرف وغير الفعل (الاسم، والأداة ذات المداخل الاسمية)، (ج) غير محسوم البناء",
+    "exclusions": "الحرف والأداة والماضي والأمر المبنيّان: لا ينتظر علامة إعرابٍ لفظية ولا يُعدّ فاقداً",
+    "murab": {
+     "total": 28029,
+     "resolved": 9662,
+     "by_agreement": {
+      "UNGOVERNED": 17840,
+      "AGREE": 9662,
+      "UNVERIFIED": 376,
+      "CONFLICT": 151
+     }
+    },
+    "unknown_build_units": {
+     "total": 19394,
+     "note": "بناؤها غير محسوم (صنفٌ غير محسوم أو زمنٌ مرشّح): في المقام غير محسومة"
+    },
+    "mabni_nonparticle": {
+     "total": 24834,
+     "resolved": 8645,
+     "by_state": {
+      "MAHALL_UNRESOLVED": 1545,
+      "ROLE_RULE_NOT_IMPLEMENTED": 11767,
+      "AGREE": 8645,
+      "LEXICAL_ENTRY_MISSING": 2383,
+      "EVIDENCE_NOT_ADOPTED": 270,
+      "MABNI": 208,
+      "CONFLICT": 16
+     }
+    },
+    "excluded": 34294,
+    "excluded_by": {
+     "NO_MAHALL": 31158,
+     "MABNI": 3133,
+     "ROLE_RULE_NOT_IMPLEMENTED": 3
+    },
+    "unknown_build": 19394
+   },
+   "M4_roles": {
+    "unit": "وحدة التحليل",
+    "scope": "الأسماء (صنفها اسم بدليل)",
+    "exclusions": "الأفعال والحروف: أدوارها ليست موضع هذا المقياس",
+    "total": 33465,
+    "resolved": 5622,
+    "by_role": {
+     "مجرور بحرف الجر": 254,
+     "اسم ": 1233,
+     "مبتدأ": 258,
+     "ظرف": 419,
+     "مضاف إليه": 1617,
+     "منادى": 143,
+     "تابعٌ لـ": 143,
+     "خبر ": 224,
+     "مفعول به": 715,
+     "خبر": 207,
+     "فاعل": 393,
+     "نائب فاعل": 16
+    },
+    "note": "الدور من علاقةٍ مرخَّصة وحدها؛ ووجود الوحدة في علاقةٍ مؤجَّلة لا يُعدّ دوراً"
+   },
+   "M5_relations": {
+    "unit": "سجل العلاقة",
+    "by_type_status": {
+     "PP|P01|LICENSED": 11264,
+     "ATTACH|A01|DEFERRED": 11920,
+     "PREDICATION|N01|DEFERRED": 1962,
+     "IDAFA|I03|LICENSED": 602,
+     "VERB_FRAME|F01|LICENSED": 7780,
+     "SILAH|R02|LICENSED": 1031,
+     "PP|P03|LICENSED": 254,
+     "ADVP|P02|LICENSED": 842,
+     "IDAFA|I01|LICENSED": 987,
+     "OBJECT|O01|LICENSED": 1294,
+     "NASIKH|V01|DEFERRED": 1906,
+     "VERB_FRAME|F01|DEFERRED": 5300,
+     "PREDICATIVE_PP|N02|LICENSED": 79,
+     "CONDITION|C01|DEFERRED": 1307,
+     "SILAH|R02|DEFERRED": 435,
+     "VOCATIVE|V02|LICENSED": 143,
+     "VOC_FOLLOWER|V02|LICENSED": 143,
+     "CONDITION|C01|LICENSED": 174,
+     "ADVP|P02|DEFERRED": 382,
+     "NASIKH|V01|LICENSED": 295,
+     "PREDICATION|N01|LICENSED": 207,
+     "ATTACH|A02|LICENSED": 36,
+     "OBJECT|O01|DEFERRED": 64,
+     "PREDICATIVE_PP|N02|DEFERRED": 90,
+     "SUBJECT|S01|DEFERRED": 186,
+     "SUBJECT|S01|LICENSED": 409,
+     "PREDICATION|N01|REJECTED": 61,
+     "IDAFA|I01|DEFERRED": 12,
+     "IDAFA|I03|DEFERRED": 28,
+     "CONTAINER_RELATIVE|R01|LICENSED": 16,
+     "RESUMPTIVE|R01|DEFERRED": 13,
+     "OBJECT|O02|DEFERRED": 4,
+     "CONTAINER_RELATIVE|R01|DEFERRED": 2
+    }
+   },
+   "M6_nuclei": {
+    "unit": "سجل النواة",
+    "verb_frames": {
+     "total": 13080,
+     "subject_satisfied": 5062,
+     "coherent": 7780,
+     "by_subject_kind": {
+      "ضمير متصل مكتوب": 3946,
+      "غير معيَّن": 6784,
+      "اسم الناسخ (V01)": 624,
+      "ضمير الصيغة أو اسمٌ ظاهر": 1234,
+      "اسم ظاهر": 409,
+      "ضمير مستتر وجوباً (غير مكتوب)": 83
+     }
+    },
+    "nasikh": {
+     "total": 2201,
+     "complete": 295
+    },
+    "nominal": {
+     "total": 2399,
+     "complete": 286
+    },
+    "note": "الفعل لا يحتاج كلُّه فاعلاً ومفعولاً: المتطلَّب بحسب البناء والاستعمال (الناسخ يطلب اسماً وخبراً، والمبني للمجهول نائب فاعل)"
+   },
+   "M7_sentences": {
+    "unit": "جملة الطبقة القديمة (المرحلة ١٤)",
+    "total": 6107,
+    "closed": 47,
+    "F_complete": 5067,
+    "note": "العلاقات المحلية الجديدة لا تستهلكها الطبقة القديمة بعد: هذا المقياس من الطبقة القديمة وحدها"
+   },
+   "unresolved_reasons": {
+    "unit": "وحدة التحليل (المعرب والاسم المبني غير المحسومَين)، وغير المنطبق للمستبعد",
+    "counts": {
+     "قاعدة غير منفذة": 26600,
+     "مدخل معجمي ناقص": 2384,
+     "صيغة صرفية متعددة": 20048,
+     "علاقة منافسة": 4481,
+     "نطاق غير محسوم": 0,
+     "دليل سابق غير موصول": 270,
+     "تعارض أدلة": 167,
+     "غير منطبق": 34294
+    },
+    "examples": {
+     "قاعدة غير منفذة": [
+      "1:1:2 اللَّهِ",
+      "1:1:3 الرَّحْمَٰنِ",
+      "1:1:4 الرَّحِيمِ",
+      "1:3:1 الرَّحْمَٰنِ",
+      "1:3:2 الرَّحِيمِ",
+      "1:4:1 مَٰلِكِ",
+      "1:4:3 الدِّينِ",
+      "1:6:2 الصِّرَٰطَ"
+     ],
+     "علاقة منافسة": [
+      "1:2:1 الْحَمْدُ",
+      "1:5:2 نَعْبُدُ",
+      "2:2:2 الْكِتَٰبُ",
+      "2:4:12 يُوقِنُونَ",
+      "2:5:8 الْمُفْلِحُونَ",
+      "2:12:4 الْمُفْسِدُونَ",
+      "2:13:16 السُّفَهَاءُ",
+      "2:15:1 اللَّهُ"
+     ],
+     "صيغة صرفية متعددة": [
+      "1:2:4 الْعَٰلَمِينَ",
+      "1:7:9 الضَّالِّينَ",
+      "2:2:7 لِّلْمُتَّقِينَ",
+      "2:19:12 ءَاذَانِ",
+      "2:35:13 تَقْرَبَا",
+      "2:35:18 الظَّٰلِمِينَ",
+      "2:43:7 الرَّٰكِعِينَ",
+      "2:47:11 الْعَٰلَمِينَ"
+     ],
+     "تعارض أدلة": [
+      "2:143:20 نَعْلَمَ",
+      "2:143:39 يُضِيعَ",
+      "2:205:6 يُفْسِدَ",
+      "2:213:14 يَحْكُمَ",
+      "3:23:13 يَحْكُمَ",
+      "3:127:1 يَقْطَعَ",
+      "3:152:32 يَبْتَلِيَ",
+      "3:156:24 يَجْعَلَ"
+     ],
+     "مدخل معجمي ناقص": [
+      "8:23:6 أَسْمَعَ",
+      "2:7:10 لَهُمْ",
+      "2:9:7 إِلَّا",
+      "2:10:7 لَهُمْ",
+      "2:14:12 إِنَّا",
+      "2:17:13 تَرَكَ",
+      "2:25:28 لَهُمْ",
+      "2:26:38 إِلَّا"
+     ],
+     "دليل سابق غير موصول": [
+      "2:23:2 تُمْ",
+      "2:23:19 تُمْ",
+      "2:28:4 تُمْ",
+      "2:31:14 تُمْ",
+      "2:33:21 تُمْ",
+      "2:64:11 تُمْ",
+      "2:72:9 تُمْ",
+      "2:91:29 تُمْ"
+     ]
+    },
+    "attach_scope_unresolved": 11920,
+    "attach_note": "التعلّق غير المرخَّص يُعدّ «نطاق غير محسوم» على مستوى العلاقة، لا الوحدة"
+   }
+  },
+  "p018": {
+   "M1_class": {
+    "unit": "وحدة التحليل",
+    "scope": "كل الوحدات",
+    "exclusions": [],
+    "total": 106551,
+    "resolved": 78261,
+    "by_value": {
+     "None": 28290,
+     "اسم": 33211,
+     "فعل": 13055,
+     "حرف": 31741,
+     "حرف + اسم": 254
+    }
+   },
+   "M2_build": {
+    "unit": "وحدة التحليل",
+    "scope": "كل الوحدات",
+    "exclusions": [],
+    "total": 106551,
+    "resolved": 87157,
+    "by_value": {
+     "None": 19394,
+     "معرب": 28029,
+     "مبني": 59128
+    }
+   },
+   "M3_irab": {
+    "unit": "وحدة التحليل",
+    "scope": "(أ) المعرب، (ب) المبني غير الحرف وغير الفعل (الاسم، والأداة ذات المداخل الاسمية)، (ج) غير محسوم البناء",
+    "exclusions": "الحرف والأداة والماضي والأمر المبنيّان: لا ينتظر علامة إعرابٍ لفظية ولا يُعدّ فاقداً",
+    "murab": {
+     "total": 28029,
+     "resolved": 9646,
+     "by_agreement": {
+      "UNGOVERNED": 17856,
+      "AGREE": 9646,
+      "UNVERIFIED": 376,
+      "CONFLICT": 151
+     }
+    },
+    "unknown_build_units": {
+     "total": 19394,
+     "note": "بناؤها غير محسوم (صنفٌ غير محسوم أو زمنٌ مرشّح): في المقام غير محسومة"
+    },
+    "mabni_nonparticle": {
+     "total": 24834,
+     "resolved": 8645,
+     "by_state": {
+      "MAHALL_UNRESOLVED": 1545,
+      "ROLE_RULE_NOT_IMPLEMENTED": 11767,
+      "AGREE": 8645,
+      "LEXICAL_ENTRY_MISSING": 2383,
+      "EVIDENCE_NOT_ADOPTED": 270,
+      "MABNI": 208,
+      "CONFLICT": 16
+     }
+    },
+    "excluded": 34294,
+    "excluded_by": {
+     "NO_MAHALL": 31158,
+     "MABNI": 3133,
+     "ROLE_RULE_NOT_IMPLEMENTED": 3
+    },
+    "unknown_build": 19394
+   },
+   "M4_roles": {
+    "unit": "وحدة التحليل",
+    "scope": "الأسماء (صنفها اسم بدليل)",
+    "exclusions": "الأفعال والحروف: أدوارها ليست موضع هذا المقياس",
+    "total": 33465,
+    "resolved": 5606,
+    "by_role": {
+     "مجرور بحرف الجر": 254,
+     "اسم ": 1233,
+     "مبتدأ": 242,
+     "ظرف": 419,
+     "مضاف إليه": 1617,
+     "منادى": 143,
+     "تابعٌ لـ": 143,
+     "خبر ": 224,
+     "مفعول به": 715,
+     "خبر": 207,
+     "فاعل": 393,
+     "نائب فاعل": 16
+    },
+    "note": "الدور من علاقةٍ مرخَّصة وحدها؛ ووجود الوحدة في علاقةٍ مؤجَّلة لا يُعدّ دوراً"
+   },
+   "M5_relations": {
+    "unit": "سجل العلاقة",
+    "by_type_status": {
+     "PP|P01|LICENSED": 11264,
+     "ATTACH|A01|DEFERRED": 11920,
+     "PREDICATION|N01|DEFERRED": 1962,
+     "IDAFA|I03|LICENSED": 602,
+     "VERB_FRAME|F01|LICENSED": 7780,
+     "SILAH|R02|LICENSED": 1031,
+     "PP|P03|LICENSED": 254,
+     "ADVP|P02|LICENSED": 842,
+     "IDAFA|I01|LICENSED": 987,
+     "OBJECT|O01|LICENSED": 1294,
+     "NASIKH|V01|DEFERRED": 1906,
+     "VERB_FRAME|F01|DEFERRED": 5300,
+     "PREDICATIVE_PP|N02|LICENSED": 63,
+     "CONDITION|C01|DEFERRED": 1307,
+     "SILAH|R02|DEFERRED": 435,
+     "VOCATIVE|V02|LICENSED": 143,
+     "VOC_FOLLOWER|V02|LICENSED": 143,
+     "CONDITION|C01|LICENSED": 174,
+     "ADVP|P02|DEFERRED": 382,
+     "NASIKH|V01|LICENSED": 295,
+     "PREDICATION|N01|LICENSED": 207,
+     "ATTACH|A02|LICENSED": 36,
+     "OBJECT|O01|DEFERRED": 64,
+     "PREDICATIVE_PP|N02|DEFERRED": 106,
+     "SUBJECT|S01|DEFERRED": 186,
+     "SUBJECT|S01|LICENSED": 409,
+     "PREDICATION|N01|REJECTED": 61,
+     "IDAFA|I01|DEFERRED": 12,
+     "IDAFA|I03|DEFERRED": 28,
+     "CONTAINER_RELATIVE|R01|LICENSED": 16,
+     "RESUMPTIVE|R01|DEFERRED": 13,
+     "OBJECT|O02|DEFERRED": 4,
+     "CONTAINER_RELATIVE|R01|DEFERRED": 2
+    }
+   },
+   "M6_nuclei": {
+    "unit": "سجل النواة",
+    "verb_frames": {
+     "total": 13080,
+     "subject_satisfied": 5062,
+     "coherent": 7780,
+     "by_subject_kind": {
+      "ضمير متصل مكتوب": 3946,
+      "غير معيَّن": 6736,
+      "اسم الناسخ (V01)": 624,
+      "ضمير الصيغة أو اسمٌ ظاهر": 1234,
+      "اسم ظاهر": 409,
+      "مرشّحات متنافسة": 42,
+      "ضمير مستتر وجوباً (غير مكتوب)": 83,
+      "من المرشّح القائم": 6
+     }
+    },
+    "nasikh": {
+     "total": 2201,
+     "complete": 295
+    },
+    "nominal": {
+     "total": 2399,
+     "complete": 270
+    },
+    "note": "الفعل لا يحتاج كلُّه فاعلاً ومفعولاً: المتطلَّب بحسب البناء والاستعمال (الناسخ يطلب اسماً وخبراً، والمبني للمجهول نائب فاعل)"
+   },
+   "M7_sentences": {
+    "unit": "جملة الطبقة القديمة (المرحلة ١٤)",
+    "total": 6107,
+    "closed": 47,
+    "F_complete": 5067,
+    "note": "العلاقات المحلية الجديدة لا تستهلكها الطبقة القديمة بعد: هذا المقياس من الطبقة القديمة وحدها"
+   },
+   "unresolved_reasons": {
+    "unit": "وحدة التحليل (المعرب والاسم المبني غير المحسومَين)، وغير المنطبق للمستبعد",
+    "counts": {
+     "قاعدة غير منفذة": 26600,
+     "مدخل معجمي ناقص": 2384,
+     "صيغة صرفية متعددة": 20048,
+     "علاقة منافسة": 4497,
+     "نطاق غير محسوم": 0,
+     "دليل سابق غير موصول": 270,
+     "تعارض أدلة": 167,
+     "غير منطبق": 34294
+    },
+    "examples": {
+     "قاعدة غير منفذة": [
+      "1:1:2 اللَّهِ",
+      "1:1:3 الرَّحْمَٰنِ",
+      "1:1:4 الرَّحِيمِ",
+      "1:3:1 الرَّحْمَٰنِ",
+      "1:3:2 الرَّحِيمِ",
+      "1:4:1 مَٰلِكِ",
+      "1:4:3 الدِّينِ",
+      "1:6:2 الصِّرَٰطَ"
+     ],
+     "علاقة منافسة": [
+      "1:2:1 الْحَمْدُ",
+      "1:5:2 نَعْبُدُ",
+      "2:2:2 الْكِتَٰبُ",
+      "2:4:12 يُوقِنُونَ",
+      "2:5:8 الْمُفْلِحُونَ",
+      "2:12:4 الْمُفْسِدُونَ",
+      "2:13:16 السُّفَهَاءُ",
+      "2:15:1 اللَّهُ"
+     ],
+     "صيغة صرفية متعددة": [
+      "1:2:4 الْعَٰلَمِينَ",
+      "1:7:9 الضَّالِّينَ",
+      "2:2:7 لِّلْمُتَّقِينَ",
+      "2:19:12 ءَاذَانِ",
+      "2:35:13 تَقْرَبَا",
+      "2:35:18 الظَّٰلِمِينَ",
+      "2:43:7 الرَّٰكِعِينَ",
+      "2:47:11 الْعَٰلَمِينَ"
+     ],
+     "تعارض أدلة": [
+      "2:143:20 نَعْلَمَ",
+      "2:143:39 يُضِيعَ",
+      "2:205:6 يُفْسِدَ",
+      "2:213:14 يَحْكُمَ",
+      "3:23:13 يَحْكُمَ",
+      "3:127:1 يَقْطَعَ",
+      "3:152:32 يَبْتَلِيَ",
+      "3:156:24 يَجْعَلَ"
+     ],
+     "مدخل معجمي ناقص": [
+      "8:23:6 أَسْمَعَ",
+      "2:7:10 لَهُمْ",
+      "2:9:7 إِلَّا",
+      "2:10:7 لَهُمْ",
+      "2:14:12 إِنَّا",
+      "2:17:13 تَرَكَ",
+      "2:25:28 لَهُمْ",
+      "2:26:38 إِلَّا"
+     ],
+     "دليل سابق غير موصول": [
+      "2:23:2 تُمْ",
+      "2:23:19 تُمْ",
+      "2:28:4 تُمْ",
+      "2:31:14 تُمْ",
+      "2:33:21 تُمْ",
+      "2:64:11 تُمْ",
+      "2:72:9 تُمْ",
+      "2:91:29 تُمْ"
+     ]
+    },
+    "attach_scope_unresolved": 11920,
+    "attach_note": "التعلّق غير المرخَّص يُعدّ «نطاق غير محسوم» على مستوى العلاقة، لا الوحدة"
+   }
+  },
+  "p019": {
+   "M1_class": {
+    "unit": "وحدة التحليل",
+    "scope": "كل الوحدات",
+    "exclusions": [],
+    "total": 106551,
+    "resolved": 78261,
+    "by_value": {
+     "None": 28290,
+     "اسم": 33211,
+     "فعل": 13055,
+     "حرف": 31741,
+     "حرف + اسم": 254
+    }
+   },
+   "M2_build": {
+    "unit": "وحدة التحليل",
+    "scope": "كل الوحدات",
+    "exclusions": [],
+    "total": 106551,
+    "resolved": 87157,
+    "by_value": {
+     "None": 19394,
+     "معرب": 28029,
+     "مبني": 59128
+    }
+   },
+   "M3_irab": {
+    "unit": "وحدة التحليل",
+    "scope": "(أ) المعرب، (ب) المبني غير الحرف وغير الفعل (الاسم، والأداة ذات المداخل الاسمية)، (ج) غير محسوم البناء",
+    "exclusions": "الحرف والأداة والماضي والأمر المبنيّان: لا ينتظر علامة إعرابٍ لفظية ولا يُعدّ فاقداً",
+    "murab": {
+     "total": 28029,
+     "resolved": 9662,
+     "by_agreement": {
+      "UNGOVERNED": 17840,
+      "AGREE": 9662,
+      "UNVERIFIED": 376,
+      "CONFLICT": 151
+     }
+    },
+    "unknown_build_units": {
+     "total": 19394,
+     "note": "بناؤها غير محسوم (صنفٌ غير محسوم أو زمنٌ مرشّح): في المقام غير محسومة"
+    },
+    "mabni_nonparticle": {
+     "total": 24834,
+     "resolved": 8645,
+     "by_state": {
+      "MAHALL_UNRESOLVED": 1545,
+      "ROLE_RULE_NOT_IMPLEMENTED": 11767,
+      "AGREE": 8645,
+      "LEXICAL_ENTRY_MISSING": 2383,
+      "EVIDENCE_NOT_ADOPTED": 270,
+      "MABNI": 208,
+      "CONFLICT": 16
+     }
+    },
+    "excluded": 34294,
+    "excluded_by": {
+     "NO_MAHALL": 31158,
+     "MABNI": 3133,
+     "ROLE_RULE_NOT_IMPLEMENTED": 3
+    },
+    "unknown_build": 19394
+   },
+   "M4_roles": {
+    "unit": "وحدة التحليل",
+    "scope": "الأسماء (صنفها اسم بدليل)",
+    "exclusions": "الأفعال والحروف: أدوارها ليست موضع هذا المقياس",
+    "total": 33465,
+    "resolved": 5622,
+    "by_role": {
+     "مجرور بحرف الجر": 254,
+     "اسم ": 1233,
+     "مبتدأ": 258,
+     "ظرف": 419,
+     "مضاف إليه": 1617,
+     "منادى": 143,
+     "تابعٌ لـ": 143,
+     "خبر ": 224,
+     "مفعول به": 715,
+     "خبر": 207,
+     "فاعل": 393,
+     "نائب فاعل": 16
+    },
+    "note": "الدور من علاقةٍ مرخَّصة وحدها؛ ووجود الوحدة في علاقةٍ مؤجَّلة لا يُعدّ دوراً"
+   },
+   "M5_relations": {
+    "unit": "سجل العلاقة",
+    "by_type_status": {
+     "PP|P01|LICENSED": 11264,
+     "ATTACH|A01|DEFERRED": 11920,
+     "PREDICATION|N01|DEFERRED": 1962,
+     "IDAFA|I03|LICENSED": 602,
+     "VERB_FRAME|F01|LICENSED": 7780,
+     "SILAH|R02|LICENSED": 1031,
+     "PP|P03|LICENSED": 254,
+     "ADVP|P02|LICENSED": 842,
+     "IDAFA|I01|LICENSED": 987,
+     "OBJECT|O01|LICENSED": 1294,
+     "NASIKH|V01|DEFERRED": 1906,
+     "VERB_FRAME|F01|DEFERRED": 5300,
+     "PREDICATIVE_PP|N02|LICENSED": 79,
+     "CONDITION|C01|DEFERRED": 1307,
+     "SILAH|R02|DEFERRED": 435,
+     "VOCATIVE|V02|LICENSED": 143,
+     "VOC_FOLLOWER|V02|LICENSED": 143,
+     "CONDITION|C01|LICENSED": 174,
+     "ADVP|P02|DEFERRED": 382,
+     "NASIKH|V01|LICENSED": 295,
+     "PREDICATION|N01|LICENSED": 207,
+     "ATTACH|A02|LICENSED": 36,
+     "OBJECT|O01|DEFERRED": 64,
+     "PREDICATIVE_PP|N02|DEFERRED": 90,
+     "SUBJECT|S01|DEFERRED": 186,
+     "SUBJECT|S01|LICENSED": 409,
+     "PREDICATION|N01|REJECTED": 61,
+     "IDAFA|I01|DEFERRED": 12,
+     "IDAFA|I03|DEFERRED": 28,
+     "CONTAINER_RELATIVE|R01|LICENSED": 16,
+     "RESUMPTIVE|R01|DEFERRED": 13,
+     "OBJECT|O02|DEFERRED": 4,
+     "CONTAINER_RELATIVE|R01|DEFERRED": 2
+    }
+   },
+   "M6_nuclei": {
+    "unit": "سجل النواة",
+    "verb_frames": {
+     "total": 13080,
+     "subject_satisfied": 5062,
+     "coherent": 7780,
+     "by_subject_kind": {
+      "ضمير متصل مكتوب": 3946,
+      "غير معيَّن": 6736,
+      "اسم الناسخ (V01)": 624,
+      "ضمير الصيغة أو اسمٌ ظاهر": 1234,
+      "اسم ظاهر": 409,
+      "مرشّحات متنافسة": 42,
+      "ضمير مستتر وجوباً (غير مكتوب)": 83,
+      "من المرشّح القائم": 6
+     }
+    },
+    "nasikh": {
+     "total": 2201,
+     "complete": 295
+    },
+    "nominal": {
+     "total": 2399,
+     "complete": 286
+    },
+    "note": "الفعل لا يحتاج كلُّه فاعلاً ومفعولاً: المتطلَّب بحسب البناء والاستعمال (الناسخ يطلب اسماً وخبراً، والمبني للمجهول نائب فاعل)"
+   },
+   "M7_sentences": {
+    "unit": "جملة الطبقة القديمة (المرحلة ١٤)",
+    "total": 6107,
+    "closed": 47,
+    "F_complete": 5067,
+    "note": "العلاقات المحلية الجديدة لا تستهلكها الطبقة القديمة بعد: هذا المقياس من الطبقة القديمة وحدها"
+   },
+   "unresolved_reasons": {
+    "unit": "وحدة التحليل (المعرب والاسم المبني غير المحسومَين)، وغير المنطبق للمستبعد",
+    "counts": {
+     "قاعدة غير منفذة": 26600,
+     "مدخل معجمي ناقص": 2384,
+     "صيغة صرفية متعددة": 20048,
+     "علاقة منافسة": 4481,
+     "نطاق غير محسوم": 0,
+     "دليل سابق غير موصول": 270,
+     "تعارض أدلة": 167,
+     "غير منطبق": 34294
+    },
+    "examples": {
+     "قاعدة غير منفذة": [
+      "1:1:2 اللَّهِ",
+      "1:1:3 الرَّحْمَٰنِ",
+      "1:1:4 الرَّحِيمِ",
+      "1:3:1 الرَّحْمَٰنِ",
+      "1:3:2 الرَّحِيمِ",
+      "1:4:1 مَٰلِكِ",
+      "1:4:3 الدِّينِ",
+      "1:6:2 الصِّرَٰطَ"
+     ],
+     "علاقة منافسة": [
+      "1:2:1 الْحَمْدُ",
+      "1:5:2 نَعْبُدُ",
+      "2:2:2 الْكِتَٰبُ",
+      "2:4:12 يُوقِنُونَ",
+      "2:5:8 الْمُفْلِحُونَ",
+      "2:12:4 الْمُفْسِدُونَ",
+      "2:13:16 السُّفَهَاءُ",
+      "2:15:1 اللَّهُ"
+     ],
+     "صيغة صرفية متعددة": [
+      "1:2:4 الْعَٰلَمِينَ",
+      "1:7:9 الضَّالِّينَ",
+      "2:2:7 لِّلْمُتَّقِينَ",
+      "2:19:12 ءَاذَانِ",
+      "2:35:13 تَقْرَبَا",
+      "2:35:18 الظَّٰلِمِينَ",
+      "2:43:7 الرَّٰكِعِينَ",
+      "2:47:11 الْعَٰلَمِينَ"
+     ],
+     "تعارض أدلة": [
+      "2:143:20 نَعْلَمَ",
+      "2:143:39 يُضِيعَ",
+      "2:205:6 يُفْسِدَ",
+      "2:213:14 يَحْكُمَ",
+      "3:23:13 يَحْكُمَ",
+      "3:127:1 يَقْطَعَ",
+      "3:152:32 يَبْتَلِيَ",
+      "3:156:24 يَجْعَلَ"
+     ],
+     "مدخل معجمي ناقص": [
+      "8:23:6 أَسْمَعَ",
+      "2:7:10 لَهُمْ",
+      "2:9:7 إِلَّا",
+      "2:10:7 لَهُمْ",
+      "2:14:12 إِنَّا",
+      "2:17:13 تَرَكَ",
+      "2:25:28 لَهُمْ",
+      "2:26:38 إِلَّا"
+     ],
+     "دليل سابق غير موصول": [
+      "2:23:2 تُمْ",
+      "2:23:19 تُمْ",
+      "2:28:4 تُمْ",
+      "2:31:14 تُمْ",
+      "2:33:21 تُمْ",
+      "2:64:11 تُمْ",
+      "2:72:9 تُمْ",
+      "2:91:29 تُمْ"
+     ]
+    },
+    "attach_scope_unresolved": 11920,
+    "attach_note": "التعلّق غير المرخَّص يُعدّ «نطاق غير محسوم» على مستوى العلاقة، لا الوحدة"
+   }
+  }
+ }
+}
