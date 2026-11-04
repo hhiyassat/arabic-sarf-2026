@@ -1,0 +1,3972 @@
+{
+ "round": "SARF_RESULT_006_RECONCILIATION_AND_RELATIONS_01 + ملحق الإسناد الفعلي والتغطية",
+ "identities": {
+  "reference": {
+   "report": "arabic-sarf-006.html (جهاز المالك)",
+   "sha256": "cf7d276c4339e666d75bed896b9b49f5aca78ea2129f3e9babee0585a2fcbeea",
+   "run": "5fbd771a8b09",
+   "head": "a1fe41cacfcc7476894efcf58a716546c12b09d8",
+   "input_fingerprint": "a6dc1c01d94bd67f"
+  },
+  "reference_regenerated_here": {
+   "commit": "a1fe41c",
+   "input_fingerprint": "a6dc1c01d94bd67f",
+   "note": "الأقسام 1–14 و15–16 من النص نفسه؛ والمقارنة بها"
+  },
+  "final": {
+   "report": "reports/arabic-sarf-012.html",
+   "sha256": "6a56a46cb1a40e0deaaeb5c93e1eab0abb766faf8997635398bbf5b340009979",
+   "run": "a0bff415090a",
+   "commit": "293cb2c",
+   "intermediate": [
+    "007 (4b20aa5)",
+    "008 (907f000)",
+    "009 (8bf9de3)",
+    "010 (320e261)",
+    "011 (9b78bc3)"
+   ]
+  },
+  "mushaf": {
+   "path": "data/quran_hafs.tsv",
+   "sha256": "d37c6b2cf81d31acb627ef9ff97aab8bd524bb5193787c9bd388b2ff8aa7a4f5",
+   "source": "hafs_kfgqpc"
+  },
+  "hfn": {
+   "release": "release_v18",
+   "fingerprint": "8f5dd3684b0f1f80"
+  },
+  "env": "SARF_HFN=…/release_v18 PYTHONHASHSEED=0؛ python3 -s (و-P للاختبارات)"
+ },
+ "tests": {
+  "test_round006": {
+   "passed": 59,
+   "failed": 0,
+   "mutation": 8
+  },
+  "test_inflection": {
+   "passed": 33,
+   "failed": 0
+  },
+  "test_relations": "ALL OK (31 PASS، 5 DIFFERS موثّقة سابقة، 0 FAIL) — مطابقٌ للأساس",
+  "others_all_ok": [
+   "test_mood",
+   "test_segment",
+   "test_review_dayn",
+   "test_protected",
+   "test_features",
+   "test_features_ext",
+   "test_coord",
+   "test_quran_source",
+   "test_snapshot",
+   "test_algebra",
+   "test_core",
+   "test_behaviour"
+  ]
+ },
+ "stage7_2_282": {
+  "reference": {
+   "accepted": 31,
+   "blocked": 40,
+   "deferred": 22
+  },
+  "final": {
+   "deferred": 25,
+   "accepted": 31,
+   "blocked": 37
+  },
+  "reviewed_proven": {
+   "total": 68,
+   "judged_correct_by_agent": 68,
+   "note": "مراجعة الوكيل لا صاحب النظرية؛ والمؤجَّل (25) لا ادّعاء فيه"
+  },
+  "judgments": [
+   {
+    "position": "2:282:1",
+    "operator": "يَا",
+    "group": "4",
+    "operator_class": "أداة نداء الأم",
+    "usage": [
+     "النداء"
+    ],
+    "status": "deferred",
+    "target": "الَّذِينَ",
+    "target_analysis": {
+     "pos": null,
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة"
+    ],
+    "blocker": null,
+    "deferred_because": [
+     "أثره في معموله لم يثبت بالكتابة"
+    ],
+    "mood_faces": null,
+    "relation": {
+     "expected": null,
+     "observed": null,
+     "consistent": null,
+     "role": null
+    },
+    "evidence_scope": "علاقة المرحلة ١١ (العلامة في المعمول)"
+   },
+   {
+    "position": "2:282:4",
+    "operator": "إِذَا",
+    "group": "7",
+    "operator_class": "الشرط الجازمة فقط",
+    "usage": [
+     "الشرط المستقبلي",
+     "الفجائية"
+    ],
+    "status": "deferred",
+    "target": "تَدَايَنْتُمْ",
+    "target_analysis": {
+     "pos": "verb",
+     "kind": "madi",
+     "mood": null,
+     "suffix": "تُمْ",
+     "evidence": [
+      "ضمير الرفع «تُمْ» بعد ساكن"
+     ]
+    },
+    "rule_checks": [],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة"
+    ],
+    "blocker": null,
+    "deferred_because": [
+     "أثره في معموله لم يثبت بالكتابة (المعمول فعل ماضٍ)"
+    ],
+    "mood_faces": null,
+    "relation": {
+     "expected": null,
+     "observed": null,
+     "consistent": null,
+     "role": null
+    },
+    "evidence_scope": "علاقة المرحلة ١١ (العلامة في المعمول)"
+   },
+   {
+    "position": "2:282:6",
+    "operator": "بِ",
+    "group": "1",
+    "operator_class": "الجر فقط الدلالية",
+    "usage": [
+     "الإلصاق",
+     "الاستعانة",
+     "السببية",
+     "المصاحبة",
+     "الظرفية",
+     "التوكيد (الزائدة)",
+     "المقابلة",
+     "القسم"
+    ],
+    "status": "accepted",
+    "target": "دَيْنٍ",
+    "target_analysis": {
+     "pos": "noun",
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": [
+      "تنوين"
+     ]
+    },
+    "rule_checks": [
+     "R6 المرفوع بعد الجار"
+    ],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة",
+     "الشرط: العلامة المكتوبة توافق أثره (جر)",
+     "الموانع المفحوصة: R6 المرفوع بعد الجار"
+    ],
+    "blocker": null,
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": {
+     "expected": "جر",
+     "observed": "جر",
+     "consistent": true,
+     "role": "مجرور بـ«بِ»"
+    },
+    "evidence_scope": "علامة آخر المعمول (الرفع أو السكون)"
+   },
+   {
+    "position": "2:282:7",
+    "operator": "إِلَى",
+    "group": "1",
+    "operator_class": "الجر فقط الدلالية",
+    "usage": [
+     "انتهاء الغاية",
+     "المصاحبة",
+     "موافقة 'عند'"
+    ],
+    "status": "accepted",
+    "target": "أَجَلٍ",
+    "target_analysis": {
+     "pos": "noun",
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": [
+      "تنوين"
+     ]
+    },
+    "rule_checks": [
+     "R6 المرفوع بعد الجار"
+    ],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة",
+     "الشرط: العلامة المكتوبة توافق أثره (جر)",
+     "الموانع المفحوصة: R6 المرفوع بعد الجار"
+    ],
+    "blocker": null,
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": {
+     "expected": "جر",
+     "observed": "جر",
+     "consistent": true,
+     "role": "مجرور بـ«إِلَى»"
+    },
+    "evidence_scope": "علامة آخر المعمول (الرفع أو السكون)"
+   },
+   {
+    "position": "2:282:11",
+    "operator": "وَ",
+    "group": "1",
+    "operator_class": "الجر فقط الدلالية",
+    "usage": [
+     "القسم",
+     "التقليل"
+    ],
+    "status": "blocked",
+    "target": "لْيَكْتُبْ",
+    "target_analysis": {
+     "pos": "verb",
+     "kind": "amr",
+     "mood": null,
+     "suffix": null,
+     "evidence": [
+      "سكون الآخر بلا حرف مضارعة (أمر مبني على السكون)"
+     ]
+    },
+    "rule_checks": [
+     "R4 الاسم بعد الواو"
+    ],
+    "conditions": [],
+    "blocker": "بعدها فعل (سكون الآخر بلا حرف مضارعة (أمر مبني على السكون)): الواو عاطفة",
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": null,
+    "evidence_scope": "ما بعد الواو: فعل أو عامل أو ضمير رفع"
+   },
+   {
+    "position": "2:282:11",
+    "operator": "وَ",
+    "group": "4",
+    "operator_class": "واو المصاحبة (المعيّة)",
+    "usage": [
+     "المعية"
+    ],
+    "status": "blocked",
+    "target": "لْيَكْتُبْ",
+    "target_analysis": {
+     "pos": "verb",
+     "kind": "amr",
+     "mood": null,
+     "suffix": null,
+     "evidence": [
+      "سكون الآخر بلا حرف مضارعة (أمر مبني على السكون)"
+     ]
+    },
+    "rule_checks": [
+     "R4 الاسم بعد الواو"
+    ],
+    "conditions": [],
+    "blocker": "بعدها فعل (سكون الآخر بلا حرف مضارعة (أمر مبني على السكون)): الواو عاطفة",
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": null,
+    "evidence_scope": "ما بعد الواو: فعل أو عامل أو ضمير رفع"
+   },
+   {
+    "position": "2:282:11",
+    "operator": "لِ",
+    "group": "6",
+    "operator_class": "الجزم فقط النافية والشرطية",
+    "usage": [
+     "الأمر"
+    ],
+    "status": "accepted",
+    "target": "يَكْتُبْ",
+    "target_analysis": {
+     "pos": "verb",
+     "kind": "mudari",
+     "mood": "جزم",
+     "suffix": null,
+     "evidence": [
+      "حرف المضارعة «ي»",
+      "حرف المضارعة والسكون في الآخر"
+     ]
+    },
+    "rule_checks": [
+     "R1/R2 المجزوم بعدها"
+    ],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة",
+     "الشرط: العلامة المكتوبة توافق أثره (جزم)",
+     "الموانع المفحوصة: R1/R2 المجزوم بعدها"
+    ],
+    "blocker": null,
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": {
+     "expected": "جزم",
+     "observed": "جزم",
+     "consistent": true,
+     "role": "مضارع مجزوم بـ«لِ»"
+    },
+    "evidence_scope": "كتابة المعمول: صنفه وعلامة آخره"
+   },
+   {
+    "position": "2:282:14",
+    "operator": "بِ",
+    "group": "1",
+    "operator_class": "الجر فقط الدلالية",
+    "usage": [
+     "الإلصاق",
+     "الاستعانة",
+     "السببية",
+     "المصاحبة",
+     "الظرفية",
+     "التوكيد (الزائدة)",
+     "المقابلة",
+     "القسم"
+    ],
+    "status": "accepted",
+    "target": "الْعَدْلِ",
+    "target_analysis": {
+     "pos": "noun",
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": [
+      "أل"
+     ]
+    },
+    "rule_checks": [
+     "R6 المرفوع بعد الجار"
+    ],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة",
+     "الشرط: العلامة المكتوبة توافق أثره (جر)",
+     "الموانع المفحوصة: R6 المرفوع بعد الجار"
+    ],
+    "blocker": null,
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": {
+     "expected": "جر",
+     "observed": "جر",
+     "consistent": true,
+     "role": "مجرور بـ«بِ»"
+    },
+    "evidence_scope": "علامة آخر المعمول (الرفع أو السكون)"
+   },
+   {
+    "position": "2:282:15",
+    "operator": "وَ",
+    "group": "1",
+    "operator_class": "الجر فقط الدلالية",
+    "usage": [
+     "القسم",
+     "التقليل"
+    ],
+    "status": "blocked",
+    "target": "لَا",
+    "target_analysis": {
+     "pos": null,
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [
+     "R4 الاسم بعد الواو"
+    ],
+    "conditions": [],
+    "blocker": "بعدها عامل (لَا): الواو عاطفة",
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": null,
+    "evidence_scope": "ما بعد الواو: فعل أو عامل أو ضمير رفع"
+   },
+   {
+    "position": "2:282:15",
+    "operator": "وَ",
+    "group": "4",
+    "operator_class": "واو المصاحبة (المعيّة)",
+    "usage": [
+     "المعية"
+    ],
+    "status": "blocked",
+    "target": "لَا",
+    "target_analysis": {
+     "pos": null,
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [
+     "R4 الاسم بعد الواو"
+    ],
+    "conditions": [],
+    "blocker": "بعدها عامل (لَا): الواو عاطفة",
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": null,
+    "evidence_scope": "ما بعد الواو: فعل أو عامل أو ضمير رفع"
+   },
+   {
+    "position": "2:282:15",
+    "operator": "لَا",
+    "group": "3",
+    "operator_class": "النفي الإعرابية",
+    "usage": [
+     "النافية للجنس",
+     "العاطفة"
+    ],
+    "status": "deferred",
+    "target": "يَأْبَ",
+    "target_analysis": {
+     "pos": null,
+     "kind": "mudari",
+     "mood": "نصب",
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة"
+    ],
+    "blocker": null,
+    "deferred_because": [
+     "تحليلات منافسة على الخانة: لَا (مج 6)",
+     "أثره في معموله لم يثبت بالكتابة"
+    ],
+    "mood_faces": null,
+    "relation": {
+     "expected": null,
+     "observed": null,
+     "consistent": null,
+     "role": null
+    },
+    "evidence_scope": "منافسة الخانة"
+   },
+   {
+    "position": "2:282:15",
+    "operator": "لَا",
+    "group": "6",
+    "operator_class": "الجزم فقط النافية والشرطية",
+    "usage": [
+     "الناهية"
+    ],
+    "status": "deferred",
+    "target": "يَأْبَ",
+    "target_analysis": {
+     "pos": null,
+     "kind": "mudari",
+     "mood": "نصب",
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [
+     "R1/R2 المجزوم بعدها",
+     "R1/R2: حرف المضارعة ثم أصلان أولهما ساكن: المحذوف لام الفعل، والحركة على الآخر حركة العين لا علامة؛ والجذر المرشّح في HFN: ءبو، ءبي"
+    ],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة",
+     "الموانع المفحوصة: R1/R2 المجزوم بعدها، R1/R2: حرف المضارعة ثم أصلان أولهما ساكن: المحذوف لام الفعل، والحركة على الآخر حركة العين لا علامة؛ والجذر المرشّح في HFN: ءبو، ءبي"
+    ],
+    "blocker": null,
+    "deferred_because": [
+     "تحليلات منافسة على الخانة: لَا (مج 3)",
+     "أثره في معموله لم يثبت بالكتابة",
+     "العلامة المكتوبة لا تعيّن الحالة (M01): حرف المضارعة ثم أصلان أولهما ساكن: المحذوف لام الفعل، والحركة على الآخر حركة العين لا علامة؛ والجذر المرشّح في HFN: ءبو، ءبي؛ والأوجه: جزم (حذف حرف العلة، وحركة الآخر حركة العين)؛ فلا يُقبل العامل بها ولا يُمنع"
+    ],
+    "mood_faces": {
+     "rule": "M01.2",
+     "faces": [
+      "جزم (حذف حرف العلة، وحركة الآخر حركة العين)"
+     ],
+     "roots": [
+      "ءبو",
+      "ءبي"
+     ],
+     "why": "حرف المضارعة ثم أصلان أولهما ساكن: المحذوف لام الفعل، والحركة على الآخر حركة العين لا علامة؛ والجذر المرشّح في HFN: ءبو، ءبي"
+    },
+    "relation": {
+     "expected": "جزم",
+     "observed": "نصب",
+     "consistent": false,
+     "role": "مضارع مجزوم بـ«لَا» (العلامة المكتوبة تخالف)"
+    },
+    "evidence_scope": "بنية الفعل بعدها (M01): حذف اللام أو الإدغام"
+   },
+   {
+    "position": "2:282:18",
+    "operator": "أَنْ",
+    "group": "5",
+    "operator_class": "أداة نصب ومصدر",
+    "usage": [
+     "المصدرية الناصبة",
+     "التفسيرية"
+    ],
+    "status": "accepted",
+    "target": "يَكْتُبَ",
+    "target_analysis": {
+     "pos": null,
+     "kind": "mudari",
+     "mood": "نصب",
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة",
+     "الشرط: العلامة المكتوبة توافق أثره (نصب)"
+    ],
+    "blocker": null,
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": {
+     "expected": "نصب",
+     "observed": "نصب",
+     "consistent": true,
+     "role": "مضارع منصوب بـ«أَنْ»"
+    },
+    "evidence_scope": "علاقة المرحلة ١١ (العلامة في المعمول)"
+   },
+   {
+    "position": "2:282:20",
+    "operator": "كَ",
+    "group": "1",
+    "operator_class": "الجر فقط الدلالية",
+    "usage": [
+     "التشبيه",
+     "التعليل"
+    ],
+    "status": "deferred",
+    "target": "مَا",
+    "target_analysis": {
+     "pos": null,
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [
+     "R6 المرفوع بعد الجار"
+    ],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة",
+     "الموانع المفحوصة: R6 المرفوع بعد الجار"
+    ],
+    "blocker": null,
+    "deferred_because": [
+     "أثره في معموله لم يثبت بالكتابة (المعمول يبدأ بعامل: جملة أو مصدر مؤوَّل)",
+     "الكاف قد تكون من أصل الكلمة: لا «أل» ولا ضمير بعدها"
+    ],
+    "mood_faces": null,
+    "relation": {
+     "expected": "جر",
+     "observed": null,
+     "consistent": null,
+     "role": null
+    },
+    "evidence_scope": "علامة آخر المعمول (الرفع أو السكون)"
+   },
+   {
+    "position": "2:282:20",
+    "operator": "مَا",
+    "group": "3",
+    "operator_class": "النفي الإعرابية",
+    "usage": [
+     "النفي الحالي",
+     "الموصولية",
+     "المصدرية"
+    ],
+    "status": "deferred",
+    "target": "عَلَّمَهُ",
+    "target_analysis": {
+     "pos": null,
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة"
+    ],
+    "blocker": null,
+    "deferred_because": [
+     "تحليلات منافسة على الخانة: مَا (مج 7)",
+     "أثره في معموله لم يثبت بالكتابة"
+    ],
+    "mood_faces": null,
+    "relation": {
+     "expected": null,
+     "observed": null,
+     "consistent": null,
+     "role": null
+    },
+    "evidence_scope": "منافسة الخانة"
+   },
+   {
+    "position": "2:282:20",
+    "operator": "مَا",
+    "group": "7",
+    "operator_class": "الشرط الجازمة فقط",
+    "usage": [
+     "الشرطية"
+    ],
+    "status": "deferred",
+    "target": "عَلَّمَهُ",
+    "target_analysis": {
+     "pos": null,
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [
+     "R7 المرفوع بعد أداة الشرط"
+    ],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة",
+     "الموانع المفحوصة: R7 المرفوع بعد أداة الشرط"
+    ],
+    "blocker": null,
+    "deferred_because": [
+     "تحليلات منافسة على الخانة: مَا (مج 3)",
+     "أثره في معموله لم يثبت بالكتابة"
+    ],
+    "mood_faces": null,
+    "relation": {
+     "expected": "جزم",
+     "observed": null,
+     "consistent": null,
+     "role": null
+    },
+    "evidence_scope": "علامة ما بعد أداة الشرط"
+   },
+   {
+    "position": "2:282:23",
+    "operator": "لِ",
+    "group": "6",
+    "operator_class": "الجزم فقط النافية والشرطية",
+    "usage": [
+     "الأمر"
+    ],
+    "status": "accepted",
+    "target": "يَكْتُبْ",
+    "target_analysis": {
+     "pos": "verb",
+     "kind": "mudari",
+     "mood": "جزم",
+     "suffix": null,
+     "evidence": [
+      "حرف المضارعة «ي»",
+      "حرف المضارعة والسكون في الآخر"
+     ]
+    },
+    "rule_checks": [
+     "R1/R2 المجزوم بعدها"
+    ],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة",
+     "الشرط: العلامة المكتوبة توافق أثره (جزم)",
+     "الموانع المفحوصة: R1/R2 المجزوم بعدها"
+    ],
+    "blocker": null,
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": {
+     "expected": "جزم",
+     "observed": "جزم",
+     "consistent": true,
+     "role": "مضارع مجزوم بـ«لِ»"
+    },
+    "evidence_scope": "كتابة المعمول: صنفه وعلامة آخره"
+   },
+   {
+    "position": "2:282:24",
+    "operator": "وَ",
+    "group": "1",
+    "operator_class": "الجر فقط الدلالية",
+    "usage": [
+     "القسم",
+     "التقليل"
+    ],
+    "status": "blocked",
+    "target": "لْيُمْلِلِ",
+    "target_analysis": {
+     "pos": null,
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [
+     "R4 الاسم بعد الواو"
+    ],
+    "conditions": [],
+    "blocker": "بعدها عامل (لِ): الواو عاطفة",
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": null,
+    "evidence_scope": "ما بعد الواو: فعل أو عامل أو ضمير رفع"
+   },
+   {
+    "position": "2:282:24",
+    "operator": "وَ",
+    "group": "4",
+    "operator_class": "واو المصاحبة (المعيّة)",
+    "usage": [
+     "المعية"
+    ],
+    "status": "blocked",
+    "target": "لْيُمْلِلِ",
+    "target_analysis": {
+     "pos": null,
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [
+     "R4 الاسم بعد الواو"
+    ],
+    "conditions": [],
+    "blocker": "بعدها عامل (لِ): الواو عاطفة",
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": null,
+    "evidence_scope": "ما بعد الواو: فعل أو عامل أو ضمير رفع"
+   },
+   {
+    "position": "2:282:24",
+    "operator": "لِ",
+    "group": "6",
+    "operator_class": "الجزم فقط النافية والشرطية",
+    "usage": [
+     "الأمر"
+    ],
+    "status": "accepted",
+    "target": "يُمْلِلِ",
+    "target_analysis": {
+     "pos": null,
+     "kind": "mudari",
+     "mood": null,
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [
+     "R1/R2 المجزوم بعدها"
+    ],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة",
+     "الشرط: العلامة المكتوبة توافق أثره (جزم)",
+     "الموانع المفحوصة: R1/R2 المجزوم بعدها"
+    ],
+    "blocker": null,
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": {
+     "expected": "جزم",
+     "observed": "جزم",
+     "consistent": true,
+     "role": "مضارع مجزوم بـ«لِ»"
+    },
+    "evidence_scope": "كتابة المعمول: صنفه وعلامة آخره"
+   },
+   {
+    "position": "2:282:26",
+    "operator": "عَلَى",
+    "group": "1",
+    "operator_class": "الجر فقط الدلالية",
+    "usage": [
+     "الاستعلاء الحقيقي",
+     "الاستعلاء المجازي",
+     "المصاحبة",
+     "التعليل"
+    ],
+    "status": "accepted",
+    "target": "الْحَقُّ",
+    "target_analysis": {
+     "pos": "noun",
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": [
+      "أل"
+     ]
+    },
+    "rule_checks": [],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة",
+     "الشرط: معموله مبنيٌّ من ملف المبنيات (ضمير متصل) في محلّ جر"
+    ],
+    "blocker": null,
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": {
+     "expected": "جر",
+     "observed": "محلاً",
+     "consistent": null,
+     "role": "في محلّ جر بـ«عَلَى»"
+    },
+    "evidence_scope": "علاقة المرحلة ١١ (العلامة في المعمول)"
+   },
+   {
+    "position": "2:282:28",
+    "operator": "وَ",
+    "group": "1",
+    "operator_class": "الجر فقط الدلالية",
+    "usage": [
+     "القسم",
+     "التقليل"
+    ],
+    "status": "blocked",
+    "target": "لْيَتَّقِ",
+    "target_analysis": {
+     "pos": null,
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [
+     "R4 الاسم بعد الواو"
+    ],
+    "conditions": [],
+    "blocker": "بعدها عامل (لِ): الواو عاطفة",
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": null,
+    "evidence_scope": "ما بعد الواو: فعل أو عامل أو ضمير رفع"
+   },
+   {
+    "position": "2:282:28",
+    "operator": "وَ",
+    "group": "4",
+    "operator_class": "واو المصاحبة (المعيّة)",
+    "usage": [
+     "المعية"
+    ],
+    "status": "blocked",
+    "target": "لْيَتَّقِ",
+    "target_analysis": {
+     "pos": null,
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [
+     "R4 الاسم بعد الواو"
+    ],
+    "conditions": [],
+    "blocker": "بعدها عامل (لِ): الواو عاطفة",
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": null,
+    "evidence_scope": "ما بعد الواو: فعل أو عامل أو ضمير رفع"
+   },
+   {
+    "position": "2:282:28",
+    "operator": "لِ",
+    "group": "6",
+    "operator_class": "الجزم فقط النافية والشرطية",
+    "usage": [
+     "الأمر"
+    ],
+    "status": "accepted",
+    "target": "يَتَّقِ",
+    "target_analysis": {
+     "pos": null,
+     "kind": "mudari",
+     "mood": null,
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [
+     "R1/R2 المجزوم بعدها"
+    ],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة",
+     "الشرط: العلامة المكتوبة توافق أثره (جزم)",
+     "الموانع المفحوصة: R1/R2 المجزوم بعدها"
+    ],
+    "blocker": null,
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": {
+     "expected": "جزم",
+     "observed": "جزم",
+     "consistent": true,
+     "role": "مضارع مجزوم بـ«لِ»"
+    },
+    "evidence_scope": "كتابة المعمول: صنفه وعلامة آخره"
+   },
+   {
+    "position": "2:282:31",
+    "operator": "وَ",
+    "group": "1",
+    "operator_class": "الجر فقط الدلالية",
+    "usage": [
+     "القسم",
+     "التقليل"
+    ],
+    "status": "blocked",
+    "target": "لَا",
+    "target_analysis": {
+     "pos": null,
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [
+     "R4 الاسم بعد الواو"
+    ],
+    "conditions": [],
+    "blocker": "بعدها عامل (لَا): الواو عاطفة",
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": null,
+    "evidence_scope": "ما بعد الواو: فعل أو عامل أو ضمير رفع"
+   },
+   {
+    "position": "2:282:31",
+    "operator": "وَ",
+    "group": "4",
+    "operator_class": "واو المصاحبة (المعيّة)",
+    "usage": [
+     "المعية"
+    ],
+    "status": "blocked",
+    "target": "لَا",
+    "target_analysis": {
+     "pos": null,
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [
+     "R4 الاسم بعد الواو"
+    ],
+    "conditions": [],
+    "blocker": "بعدها عامل (لَا): الواو عاطفة",
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": null,
+    "evidence_scope": "ما بعد الواو: فعل أو عامل أو ضمير رفع"
+   },
+   {
+    "position": "2:282:31",
+    "operator": "لَا",
+    "group": "3",
+    "operator_class": "النفي الإعرابية",
+    "usage": [
+     "النافية للجنس",
+     "العاطفة"
+    ],
+    "status": "deferred",
+    "target": "يَبْخَسْ",
+    "target_analysis": {
+     "pos": "verb",
+     "kind": "mudari",
+     "mood": "جزم",
+     "suffix": null,
+     "evidence": [
+      "حرف المضارعة «ي»",
+      "حرف المضارعة والسكون في الآخر"
+     ]
+    },
+    "rule_checks": [],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة"
+    ],
+    "blocker": null,
+    "deferred_because": [
+     "تحليلات منافسة على الخانة: لَا (مج 6)",
+     "أثره في معموله لم يثبت بالكتابة"
+    ],
+    "mood_faces": null,
+    "relation": {
+     "expected": null,
+     "observed": null,
+     "consistent": null,
+     "role": null
+    },
+    "evidence_scope": "منافسة الخانة"
+   },
+   {
+    "position": "2:282:31",
+    "operator": "لَا",
+    "group": "6",
+    "operator_class": "الجزم فقط النافية والشرطية",
+    "usage": [
+     "الناهية"
+    ],
+    "status": "accepted",
+    "target": "يَبْخَسْ",
+    "target_analysis": {
+     "pos": "verb",
+     "kind": "mudari",
+     "mood": "جزم",
+     "suffix": null,
+     "evidence": [
+      "حرف المضارعة «ي»",
+      "حرف المضارعة والسكون في الآخر"
+     ]
+    },
+    "rule_checks": [
+     "R1/R2 المجزوم بعدها"
+    ],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة",
+     "المنافس لَا (مج 3) لا يُحدث جزم، وجزم مكتوبٌ في معموله ولا عامل قبله يفسّره",
+     "الشرط: العلامة المكتوبة توافق أثره (جزم)",
+     "الموانع المفحوصة: R1/R2 المجزوم بعدها"
+    ],
+    "blocker": null,
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": {
+     "expected": "جزم",
+     "observed": "جزم",
+     "consistent": true,
+     "role": "مضارع مجزوم بـ«لَا»"
+    },
+    "evidence_scope": "كتابة المعمول: صنفه وعلامة آخره"
+   },
+   {
+    "position": "2:282:33",
+    "operator": "مِنْ",
+    "group": "1",
+    "operator_class": "الجر فقط الدلالية",
+    "usage": [
+     "ابتداء الغاية",
+     "التبعيض",
+     "بيان الجنس",
+     "الزائدة (توكيد النفي والعموم)",
+     "التعليل والسببية"
+    ],
+    "status": "accepted",
+    "target": "شَيْءًا",
+    "target_analysis": {
+     "pos": "noun",
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": [
+      "تنوين"
+     ]
+    },
+    "rule_checks": [],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة",
+     "الشرط: معموله مبنيٌّ من ملف المبنيات (ضمير متصل) في محلّ جر"
+    ],
+    "blocker": null,
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": {
+     "expected": "جر",
+     "observed": "محلاً",
+     "consistent": null,
+     "role": "في محلّ جر بـ«مِنْ»"
+    },
+    "evidence_scope": "علاقة المرحلة ١١ (العلامة في المعمول)"
+   },
+   {
+    "position": "2:282:35",
+    "operator": "إِنْ",
+    "group": "6",
+    "operator_class": "الجزم فقط النافية والشرطية",
+    "usage": [
+     "الشرطية الجازمة",
+     "النافية (الحجازية)"
+    ],
+    "status": "deferred",
+    "target": "كَانَ",
+    "target_analysis": {
+     "pos": null,
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة"
+    ],
+    "blocker": null,
+    "deferred_because": [
+     "أثره في معموله لم يثبت بالكتابة (المعمول يبدأ بعامل: جملة أو مصدر مؤوَّل)"
+    ],
+    "mood_faces": null,
+    "relation": {
+     "expected": "جزم",
+     "observed": null,
+     "consistent": null,
+     "role": null
+    },
+    "evidence_scope": "علاقة المرحلة ١١ (العلامة في المعمول)"
+   },
+   {
+    "position": "2:282:36",
+    "operator": "كَانَ",
+    "group": "10",
+    "operator_class": "الزمن والنفي الإعرابية",
+    "usage": [
+     "الدلالة على الزمن الماضي",
+     "الزيادة (التوكيد)"
+    ],
+    "status": "accepted",
+    "target": "الَّذِي",
+    "target_analysis": {
+     "pos": null,
+     "kind": null,
+     "mood": null,
+     "suffix": "ي",
+     "evidence": []
+    },
+    "rule_checks": [],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة",
+     "الشرط: معموله اسم موصول مبني في محلّ رفع"
+    ],
+    "blocker": null,
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": {
+     "expected": "رفع",
+     "observed": "محلاً",
+     "consistent": null,
+     "role": "في محلّ رفع اسم «كَانَ»"
+    },
+    "evidence_scope": "علاقة المرحلة ١١ (العلامة في المعمول)"
+   },
+   {
+    "position": "2:282:38",
+    "operator": "عَلَى",
+    "group": "1",
+    "operator_class": "الجر فقط الدلالية",
+    "usage": [
+     "الاستعلاء الحقيقي",
+     "الاستعلاء المجازي",
+     "المصاحبة",
+     "التعليل"
+    ],
+    "status": "accepted",
+    "target": "الْحَقُّ",
+    "target_analysis": {
+     "pos": "noun",
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": [
+      "أل"
+     ]
+    },
+    "rule_checks": [],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة",
+     "الشرط: معموله مبنيٌّ من ملف المبنيات (ضمير متصل) في محلّ جر"
+    ],
+    "blocker": null,
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": {
+     "expected": "جر",
+     "observed": "محلاً",
+     "consistent": null,
+     "role": "في محلّ جر بـ«عَلَى»"
+    },
+    "evidence_scope": "علاقة المرحلة ١١ (العلامة في المعمول)"
+   },
+   {
+    "position": "2:282:44",
+    "operator": "لَا",
+    "group": "3",
+    "operator_class": "النفي الإعرابية",
+    "usage": [
+     "النافية للجنس",
+     "العاطفة"
+    ],
+    "status": "deferred",
+    "target": "يَسْتَطِيعُ",
+    "target_analysis": {
+     "pos": null,
+     "kind": "mudari",
+     "mood": "رفع",
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة"
+    ],
+    "blocker": null,
+    "deferred_because": [
+     "أثره في معموله لم يثبت بالكتابة"
+    ],
+    "mood_faces": null,
+    "relation": {
+     "expected": null,
+     "observed": null,
+     "consistent": null,
+     "role": null
+    },
+    "evidence_scope": "علاقة المرحلة ١١ (العلامة في المعمول)"
+   },
+   {
+    "position": "2:282:44",
+    "operator": "لَا",
+    "group": "6",
+    "operator_class": "الجزم فقط النافية والشرطية",
+    "usage": [
+     "الناهية"
+    ],
+    "status": "blocked",
+    "target": "يَسْتَطِيعُ",
+    "target_analysis": {
+     "pos": null,
+     "kind": "mudari",
+     "mood": "رفع",
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [
+     "R1/R2 المجزوم بعدها"
+    ],
+    "conditions": [],
+    "blocker": "الفعل بعدها غير مجزوم كتابةً (مرفوع)",
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": null,
+    "evidence_scope": "كتابة المعمول: صنفه وعلامة آخره"
+   },
+   {
+    "position": "2:282:46",
+    "operator": "أَنْ",
+    "group": "5",
+    "operator_class": "أداة نصب ومصدر",
+    "usage": [
+     "المصدرية الناصبة",
+     "التفسيرية"
+    ],
+    "status": "accepted",
+    "target": "يُمِلَّ",
+    "target_analysis": {
+     "pos": null,
+     "kind": "mudari",
+     "mood": "نصب",
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة",
+     "الشرط: العلامة المكتوبة توافق أثره (نصب)"
+    ],
+    "blocker": null,
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": {
+     "expected": "نصب",
+     "observed": "نصب",
+     "consistent": true,
+     "role": "مضارع منصوب بـ«أَنْ»"
+    },
+    "evidence_scope": "علاقة المرحلة ١١ (العلامة في المعمول)"
+   },
+   {
+    "position": "2:282:49",
+    "operator": "لِ",
+    "group": "6",
+    "operator_class": "الجزم فقط النافية والشرطية",
+    "usage": [
+     "الأمر"
+    ],
+    "status": "accepted",
+    "target": "يُمْلِلْ",
+    "target_analysis": {
+     "pos": "verb",
+     "kind": "mudari",
+     "mood": "جزم",
+     "suffix": null,
+     "evidence": [
+      "حرف المضارعة «ي»",
+      "حرف المضارعة والسكون في الآخر"
+     ]
+    },
+    "rule_checks": [
+     "R1/R2 المجزوم بعدها"
+    ],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة",
+     "الشرط: العلامة المكتوبة توافق أثره (جزم)",
+     "الموانع المفحوصة: R1/R2 المجزوم بعدها"
+    ],
+    "blocker": null,
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": {
+     "expected": "جزم",
+     "observed": "جزم",
+     "consistent": true,
+     "role": "مضارع مجزوم بـ«لِ»"
+    },
+    "evidence_scope": "كتابة المعمول: صنفه وعلامة آخره"
+   },
+   {
+    "position": "2:282:50",
+    "operator": "وَ",
+    "group": "1",
+    "operator_class": "الجر فقط الدلالية",
+    "usage": [
+     "القسم",
+     "التقليل"
+    ],
+    "status": "blocked",
+    "target": "لِيُّهُ",
+    "target_analysis": {
+     "pos": null,
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [
+     "R10 رخصة البقية"
+    ],
+    "conditions": [],
+    "blocker": "الكلمة كلها مرخَّصة (بناء: ولي، فَعِيلٌ (S205) [«ي» المشدَّدة بعد حركتها: حرف مدٍّ مدغمٌ في لامٍ مثله]؛ قوة 0.5)، والبقية «لِيُّهُ» لا رخصة لها: الحرف من أصل الكلمة",
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": null,
+    "evidence_scope": "رخصة البقية: الأبنية والمعجم وHFN (sarf.cells)"
+   },
+   {
+    "position": "2:282:50",
+    "operator": "وَ",
+    "group": "4",
+    "operator_class": "واو المصاحبة (المعيّة)",
+    "usage": [
+     "المعية"
+    ],
+    "status": "blocked",
+    "target": "لِيُّهُ",
+    "target_analysis": {
+     "pos": null,
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [
+     "R10 رخصة البقية"
+    ],
+    "conditions": [],
+    "blocker": "الكلمة كلها مرخَّصة (بناء: ولي، فَعِيلٌ (S205) [«ي» المشدَّدة بعد حركتها: حرف مدٍّ مدغمٌ في لامٍ مثله]؛ قوة 0.5)، والبقية «لِيُّهُ» لا رخصة لها: الحرف من أصل الكلمة",
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": null,
+    "evidence_scope": "رخصة البقية: الأبنية والمعجم وHFN (sarf.cells)"
+   },
+   {
+    "position": "2:282:51",
+    "operator": "بِ",
+    "group": "1",
+    "operator_class": "الجر فقط الدلالية",
+    "usage": [
+     "الإلصاق",
+     "الاستعانة",
+     "السببية",
+     "المصاحبة",
+     "الظرفية",
+     "التوكيد (الزائدة)",
+     "المقابلة",
+     "القسم"
+    ],
+    "status": "accepted",
+    "target": "الْعَدْلِ",
+    "target_analysis": {
+     "pos": "noun",
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": [
+      "أل"
+     ]
+    },
+    "rule_checks": [
+     "R6 المرفوع بعد الجار"
+    ],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة",
+     "الشرط: العلامة المكتوبة توافق أثره (جر)",
+     "الموانع المفحوصة: R6 المرفوع بعد الجار"
+    ],
+    "blocker": null,
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": {
+     "expected": "جر",
+     "observed": "جر",
+     "consistent": true,
+     "role": "مجرور بـ«بِ»"
+    },
+    "evidence_scope": "علامة آخر المعمول (الرفع أو السكون)"
+   },
+   {
+    "position": "2:282:52",
+    "operator": "وَ",
+    "group": "1",
+    "operator_class": "الجر فقط الدلالية",
+    "usage": [
+     "القسم",
+     "التقليل"
+    ],
+    "status": "blocked",
+    "target": "اسْتَشْهِدُوا",
+    "target_analysis": {
+     "pos": "verb",
+     "kind": "amr",
+     "mood": null,
+     "suffix": "وا",
+     "evidence": [
+      "واو الجماعة والألف الفارقة",
+      "همزة وصل في أول فعل الأمر"
+     ]
+    },
+    "rule_checks": [
+     "R4 الاسم بعد الواو"
+    ],
+    "conditions": [],
+    "blocker": "بعدها فعل (واو الجماعة والألف الفارقة، همزة وصل في أول فعل الأمر): الواو عاطفة",
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": null,
+    "evidence_scope": "ما بعد الواو: فعل أو عامل أو ضمير رفع"
+   },
+   {
+    "position": "2:282:52",
+    "operator": "وَ",
+    "group": "4",
+    "operator_class": "واو المصاحبة (المعيّة)",
+    "usage": [
+     "المعية"
+    ],
+    "status": "blocked",
+    "target": "اسْتَشْهِدُوا",
+    "target_analysis": {
+     "pos": "verb",
+     "kind": "amr",
+     "mood": null,
+     "suffix": "وا",
+     "evidence": [
+      "واو الجماعة والألف الفارقة",
+      "همزة وصل في أول فعل الأمر"
+     ]
+    },
+    "rule_checks": [
+     "R4 الاسم بعد الواو"
+    ],
+    "conditions": [],
+    "blocker": "بعدها فعل (واو الجماعة والألف الفارقة، همزة وصل في أول فعل الأمر): الواو عاطفة",
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": null,
+    "evidence_scope": "ما بعد الواو: فعل أو عامل أو ضمير رفع"
+   },
+   {
+    "position": "2:282:54",
+    "operator": "مِنْ",
+    "group": "1",
+    "operator_class": "الجر فقط الدلالية",
+    "usage": [
+     "ابتداء الغاية",
+     "التبعيض",
+     "بيان الجنس",
+     "الزائدة (توكيد النفي والعموم)",
+     "التعليل والسببية"
+    ],
+    "status": "accepted",
+    "target": "رِّجَالِكُمْ",
+    "target_analysis": {
+     "pos": null,
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [
+     "R6 المرفوع بعد الجار"
+    ],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة",
+     "الشرط: العلامة المكتوبة توافق أثره (جر)",
+     "الموانع المفحوصة: R6 المرفوع بعد الجار"
+    ],
+    "blocker": null,
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": {
+     "expected": "جر",
+     "observed": "جر",
+     "consistent": true,
+     "role": "مجرور بـ«مِنْ»"
+    },
+    "evidence_scope": "علامة آخر المعمول (الرفع أو السكون)"
+   },
+   {
+    "position": "2:282:56",
+    "operator": "إِنْ",
+    "group": "6",
+    "operator_class": "الجزم فقط النافية والشرطية",
+    "usage": [
+     "الشرطية الجازمة",
+     "النافية (الحجازية)"
+    ],
+    "status": "deferred",
+    "target": "لَّمْ",
+    "target_analysis": {
+     "pos": null,
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة"
+    ],
+    "blocker": null,
+    "deferred_because": [
+     "أثره في معموله لم يثبت بالكتابة (المعمول يبدأ بعامل: جملة أو مصدر مؤوَّل)"
+    ],
+    "mood_faces": null,
+    "relation": {
+     "expected": "جزم",
+     "observed": null,
+     "consistent": null,
+     "role": null
+    },
+    "evidence_scope": "علاقة المرحلة ١١ (العلامة في المعمول)"
+   },
+   {
+    "position": "2:282:57",
+    "operator": "لَمْ",
+    "group": "6",
+    "operator_class": "الجزم فقط النافية والشرطية",
+    "usage": [
+     "نفي الماضي المتصل بالحال"
+    ],
+    "status": "accepted",
+    "target": "يَكُونَا",
+    "target_analysis": {
+     "pos": null,
+     "kind": "mudari",
+     "mood": "حذف النون",
+     "suffix": "ا",
+     "evidence": []
+    },
+    "rule_checks": [],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة",
+     "الشرط: العلامة المكتوبة توافق أثره (جزم)"
+    ],
+    "blocker": null,
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": {
+     "expected": "جزم",
+     "observed": "حذف النون",
+     "consistent": true,
+     "role": "مضارع مجزوم بـ«لَمْ» وعلامة جزمه حذف النون"
+    },
+    "evidence_scope": "علاقة المرحلة ١١ (العلامة في المعمول)"
+   },
+   {
+    "position": "2:282:61",
+    "operator": "وَ",
+    "group": "1",
+    "operator_class": "الجر فقط الدلالية",
+    "usage": [
+     "القسم",
+     "التقليل"
+    ],
+    "status": "blocked",
+    "target": "امْرَأَتَانِ",
+    "target_analysis": {
+     "pos": null,
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [
+     "R4 الاسم بعد الواو",
+     "R6 المرفوع بعد الجار"
+    ],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة",
+     "الموانع المفحوصة: R4 الاسم بعد الواو، R6 المرفوع بعد الجار"
+    ],
+    "blocker": "العلامة المكتوبة على «امْرَأَتَانِ» (رفع) تخالف أثره (جر)",
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": {
+     "expected": "جر",
+     "observed": "رفع",
+     "consistent": false,
+     "role": "مجرور بـ«وَ» (العلامة المكتوبة تخالف)"
+    },
+    "evidence_scope": "علامة المعمول في علاقة المرحلة ١١ (sarf.judge._written_case)"
+   },
+   {
+    "position": "2:282:61",
+    "operator": "وَ",
+    "group": "4",
+    "operator_class": "واو المصاحبة (المعيّة)",
+    "usage": [
+     "المعية"
+    ],
+    "status": "deferred",
+    "target": "امْرَأَتَانِ",
+    "target_analysis": {
+     "pos": null,
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [
+     "R4 الاسم بعد الواو",
+     "R6 المرفوع بعد الجار"
+    ],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة",
+     "الموانع المفحوصة: R4 الاسم بعد الواو، R6 المرفوع بعد الجار"
+    ],
+    "blocker": null,
+    "deferred_because": [
+     "أثره في معموله لم يثبت بالكتابة"
+    ],
+    "mood_faces": null,
+    "relation": {
+     "expected": null,
+     "observed": null,
+     "consistent": null,
+     "role": null
+    },
+    "evidence_scope": "ما بعد الواو: فعل أو عامل أو ضمير رفع"
+   },
+   {
+    "position": "2:282:64",
+    "operator": "مِنْ",
+    "group": "1",
+    "operator_class": "الجر فقط الدلالية",
+    "usage": [
+     "ابتداء الغاية",
+     "التبعيض",
+     "بيان الجنس",
+     "الزائدة (توكيد النفي والعموم)",
+     "التعليل والسببية"
+    ],
+    "status": "accepted",
+    "target": "الشُّهَدَاءِ",
+    "target_analysis": {
+     "pos": "noun",
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": [
+      "أل"
+     ]
+    },
+    "rule_checks": [
+     "R6 المرفوع بعد الجار"
+    ],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة",
+     "الشرط: العلامة المكتوبة توافق أثره (جر)",
+     "الموانع المفحوصة: R6 المرفوع بعد الجار"
+    ],
+    "blocker": null,
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": {
+     "expected": "جر",
+     "observed": "جر",
+     "consistent": true,
+     "role": "مجرور بـ«مِنْ»"
+    },
+    "evidence_scope": "علامة آخر المعمول (الرفع أو السكون)"
+   },
+   {
+    "position": "2:282:66",
+    "operator": "أَنْ",
+    "group": "5",
+    "operator_class": "أداة نصب ومصدر",
+    "usage": [
+     "المصدرية الناصبة",
+     "التفسيرية"
+    ],
+    "status": "accepted",
+    "target": "تَضِلَّ",
+    "target_analysis": {
+     "pos": null,
+     "kind": "mudari",
+     "mood": "نصب",
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة",
+     "الشرط: العلامة المكتوبة توافق أثره (نصب)"
+    ],
+    "blocker": null,
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": {
+     "expected": "نصب",
+     "observed": "نصب",
+     "consistent": true,
+     "role": "مضارع منصوب بـ«أَنْ»"
+    },
+    "evidence_scope": "علاقة المرحلة ١١ (العلامة في المعمول)"
+   },
+   {
+    "position": "2:282:72",
+    "operator": "وَ",
+    "group": "1",
+    "operator_class": "الجر فقط الدلالية",
+    "usage": [
+     "القسم",
+     "التقليل"
+    ],
+    "status": "blocked",
+    "target": "لَا",
+    "target_analysis": {
+     "pos": null,
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [
+     "R4 الاسم بعد الواو"
+    ],
+    "conditions": [],
+    "blocker": "بعدها عامل (لَا): الواو عاطفة",
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": null,
+    "evidence_scope": "ما بعد الواو: فعل أو عامل أو ضمير رفع"
+   },
+   {
+    "position": "2:282:72",
+    "operator": "وَ",
+    "group": "4",
+    "operator_class": "واو المصاحبة (المعيّة)",
+    "usage": [
+     "المعية"
+    ],
+    "status": "blocked",
+    "target": "لَا",
+    "target_analysis": {
+     "pos": null,
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [
+     "R4 الاسم بعد الواو"
+    ],
+    "conditions": [],
+    "blocker": "بعدها عامل (لَا): الواو عاطفة",
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": null,
+    "evidence_scope": "ما بعد الواو: فعل أو عامل أو ضمير رفع"
+   },
+   {
+    "position": "2:282:72",
+    "operator": "لَا",
+    "group": "3",
+    "operator_class": "النفي الإعرابية",
+    "usage": [
+     "النافية للجنس",
+     "العاطفة"
+    ],
+    "status": "deferred",
+    "target": "يَأْبَ",
+    "target_analysis": {
+     "pos": null,
+     "kind": "mudari",
+     "mood": "نصب",
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة"
+    ],
+    "blocker": null,
+    "deferred_because": [
+     "تحليلات منافسة على الخانة: لَا (مج 6)",
+     "أثره في معموله لم يثبت بالكتابة"
+    ],
+    "mood_faces": null,
+    "relation": {
+     "expected": null,
+     "observed": null,
+     "consistent": null,
+     "role": null
+    },
+    "evidence_scope": "منافسة الخانة"
+   },
+   {
+    "position": "2:282:72",
+    "operator": "لَا",
+    "group": "6",
+    "operator_class": "الجزم فقط النافية والشرطية",
+    "usage": [
+     "الناهية"
+    ],
+    "status": "deferred",
+    "target": "يَأْبَ",
+    "target_analysis": {
+     "pos": null,
+     "kind": "mudari",
+     "mood": "نصب",
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [
+     "R1/R2 المجزوم بعدها",
+     "R1/R2: حرف المضارعة ثم أصلان أولهما ساكن: المحذوف لام الفعل، والحركة على الآخر حركة العين لا علامة؛ والجذر المرشّح في HFN: ءبو، ءبي"
+    ],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة",
+     "الموانع المفحوصة: R1/R2 المجزوم بعدها، R1/R2: حرف المضارعة ثم أصلان أولهما ساكن: المحذوف لام الفعل، والحركة على الآخر حركة العين لا علامة؛ والجذر المرشّح في HFN: ءبو، ءبي"
+    ],
+    "blocker": null,
+    "deferred_because": [
+     "تحليلات منافسة على الخانة: لَا (مج 3)",
+     "أثره في معموله لم يثبت بالكتابة",
+     "العلامة المكتوبة لا تعيّن الحالة (M01): حرف المضارعة ثم أصلان أولهما ساكن: المحذوف لام الفعل، والحركة على الآخر حركة العين لا علامة؛ والجذر المرشّح في HFN: ءبو، ءبي؛ والأوجه: جزم (حذف حرف العلة، وحركة الآخر حركة العين)؛ فلا يُقبل العامل بها ولا يُمنع"
+    ],
+    "mood_faces": {
+     "rule": "M01.2",
+     "faces": [
+      "جزم (حذف حرف العلة، وحركة الآخر حركة العين)"
+     ],
+     "roots": [
+      "ءبو",
+      "ءبي"
+     ],
+     "why": "حرف المضارعة ثم أصلان أولهما ساكن: المحذوف لام الفعل، والحركة على الآخر حركة العين لا علامة؛ والجذر المرشّح في HFN: ءبو، ءبي"
+    },
+    "relation": {
+     "expected": "جزم",
+     "observed": "نصب",
+     "consistent": false,
+     "role": "مضارع مجزوم بـ«لَا» (العلامة المكتوبة تخالف)"
+    },
+    "evidence_scope": "بنية الفعل بعدها (M01): حذف اللام أو الإدغام"
+   },
+   {
+    "position": "2:282:75",
+    "operator": "إِذَا",
+    "group": "7",
+    "operator_class": "الشرط الجازمة فقط",
+    "usage": [
+     "الشرط المستقبلي",
+     "الفجائية"
+    ],
+    "status": "deferred",
+    "target": "مَا",
+    "target_analysis": {
+     "pos": null,
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة"
+    ],
+    "blocker": null,
+    "deferred_because": [
+     "أثره في معموله لم يثبت بالكتابة (المعمول يبدأ بعامل: جملة أو مصدر مؤوَّل)"
+    ],
+    "mood_faces": null,
+    "relation": {
+     "expected": null,
+     "observed": null,
+     "consistent": null,
+     "role": null
+    },
+    "evidence_scope": "علاقة المرحلة ١١ (العلامة في المعمول)"
+   },
+   {
+    "position": "2:282:76",
+    "operator": "مَا",
+    "group": "3",
+    "operator_class": "النفي الإعرابية",
+    "usage": [
+     "النفي الحالي",
+     "الموصولية",
+     "المصدرية"
+    ],
+    "status": "deferred",
+    "target": "دُعُوا",
+    "target_analysis": {
+     "pos": "verb",
+     "kind": "amr",
+     "mood": null,
+     "suffix": "وا",
+     "evidence": [
+      "واو الجماعة والألف الفارقة",
+      "أمر بلا همزة وصل مع واو الجماعة"
+     ]
+    },
+    "rule_checks": [],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة"
+    ],
+    "blocker": null,
+    "deferred_because": [
+     "تحليلات منافسة على الخانة: مَا (مج 7)",
+     "أثره في معموله لم يثبت بالكتابة (المعمول فعل أمر)"
+    ],
+    "mood_faces": null,
+    "relation": {
+     "expected": null,
+     "observed": null,
+     "consistent": null,
+     "role": null
+    },
+    "evidence_scope": "منافسة الخانة"
+   },
+   {
+    "position": "2:282:76",
+    "operator": "مَا",
+    "group": "7",
+    "operator_class": "الشرط الجازمة فقط",
+    "usage": [
+     "الشرطية"
+    ],
+    "status": "deferred",
+    "target": "دُعُوا",
+    "target_analysis": {
+     "pos": "verb",
+     "kind": "amr",
+     "mood": null,
+     "suffix": "وا",
+     "evidence": [
+      "واو الجماعة والألف الفارقة",
+      "أمر بلا همزة وصل مع واو الجماعة"
+     ]
+    },
+    "rule_checks": [
+     "R7 المرفوع بعد أداة الشرط"
+    ],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة",
+     "الموانع المفحوصة: R7 المرفوع بعد أداة الشرط"
+    ],
+    "blocker": null,
+    "deferred_because": [
+     "تحليلات منافسة على الخانة: مَا (مج 3)",
+     "أثره في معموله لم يثبت بالكتابة (المعمول فعل أمر)"
+    ],
+    "mood_faces": null,
+    "relation": {
+     "expected": "جزم",
+     "observed": null,
+     "consistent": null,
+     "role": "أثر «مَا» فيه جزم، ولا علامة ظاهرة في الكتابة"
+    },
+    "evidence_scope": "علامة ما بعد أداة الشرط"
+   },
+   {
+    "position": "2:282:78",
+    "operator": "وَ",
+    "group": "1",
+    "operator_class": "الجر فقط الدلالية",
+    "usage": [
+     "القسم",
+     "التقليل"
+    ],
+    "status": "blocked",
+    "target": "لَا",
+    "target_analysis": {
+     "pos": null,
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [
+     "R4 الاسم بعد الواو"
+    ],
+    "conditions": [],
+    "blocker": "بعدها عامل (لَا): الواو عاطفة",
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": null,
+    "evidence_scope": "ما بعد الواو: فعل أو عامل أو ضمير رفع"
+   },
+   {
+    "position": "2:282:78",
+    "operator": "وَ",
+    "group": "4",
+    "operator_class": "واو المصاحبة (المعيّة)",
+    "usage": [
+     "المعية"
+    ],
+    "status": "blocked",
+    "target": "لَا",
+    "target_analysis": {
+     "pos": null,
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [
+     "R4 الاسم بعد الواو"
+    ],
+    "conditions": [],
+    "blocker": "بعدها عامل (لَا): الواو عاطفة",
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": null,
+    "evidence_scope": "ما بعد الواو: فعل أو عامل أو ضمير رفع"
+   },
+   {
+    "position": "2:282:78",
+    "operator": "لَا",
+    "group": "3",
+    "operator_class": "النفي الإعرابية",
+    "usage": [
+     "النافية للجنس",
+     "العاطفة"
+    ],
+    "status": "deferred",
+    "target": "تَسْءَمُوا",
+    "target_analysis": {
+     "pos": "verb",
+     "kind": "mudari",
+     "mood": "حذف النون",
+     "suffix": "وا",
+     "evidence": [
+      "حرف المضارعة «ت»",
+      "واو الجماعة والألف الفارقة"
+     ]
+    },
+    "rule_checks": [],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة"
+    ],
+    "blocker": null,
+    "deferred_because": [
+     "تحليلات منافسة على الخانة: لَا (مج 6)",
+     "أثره في معموله لم يثبت بالكتابة"
+    ],
+    "mood_faces": null,
+    "relation": {
+     "expected": null,
+     "observed": null,
+     "consistent": null,
+     "role": null
+    },
+    "evidence_scope": "منافسة الخانة"
+   },
+   {
+    "position": "2:282:78",
+    "operator": "لَا",
+    "group": "6",
+    "operator_class": "الجزم فقط النافية والشرطية",
+    "usage": [
+     "الناهية"
+    ],
+    "status": "accepted",
+    "target": "تَسْءَمُوا",
+    "target_analysis": {
+     "pos": "verb",
+     "kind": "mudari",
+     "mood": "حذف النون",
+     "suffix": "وا",
+     "evidence": [
+      "حرف المضارعة «ت»",
+      "واو الجماعة والألف الفارقة"
+     ]
+    },
+    "rule_checks": [
+     "R1/R2 المجزوم بعدها"
+    ],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة",
+     "المنافس لَا (مج 3) لا يُحدث جزم، وجزم مكتوبٌ في معموله ولا عامل قبله يفسّره",
+     "الشرط: العلامة المكتوبة توافق أثره (جزم)",
+     "الموانع المفحوصة: R1/R2 المجزوم بعدها"
+    ],
+    "blocker": null,
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": {
+     "expected": "جزم",
+     "observed": "حذف النون",
+     "consistent": true,
+     "role": "مضارع مجزوم بـ«لَا» وعلامة جزمه حذف النون"
+    },
+    "evidence_scope": "كتابة المعمول: صنفه وعلامة آخره"
+   },
+   {
+    "position": "2:282:80",
+    "operator": "أَنْ",
+    "group": "5",
+    "operator_class": "أداة نصب ومصدر",
+    "usage": [
+     "المصدرية الناصبة",
+     "التفسيرية"
+    ],
+    "status": "accepted",
+    "target": "تَكْتُبُوهُ",
+    "target_analysis": {
+     "pos": null,
+     "kind": "mudari",
+     "mood": "حذف النون",
+     "suffix": "و",
+     "evidence": []
+    },
+    "rule_checks": [],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة",
+     "الشرط: العلامة المكتوبة توافق أثره (نصب)"
+    ],
+    "blocker": null,
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": {
+     "expected": "نصب",
+     "observed": "حذف النون",
+     "consistent": true,
+     "role": "مضارع منصوب بـ«أَنْ» وعلامة نصبه حذف النون"
+    },
+    "evidence_scope": "علاقة المرحلة ١١ (العلامة في المعمول)"
+   },
+   {
+    "position": "2:282:84",
+    "operator": "كَ",
+    "group": "1",
+    "operator_class": "الجر فقط الدلالية",
+    "usage": [
+     "التشبيه",
+     "التعليل"
+    ],
+    "status": "blocked",
+    "target": "بِيرًا",
+    "target_analysis": {
+     "pos": "noun",
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": [
+      "تنوين"
+     ]
+    },
+    "rule_checks": [
+     "R10 رخصة البقية"
+    ],
+    "conditions": [],
+    "blocker": "الكلمة كلها مرخَّصة (بناء: كبر، فَعِيلٌ (S205)؛ قوة 1)، والبقية «بِيرًا» لا رخصة لها: الحرف من أصل الكلمة",
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": null,
+    "evidence_scope": "رخصة البقية: الأبنية والمعجم وHFN (sarf.cells)"
+   },
+   {
+    "position": "2:282:85",
+    "operator": "إِلَى",
+    "group": "1",
+    "operator_class": "الجر فقط الدلالية",
+    "usage": [
+     "انتهاء الغاية",
+     "المصاحبة",
+     "موافقة 'عند'"
+    ],
+    "status": "accepted",
+    "target": "أَجَلِهِ",
+    "target_analysis": {
+     "pos": null,
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [
+     "R6 المرفوع بعد الجار"
+    ],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة",
+     "الشرط: العلامة المكتوبة توافق أثره (جر)",
+     "الموانع المفحوصة: R6 المرفوع بعد الجار"
+    ],
+    "blocker": null,
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": {
+     "expected": "جر",
+     "observed": "جر",
+     "consistent": true,
+     "role": "مجرور بـ«إِلَى»"
+    },
+    "evidence_scope": "علامة آخر المعمول (الرفع أو السكون)"
+   },
+   {
+    "position": "2:282:91",
+    "operator": "وَ",
+    "group": "1",
+    "operator_class": "الجر فقط الدلالية",
+    "usage": [
+     "القسم",
+     "التقليل"
+    ],
+    "status": "blocked",
+    "target": "أَقْوَمُ",
+    "target_analysis": {
+     "pos": null,
+     "kind": "mudari",
+     "mood": "رفع",
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [
+     "R4 الاسم بعد الواو",
+     "R6 المرفوع بعد الجار"
+    ],
+    "conditions": [],
+    "blocker": "ما بعدها مرفوع كتابةً (الضمة)، و«وَ» تجرّ",
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": null,
+    "evidence_scope": "ما بعد الواو: فعل أو عامل أو ضمير رفع"
+   },
+   {
+    "position": "2:282:91",
+    "operator": "وَ",
+    "group": "4",
+    "operator_class": "واو المصاحبة (المعيّة)",
+    "usage": [
+     "المعية"
+    ],
+    "status": "blocked",
+    "target": "أَقْوَمُ",
+    "target_analysis": {
+     "pos": null,
+     "kind": "mudari",
+     "mood": "رفع",
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [
+     "R4 الاسم بعد الواو",
+     "R6 المرفوع بعد الجار"
+    ],
+    "conditions": [],
+    "blocker": "ما بعدها مرفوع كتابةً (الضمة)، و«وَ» تنصب المفعول معه",
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": null,
+    "evidence_scope": "ما بعد الواو: فعل أو عامل أو ضمير رفع"
+   },
+   {
+    "position": "2:282:92",
+    "operator": "لِ",
+    "group": "1",
+    "operator_class": "الجر فقط الدلالية",
+    "usage": [
+     "الملك",
+     "التعليل",
+     "الاختصاص",
+     "التوكيد (المُزحلَقة)"
+    ],
+    "status": "accepted",
+    "target": "لشَّهَادَةِ",
+    "target_analysis": {
+     "pos": "noun",
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": [
+      "تاء مربوطة"
+     ]
+    },
+    "rule_checks": [
+     "R5 اللام المفتوحة قبل الفعل",
+     "R6 المرفوع بعد الجار"
+    ],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة",
+     "الشرط: العلامة المكتوبة توافق أثره (جر)",
+     "الموانع المفحوصة: R5 اللام المفتوحة قبل الفعل، R6 المرفوع بعد الجار"
+    ],
+    "blocker": null,
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": {
+     "expected": "جر",
+     "observed": "جر",
+     "consistent": true,
+     "role": "مجرور بـ«لِ»"
+    },
+    "evidence_scope": "حركة اللام وصنف ما بعدها"
+   },
+   {
+    "position": "2:282:92",
+    "operator": "لِ",
+    "group": "6",
+    "operator_class": "الجزم فقط النافية والشرطية",
+    "usage": [
+     "الأمر"
+    ],
+    "status": "blocked",
+    "target": "لشَّهَادَةِ",
+    "target_analysis": {
+     "pos": "noun",
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": [
+      "تاء مربوطة"
+     ]
+    },
+    "rule_checks": [
+     "R1/R2 المجزوم بعدها"
+    ],
+    "conditions": [],
+    "blocker": "ما بعدها اسم (تاء مربوطة)",
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": null,
+    "evidence_scope": "كتابة المعمول: صنفه وعلامة آخره"
+   },
+   {
+    "position": "2:282:93",
+    "operator": "وَ",
+    "group": "1",
+    "operator_class": "الجر فقط الدلالية",
+    "usage": [
+     "القسم",
+     "التقليل"
+    ],
+    "status": "deferred",
+    "target": "أَدْنَى",
+    "target_analysis": {
+     "pos": null,
+     "kind": "mudari",
+     "mood": null,
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [
+     "R4 الاسم بعد الواو",
+     "R6 المرفوع بعد الجار"
+    ],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة",
+     "الموانع المفحوصة: R4 الاسم بعد الواو، R6 المرفوع بعد الجار"
+    ],
+    "blocker": null,
+    "deferred_because": [
+     "تحليلات منافسة على الخانة: وَ (مج 4)",
+     "أثره في معموله لم يثبت بالكتابة"
+    ],
+    "mood_faces": null,
+    "relation": {
+     "expected": "جر",
+     "observed": null,
+     "consistent": null,
+     "role": "مجرور بـ«وَ»"
+    },
+    "evidence_scope": "ما بعد الواو: فعل أو عامل أو ضمير رفع"
+   },
+   {
+    "position": "2:282:93",
+    "operator": "وَ",
+    "group": "4",
+    "operator_class": "واو المصاحبة (المعيّة)",
+    "usage": [
+     "المعية"
+    ],
+    "status": "deferred",
+    "target": "أَدْنَى",
+    "target_analysis": {
+     "pos": null,
+     "kind": "mudari",
+     "mood": null,
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [
+     "R4 الاسم بعد الواو",
+     "R6 المرفوع بعد الجار"
+    ],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة",
+     "الموانع المفحوصة: R4 الاسم بعد الواو، R6 المرفوع بعد الجار"
+    ],
+    "blocker": null,
+    "deferred_because": [
+     "تحليلات منافسة على الخانة: وَ (مج 1)",
+     "أثره في معموله لم يثبت بالكتابة"
+    ],
+    "mood_faces": null,
+    "relation": {
+     "expected": null,
+     "observed": null,
+     "consistent": null,
+     "role": null
+    },
+    "evidence_scope": "ما بعد الواو: فعل أو عامل أو ضمير رفع"
+   },
+   {
+    "position": "2:282:96",
+    "operator": "إِلَّا",
+    "group": "4",
+    "operator_class": "أداة الاستثناء الأم",
+    "usage": [
+     "الاستثناء",
+     "الوصف بمعنى غير"
+    ],
+    "status": "deferred",
+    "target": "أَنْ",
+    "target_analysis": {
+     "pos": null,
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة"
+    ],
+    "blocker": null,
+    "deferred_because": [
+     "أثره في معموله لم يثبت بالكتابة (المعمول يبدأ بعامل: جملة أو مصدر مؤوَّل)"
+    ],
+    "mood_faces": null,
+    "relation": {
+     "expected": null,
+     "observed": null,
+     "consistent": null,
+     "role": null
+    },
+    "evidence_scope": "علاقة المرحلة ١١ (العلامة في المعمول)"
+   },
+   {
+    "position": "2:282:97",
+    "operator": "أَنْ",
+    "group": "5",
+    "operator_class": "أداة نصب ومصدر",
+    "usage": [
+     "المصدرية الناصبة",
+     "التفسيرية"
+    ],
+    "status": "accepted",
+    "target": "تَكُونَ",
+    "target_analysis": {
+     "pos": null,
+     "kind": "mudari",
+     "mood": "نصب",
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة",
+     "الشرط: العلامة المكتوبة توافق أثره (نصب)"
+    ],
+    "blocker": null,
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": {
+     "expected": "نصب",
+     "observed": "نصب",
+     "consistent": true,
+     "role": "مضارع منصوب بـ«أَنْ»"
+    },
+    "evidence_scope": "علاقة المرحلة ١١ (العلامة في المعمول)"
+   },
+   {
+    "position": "2:282:103",
+    "operator": "لَيْسَ",
+    "group": "10",
+    "operator_class": "الزمن والنفي الإعرابية",
+    "usage": [
+     "النفي"
+    ],
+    "status": "accepted",
+    "target": "عَلَيْكُمْ",
+    "target_analysis": {
+     "pos": null,
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة",
+     "الشرط: العلامة المكتوبة توافق أثره (رفع)"
+    ],
+    "blocker": null,
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": {
+     "expected": "رفع",
+     "observed": "رفع",
+     "consistent": true,
+     "role": "اسم «لَيْسَ» مرفوع"
+    },
+    "evidence_scope": "علاقة المرحلة ١١ (العلامة في المعمول)"
+   },
+   {
+    "position": "2:282:104",
+    "operator": "عَلَى",
+    "group": "1",
+    "operator_class": "الجر فقط الدلالية",
+    "usage": [
+     "الاستعلاء الحقيقي",
+     "الاستعلاء المجازي",
+     "المصاحبة",
+     "التعليل"
+    ],
+    "status": "accepted",
+    "target": "جُنَاحٌ",
+    "target_analysis": {
+     "pos": "noun",
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": [
+      "تنوين"
+     ]
+    },
+    "rule_checks": [],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة",
+     "الشرط: معموله مبنيٌّ من ملف المبنيات (ضمير متصل) في محلّ جر"
+    ],
+    "blocker": null,
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": {
+     "expected": "جر",
+     "observed": "محلاً",
+     "consistent": null,
+     "role": "في محلّ جر بـ«عَلَى»"
+    },
+    "evidence_scope": "علاقة المرحلة ١١ (العلامة في المعمول)"
+   },
+   {
+    "position": "2:282:108",
+    "operator": "وَ",
+    "group": "1",
+    "operator_class": "الجر فقط الدلالية",
+    "usage": [
+     "القسم",
+     "التقليل"
+    ],
+    "status": "blocked",
+    "target": "أَشْهِدُوا",
+    "target_analysis": {
+     "pos": "verb",
+     "kind": "amr",
+     "mood": null,
+     "suffix": "وا",
+     "evidence": [
+      "واو الجماعة والألف الفارقة",
+      "أمر أَفۡعَلَ: كسرٌ قبل الآخر (ءَامِنُوا، أَتِمُّوا)، أو ثلاثة أحرف (أَوۡفُوا)"
+     ]
+    },
+    "rule_checks": [
+     "R4 الاسم بعد الواو"
+    ],
+    "conditions": [],
+    "blocker": "بعدها فعل (واو الجماعة والألف الفارقة، أمر أَفۡعَلَ: كسرٌ قبل الآخر (ءَامِنُوا، أَتِمُّوا)، أو ثلاثة أحرف (أَوۡفُوا)): الواو عاطفة",
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": null,
+    "evidence_scope": "ما بعد الواو: فعل أو عامل أو ضمير رفع"
+   },
+   {
+    "position": "2:282:108",
+    "operator": "وَ",
+    "group": "4",
+    "operator_class": "واو المصاحبة (المعيّة)",
+    "usage": [
+     "المعية"
+    ],
+    "status": "blocked",
+    "target": "أَشْهِدُوا",
+    "target_analysis": {
+     "pos": "verb",
+     "kind": "amr",
+     "mood": null,
+     "suffix": "وا",
+     "evidence": [
+      "واو الجماعة والألف الفارقة",
+      "أمر أَفۡعَلَ: كسرٌ قبل الآخر (ءَامِنُوا، أَتِمُّوا)، أو ثلاثة أحرف (أَوۡفُوا)"
+     ]
+    },
+    "rule_checks": [
+     "R4 الاسم بعد الواو"
+    ],
+    "conditions": [],
+    "blocker": "بعدها فعل (واو الجماعة والألف الفارقة، أمر أَفۡعَلَ: كسرٌ قبل الآخر (ءَامِنُوا، أَتِمُّوا)، أو ثلاثة أحرف (أَوۡفُوا)): الواو عاطفة",
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": null,
+    "evidence_scope": "ما بعد الواو: فعل أو عامل أو ضمير رفع"
+   },
+   {
+    "position": "2:282:109",
+    "operator": "إِذَا",
+    "group": "7",
+    "operator_class": "الشرط الجازمة فقط",
+    "usage": [
+     "الشرط المستقبلي",
+     "الفجائية"
+    ],
+    "status": "deferred",
+    "target": "تَبَايَعْتُمْ",
+    "target_analysis": {
+     "pos": "verb",
+     "kind": "madi",
+     "mood": null,
+     "suffix": "تُمْ",
+     "evidence": [
+      "ضمير الرفع «تُمْ» بعد ساكن"
+     ]
+    },
+    "rule_checks": [],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة"
+    ],
+    "blocker": null,
+    "deferred_because": [
+     "أثره في معموله لم يثبت بالكتابة (المعمول فعل ماضٍ)"
+    ],
+    "mood_faces": null,
+    "relation": {
+     "expected": null,
+     "observed": null,
+     "consistent": null,
+     "role": null
+    },
+    "evidence_scope": "علاقة المرحلة ١١ (العلامة في المعمول)"
+   },
+   {
+    "position": "2:282:111",
+    "operator": "وَ",
+    "group": "1",
+    "operator_class": "الجر فقط الدلالية",
+    "usage": [
+     "القسم",
+     "التقليل"
+    ],
+    "status": "blocked",
+    "target": "لَا",
+    "target_analysis": {
+     "pos": null,
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [
+     "R4 الاسم بعد الواو"
+    ],
+    "conditions": [],
+    "blocker": "بعدها عامل (لَا): الواو عاطفة",
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": null,
+    "evidence_scope": "ما بعد الواو: فعل أو عامل أو ضمير رفع"
+   },
+   {
+    "position": "2:282:111",
+    "operator": "وَ",
+    "group": "4",
+    "operator_class": "واو المصاحبة (المعيّة)",
+    "usage": [
+     "المعية"
+    ],
+    "status": "blocked",
+    "target": "لَا",
+    "target_analysis": {
+     "pos": null,
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [
+     "R4 الاسم بعد الواو"
+    ],
+    "conditions": [],
+    "blocker": "بعدها عامل (لَا): الواو عاطفة",
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": null,
+    "evidence_scope": "ما بعد الواو: فعل أو عامل أو ضمير رفع"
+   },
+   {
+    "position": "2:282:111",
+    "operator": "لَا",
+    "group": "3",
+    "operator_class": "النفي الإعرابية",
+    "usage": [
+     "النافية للجنس",
+     "العاطفة"
+    ],
+    "status": "deferred",
+    "target": "يُضَارَّ",
+    "target_analysis": {
+     "pos": null,
+     "kind": "mudari",
+     "mood": "نصب",
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة"
+    ],
+    "blocker": null,
+    "deferred_because": [
+     "تحليلات منافسة على الخانة: لَا (مج 6)",
+     "أثره في معموله لم يثبت بالكتابة"
+    ],
+    "mood_faces": null,
+    "relation": {
+     "expected": null,
+     "observed": null,
+     "consistent": null,
+     "role": null
+    },
+    "evidence_scope": "منافسة الخانة"
+   },
+   {
+    "position": "2:282:111",
+    "operator": "لَا",
+    "group": "6",
+    "operator_class": "الجزم فقط النافية والشرطية",
+    "usage": [
+     "الناهية"
+    ],
+    "status": "deferred",
+    "target": "يُضَارَّ",
+    "target_analysis": {
+     "pos": null,
+     "kind": "mudari",
+     "mood": "نصب",
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [
+     "R1/R2 المجزوم بعدها",
+     "R1/R2: «ر» مشدَّدٌ مفتوح في آخر المضارع: المضعّف المدغم يُفتح في الجزم تخلّصاً، فالفتحة لا تنفي الجزم"
+    ],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة",
+     "الموانع المفحوصة: R1/R2 المجزوم بعدها، R1/R2: «ر» مشدَّدٌ مفتوح في آخر المضارع: المضعّف المدغم يُفتح في الجزم تخلّصاً، فالفتحة لا تنفي الجزم"
+    ],
+    "blocker": null,
+    "deferred_because": [
+     "تحليلات منافسة على الخانة: لَا (مج 3)",
+     "أثره في معموله لم يثبت بالكتابة",
+     "العلامة المكتوبة لا تعيّن الحالة (M01): «ر» مشدَّدٌ مفتوح في آخر المضارع: المضعّف المدغم يُفتح في الجزم تخلّصاً، فالفتحة لا تنفي الجزم؛ والأوجه: جزم (السكون، وحُرِّك المدغم بالفتح للتخلّص)، نصب (الفتحة)؛ فلا يُقبل العامل بها ولا يُمنع"
+    ],
+    "mood_faces": {
+     "rule": "M01.1",
+     "faces": [
+      "جزم (السكون، وحُرِّك المدغم بالفتح للتخلّص)",
+      "نصب (الفتحة)"
+     ],
+     "why": "«ر» مشدَّدٌ مفتوح في آخر المضارع: المضعّف المدغم يُفتح في الجزم تخلّصاً، فالفتحة لا تنفي الجزم"
+    },
+    "relation": {
+     "expected": "جزم",
+     "observed": "نصب",
+     "consistent": false,
+     "role": "مضارع مجزوم بـ«لَا» (العلامة المكتوبة تخالف)"
+    },
+    "evidence_scope": "بنية الفعل بعدها (M01): حذف اللام أو الإدغام"
+   },
+   {
+    "position": "2:282:114",
+    "operator": "وَ",
+    "group": "1",
+    "operator_class": "الجر فقط الدلالية",
+    "usage": [
+     "القسم",
+     "التقليل"
+    ],
+    "status": "blocked",
+    "target": "لَا",
+    "target_analysis": {
+     "pos": null,
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [
+     "R4 الاسم بعد الواو"
+    ],
+    "conditions": [],
+    "blocker": "بعدها عامل (لَا): الواو عاطفة",
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": null,
+    "evidence_scope": "ما بعد الواو: فعل أو عامل أو ضمير رفع"
+   },
+   {
+    "position": "2:282:114",
+    "operator": "وَ",
+    "group": "4",
+    "operator_class": "واو المصاحبة (المعيّة)",
+    "usage": [
+     "المعية"
+    ],
+    "status": "blocked",
+    "target": "لَا",
+    "target_analysis": {
+     "pos": null,
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [
+     "R4 الاسم بعد الواو"
+    ],
+    "conditions": [],
+    "blocker": "بعدها عامل (لَا): الواو عاطفة",
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": null,
+    "evidence_scope": "ما بعد الواو: فعل أو عامل أو ضمير رفع"
+   },
+   {
+    "position": "2:282:114",
+    "operator": "لَا",
+    "group": "3",
+    "operator_class": "النفي الإعرابية",
+    "usage": [
+     "النافية للجنس",
+     "العاطفة"
+    ],
+    "status": "deferred",
+    "target": "شَهِيدٌ",
+    "target_analysis": {
+     "pos": "noun",
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": [
+      "تنوين"
+     ]
+    },
+    "rule_checks": [],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة"
+    ],
+    "blocker": null,
+    "deferred_because": [
+     "أثره في معموله لم يثبت بالكتابة"
+    ],
+    "mood_faces": null,
+    "relation": {
+     "expected": null,
+     "observed": null,
+     "consistent": null,
+     "role": null
+    },
+    "evidence_scope": "علاقة المرحلة ١١ (العلامة في المعمول)"
+   },
+   {
+    "position": "2:282:114",
+    "operator": "لَا",
+    "group": "6",
+    "operator_class": "الجزم فقط النافية والشرطية",
+    "usage": [
+     "الناهية"
+    ],
+    "status": "blocked",
+    "target": "شَهِيدٌ",
+    "target_analysis": {
+     "pos": "noun",
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": [
+      "تنوين"
+     ]
+    },
+    "rule_checks": [
+     "R1/R2 المجزوم بعدها"
+    ],
+    "conditions": [],
+    "blocker": "ما بعدها اسم (تنوين)",
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": null,
+    "evidence_scope": "كتابة المعمول: صنفه وعلامة آخره"
+   },
+   {
+    "position": "2:282:116",
+    "operator": "وَ",
+    "group": "1",
+    "operator_class": "الجر فقط الدلالية",
+    "usage": [
+     "القسم",
+     "التقليل"
+    ],
+    "status": "blocked",
+    "target": "إِنْ",
+    "target_analysis": {
+     "pos": null,
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [
+     "R4 الاسم بعد الواو"
+    ],
+    "conditions": [],
+    "blocker": "بعدها عامل (إِنْ): الواو عاطفة",
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": null,
+    "evidence_scope": "ما بعد الواو: فعل أو عامل أو ضمير رفع"
+   },
+   {
+    "position": "2:282:116",
+    "operator": "وَ",
+    "group": "4",
+    "operator_class": "واو المصاحبة (المعيّة)",
+    "usage": [
+     "المعية"
+    ],
+    "status": "blocked",
+    "target": "إِنْ",
+    "target_analysis": {
+     "pos": null,
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [
+     "R4 الاسم بعد الواو"
+    ],
+    "conditions": [],
+    "blocker": "بعدها عامل (إِنْ): الواو عاطفة",
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": null,
+    "evidence_scope": "ما بعد الواو: فعل أو عامل أو ضمير رفع"
+   },
+   {
+    "position": "2:282:116",
+    "operator": "إِنْ",
+    "group": "6",
+    "operator_class": "الجزم فقط النافية والشرطية",
+    "usage": [
+     "الشرطية الجازمة",
+     "النافية (الحجازية)"
+    ],
+    "status": "accepted",
+    "target": "تَفْعَلُوا",
+    "target_analysis": {
+     "pos": "verb",
+     "kind": "mudari",
+     "mood": "حذف النون",
+     "suffix": "وا",
+     "evidence": [
+      "حرف المضارعة «ت»",
+      "واو الجماعة والألف الفارقة"
+     ]
+    },
+    "rule_checks": [],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة",
+     "الشرط: العلامة المكتوبة توافق أثره (جزم)"
+    ],
+    "blocker": null,
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": {
+     "expected": "جزم",
+     "observed": "حذف النون",
+     "consistent": true,
+     "role": "مضارع مجزوم بـ«إِنْ» وعلامة جزمه حذف النون"
+    },
+    "evidence_scope": "علاقة المرحلة ١١ (العلامة في المعمول)"
+   },
+   {
+    "position": "2:282:118",
+    "operator": "إِنَّ",
+    "group": "2",
+    "operator_class": "التوكيد",
+    "usage": [
+     "التوكيد"
+    ],
+    "status": "accepted",
+    "target": "فُسُوقٌ",
+    "target_analysis": {
+     "pos": "noun",
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": [
+      "تنوين"
+     ]
+    },
+    "rule_checks": [],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة",
+     "الشرط: معموله مبنيٌّ من ملف المبنيات (ضمير متصل) في محلّ نصب"
+    ],
+    "blocker": null,
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": {
+     "expected": "نصب",
+     "observed": "محلاً",
+     "consistent": null,
+     "role": "في محلّ نصب اسم «إِنَّ»"
+    },
+    "evidence_scope": "علاقة المرحلة ١١ (العلامة في المعمول)"
+   },
+   {
+    "position": "2:282:120",
+    "operator": "بِ",
+    "group": "1",
+    "operator_class": "الجر فقط الدلالية",
+    "usage": [
+     "الإلصاق",
+     "الاستعانة",
+     "السببية",
+     "المصاحبة",
+     "الظرفية",
+     "التوكيد (الزائدة)",
+     "المقابلة",
+     "القسم"
+    ],
+    "status": "accepted",
+    "target": "كُمْ",
+    "target_analysis": {
+     "pos": null,
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة",
+     "الشرط: معموله ضمير متصل مبني في محلّ جر"
+    ],
+    "blocker": null,
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": {
+     "expected": "جر",
+     "observed": "محلاً",
+     "consistent": null,
+     "role": "في محلّ جر بـ«بِ»"
+    },
+    "evidence_scope": "علاقة المرحلة ١١ (العلامة في المعمول)"
+   },
+   {
+    "position": "2:282:123",
+    "operator": "وَ",
+    "group": "1",
+    "operator_class": "الجر فقط الدلالية",
+    "usage": [
+     "القسم",
+     "التقليل"
+    ],
+    "status": "blocked",
+    "target": "يُعَلِّمُكُمُ",
+    "target_analysis": {
+     "pos": null,
+     "kind": "mudari",
+     "mood": "رفع",
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [
+     "R4 الاسم بعد الواو",
+     "R6 المرفوع بعد الجار"
+    ],
+    "conditions": [],
+    "blocker": "ما بعدها مرفوع كتابةً (الضمة)، و«وَ» تجرّ",
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": null,
+    "evidence_scope": "ما بعد الواو: فعل أو عامل أو ضمير رفع"
+   },
+   {
+    "position": "2:282:123",
+    "operator": "وَ",
+    "group": "4",
+    "operator_class": "واو المصاحبة (المعيّة)",
+    "usage": [
+     "المعية"
+    ],
+    "status": "blocked",
+    "target": "يُعَلِّمُكُمُ",
+    "target_analysis": {
+     "pos": null,
+     "kind": "mudari",
+     "mood": "رفع",
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [
+     "R4 الاسم بعد الواو",
+     "R6 المرفوع بعد الجار"
+    ],
+    "conditions": [],
+    "blocker": "ما بعدها مرفوع كتابةً (الضمة)، و«وَ» تنصب المفعول معه",
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": null,
+    "evidence_scope": "ما بعد الواو: فعل أو عامل أو ضمير رفع"
+   },
+   {
+    "position": "2:282:125",
+    "operator": "وَ",
+    "group": "1",
+    "operator_class": "الجر فقط الدلالية",
+    "usage": [
+     "القسم",
+     "التقليل"
+    ],
+    "status": "blocked",
+    "target": "اللَّهُ",
+    "target_analysis": {
+     "pos": "noun",
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": [
+      "أل"
+     ]
+    },
+    "rule_checks": [
+     "R4 الاسم بعد الواو",
+     "R6 المرفوع بعد الجار"
+    ],
+    "conditions": [],
+    "blocker": "ما بعدها مرفوع كتابةً (الضمة)، و«وَ» تجرّ",
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": null,
+    "evidence_scope": "ما بعد الواو: فعل أو عامل أو ضمير رفع"
+   },
+   {
+    "position": "2:282:125",
+    "operator": "وَ",
+    "group": "4",
+    "operator_class": "واو المصاحبة (المعيّة)",
+    "usage": [
+     "المعية"
+    ],
+    "status": "blocked",
+    "target": "اللَّهُ",
+    "target_analysis": {
+     "pos": "noun",
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": [
+      "أل"
+     ]
+    },
+    "rule_checks": [
+     "R4 الاسم بعد الواو",
+     "R6 المرفوع بعد الجار"
+    ],
+    "conditions": [],
+    "blocker": "ما بعدها مرفوع كتابةً (الضمة)، و«وَ» تنصب المفعول معه",
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": null,
+    "evidence_scope": "ما بعد الواو: فعل أو عامل أو ضمير رفع"
+   },
+   {
+    "position": "2:282:126",
+    "operator": "بِ",
+    "group": "1",
+    "operator_class": "الجر فقط الدلالية",
+    "usage": [
+     "الإلصاق",
+     "الاستعانة",
+     "السببية",
+     "المصاحبة",
+     "الظرفية",
+     "التوكيد (الزائدة)",
+     "المقابلة",
+     "القسم"
+    ],
+    "status": "accepted",
+    "target": "كُلِّ",
+    "target_analysis": {
+     "pos": null,
+     "kind": null,
+     "mood": null,
+     "suffix": null,
+     "evidence": []
+    },
+    "rule_checks": [
+     "R6 المرفوع بعد الجار"
+    ],
+    "conditions": [
+     "السبب: مطابقة الحروف والحركة",
+     "الشرط: العلامة المكتوبة توافق أثره (جر)",
+     "الموانع المفحوصة: R6 المرفوع بعد الجار"
+    ],
+    "blocker": null,
+    "deferred_because": [],
+    "mood_faces": null,
+    "relation": {
+     "expected": "جر",
+     "observed": "جر",
+     "consistent": true,
+     "role": "مجرور بـ«بِ»"
+    },
+    "evidence_scope": "علامة آخر المعمول (الرفع أو السكون)"
+   }
+  ]
+ },
+ "stage7_corpus": {
+  "base": {
+   "accepted": 14941,
+   "deferred": 18341,
+   "blocked": 16997
+  },
+  "final": {
+   "accepted": 14935,
+   "deferred": 18368,
+   "blocked": 16976
+  },
+  "changes": [
+   {
+    "pos": "2:233:22",
+    "op": "لَا",
+    "group": "6",
+    "before": "blocked",
+    "after": "deferred",
+    "before_reason": "الفعل بعدها غير مجزوم كتابةً (منصوب)",
+    "rule": "M01.1",
+    "rel_after": "نصب أو جزم"
+   },
+   {
+    "pos": "2:282:15",
+    "op": "لَا",
+    "group": "6",
+    "before": "blocked",
+    "after": "deferred",
+    "before_reason": "الفعل بعدها غير مجزوم كتابةً (منصوب)",
+    "rule": "M01.2",
+    "rel_after": "جزم (حذف حرف العلة)"
+   },
+   {
+    "pos": "2:282:72",
+    "op": "لَا",
+    "group": "6",
+    "before": "blocked",
+    "after": "deferred",
+    "before_reason": "الفعل بعدها غير مجزوم كتابةً (منصوب)",
+    "rule": "M01.2",
+    "rel_after": "جزم (حذف حرف العلة)"
+   },
+   {
+    "pos": "2:282:111",
+    "op": "لَا",
+    "group": "6",
+    "before": "blocked",
+    "after": "deferred",
+    "before_reason": "الفعل بعدها غير مجزوم كتابةً (منصوب)",
+    "rule": "M01.1",
+    "rel_after": "نصب أو جزم"
+   },
+   {
+    "pos": "4:9:1",
+    "op": "لِ",
+    "group": "6",
+    "before": "blocked",
+    "after": "deferred",
+    "before_reason": "الفعل بعدها غير مجزوم كتابةً (منصوب)",
+    "rule": "M01.2",
+    "rel_after": "جزم (حذف حرف العلة)"
+   },
+   {
+    "pos": "5:26:10",
+    "op": "لَا",
+    "group": "6",
+    "before": "blocked",
+    "after": "deferred",
+    "before_reason": "الفعل بعدها غير مجزوم كتابةً (منصوب)",
+    "rule": "M01.2",
+    "rel_after": "جزم (حذف حرف العلة)"
+   },
+   {
+    "pos": "5:68:26",
+    "op": "لَا",
+    "group": "6",
+    "before": "blocked",
+    "after": "deferred",
+    "before_reason": "الفعل بعدها غير مجزوم كتابةً (منصوب)",
+    "rule": "M01.2",
+    "rel_after": "جزم (حذف حرف العلة)"
+   },
+   {
+    "pos": "6:144:31",
+    "op": "لِ",
+    "group": "1",
+    "before": "accepted",
+    "after": "deferred",
+    "before_reason": null,
+    "rule": null,
+    "rel_after": "نصب"
+   },
+   {
+    "pos": "6:144:31",
+    "op": "لِ",
+    "group": "6",
+    "before": "blocked",
+    "after": "deferred",
+    "before_reason": "الفعل بعدها غير مجزوم كتابةً (منصوب)",
+    "rule": "M01.1",
+    "rel_after": "نصب أو جزم"
+   },
+   {
+    "pos": "8:8:1",
+    "op": "لِ",
+    "group": "1",
+    "before": "accepted",
+    "after": "deferred",
+    "before_reason": null,
+    "rule": null,
+    "rel_after": "نصب"
+   },
+   {
+    "pos": "8:8:1",
+    "op": "لِ",
+    "group": "6",
+    "before": "blocked",
+    "after": "deferred",
+    "before_reason": "الفعل بعدها غير مجزوم كتابةً (منصوب)",
+    "rule": "M01.1",
+    "rel_after": "نصب أو جزم"
+   },
+   {
+    "pos": "9:115:4",
+    "op": "لِ",
+    "group": "1",
+    "before": "accepted",
+    "after": "deferred",
+    "before_reason": null,
+    "rule": null,
+    "rel_after": "نصب"
+   },
+   {
+    "pos": "9:115:4",
+    "op": "لِ",
+    "group": "6",
+    "before": "blocked",
+    "after": "deferred",
+    "before_reason": "الفعل بعدها غير مجزوم كتابةً (منصوب)",
+    "rule": "M01.1",
+    "rel_after": "نصب أو جزم"
+   },
+   {
+    "pos": "10:106:1",
+    "op": "لَا",
+    "group": "6",
+    "before": "blocked",
+    "after": "deferred",
+    "before_reason": "الفعل بعدها غير مجزوم كتابةً (مرفوع)",
+    "rule": "M01.2",
+    "rel_after": "جزم (حذف حرف العلة)"
+   },
+   {
+    "pos": "17:36:1",
+    "op": "لَا",
+    "group": "6",
+    "before": "blocked",
+    "after": "deferred",
+    "before_reason": "الفعل بعدها غير مجزوم كتابةً (مرفوع)",
+    "rule": "M01.2",
+    "rel_after": "جزم (حذف حرف العلة)"
+   },
+   {
+    "pos": "18:28:11",
+    "op": "لَا",
+    "group": "6",
+    "before": "blocked",
+    "after": "deferred",
+    "before_reason": "الفعل بعدها غير مجزوم كتابةً (مرفوع)",
+    "rule": "M01.2",
+    "rel_after": "جزم (حذف حرف العلة)"
+   },
+   {
+    "pos": "22:9:3",
+    "op": "لِ",
+    "group": "1",
+    "before": "accepted",
+    "after": "deferred",
+    "before_reason": null,
+    "rule": null,
+    "rel_after": "نصب"
+   },
+   {
+    "pos": "22:9:3",
+    "op": "لِ",
+    "group": "6",
+    "before": "blocked",
+    "after": "deferred",
+    "before_reason": "الفعل بعدها غير مجزوم كتابةً (منصوب)",
+    "rule": "M01.1",
+    "rel_after": "نصب أو جزم"
+   },
+   {
+    "pos": "26:213:1",
+    "op": "لَا",
+    "group": "6",
+    "before": "blocked",
+    "after": "deferred",
+    "before_reason": "الفعل بعدها غير مجزوم كتابةً (مرفوع)",
+    "rule": "M01.2",
+    "rel_after": "جزم (حذف حرف العلة)"
+   },
+   {
+    "pos": "28:77:7",
+    "op": "لَا",
+    "group": "6",
+    "before": "blocked",
+    "after": "deferred",
+    "before_reason": "الفعل بعدها غير مجزوم كتابةً (منصوب)",
+    "rule": "M01.2",
+    "rel_after": "جزم (حذف حرف العلة)"
+   },
+   {
+    "pos": "28:88:1",
+    "op": "لَا",
+    "group": "6",
+    "before": "blocked",
+    "after": "deferred",
+    "before_reason": "الفعل بعدها غير مجزوم كتابةً (مرفوع)",
+    "rule": "M01.2",
+    "rel_after": "جزم (حذف حرف العلة)"
+   },
+   {
+    "pos": "31:6:7",
+    "op": "لِ",
+    "group": "1",
+    "before": "accepted",
+    "after": "deferred",
+    "before_reason": null,
+    "rule": null,
+    "rel_after": "نصب"
+   },
+   {
+    "pos": "31:6:7",
+    "op": "لِ",
+    "group": "6",
+    "before": "blocked",
+    "after": "deferred",
+    "before_reason": "الفعل بعدها غير مجزوم كتابةً (منصوب)",
+    "rule": "M01.1",
+    "rel_after": "نصب أو جزم"
+   },
+   {
+    "pos": "39:8:24",
+    "op": "لِ",
+    "group": "1",
+    "before": "accepted",
+    "after": "deferred",
+    "before_reason": null,
+    "rule": null,
+    "rel_after": "نصب"
+   },
+   {
+    "pos": "39:8:24",
+    "op": "لِ",
+    "group": "6",
+    "before": "blocked",
+    "after": "deferred",
+    "before_reason": "الفعل بعدها غير مجزوم كتابةً (منصوب)",
+    "rule": "M01.1",
+    "rel_after": "نصب أو جزم"
+   },
+   {
+    "pos": "40:26:6",
+    "op": "لِ",
+    "group": "6",
+    "before": "blocked",
+    "after": "deferred",
+    "before_reason": "الفعل بعدها غير مجزوم كتابةً (مرفوع)",
+    "rule": "M01.2",
+    "rel_after": "جزم (حذف حرف العلة)"
+   },
+   {
+    "pos": "96:17:1",
+    "op": "لِ",
+    "group": "6",
+    "before": "blocked",
+    "after": "deferred",
+    "before_reason": "الفعل بعدها غير مجزوم كتابةً (مرفوع)",
+    "rule": "M01.2",
+    "rel_after": "جزم (حذف حرف العلة)"
+   }
+  ],
+  "summary": {
+   "blocked→deferred|M01.1": 8,
+   "blocked→deferred|M01.2": 13,
+   "accepted→deferred|rival": 6
+  }
+ },
+ "inflection": {
+  "base": {
+   "UNGOVERNED": 41838,
+   "MABNI": 30582,
+   "N/A": 15404,
+   "AGREE": 14200,
+   "UNVERIFIED": 4351,
+   "CONFLICT": 173
+  },
+  "final": {
+   "UNGOVERNED": 38118,
+   "MABNI": 30189,
+   "AGREE": 18307,
+   "N/A": 15406,
+   "UNVERIFIED": 4364,
+   "CONFLICT": 167
+  },
+  "checker_errors": [
+   0,
+   0
+  ],
+  "verbs_with_jarr": [
+   0,
+   0
+  ],
+  "conflicts_new": [],
+  "conflicts_gone": [
+   {
+    "loc": "6:144:31",
+    "text": "يُضِلَّ",
+    "gov": "لِ",
+    "conf": [
+     "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»، ولا وساطة له في الجرد"
+    ],
+    "after": "N/A"
+   },
+   {
+    "loc": "8:8:1",
+    "text": "يُحِقَّ",
+    "gov": "لِ",
+    "conf": [
+     "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»، ولا وساطة له في الجرد"
+    ],
+    "after": "N/A"
+   },
+   {
+    "loc": "9:115:4",
+    "text": "يُضِلَّ",
+    "gov": "لِ",
+    "conf": [
+     "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»، ولا وساطة له في الجرد"
+    ],
+    "after": "N/A"
+   },
+   {
+    "loc": "22:9:3",
+    "text": "يُضِلَّ",
+    "gov": "لِ",
+    "conf": [
+     "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»، ولا وساطة له في الجرد"
+    ],
+    "after": "N/A"
+   },
+   {
+    "loc": "31:6:7",
+    "text": "يُضِلَّ",
+    "gov": "لِ",
+    "conf": [
+     "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»، ولا وساطة له في الجرد"
+    ],
+    "after": "N/A"
+   },
+   {
+    "loc": "39:8:24",
+    "text": "يُضِلَّ",
+    "gov": "لِ",
+    "conf": [
+     "قدرة العامل في الجرد ['جر'] لا تشمل ما سُجّل له «نصب»، ولا وساطة له في الجرد"
+    ],
+    "after": "N/A"
+   }
+  ]
+ },
+ "unit_transitions": {
+  "by_agreement": {
+   "UNGOVERNED→UNGOVERNED": 38114,
+   "MABNI→MABNI": 30186,
+   "N/A→N/A": 15400,
+   "AGREE→AGREE": 14199,
+   "UNVERIFIED→UNVERIFIED": 4351,
+   "UNGOVERNED→AGREE": 3711,
+   "MABNI→AGREE": 396,
+   "CONFLICT→CONFLICT": 167,
+   "UNGOVERNED→UNVERIFIED": 13,
+   "CONFLICT→N/A": 6,
+   "N/A→MABNI": 3,
+   "AGREE→UNGOVERNED": 1,
+   "N/A→AGREE": 1
+  },
+  "agree_to_non_agree": [
+   {
+    "uid": "Q26:120.w3.u0",
+    "loc": "26:120:4",
+    "text": "الْبَاقِينَ",
+    "before": "اسم مجرور مضافاً إليه لـ«بَعْدُ» وعلامة جرّه الياء",
+    "after_agreement": "UNGOVERNED",
+    "after_state": null,
+    "gov": null,
+    "mark": "الياء"
+   }
+  ],
+  "agree_statement_wording_changed": 6640,
+  "new_agree_by_role": {
+   "مضاف إليه": 1449,
+   "مفعول به": 1290,
+   "ظرف": 419,
+   "فاعل": 393,
+   "مجرور بحرف الجر": 254,
+   "منادى": 143,
+   "تابعٌ لـ": 143,
+   "نائب فاعل": 16,
+   "مبتدأ": 1
+  }
+ },
+ "corpus_sample_review": {
+  "first": {
+   "rows": 49,
+   "errors": 3,
+   "fixed_in": "9b78bc3",
+   "items": [
+    "2:193 قَٰتِلُوهُمۡ (I01)",
+    "19:20 غُلَٰمٌ (S01)",
+    "6:73 عَٰلِمُ (S01 نائب فاعل)"
+   ]
+  },
+  "second": {
+   "rows": 65,
+   "correct": 64,
+   "disputable": 1,
+   "items": [
+    "26:114 أَنَا: مبتدأ أو اسم «ما» الحجازية (البديل غير مسجَّل)"
+   ]
+  },
+  "note": "عيّنة عشوائية مقسَّمة بالدور من المواضع التي صارت AGREE؛ مراجعة الوكيل"
+ },
+ "coverage": {
+  "M1_class": {
+   "unit": "وحدة التحليل",
+   "scope": "كل الوحدات",
+   "exclusions": [],
+   "total": 106551,
+   "resolved": 78261,
+   "by_value": {
+    "None": 28290,
+    "اسم": 33211,
+    "فعل": 13055,
+    "حرف": 31741,
+    "حرف + اسم": 254
+   }
+  },
+  "M2_build": {
+   "unit": "وحدة التحليل",
+   "scope": "كل الوحدات",
+   "exclusions": [],
+   "total": 106551,
+   "resolved": 87157,
+   "by_value": {
+    "None": 19394,
+    "معرب": 28029,
+    "مبني": 59128
+   }
+  },
+  "M3_irab": {
+   "unit": "وحدة التحليل",
+   "scope": "(أ) المعرب، (ب) المبني غير الحرف وغير الفعل (الاسم، والأداة ذات المداخل الاسمية)، (ج) غير محسوم البناء",
+   "exclusions": "الحرف والأداة والماضي والأمر المبنيّان: لا ينتظر علامة إعرابٍ لفظية ولا يُعدّ فاقداً",
+   "murab": {
+    "total": 28029,
+    "resolved": 9662,
+    "by_agreement": {
+     "UNGOVERNED": 17840,
+     "AGREE": 9662,
+     "UNVERIFIED": 376,
+     "CONFLICT": 151
+    }
+   },
+   "unknown_build_units": {
+    "total": 19394,
+    "note": "بناؤها غير محسوم (صنفٌ غير محسوم أو زمنٌ مرشّح): في المقام غير محسومة"
+   },
+   "mabni_nonparticle": {
+    "total": 24834,
+    "resolved": 8645,
+    "by_state": {
+     "MAHALL_UNRESOLVED": 1545,
+     "ROLE_RULE_NOT_IMPLEMENTED": 11767,
+     "AGREE": 8645,
+     "LEXICAL_ENTRY_MISSING": 2383,
+     "EVIDENCE_NOT_ADOPTED": 270,
+     "MABNI": 208,
+     "CONFLICT": 16
+    }
+   },
+   "excluded": 34294,
+   "excluded_by": {
+    "NO_MAHALL": 31158,
+    "MABNI": 3133,
+    "ROLE_RULE_NOT_IMPLEMENTED": 3
+   },
+   "unknown_build": 19394
+  },
+  "M4_roles": {
+   "unit": "وحدة التحليل",
+   "scope": "الأسماء (صنفها اسم بدليل)",
+   "exclusions": "الأفعال والحروف: أدوارها ليست موضع هذا المقياس",
+   "total": 33465,
+   "resolved": 5622,
+   "by_role": {
+    "مجرور بحرف الجر": 254,
+    "اسم ": 1233,
+    "مبتدأ": 258,
+    "ظرف": 419,
+    "مضاف إليه": 1617,
+    "منادى": 143,
+    "تابعٌ لـ": 143,
+    "خبر ": 224,
+    "مفعول به": 715,
+    "خبر": 207,
+    "فاعل": 393,
+    "نائب فاعل": 16
+   },
+   "note": "الدور من علاقةٍ مرخَّصة وحدها؛ ووجود الوحدة في علاقةٍ مؤجَّلة لا يُعدّ دوراً"
+  },
+  "M5_relations": {
+   "unit": "سجل العلاقة",
+   "by_type_status": {
+    "PP|P01|LICENSED": 11264,
+    "ATTACH|A01|DEFERRED": 11920,
+    "PREDICATION|N01|DEFERRED": 1962,
+    "IDAFA|I03|LICENSED": 602,
+    "VERB_FRAME|F01|LICENSED": 7780,
+    "SILAH|R02|LICENSED": 1031,
+    "PP|P03|LICENSED": 254,
+    "ADVP|P02|LICENSED": 842,
+    "IDAFA|I01|LICENSED": 987,
+    "OBJECT|O01|LICENSED": 1294,
+    "NASIKH|V01|DEFERRED": 1906,
+    "VERB_FRAME|F01|DEFERRED": 5300,
+    "PREDICATIVE_PP|N02|LICENSED": 79,
+    "CONDITION|C01|DEFERRED": 1307,
+    "SILAH|R02|DEFERRED": 435,
+    "VOCATIVE|V02|LICENSED": 143,
+    "VOC_FOLLOWER|V02|LICENSED": 143,
+    "CONDITION|C01|LICENSED": 174,
+    "ADVP|P02|DEFERRED": 382,
+    "NASIKH|V01|LICENSED": 295,
+    "PREDICATION|N01|LICENSED": 207,
+    "ATTACH|A02|LICENSED": 36,
+    "OBJECT|O01|DEFERRED": 64,
+    "PREDICATIVE_PP|N02|DEFERRED": 90,
+    "SUBJECT|S01|DEFERRED": 186,
+    "SUBJECT|S01|LICENSED": 409,
+    "PREDICATION|N01|REJECTED": 61,
+    "IDAFA|I01|DEFERRED": 12,
+    "IDAFA|I03|DEFERRED": 28,
+    "CONTAINER_RELATIVE|R01|LICENSED": 16,
+    "RESUMPTIVE|R01|DEFERRED": 13,
+    "OBJECT|O02|DEFERRED": 4,
+    "CONTAINER_RELATIVE|R01|DEFERRED": 2
+   }
+  },
+  "M6_nuclei": {
+   "unit": "سجل النواة",
+   "verb_frames": {
+    "total": 13080,
+    "subject_satisfied": 5062,
+    "coherent": 7780,
+    "by_subject_kind": {
+     "ضمير متصل مكتوب": 3946,
+     "غير معيَّن": 6784,
+     "اسم الناسخ (V01)": 624,
+     "ضمير الصيغة أو اسمٌ ظاهر": 1234,
+     "اسم ظاهر": 409,
+     "ضمير مستتر وجوباً (غير مكتوب)": 83
+    }
+   },
+   "nasikh": {
+    "total": 2201,
+    "complete": 295
+   },
+   "nominal": {
+    "total": 2399,
+    "complete": 286
+   },
+   "note": "الفعل لا يحتاج كلُّه فاعلاً ومفعولاً: المتطلَّب بحسب البناء والاستعمال (الناسخ يطلب اسماً وخبراً، والمبني للمجهول نائب فاعل)"
+  },
+  "M7_sentences": {
+   "unit": "جملة الطبقة القديمة (المرحلة ١٤)",
+   "total": 6107,
+   "closed": 47,
+   "F_complete": 5067,
+   "note": "العلاقات المحلية الجديدة لا تستهلكها الطبقة القديمة بعد: هذا المقياس من الطبقة القديمة وحدها"
+  },
+  "unresolved_reasons": {
+   "unit": "وحدة التحليل (المعرب والاسم المبني غير المحسومَين)، وغير المنطبق للمستبعد",
+   "counts": {
+    "قاعدة غير منفذة": 26600,
+    "مدخل معجمي ناقص": 2384,
+    "صيغة صرفية متعددة": 20048,
+    "علاقة منافسة": 4481,
+    "نطاق غير محسوم": 0,
+    "دليل سابق غير موصول": 270,
+    "تعارض أدلة": 167,
+    "غير منطبق": 34294
+   },
+   "examples": {
+    "قاعدة غير منفذة": [
+     "1:1:2 اللَّهِ",
+     "1:1:3 الرَّحْمَٰنِ",
+     "1:1:4 الرَّحِيمِ",
+     "1:3:1 الرَّحْمَٰنِ",
+     "1:3:2 الرَّحِيمِ",
+     "1:4:1 مَٰلِكِ",
+     "1:4:3 الدِّينِ",
+     "1:6:2 الصِّرَٰطَ"
+    ],
+    "علاقة منافسة": [
+     "1:2:1 الْحَمْدُ",
+     "1:5:2 نَعْبُدُ",
+     "2:2:2 الْكِتَٰبُ",
+     "2:4:12 يُوقِنُونَ",
+     "2:5:8 الْمُفْلِحُونَ",
+     "2:12:4 الْمُفْسِدُونَ",
+     "2:13:16 السُّفَهَاءُ",
+     "2:15:1 اللَّهُ"
+    ],
+    "صيغة صرفية متعددة": [
+     "1:2:4 الْعَٰلَمِينَ",
+     "1:7:9 الضَّالِّينَ",
+     "2:2:7 لِّلْمُتَّقِينَ",
+     "2:19:12 ءَاذَانِ",
+     "2:35:13 تَقْرَبَا",
+     "2:35:18 الظَّٰلِمِينَ",
+     "2:43:7 الرَّٰكِعِينَ",
+     "2:47:11 الْعَٰلَمِينَ"
+    ],
+    "تعارض أدلة": [
+     "2:143:20 نَعْلَمَ",
+     "2:143:39 يُضِيعَ",
+     "2:205:6 يُفْسِدَ",
+     "2:213:14 يَحْكُمَ",
+     "3:23:13 يَحْكُمَ",
+     "3:127:1 يَقْطَعَ",
+     "3:152:32 يَبْتَلِيَ",
+     "3:156:24 يَجْعَلَ"
+    ],
+    "مدخل معجمي ناقص": [
+     "8:23:6 أَسْمَعَ",
+     "2:7:10 لَهُمْ",
+     "2:9:7 إِلَّا",
+     "2:10:7 لَهُمْ",
+     "2:14:12 إِنَّا",
+     "2:17:13 تَرَكَ",
+     "2:25:28 لَهُمْ",
+     "2:26:38 إِلَّا"
+    ],
+    "دليل سابق غير موصول": [
+     "2:23:2 تُمْ",
+     "2:23:19 تُمْ",
+     "2:28:4 تُمْ",
+     "2:31:14 تُمْ",
+     "2:33:21 تُمْ",
+     "2:64:11 تُمْ",
+     "2:72:9 تُمْ",
+     "2:91:29 تُمْ"
+    ]
+   },
+   "attach_scope_unresolved": 11920,
+   "attach_note": "التعلّق غير المرخَّص يُعدّ «نطاق غير محسوم» على مستوى العلاقة، لا الوحدة"
+  }
+ },
+ "coverage_checker_errors": 0,
+ "units": 106551,
+ "baseline_006_declared": {
+  "units_closed": 155,
+  "units_suspended": 26,
+  "relations_licensed": 27,
+  "relations_deferred": 18,
+  "axis_agree": 42,
+  "note": "أعداد 006 للآية 2:282 في طبقات قائمة (12 و14أ القديمة و14ب): الأقسام 1–14 لم تتغيّر؛ و14أ و14ب تغيّرتا بالقواعد الجديدة"
+ }
+}
