@@ -248,5 +248,13 @@ check('X26 «إذا تداينتم … فاكتبوه»: الأداة وفعل �
 check('X27 «فإن لم يكونا … فرجل»: الجواب مرشّحٌ هناك فيُنقل مؤجَّلاً لا مرخَّصاً (لا تُرفع الرتبة بالنقل)',
       c56 and c56['status'] == 'DEFERRED' and c56['parts_status']['answer'] == 'DEFERRED', c56)
 
+# ١٣ حدود M01: سؤالٌ واحد (هل تنفي الحركة الجزم؟) لا يمسّ الناصب، والمرحلة ١١ تقرأ الوجه نفسه بلا عبارةٍ تقريرية
+_, ax47 = at(o, '2:282:47', 'يُمِلَّ')
+check('X28 «أن يُمِلَّ» (المضعّف بعد الناصب): الفتحة علامة النصب، والاتفاق قائم (M01 لا يُطبَّق على الناصب)',
+      ax47['inflection']['agreement'] == 'AGREE' and 'منصوب بـ«أَنْ»' in (ax47['inflection']['statement'] or ''), ax47['inflection']['statement'])
+r15 = lam[(15, '6')].get('relation') or {}
+check('X29 المرحلة ١١ في «لا يأبَ»: المشاهَد «جزم (حذف حرف العلة)»، والاتساق غير معيَّن، والدور «وجهٌ مرشّح» لا عبارةٌ تقريرية',
+      r15.get('observed') == 'جزم (حذف حرف العلة)' and r15.get('consistent') is None and str(r15.get('role')).startswith('وجهٌ مرشّح'), r15)
+
 print('ALL OK' if not FAIL else f'FAILED {len(FAIL)}: {FAIL}')
 sys.exit(1 if FAIL else 0)

@@ -455,7 +455,17 @@ def relate(segs, cands):
                         # العلة (وَلۡيَتَّقِ ٱللَّهَ)؛ والكتابة لا تفصل بين السببين، وكلاهما جزم
                         m = dict(m, mood='جزم')
                         r['note'] = 'الكسر لالتقاء الساكنين أو بعد حذف حرف العلة'
-                if m['kind'] == 'mudari' and c['group'] in VERB_CHECKED and r['expected']:
+                jf = None
+                if m['kind'] == 'mudari' and m['mood'] in ('رفع', 'نصب') and m.get('suffix') != 'نون الرفع' and \
+                        r['expected'] == 'جزم':
+                    # M01 جوابٌ عن سؤالٍ واحد: هل تنفي الحركةُ الجزم؟ فلا يُطبَّق على الناصب (أَن يُمِلَّ: الفتحة علامة نصبه)
+                    from .evidence import jazm_faces
+                    jf = jazm_faces(ts['text'])     # M01: بنية الفعل تُبقي الجزم وجهاً، فالحركة الأخيرة وحدها لا تُقرأ حالةً مخالفة
+                if jf and m['kind'] == 'mudari' and c['group'] in VERB_CHECKED and r['expected']:
+                    r['observed'] = 'جزم (حذف حرف العلة)' if jf['rule'] == 'M01.2' else 'نصب أو جزم'
+                    r['consistent'] = None
+                    r['note'] = f"{jf['rule']}: {jf['why']}؛ والأوجه: {'، '.join(jf['faces'])}"
+                elif m['kind'] == 'mudari' and c['group'] in VERB_CHECKED and r['expected']:
                     r['observed'] = m['mood']
                     if m['mood'] == 'حذف النون':
                         r['consistent'] = r['expected'] in ('نصب', 'جزم')
@@ -519,6 +529,8 @@ def _role(r):
         text += f" وعلامة {'جزمه' if exp == 'جزم' else 'نصبه'} حذف النون"
     if r['consistent'] is False:
         text += ' (العلامة المكتوبة تخالف)'
+    if r['consistent'] is None and str(r.get('note') or '').startswith('M01'):
+        text = f'وجهٌ مرشّح: {text} — العلامة لا تعيّن الحالة (M01)'   # لا تُعرض العلاقة بصيغةٍ تقريرية قبل حسمها
     return text
 
 
