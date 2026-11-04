@@ -657,6 +657,7 @@ CAT_AR = {'relative': 'اسم موصول', 'conditional_noun': 'اسم شرط', 
           'adverb': 'ظرف', 'demonstrative': 'اسم إشارة', 'attached_pronoun': 'ضمير متصل', 'separate_pronoun': 'ضمير منفصل',
           'verb_name': 'اسم فعل'}
 MCAT_KW = {'relative': 'اسم موصول', 'demonstrative': 'اسم إشارة', 'separate_pronoun': 'ضمير منفصل', 'attached_pronoun': 'ضمير متصل'}
+COND_PART_AR = {'tool': 'الأداة', 'condition_verb': 'فعل الشرط', 'answer': 'الجواب', 'linker': 'الرابط'}
 ROLE_NAME = {'ibtida': 'مبتدأ', 'khabar': 'خبر', 'idafa': 'مضاف إليه', 'object': 'مفعول به', 'subject': 'فاعل',
              'zarf': 'ظرف', 'voc_follower': 'تابعٌ لـ«أيّ» في النداء (نعتٌ أو عطف بيانٍ أو بدل)'}
 ROLE_REL = {'ibtida': 'معنوي (الابتداء)', 'khabar': 'بالمبتدأ', 'nasikh': 'بالناسخ', 'idafa': 'بالمضاف', 'object': 'بالفعل',
@@ -1690,11 +1691,31 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                                status=rv, why='وجه الطبقة القديمة'))
         if len(cands_) > 1 and rv == LICENSED:
             rv = DEFERRED                               # مرشّحان للعائد من طبقتين: لا يُرخَّص أحدهما بإسقاط الآخر
+        if len(cands_) > 1:
+            rnote = ('مرشّحان من طبقتين: ' + '، و'.join(f'«{x["candidate"]}» ({x["source"]})' for x in cands_) +
+                     '؛ ولا يُسقط أحدهما الآخر حتى يُعيَّن نوع الصلة')
+        if cont_ and kind_status == DEFERRED and len(kinds_) > 1:
+            # نوع الصلة مؤجَّل: فدور المرفوع فيها (مبتدأ مؤخَّر في وجه R01، أو فاعلٌ لمتعلَّق شبه الجملة في وجه الطبقة القديمة)
+            # غير مثبت؛ وحدّ الصلة (الذي يقوم عليه ما بعدها) مثبتٌ في الوجهين، فلا تُنزَّل الحاوية
+            cont_['reason_before_kind'] = cont_['reason']
+            cont_['reason'] = ('الموصول المختصّ تليه شبه جملة ثم مرفوع: حدّ الصلة مثبت في الوجهين؛ '
+                               'ونوعها (اسمية، أو شبه جملة متعلّقها محذوف) مؤجَّلٌ في R02')
+            for n2 in R:
+                if n2['type'] == 'PREDICATIVE_PP' and n2.get('container_id') == cont_['relation_id'] and n2['status'] == LICENSED:
+                    sj = n2['texts'].get('subject')
+                    n2['reason_before_kind'] = n2['reason']
+                    n2['status'] = DEFERRED
+                    n2['reason'] = (f'نوع الصلة مؤجَّلٌ بوجهيه (R02): «{sj}» مبتدأٌ مؤخَّر وشبه الجملة خبرٌ مقدَّم في وجه R01، '
+                                    'أو فاعلٌ لمتعلَّق شبه الجملة المحذوف في وجه الطبقة القديمة؛ فلا يُثبت أحد الدورين')
+                    n2['alternatives'] = list(n2.get('alternatives') or []) + [
+                        f'«{sj}» فاعلٌ لمتعلَّق شبه الجملة المحذوف (وجه الطبقة القديمة، sarf.algebra.relative_structs)']
+                    n2['nucleus_complete'] = None
         R.append(_rec(ref, 'SILAH', 'R02', {'relative': rel_t, 'silah_head': head_}, {'relative': [rel_t], 'silah_head': [head_], 'silah': span}, st_,
                       (f'صلة «{rel_t.text}» من «{span[0].text}» إلى «{span[-1].text}» (الحدّ: {bnd})؛ ونوعها ' +
                        ('مؤجَّلٌ بوجهين: ' + ' / '.join(k_['kind'] for k_ in kinds_) if kind_status == DEFERRED and len(kinds_) > 1 else c['silah'])
                        if s_ok else 'الصلة غير مكشوفة في الطبقة القديمة'),
                       premises=[f'المرحلة ١٤ (LEGACY، sarf.algebra.relative_structs): {o_[0]} — {o_[2]} → {"مستوفى" if o_[1] == "True" else "مفتوح"}'
+                                + (f' في الطبقة القديمة؛ وهو هنا {rv} بمرشّحيه' if o_[0] == 'عائد' and o_[1] == 'True' and rv != LICENSED else '')
                                 for o_ in c['obligations']] + ([cont_['relation_id']] if cont_ and cont_['status'] == LICENSED else []),
                       extent=[t.uid for t in [rel_t] + span], boundary_proven=bool(c['end_is_text_end']),
                       silah_kinds=kinds_, kind_status=kind_status,
@@ -1744,7 +1765,7 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
         R.append(_rec(ref, 'CONDITION', 'C01', heads, members, LICENSED if ok else DEFERRED,
                       ('الأداة وفعل الشرط والجواب مرخَّصةٌ في الطبقة القديمة بأدلتها، والجواب مملوكٌ للأداة' if ok else
                        'بعض أجزاء الشرط مرشّحةٌ أو غائبة في الطبقة القديمة: ' +
-                       '، '.join(f'{k_}={v_[0]}' for k_, v_ in parts_st.items() if v_[0] != LICENSED)) +
+                       '، '.join(f'{COND_PART_AR.get(k_, k_)} {v_[0]}' for k_, v_ in parts_st.items() if v_[0] != LICENSED)) +
                       ('؛ والأداة ملتبسة (شرطية أو موصولة أو استفهامية)' if c['amb'] else ''),
                       premises=prem or [f'المرحلة ١٤: أداة شرط «{c["tool"]}» ({c["head"]})'],
                       parts_status={k_: v_[0] for k_, v_ in parts_st.items()}, legacy=dict(head=c['head'], q_kind=c.get('q_kind'),
@@ -2085,4 +2106,11 @@ def check_cross(records, axes):
                 errs.append(f'{u}: الدور «{g["role_name"]}» من علاقةٍ {r["status"]}')
             elif not any(u in us for us in r['members'].values()):
                 errs.append(f'{u}: الدور «{g["role_name"]}» من علاقةٍ ليست الوحدة من أعضائها')
+    # ٥ نوع الصلة المؤجَّل: لا يُرخَّص إسنادٌ داخل حاويتها يفترض أحد الوجهين
+    for r in records:
+        if r['type'] == 'SILAH' and r.get('kind_status') == DEFERRED and len(r.get('silah_kinds') or []) > 1:
+            for k_ in r['silah_kinds']:
+                for n2 in records:
+                    if n2['type'] == 'PREDICATIVE_PP' and n2.get('container_id') == k_.get('source') and n2['status'] == LICENSED:
+                        errs.append(f'{n2["relation_id"]}: إسنادٌ مرخَّص في صلةٍ نوعها مؤجَّل ({r["relation_id"]})')
     return errs

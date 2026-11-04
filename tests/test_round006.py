@@ -336,5 +336,27 @@ r_['analysis_id'] = 'X@v1'
 r_['members'] = {k: [x for x in v if x != u2] for k, v in r_['members'].items()}
 check('M11 إفساد هوية التحليل في علاقة الدور يكشفه الفاحص العابر للطبقات', bool(check_cross(m['records'], m['axes'])))
 
+# ١٧ بعد قراءة 016: دور المرفوع في صلةٍ نوعها مؤجَّل، وعبارة العائد، وأجزاء الشرط، والسمات بالعربية
+u27 = at(o, '2:282:27', 'الْحَقُّ')[0]
+n27 = next(r for r in o['records'] if r['type'] == 'PREDICATIVE_PP' and r['heads'].get('subject') == u27)
+ax27 = o['axes'][u27]
+v36 = rec(o, 'NASIKH', nasikh=u36)
+check('X44 «الحق» في صلةٍ نوعها مؤجَّل: الإسناد مؤجَّلٌ بوجهيه (مبتدأ مؤخَّر أو فاعل)، فلا دور مرخَّص ولا عبارة تقريرية؛ وحدّ الصلة باقٍ، و«كان» V01 مرخَّص',
+      n27['status'] == 'DEFERRED' and 'فاعل' in ' '.join(n27['alternatives']) and not ax27['role'][0] and not ax27['inflection']['statement']
+      and c25['status'] == 'LICENSED' and 'مؤجَّل' in c25['reason'] and v36['status'] == 'LICENSED', (n27['status'], ax27['role'], ax27['inflection']['statement']))
+m = copy.deepcopy(o)
+next(r for r in m['records'] if r['relation_id'] == n27['relation_id'])['status'] = 'LICENSED'
+check('M12 إفساد رتبة الإسناد داخل الصلة المؤجَّلة النوع (LICENSED) يكشفه الفاحص العابر للطبقات', bool(check_cross(m['records'], m['axes'])))
+check('X45 عبارة العائد تسمّي المرشّحين كليهما، ومقدّمة الطبقة القديمة «مستوفى» تُنسب إليها مع حالته هنا',
+      '«هِ»' in s25['resumptive']['note'] and 'مستتر' in s25['resumptive']['note']
+      and any(p.startswith('المرحلة ١٤') and 'عائد' in p and 'في الطبقة القديمة؛ وهو هنا DEFERRED' in p for p in s25['premises']), s25['resumptive']['note'])
+cr = [r for r in o['records'] if r['type'] == 'CONDITION' and r['status'] == 'DEFERRED']
+check('X46 أجزاء الشرط في السبب بأسمائها العربية (فعل الشرط، الجواب)، بلا مفاتيح داخلية',
+      cr and all('=' not in r['reason'] and 'answer' not in r['reason'] and 'condition_verb' not in r['reason'] for r in cr), [r['reason'] for r in cr])
+import re as _re
+leak = [p for r in o['records'] for p in r['premises'] + [r['reason']] + list(r.get('alternatives') or [])
+        if isinstance(p, str) and _re.search(r"\b(singular|dual|plural|masc|fem)\b|\{'|\['", p)]
+check('X47 لا سماتٌ بالإنجليزية ولا تمثيل بايثون في سبب العلاقات ومقدّماتها وبدائلها', not leak, leak[:3])
+
 print('ALL OK' if not FAIL else f'FAILED {len(FAIL)}: {FAIL}')
 sys.exit(1 if FAIL else 0)
