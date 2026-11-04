@@ -34,11 +34,11 @@ def run(text, ref='t', cond=False, s=0, v=0):
     a = analyze(CAT, text, 'auto')
     S, U = sentence_geo(a, 'Q' + ref, Trace())
     F = unit_features(a, U)
-    C = None
+    C = Rl = None
     if cond:
-        C = []
-        linguistic_layer([(s, v, a, U, S)], Trace(), 'test', cond_out=C)
-    return a, verse_relations(a, U, F, ref, legacy_cond=C)
+        C, Rl = [], []
+        linguistic_layer([(s, v, a, U, S)], Trace(), 'test', cond_out=C, rel_out=Rl)
+    return a, verse_relations(a, U, F, ref, legacy_cond=C, legacy_rel=Rl)
 
 
 def at(o, loc, text):
@@ -255,6 +255,24 @@ check('X28 «أن يُمِلَّ» (المضعّف بعد الناصب): الف�
 r15 = lam[(15, '6')].get('relation') or {}
 check('X29 المرحلة ١١ في «لا يأبَ»: المشاهَد «جزم (حذف حرف العلة)»، والاتساق غير معيَّن، والدور «وجهٌ مرشّح» لا عبارةٌ تقريرية',
       r15.get('observed') == 'جزم (حذف حرف العلة)' and r15.get('consistent') is None and str(r15.get('role')).startswith('وجهٌ مرشّح'), r15)
+
+# ١٤ توزيع الأدوار مع النواسخ، والعائد
+u58, _ = at(o, '2:282:58', 'يَكُونَا')
+f58 = rec(o, 'VERB_FRAME', verb=u58)['frame']
+check('X30 «يكونا» من صيغ «كان» (VERBAL) ولم يُقبل ناسخاً: ضميره «اسم الناسخ أو فاعل التامّ» مؤجَّل، لا «فاعل» مرخَّص',
+      f58['subject']['status'] == 'DEFERRED' and f58['subject']['role'] == 'اسم الناسخ أو فاعل التامّ' and 'VERBAL' in f58['usage'],
+      f58['subject'])
+f36b = rec(o, 'VERB_FRAME', verb=u36)
+check('X31 «كان» الناسخ المقبول: الإطار متّسق (البناء للمجهول لا ينطبق عليه)، وإسناده «اسم الناسخ (V01)»',
+      f36b['status'] == 'LICENSED' and f36b['frame']['subject']['kind'] == 'اسم الناسخ (V01)', (f36b['status'], f36b['frame']['subject']))
+s2 = next(r for r in o['records'] if r['type'] == 'SILAH' and r['heads'].get('relative') == u2)
+check('X32 صلة «الذين آمنوا» مرخَّصة بنطاقها، والعائد مؤجَّل: ضمير الصيغة في «آمنوا» مرشّح، والمطابقة على مرشّحٍ لا تثبت المرجع',
+      s2['status'] == 'LICENSED' and s2['resumptive']['status'] == 'DEFERRED' and 'مرشّح' in s2['resumptive']['note'], s2['resumptive'])
+u62, ax62 = at(o, '2:282:62', 'مِمَّنْ')
+p3 = rec(o, 'PP', preposition=u62)
+check('X33 «مِمَّنْ» = «مِنْ» + «مَنْ»: جزآن بهويتين، و«مَنْ» في محلّ جر (P03)، ونوعه بدائل، وصلته «ترضون» مؤجَّلة',
+      p3 and p3['rule_id'] == 'P03' and len(p3['parts']) == 2 and ax62['case_axis'][0] == 'في محلّ جر' and p3['kind_status'] == 'DEFERRED'
+      and any(r['type'] == 'SILAH' and r['heads'].get('relative') == u62 and r['status'] == 'DEFERRED' for r in o['records']), p3)
 
 print('ALL OK' if not FAIL else f'FAILED {len(FAIL)}: {FAIL}')
 sys.exit(1 if FAIL else 0)

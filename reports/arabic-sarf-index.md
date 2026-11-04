@@ -8,4 +8,5 @@
 | 004 | `arabic-sarf-004.html` | 2026-11-04 | `dffa16a` | مسار التحليل: 2:282 — هوية التشغيل 4d53b044fe5e | `tools/pipeline_trace.py 2:282` |
 | 005 | `arabic-sarf-005.html` | 2026-11-04 | `5810dfb` | مسار التحليل: 2:282 — هوية التشغيل f4e2790a2192 | `tools/pipeline_trace.py 2:282` |
 | 006 | `arabic-sarf-006.html` (وُلّد على جهاز المالك، خارج المستودع؛ sha256 `cf7d276c4339e666d75bed896b9b49f5aca78ea2129f3e9babee0585a2fcbeea`) | 2026-11-04 | `a1fe41c` | مسار التحليل: 2:282 — هوية التشغيل 5fbd771a8b09 (بصمة المدخل a6dc1c01d94bd67f)؛ مرجع جولة SARF_RESULT_006_RECONCILIATION_AND_RELATIONS_01 | `tools/pipeline_trace.py 2:282` |
-| 007 | `arabic-sarf-007.html` | 2026-11-04 | `4b20aa5` | مسار التحليل: 2:282 — هوية التشغيل e4d07793627e | `tools/pipeline_trace.py 2:282` |
+| 007 | `arabic-sarf-007.html` (مرحلي: كشفت قراءته تناقض المرحلة ١١ في «لا يأبَ») | 2026-11-04 | `4b20aa5` | مسار التحليل: 2:282 — هوية التشغيل e4d07793627e | `tools/pipeline_trace.py 2:282` |
+| 008 | `arabic-sarf-008.html` (مرحلي: كشفت قراءته «يكونا» فاعلاً، وعائد «آمنوا» على ضمير مرشّح) | 2026-11-04 | `907f000` | مسار التحليل: 2:282 — هوية التشغيل 274716e0ed3a | `tools/pipeline_trace.py 2:282` |

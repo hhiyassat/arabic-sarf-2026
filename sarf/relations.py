@@ -973,7 +973,8 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
         if f_ is None or not word_start(f_):
             continue
         ok_f = f_.mcat in ('relative', 'demonstrative') or 'أل' in f_.types and (f_.nounish() or f_.shape_only)
-        why_f = (f'«{f_.text}» موصولٌ أو إشارة' if f_.mcat in ('relative', 'demonstrative') else f'«{f_.text}» معرَّفٌ بـ«أل»')
+        why_f = (f'«{f_.text}» موصولٌ مختصّ (ملف المبنيات)' if f_.mcat == 'relative' else f'«{f_.text}» اسم إشارة (ملف المبنيات)'
+                 if f_.mcat == 'demonstrative' else f'«{f_.text}» معرَّفٌ بـ«أل»')
         R.append(_rec(ref, 'VOC_FOLLOWER', 'V02', {'munada': ay, 'follower': f_}, {'munada': [ay], 'follower': [f_]},
                       LICENSED if ok_f else DEFERRED,
                       ('تابعٌ لـ«أيّ» في النداء، مرفوعٌ تبعاً للفظها: ' + why_f) if ok_f else
@@ -1295,8 +1296,14 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
         tf, vf, sf, trf = (v.feats.get(k) or {} for k in ('tense', 'voice', 'subject', 'transitivity'))
         nas = next((o_ for o_ in a['operators'] if o_['word_index'] == v.wi and str(o_['group']) == NASIKH_KANA and
                     o_.get('status') == 'accepted' and (o_.get('slot') or {}).get('unit') == v.ui), None)
-        usage = f'ناسخ «{nas["operator"]}» (مج 10، حكم المرحلة ١١)' if nas else 'غير ناسخ في حكم المرحلة ١١'
-        coherent = all(x.get('st') == 'مثبت' for x in (tf, vf, sf))
+        from .protected import VERBAL
+        pid = (v.G.Theta.get('protected') or {}).get('identity')
+        vb = next((k_ for k_, (forms, _) in VERBAL.items() if v.text in forms or pid in forms or pid == k_), None)
+        usage = f'ناسخ «{nas["operator"]}» (مج 10، حكم المرحلة ١١)' if nas else \
+            (f'صيغةٌ من صيغ «{vb}» في الجرد المعتمد (VERBAL): ناسخٌ أو تامّ، غير محسوم في حكم المرحلة ١١' if vb else
+             'غير ناسخ في حكم المرحلة ١١')
+        # البناء للمعلوم أو المجهول لا ينطبق على الفعل العامل من الجرد (كان، ليس): غيابه ليس نقصاً
+        coherent = all(x.get('st') == 'مثبت' for x in (tf, sf)) and (vf.get('st') == 'مثبت' or not vf and (nas or vb))
         cands = []
         tl_ = letters(v.text)
         if len(tl_) == 4 and DAMMA in tl_[0][1] and DAMMA in tl_[1][1] and tl_[2][0] == 'و' and tl_[3][0] == 'ا' and \
@@ -1328,6 +1335,12 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
         srole = 'نائب فاعل' if passive else 'فاعل'
         if nas:
             opn.append('اسم الناسخ وخبره: تُربطان بـV01 لا بالفاعل')
+            subj = dict(kind='اسم الناسخ (V01)', role='اسم الناسخ', status='V01', why='يُربط بقاعدة الناسخ V01، لا بالفاعل')
+        elif vb:
+            subj = dict(kind='ضمير الصيغة أو اسمٌ ظاهر', role='اسم الناسخ أو فاعل التامّ', status=DEFERRED,
+                        why=f'«{v.text}» من صيغ «{vb}» ولم يُقبل ناسخاً في المرحلة ١١: ضميره اسم الناسخ إن كان ناقصاً، وفاعلٌ إن كان تامّاً؛ '
+                            'فلا يُسمّى فاعلاً قبل حسم الاستعمال')
+            opn.append('الاستعمال (ناسخ أو تامّ) غير محسوم: الخبر إن كان ناقصاً غير مربوط')
         elif sf.get('st') == 'مثبت' and (sp.get('number') in ('plural', 'dual') or sp.get('person') in (1, 2) and
                                         not (tf.get('v') == 'مضارع' and sp.get('number') == 'singular')):
             subj = dict(kind='ضمير متصل مكتوب', role=srole, status=LICENSED,
@@ -1399,7 +1412,7 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                   [f'{n_}: {x.get("v")} ({x.get("st")})' for n_, x in (('الزمن', tf), ('البناء', vf), ('ضمير الصيغة', sf)) if x],
                   frame=dict(identity=v.text, root=v.G.Theta.get('R'), pattern=v.G.Theta.get('P'),
                              tense=(tf.get('v'), tf.get('st'), tf.get('alt')), voice=(vf.get('v'), vf.get('st'), vf.get('alt')),
-                             usage=usage, subject_requirement=srole if not nas else 'اسم الناسخ',
+                             usage=usage, subject_requirement='اسم الناسخ' if nas else 'اسم الناسخ أو الفاعل' if vb else srole,
                              transitivity=(trf.get('v'), trf.get('st'), trf.get('ev')),
                              subject=dict({k: x for k, x in (subj or {}).items() if k != 'unit'},
                                           unit=(subj or {}).get('unit').uid if (subj or {}).get('unit') else None) if subj else None,
@@ -1553,8 +1566,14 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
         prons = [t for t in span if t.enclitic]
         rv = DEFERRED
         rnote = (rh[2] if len(rh) > 2 else '') or 'لم يُكشف'
+        sf_ = head_.feats.get('subject') or {}
+        sp_ = sf_.get('v') if isinstance(sf_.get('v'), dict) else {}
         if rh[1] == 'True' and 'فاعل' in rnote and not prons and head_.pos == 'فعل':
-            rv, rnote = LICENSED, rnote + '؛ ولا ضمير غيره في نطاق الصلة: هو العائد بالحصر'
+            if sf_.get('st') == 'مثبت' and sp_.get('person') == 3:
+                rv, rnote = LICENSED, rnote + '؛ وضمير الصيغة غائبٌ مثبت، ولا ضمير غيره في نطاق الصلة: هو العائد بالحصر'
+            else:
+                rnote += f'؛ لكن ضمير الصيغة في «{head_.text}» {sf_.get("st") or "غير مثبت"} (الشخص {sp_.get("person")}): ' \
+                         'المطابقة على مرشّحٍ لا تثبت العائد'
         R.append(_rec(ref, 'SILAH', 'R02', {'relative': rel_t, 'silah_head': head_}, {'relative': [rel_t], 'silah_head': [head_], 'silah': span}, st_,
                       (f'صلة «{rel_t.text}» {c["silah"]} من «{span[0].text}» إلى «{span[-1].text}» (الحدّ: {bnd})' if s_ok else
                        'الصلة غير مكشوفة في الطبقة القديمة'),
