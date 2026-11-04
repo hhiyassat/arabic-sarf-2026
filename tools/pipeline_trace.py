@@ -531,7 +531,7 @@ for pv in per_verse:
         if r.get('head_parts'):
             alts += '<br>أجزاء الأطراف: ' + h('، '.join(f'{k}={v}' for k, v in r['head_parts'].items()))
         if r.get('kind_status'):
-            alts += f"<br>النوع: {h(r['kind_status'])} — {h(r.get('kind_note') or '')}"
+            alts += f"<br>النوع: {h(r['kind_status'])}" + (f" — {h(r['kind_note'])}" if r.get('kind_note') else '')
         if r.get('reason_before_rank'):
             alts += f"<br>قبل الرتبة: {h(r['reason_before_rank'])}"
         rows_r.append([h(r['type']), f"{h(r['rule_id'])} {h(r['rule_version'])}", f"<span class='st {'p' if r['status'] == 'LICENSED' else 'c'}'>{h(r['status'])}</span>",

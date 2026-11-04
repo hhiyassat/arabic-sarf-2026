@@ -1477,8 +1477,12 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
         fr = _rec(ref, 'VERB_FRAME', 'F01', heads, members, LICENSED if coherent else DEFERRED,
                   'سمات الفعل كلها مثبتة من تحليلٍ واحد' if coherent else
                   ('مرشّحاتٌ صرفية كاملة متنافسة' if cands else 'بعض سمات الفعل مرشّحة: لا تُجمع من مرشّحاتٍ متفرقة'),
-                  premises=[f'الصنف: فعل — {(v.feats.get("pos") or {}).get("ev")}'] +
-                  [f'{n_}: {x.get("v")} ({x.get("st")})' for n_, x in (('الزمن', tf), ('البناء', vf), ('ضمير الصيغة', sf)) if x],
+                  premises=([f'الصنف: فعل — {(v.feats.get("pos") or {}).get("ev")}'] +
+                            [f'{n_}: {x.get("v")} ({x.get("st")})' for n_, x in (('الزمن', tf), ('البناء', vf), ('ضمير الصيغة', sf)) if x])
+                  if not cands else
+                  ['الصنف: فعل في كل المرشّحات القائمة'] +
+                  [f'المرشّح القائم {c_["id"]}: {c_["tense"]}، {c_["voice"]}، {c_["subject_role"]}' for c_ in cands if c_['status'] != REJECTED] +
+                  [f'الوجه الممنوع {c_["id"]} ({c_["tense"]}): {c_["reason"]} — لا يُبنى عليه' for c_ in cands if c_['status'] == REJECTED],
                   frame=dict(identity=v.text, root=v.G.Theta.get('R'), pattern=v.G.Theta.get('P'),
                              tense=(tf.get('v'), tf.get('st'), tf.get('alt')) if not cands else
                              ('، '.join(sorted({c_['tense'] for c_ in cands if c_['status'] != REJECTED} - {None})) or None, 'مرشّح', None),
@@ -1487,7 +1491,8 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                              stage8=dict(tense=tf.get('v'), voice=vf.get('v'), subject=sf.get('v'),
                                          note='سمات المرحلة ٨ والسمات: ' + ('وجهٌ ممنوعٌ في F01، لا يدخل الإطار' if any(
                                              c_['status'] == REJECTED and c_.get('tense') == tf.get('v') for c_ in cands) else 'كما هي')) if cands else None,
-                             usage=usage, subject_requirement='اسم الناسخ' if nas else 'اسم الناسخ أو الفاعل' if vb else srole,
+                             usage=usage, subject_requirement='اسم الناسخ' if nas else 'اسم الناسخ أو الفاعل' if vb else
+                             ('، '.join(sorted({c_['subject_role'] for c_ in cands if c_['status'] != REJECTED})) if cands else srole),
                              transitivity=(trf.get('v'), trf.get('st'), trf.get('ev')),
                              subject=dict({k: x for k, x in (subj or {}).items() if k != 'unit'},
                                           unit=(subj or {}).get('unit').uid if (subj or {}).get('unit') else None) if subj else None,

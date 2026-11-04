@@ -307,6 +307,7 @@ f77 = rec(o, 'VERB_FRAME', verb=u77)
 _, ax77 = at(o, '2:282:77', 'دُعُوا')
 check('X40 «دُعُوا»: المرشّح الممنوع (الأمر) لا يتسرّب — زمن الإطار وبناؤه من القائم، وصنف المحور وبناؤه يسمّيانه ممنوعاً، والشرط يُصالَح به بلا رفع رتبة',
       f77['frame']['tense'][0] == 'ماضٍ' and f77['frame']['voice'][0] == 'مجهول' and 'ممنوع' in f77['frame']['stage8']['note']
+      and f77['frame']['subject_requirement'] == 'نائب فاعل' and not any(p.startswith('الزمن: أمر') for p in f77['premises'])
       and 'F01.c1' in ax77['word_class'][1] and 'أمر' not in ax77['inflection']['build'][1].split('الممنوع')[0]
       and any('المصالحة مع F01' in p for r in o['records'] if r['type'] == 'CONDITION' and r['heads'].get('condition_verb') == u77
               for p in r['premises']), (f77['frame']['tense'], ax77['word_class'], ax77['inflection']['build']))
