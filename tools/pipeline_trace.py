@@ -110,6 +110,7 @@ for pv in per_verse:
         ends.add((prev['s'], prev['v']))
     prev = cur
 COND, RELS = [], []
+REL_CACHE = {}
 LT, lstats, _ = linguistic_layer(items, Trace(), 'trace', cross=cross, checked_ends=frozenset(ends), cond_out=COND,
                                 rel_out=RELS)
 
@@ -482,12 +483,35 @@ for SP in LT:
                     words.append(pv['a']['segments'][w_]['word'])
             opn = [o.name for o in J.Omega if o.required and not o.met]
             bnd = J.O.get('boundary') or {}
+            # نطاق الإغلاق: شهادة الطبقة القديمة وحدها؛ وما في 14أ لمدى الجملة غير مصالَحٍ معها يُعرض بجانبها
+            span_ = {f'{s_}:{v_}:{w_ + 1}' for (s_, v_, w_) in lc}
+            un_ = []
+            for (s_, v_) in sorted({(x[0], x[1]) for x in lc}):
+                pv_ = next((p for p in per_verse if p['s'] == s_ and p['v'] == v_), None)
+                if pv_ is None:
+                    continue
+                from sarf.relations import verse_relations
+                if (s_, v_) not in REL_CACHE:
+                    REL_CACHE[(s_, v_)] = verse_relations(pv_['a'], pv_['units'], pv_['F'], f'{s_}:{v_}', legacy_cond=COND, legacy_rel=RELS)
+                for r_ in REL_CACHE[(s_, v_)]['records']:
+                    locs_ = {l_ for ls_ in r_['positions'].values() for l_ in ls_}
+                    if not locs_ or not locs_ <= span_:
+                        continue
+                    if r_['status'] != 'LICENSED':
+                        un_.append(f"{r_['rule_id']} {r_['status']}")
+                    elif r_['type'] == 'VERB_FRAME' and (r_.get('frame') or {}).get('open'):
+                        un_.append('F01 التزامٌ مفتوح')
+            scope_ = (('إغلاقٌ في الطبقة القديمة وحدها، لا شهادة إغلاقٍ موحَّدة؛ ' if J.closed else 'حكم الطبقة القديمة؛ ') +
+                      (f'وفي 14أ داخل مداها {len(un_)} غير مصالَحة معه (' +
+                       '، '.join(f'{k_}×{c_}' for k_, c_ in sorted(__import__('collections').Counter(un_).items())) + ')'
+                       if un_ else 'ولا علاقة في 14أ داخل مداها مؤجَّلةٌ أو بالتزامٍ مفتوح'))
             bonds = '<br>'.join(h(f'{b[0]}: {b[1]} → {b[2]}') for b in (J.O.get('bound') or [])) or '—'
-            rows_j.append([esc(J.id), f'{frm} – {to}', f"<span class='ar'>{h(' '.join(words))}</span>", 'مغلقة' if J.closed else 'مفتوحة',
+            rows_j.append([esc(J.id), f'{frm} – {to}', f"<span class='ar'>{h(' '.join(words))}</span>",
+                           ('مغلقة' if J.closed else 'مفتوحة') + f"<br><sub>{h(scope_)}</sub>",
                            esc(bnd.get('F') or '—'), bonds, esc(len(J.O.get('unplaced') or [])), esc('، '.join(opn) or '—')])
-            tl_j.append(f"{J.id:<14} {frm}–{to}  {'مغلقة' if J.closed else 'مفتوحة'}  روابط {len(J.O.get('bound') or [])}  "
+            tl_j.append(f"{J.id:<14} {frm}–{to}  {'مغلقة' if J.closed else 'مفتوحة'} ({'غير مصالَحة مع 14أ: ' + str(len(un_)) if un_ else 'لا مؤجَّل في 14أ'})  روابط {len(J.O.get('bound') or [])}  "
                         f"بلا موضع {len(J.O.get('unplaced') or [])}  {' '.join(words)[:70]}")
-section(14, 'الجملة', '(طبقةٌ قديمة LEGACY: لا تستهلك علاقات 14أ بعد؛ فـ«لا نواة» هنا لا ينفي نواةً مرخَّصة هناك، والمعتمد للنواة 14أ.) جهتان مختلفتان: «التمام» (F) أن في المدى نواةً ولا التزامَ نحويٍّ لازمٍ مفتوحاً (معمول، خبر، فاعل)؛ و«الإغلاق» أن تُستوفى '
+section(14, 'الجملة', '(طبقةٌ قديمة LEGACY: لا تستهلك علاقات 14أ بعد؛ فـ«لا نواة» هنا لا ينفي نواةً مرخَّصة هناك، والمعتمد للنواة 14أ؛ و«مغلقة» شهادةٌ في هذه الطبقة وحدها، لا شهادة إغلاقٍ للنظام الموحَّد، ويُعرض تحتها ما في 14أ لمداها مؤجَّلاً أو مفتوحاً غير مصالَحٍ معها.) جهتان مختلفتان: «التمام» (F) أن في المدى نواةً ولا التزامَ نحويٍّ لازمٍ مفتوحاً (معمول، خبر، فاعل)؛ و«الإغلاق» أن تُستوفى '
         'الالتزامات كلها: إغلاق كل وحدة، وموضع كل كلمة، وحسم كل علاقة. فالجملة قد تكون تامّةً في التحليل مفتوحةً غير مغلقة. والآية لا تُغلق الجملة. '
         'والروابط معروضةٌ بأطرافها، والالتزامات المفتوحة كاملةً بلا اختصار',
         rows_j, ['الجملة', 'من – إلى', 'النص', 'الإغلاق', 'التمام (F)', 'الروابط', 'كلمات بلا موضع', 'التزامات مفتوحة'], tl_j)

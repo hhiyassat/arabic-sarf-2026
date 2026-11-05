@@ -43,14 +43,18 @@ def _surah(items):
         per.append((s, v, a, U, unit_features(a, U)))
     C, Rl = [], []
     LT, st, _ = linguistic_layer(its, Trace(), 'cov', cond_out=C, rel_out=Rl)
-    J = dict(total=0, closed=0, F_complete=0)
+    J = dict(total=0, closed=0, F_complete=0, closed_unreconciled=0)
+    closed_spans = []
     for SP in LT:
         for D in SP.A + SP.O.get('pending', []):
             for Jx in D.A + D.O.get('pending', []):
                 J['total'] += 1
                 J['closed'] += bool(Jx.closed)
+                if Jx.closed:
+                    closed_spans.append({f'{a_}:{b_}:{c_ + 1}' for (a_, b_, c_) in Jx.O.get('location', [])})
                 J['F_complete'] += 'تام' in str((Jx.O.get('boundary') or {}).get('F') or '')
     out = []
+    unrec = []
     for s, v, a, U, F in per:
         ref = f'{s}:{v}'
         o = verse_relations(a, U, F, ref, legacy_cond=C, legacy_rel=Rl)
@@ -70,9 +74,15 @@ def _surah(items):
                               mabni=(ax.get('mabni_state') or {}).get('code'), state=inf['state'][1] if inf.get('state') else '',
                               mark=inf['mark'] and inf['mark'][0], gov_rel=(inf.get('governor') or {}).get('relation'),
                               pend=sorted(pend.get(uid, ()))))
+        for r in o['records']:
+            if r['status'] != 'LICENSED' or r['type'] == 'VERB_FRAME' and (r.get('frame') or {}).get('open'):
+                ls_ = {l_ for v_ in r['positions'].values() for l_ in v_}
+                if ls_:
+                    unrec.append(ls_)
         recs = [dict(type=r['type'], rule=r['rule_id'], status=r['status'], frame=r.get('frame'), nucleus_complete=r.get('nucleus_complete'),
                      heads=list(r['heads']), resumptive=(r.get('resumptive') or {}).get('status')) for r in o['records']]
         out.append(dict(verse=ref, units=units, records=recs, check=chk))
+    J['closed_unreconciled'] = sum(any(ls_ <= sp for ls_ in unrec) for sp in closed_spans)
     return dict(verses=out, sentences=J)
 
 
@@ -165,7 +175,9 @@ def main():
                           nominal=dict(total=len(pr), complete=sum(bool(r['nucleus_complete']) for r in pr)),
                           note='الفعل لا يحتاج كلُّه فاعلاً ومفعولاً: المتطلَّب بحسب البناء والاستعمال (الناسخ يطلب اسماً وخبراً، والمبني للمجهول نائب فاعل)')
     M['M7_sentences'] = dict(unit='جملة الطبقة القديمة (المرحلة ١٤)', total=SENT['total'], closed=SENT['closed'], F_complete=SENT['F_complete'],
-                             note='العلاقات المحلية الجديدة لا تستهلكها الطبقة القديمة بعد: هذا المقياس من الطبقة القديمة وحدها')
+                             closed_unreconciled=SENT['closed_unreconciled'],
+                             note='العلاقات المحلية الجديدة لا تستهلكها الطبقة القديمة بعد: هذا المقياس من الطبقة القديمة وحدها؛ و«مغلقة» فيه ليست شهادة إغلاقٍ موحَّدة. '
+                                  'closed_unreconciled: المغلقة التي في مداها علاقةٌ في 14أ مؤجَّلة أو إطارٌ بالتزامٍ مفتوح')
     unres = collections.Counter()
     ex = collections.defaultdict(list)
     for u in murab + mnoun + nob:
