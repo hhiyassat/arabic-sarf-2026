@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>الإغلاق الكبير: التقرير</title>
+<style>
+:root{--bg:#fbfaf7;--fg:#1d1c1a;--mut:#5d5a54;--line:#dedad2;--card:#ffffff;--ok:#1f6f43;--warn:#8a5a00;--bad:#9b2c2c}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#161514;--fg:#ecebe7;--mut:#a7a39b;--line:#3a3833;--card:#1f1e1c;--ok:#6fcf97;--warn:#e0b45a;--bad:#f08a8a}}
+:root[data-theme="dark"]{--bg:#161514;--fg:#ecebe7;--mut:#a7a39b;--line:#3a3833;--card:#1f1e1c;--ok:#6fcf97;--warn:#e0b45a;--bad:#f08a8a}
+body{background:var(--bg);color:var(--fg);font-family:"Amiri","Noto Naskh Arabic","Scheherazade New",serif;font-size:18px;line-height:1.75;margin:0;padding:0 16px}
+main{max-width:980px;margin:0 auto;padding:24px 0 64px}
+h1{font-size:1.6em;margin:.2em 0}h2{font-size:1.25em;margin-top:1.6em;border-bottom:1px solid var(--line);padding-bottom:.2em}
+.sub{color:var(--mut)}
+table{border-collapse:collapse;width:100%;margin:.6em 0;background:var(--card);font-size:.92em}
+th,td{border:1px solid var(--line);padding:.35em .55em;vertical-align:top;text-align:right}
+th{background:color-mix(in srgb,var(--line) 40%,var(--card))}
+.wrap{overflow-x:auto}
+.ok{color:var(--ok)}.warn{color:var(--warn)}.bad{color:var(--bad)}
+code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.85em;direction:ltr;unicode-bidi:embed}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:1em 0}
+.kpi div{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:.6em .8em}
+.kpi b{display:block;font-size:1.3em}
+</style>
+</head>
+<body><main>
+<h1>الإغلاق الكبير: تصحيح الأدلة واستكمال المسار</h1>
+<p class="sub">SARF_MAJOR_CLOSURE_01 · بعد مراجعة 032 (<code>c704c15</code>) · HFN v36 (<code>d15da9926cdb3788</code>) · المصحف <code>hafs_kfgqpc</code> (<code>a6dc1c01d94bd67f</code>) · لم يُدفع ولم يُدمج</p>
+<p><b>الحكم النهائي: PARTIAL_DELIVERY_WITH_EXPLICIT_RESIDUALS</b>. صُحّحت الأدلة الباطلة، وسُحب ما بُني عليها، واكتملت البنية المطلوبة للهوية والإغلاق والمصدر المؤوَّل في نطاقها. وبقيت أبوابٌ غير منفّذة، كلٌّ مسمّى بسببه.</p>
+
+<div class="kpi">
+<div>الفواحص على المصحف كله<b class="ok">0</b></div>
+<div>«E02 v2» عند QAC: أسماء / أفعال<b>794 / 0</b></div>
+<div>مغلقة في وجهها<b>11</b></div>
+<div>مغلقة بالبنية المشتركة<b>35</b></div>
+<div>التزامٌ مستوفى بعلاقةٍ من نوعه<b>21284</b></div>
+<div>نتائج سُحبت لبطلان شهادتها<b>247 + 9 + 7</b></div>
+</div>
+
+<h2>١. ما صُحّح</h2>
+<div class="wrap"><table>
+<tr><th>القاعدة</th><th>العيب</th><th>التصحيح</th><th>الأثر</th></tr>
+<tr><td>E02</td><td>عدّت «رُدُّهُ، مُدُّهُ» (الأمر المضعّف) اسماً</td><td>v2 بموانع مسمّاة، وتمتنع في الجذع ذي الحرفين</td><td>سُحبت الاسمية عن 156 وقوعاً (رَبُّكَ، كُلُّهُ…)، وبقي «وَلِيُّهُ» اسماً بالقاعدة المصحَّحة</td></tr>
+<tr><td>E03</td><td>«لا يبدأ فعلٌ بـإِ» تنقضها التلتلة (إِخَالُ)</td><td>v2 معطَّلة حتى تحكم في مقدّمتها: «لا تلتلة في حفص»</td><td>سُحبت الاسمية عن 91 وقوعاً، منها «إِحۡدَىٰهُمَا». ولا مدخل معجمي لها في HFN ولا في المبنيات</td></tr>
+<tr><td>زمن المعمول بالعامل</td><td>كان قبول «لم» يقوم على أثرها في الفعل، ثم يُثبت به زمنه</td><td>لا يُثبت العامل الزمن إلا بحرف مضارعةٍ مكتوب مستقل</td><td>7 أطرٍ مؤجَّلة</td></tr>
+<tr><td>«لا منافس»</td><td>رُخّص الفاعل لأن المنافس لم يُعرف صنفه</td><td>لا يُقال «لا منافس» ووراء المرشّح مرفوعٌ صنفه غير محسوم</td><td>9 فواعل مؤجَّلة، منها «يَشَآءَ ٱللَّهُ رَبُّنَا»</td></tr>
+<tr><td>شهادة الإغلاق</td><td>كان «جدول الإسناد» يستوفي ما تؤجّله 14أ، و«فاعل أو نائب فاعل» يُعدّ فاعلاً</td><td>v2: لا يُستوفى التزامٌ إلا بعلاقةٍ من نوعه للوحدة والوجه، وسبعة أحكام</td><td>«وَلۡيُمۡلِلِ ٱلَّذِي» تعارضٌ غير مستوفى، و«يكونا» اختيارٌ بين الناقص والتامّ</td></tr>
+</table></div>
+
+<h2>٢. ما اكتمل في النطاق</h2>
+<ul>
+<li><b>هوية المرشّح الصرفي:</b> الإطار والمحور يحملان المرشّح نفسه، بأزمنته القائمة والممنوعة وأسبابها. والفاحص يكشف خلط مرشّحَي الوحدة الواحدة (ثلاثة اختبارات إفساد).</li>
+<li><b>الفاعل المستتر</b> عقدةٌ مستدلٌّ عليها، بلا خلايا (S01.h، مقترحة). وبه أُغلقت «لَمۡ يَلِدۡ وَلَمۡ يُولَدۡ» في وجهها.</li>
+<li><b>المصدر المؤوَّل بنيةً:</b> الحرف، ورأس الفعل، والامتداد المثبت بأعضائه وهوياتها (والضمائر المتصلة منها)، والامتداد المرشّح، وحالة الحدّ، والوظيفة.
+<ul>
+<li>«أَلَّا» بالنصب الخالص مصدرية: 10 مواضع.</li>
+<li>ومع «حذف النون» يبقى وجه التفسير والنهي: 22 موضعاً.</li>
+</ul></li>
+<li><b>شهادة الإغلاق v2:</b> لكل التزامٍ سجلّه، والمؤجَّل داخل المدى مصنَّف (اختيار، حدّ، تغطية، لازم)، والوحدة الخطابية في §15 تحمل أشدّ أحكام جملها.</li>
+</ul>
+
+<h2>٣. الإغلاق على المصحف كله (6190 جملة)</h2>
+<div class="wrap"><table>
+<tr><th>الحكم</th><th>الجمل</th></tr>
+<tr><td>مغلقة في وجهها</td><td>11</td></tr>
+<tr><td>مغلقة بالبنية المشتركة (اختيارٌ داخل المدى مؤجَّل)</td><td>35</td></tr>
+<tr><td>التزامٌ لازمٌ غير مستوفى</td><td>805</td></tr>
+<tr><td>حدٌّ مؤجَّل</td><td>1790</td></tr>
+<tr><td>اختيارٌ مؤجَّل يتعلّق به التزامٌ لازم</td><td>288</td></tr>
+<tr><td>نقص تغطية (قاعدةٌ أو مورد)</td><td>3261</td></tr>
+</table></div>
+<p>المحرّك لا يغلق الجميع ولا يؤجّل الجميع. وأكثر ما لا يُغلق نقص تغطية: وحداتٌ لا جذر لها في HFN، وكلماتٌ بلا قاعدة موضعٍ كالنعت.</p>
+
+<h2>٤. ما يحتاج حكمك</h2>
+<div class="wrap"><table>
+<tr><th>البند</th><th>المسألة</th></tr>
+<tr><td>P1</td><td>أتُعتمد مقدّمة «رواية حفص لا تكسر حرف المضارعة»؟ عليها تقوم E03، و91 اسماً منها «إِحۡدَىٰهُمَا»</td></tr>
+<tr><td>E02 v2، وS01.h، وM02.b</td><td>قواعد مقترحة تعمل، وتنتظر الاعتماد</td></tr>
+<tr><td>«أَلَّا» مع حذف النون</td><td>مصدريةٌ ونافية، أم مفسّرةٌ وناهية؟ وفحص شرط المفسّرة غير منفّذ</td></tr>
+<tr><td>D1 إلى D6</td><td>كما في الجولة السابقة. وD6 (المرفوع الملاصق) يشمل الآن الفواعل التسعة المؤجَّلة</td></tr>
+</table></div>
+
+<h2>٥. ما لم يُنفَّذ</h2>
+<ul>
+<li>النعت، والحال، والتوكيد، والبدل، وعطف البيان، والتمييز.</li>
+<li>الاستثناء، والعدد، والقسم، ونطاق النفي.</li>
+<li>تعدد المفاعيل، والحذف بقاعدة.</li>
+<li>مصدر «أَنَّ» و«ما» و«كي».</li>
+<li>مرجع الضمير، والمعنى السياقي، والفقرة. وهذه غير منفّذة، لا «تأجيلٌ لغوي».</li>
+<li>إعادة بناء الجملة على علاقات 14أ: الشهادة مصالحةٌ بعد البناء.</li>
+</ul>
+
+<h2>الملفات</h2>
+<ul>
+<li><b>التقرير الفني:</b> <code>reports/closure01/final/technical_report.md</code></li>
+<li><b>القياس:</b> <code>measurement.json</code></li>
+<li><b>القراءة والتغطية:</b> <code>reading_coverage.csv</code></li>
+<li><b>سجل حكم المالك:</b> <code>reports/closure01/owner_decisions.md</code></li>
+<li><b>سجل الاستكمال:</b> <code>coverage/completion_registry.{jsonl,csv}</code>، بالمراحل العشرين</li>
+<li><b>الصفحة النهائية:</b> <code>reports/arabic-sarf-035.html</code> (من <code>bdbe975</code>، التشغيل <code>fda848c8962e</code>)</li>
+</ul>
+</main></body>
+</html>

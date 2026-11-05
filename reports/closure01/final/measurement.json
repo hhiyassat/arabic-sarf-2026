@@ -1,0 +1,559 @@
+{
+ "document": "SARF_MAJOR_CLOSURE_01",
+ "identity": {
+  "reviewed_commit": "c704c157cea8fdd2732134c057fe413d5280bb9c",
+  "reviewed_report": "arabic-sarf-032.html",
+  "reviewed_run": "197daf573f1a",
+  "baseline_code": "66b1389 (= c704c15 في الشيفرة)",
+  "final_code_commit": "bdbe975",
+  "final_page": "reports/arabic-sarf-035.html",
+  "final_run": "fda848c8962e",
+  "hfn": "release_v36",
+  "hfn_fingerprint": "d15da9926cdb3788",
+  "source": "data/quran_hafs.tsv (hafs_kfgqpc)",
+  "source_fingerprint": "a6dc1c01d94bd67f",
+  "pythonhashseed": 0,
+  "bridged": true
+ },
+ "steps": {
+  "G1_gate_E02_E03_identity": {
+   "vs": "baseline",
+   "compare": {
+    "checker": [
+     0,
+     0
+    ],
+    "units": [
+     106557,
+     106557
+    ],
+    "rels": [
+     51856,
+     51611
+    ],
+    "unit_transitions": {
+     "UNGOVERNED→N/A": 205,
+     "AGREE→UNGOVERNED": 182,
+     "UNGOVERNED→UNVERIFIED": 8,
+     "AGREE→N/A": 42,
+     "UNGOVERNED→AGREE": 2,
+     "added": 0
+    },
+    "relation_status_changes": {
+     "IDAFA|removed": 181,
+     "SUBJECT|removed": 40,
+     "PREDICATION|removed": 26,
+     "VERB_FRAME|F01|LICENSED→DEFERRED": 8,
+     "VERB_FRAME|removed": 28,
+     "ATTACH|removed": 1,
+     "VERB_FRAME|added": 28,
+     "SUBJECT|added": 2,
+     "ATTACH|added": 1
+    },
+    "relation_text_only": 798,
+    "empty_class_evidence": [
+     0,
+     0
+    ],
+    "english_or_python_leaks": [
+     0,
+     0
+    ],
+    "object_requirement": [
+     {
+      "NOT_FOUND_IN_SCOPE": 8143,
+      "UNLINKED_CANDIDATE": 1680,
+      "null": 2412,
+      "KHABAR_CANDIDATE": 1195,
+      "UNANALYZED_COMPLEMENT": 93,
+      "CASE_NOT_WRITTEN": 95
+     },
+     {
+      "NOT_FOUND_IN_SCOPE": 8158,
+      "UNLINKED_CANDIDATE": 1671,
+      "null": 2412,
+      "KHABAR_CANDIDATE": 1195,
+      "UNANALYZED_COMPLEMENT": 92,
+      "CASE_NOT_WRITTEN": 90
+     }
+    ]
+   }
+  },
+  "G2_plus_governor_fix_S01h_certificate": {
+   "vs": "baseline",
+   "compare": {
+    "checker": [
+     0,
+     0
+    ],
+    "units": [
+     106557,
+     106557
+    ],
+    "rels": [
+     51856,
+     51611
+    ],
+    "unit_transitions": {
+     "UNGOVERNED→N/A": 205,
+     "AGREE→UNGOVERNED": 182,
+     "UNGOVERNED→UNVERIFIED": 7,
+     "AGREE→N/A": 42,
+     "UNGOVERNED→AGREE": 2,
+     "added": 0
+    },
+    "relation_status_changes": {
+     "IDAFA|removed": 181,
+     "SUBJECT|removed": 40,
+     "PREDICATION|removed": 26,
+     "VERB_FRAME|F01|LICENSED→DEFERRED": 7,
+     "VERB_FRAME|removed": 28,
+     "ATTACH|removed": 1,
+     "VERB_FRAME|added": 28,
+     "SUBJECT|added": 2,
+     "ATTACH|added": 1
+    },
+    "relation_text_only": 798,
+    "empty_class_evidence": [
+     0,
+     0
+    ],
+    "english_or_python_leaks": [
+     0,
+     0
+    ],
+    "object_requirement": [
+     {
+      "NOT_FOUND_IN_SCOPE": 8143,
+      "UNLINKED_CANDIDATE": 1680,
+      "null": 2412,
+      "KHABAR_CANDIDATE": 1195,
+      "UNANALYZED_COMPLEMENT": 93,
+      "CASE_NOT_WRITTEN": 95
+     },
+     {
+      "NOT_FOUND_IN_SCOPE": 8158,
+      "UNLINKED_CANDIDATE": 1671,
+      "null": 2412,
+      "KHABAR_CANDIDATE": 1195,
+      "UNANALYZED_COMPLEMENT": 92,
+      "CASE_NOT_WRITTEN": 90
+     }
+    ]
+   }
+  },
+  "G3_masdar_structure": {
+   "vs": "G2",
+   "compare": {
+    "checker": [
+     0,
+     0
+    ],
+    "units": [
+     106557,
+     106557
+    ],
+    "rels": [
+     51611,
+     51643
+    ],
+    "unit_transitions": {
+     "added": 0
+    },
+    "relation_status_changes": {
+     "MASDAR|added": 32
+    },
+    "relation_text_only": 0,
+    "empty_class_evidence": [
+     0,
+     0
+    ],
+    "english_or_python_leaks": [
+     0,
+     0
+    ],
+    "object_requirement": [
+     {
+      "NOT_FOUND_IN_SCOPE": 8158,
+      "UNLINKED_CANDIDATE": 1671,
+      "null": 2412,
+      "KHABAR_CANDIDATE": 1195,
+      "UNANALYZED_COMPLEMENT": 92,
+      "CASE_NOT_WRITTEN": 90
+     },
+     {
+      "NOT_FOUND_IN_SCOPE": 8158,
+      "UNLINKED_CANDIDATE": 1671,
+      "null": 2412,
+      "KHABAR_CANDIDATE": 1195,
+      "UNANALYZED_COMPLEMENT": 92,
+      "CASE_NOT_WRITTEN": 90
+     }
+    ]
+   }
+  },
+  "G5_rival_check_and_alla_ambiguity": {
+   "vs": "G3",
+   "compare": {
+    "checker": [
+     0,
+     0
+    ],
+    "units": [
+     106557,
+     106557
+    ],
+    "rels": [
+     51643,
+     51643
+    ],
+    "unit_transitions": {
+     "AGREE→UNGOVERNED": 9,
+     "added": 0
+    },
+    "relation_status_changes": {
+     "MASDAR|M02|LICENSED→DEFERRED": 22,
+     "VERB_FRAME|removed": 9,
+     "SUBJECT|removed": 9,
+     "VERB_FRAME|added": 9,
+     "SUBJECT|added": 9
+    },
+    "relation_text_only": 10,
+    "empty_class_evidence": [
+     0,
+     0
+    ],
+    "english_or_python_leaks": [
+     0,
+     0
+    ],
+    "object_requirement": [
+     {
+      "NOT_FOUND_IN_SCOPE": 8158,
+      "UNLINKED_CANDIDATE": 1671,
+      "null": 2412,
+      "KHABAR_CANDIDATE": 1195,
+      "UNANALYZED_COMPLEMENT": 92,
+      "CASE_NOT_WRITTEN": 90
+     },
+     {
+      "NOT_FOUND_IN_SCOPE": 8159,
+      "UNLINKED_CANDIDATE": 1670,
+      "null": 2412,
+      "KHABAR_CANDIDATE": 1195,
+      "UNANALYZED_COMPLEMENT": 92,
+      "CASE_NOT_WRITTEN": 90
+     }
+    ]
+   }
+  },
+  "G6_frame_open_selection": {
+   "vs": "G5",
+   "note": "«الاستعمال (ناسخ أو تامّ) غير محسوم» في الإطار اختيارٌ لا لازم: OPEN_REQUIRED من 1367 إلى 805؛ والمحاور لا تتغيّر (الشهادة وحدها)"
+  }
+ },
+ "total_vs_baseline": {
+  "compare": {
+   "checker": [
+    0,
+    0
+   ],
+   "units": [
+    106557,
+    106557
+   ],
+   "rels": [
+    51856,
+    51643
+   ],
+   "unit_transitions": {
+    "UNGOVERNED→N/A": 205,
+    "AGREE→UNGOVERNED": 189,
+    "UNGOVERNED→UNVERIFIED": 7,
+    "AGREE→N/A": 42,
+    "added": 0
+   },
+   "relation_status_changes": {
+    "IDAFA|removed": 181,
+    "SUBJECT|removed": 45,
+    "PREDICATION|removed": 26,
+    "VERB_FRAME|F01|LICENSED→DEFERRED": 7,
+    "VERB_FRAME|removed": 33,
+    "ATTACH|removed": 1,
+    "MASDAR|added": 32,
+    "VERB_FRAME|added": 33,
+    "SUBJECT|added": 7,
+    "ATTACH|added": 1
+   },
+   "relation_text_only": 800,
+   "empty_class_evidence": [
+    0,
+    0
+   ],
+   "english_or_python_leaks": [
+    0,
+    0
+   ],
+   "object_requirement": [
+    {
+     "NOT_FOUND_IN_SCOPE": 8143,
+     "UNLINKED_CANDIDATE": 1680,
+     "null": 2412,
+     "KHABAR_CANDIDATE": 1195,
+     "UNANALYZED_COMPLEMENT": 93,
+     "CASE_NOT_WRITTEN": 95
+    },
+    {
+     "NOT_FOUND_IN_SCOPE": 8159,
+     "UNLINKED_CANDIDATE": 1670,
+     "null": 2412,
+     "KHABAR_CANDIDATE": 1195,
+     "UNANALYZED_COMPLEMENT": 92,
+     "CASE_NOT_WRITTEN": 90
+    }
+   ]
+  },
+  "relation_type_status": {
+   "ADVP|DEFERRED": [
+    347,
+    347
+   ],
+   "ADVP|LICENSED": [
+    877,
+    877
+   ],
+   "ATTACH|DEFERRED": [
+    11943,
+    11944
+   ],
+   "ATTACH|LICENSED": [
+    39,
+    38
+   ],
+   "CONDITION|DEFERRED": [
+    1304,
+    1304
+   ],
+   "CONDITION|LICENSED": [
+    183,
+    183
+   ],
+   "CONTAINER_RELATIVE|DEFERRED": [
+    2,
+    2
+   ],
+   "CONTAINER_RELATIVE|LICENSED": [
+    16,
+    16
+   ],
+   "IDAFA|DEFERRED": [
+    40,
+    40
+   ],
+   "IDAFA|LICENSED": [
+    2564,
+    2383
+   ],
+   "MASDAR|DEFERRED": [
+    0,
+    22
+   ],
+   "MASDAR|LICENSED": [
+    392,
+    402
+   ],
+   "NASIKH|DEFERRED": [
+    1901,
+    1901
+   ],
+   "NASIKH|LICENSED": [
+    300,
+    300
+   ],
+   "OBJECT|DEFERRED": [
+    72,
+    72
+   ],
+   "OBJECT|LICENSED": [
+    1423,
+    1423
+   ],
+   "PP|LICENSED": [
+    11518,
+    11518
+   ],
+   "PREDICATION|DEFERRED": [
+    2047,
+    2023
+   ],
+   "PREDICATION|LICENSED": [
+    213,
+    212
+   ],
+   "PREDICATION|REJECTED": [
+    69,
+    68
+   ],
+   "PREDICATIVE_PP|DEFERRED": [
+    96,
+    96
+   ],
+   "PREDICATIVE_PP|LICENSED": [
+    88,
+    88
+   ],
+   "RESUMPTIVE|DEFERRED": [
+    13,
+    13
+   ],
+   "SILAH|DEFERRED": [
+    417,
+    417
+   ],
+   "SILAH|LICENSED": [
+    1051,
+    1051
+   ],
+   "SUBJECT|DEFERRED": [
+    456,
+    451
+   ],
+   "SUBJECT|LICENSED": [
+    581,
+    548
+   ],
+   "VERB_FRAME|DEFERRED": [
+    3668,
+    3675
+   ],
+   "VERB_FRAME|LICENSED": [
+    9950,
+    9943
+   ],
+   "VOCATIVE|LICENSED": [
+    143,
+    143
+   ],
+   "VOC_FOLLOWER|LICENSED": [
+    143,
+    143
+   ]
+  },
+  "inflection": [
+   {
+    "UNGOVERNED": 38381,
+    "MABNI": 31478,
+    "AGREE": 19799,
+    "N/A": 13791,
+    "UNVERIFIED": 2941,
+    "CONFLICT": 167
+   },
+   {
+    "UNGOVERNED": 38358,
+    "MABNI": 31478,
+    "AGREE": 19568,
+    "N/A": 14038,
+    "UNVERIFIED": 2948,
+    "CONFLICT": 167
+   }
+  ],
+  "inflection_checker_errors": [
+   0,
+   0
+  ],
+  "inflection_conflicts": [
+   167,
+   167
+  ],
+  "M7_baseline": {
+   "unit": "جملة الطبقة القديمة (المرحلة ١٤)",
+   "total": 6190,
+   "closed": 53,
+   "F_complete": 5178,
+   "closed_unreconciled": 42,
+   "unified": {
+    "CLOSED_RECONCILED": 11,
+    "CLOSED_UNRECONCILED": 32,
+    "OPEN": 6147,
+    "obligations_met_by_14a": 13788,
+    "obligations_met_legacy_only": 11875,
+    "obligations_layer_conflict": 3657,
+    "obligations_open": 40782
+   },
+   "note": "closed وF_complete من الطبقة القديمة وحدها؛ وunified من شهادة الإغلاق الموحَّدة (sarf.algebra.closure_certificate) التي تستهلك علاقات 14أ: CLOSED_RECONCILED مغلقةٌ في الطبقة القديمة ولا مفتوح في 14أ داخل مداها، وobligations_met_by_14a التزاماتٌ استوفتها علاقةٌ مرخَّصة مسمّاة، وobligations_layer_conflict ما استوفته الطبقة القديمة وأجّلته 14أ. closed_unreconciled: المغلقة التي في مداها علاقةٌ في 14أ مؤجَّلة أو إطارٌ بالتزامٍ مفتوح"
+  },
+  "M7_final": {
+   "unit": "جملة الطبقة القديمة (المرحلة ١٤)",
+   "total": 6190,
+   "closed": 53,
+   "F_complete": 5178,
+   "closed_unreconciled": 42,
+   "unified": {
+    "verdicts": {
+     "CLOSED_IN_FACE": 11,
+     "CLOSED_WITH_SHARED_STRUCTURE": 35,
+     "OPEN_REQUIRED_OBLIGATION": 805,
+     "DEFERRED_BOUNDARY": 1790,
+     "DEFERRED_ANALYSIS_SELECTION": 288,
+     "INCOMPLETE_RULE_COVERAGE": 3261
+    },
+    "obligations": {
+     "MET": 24040,
+     "MET_IN_ALL_FACES": 1384,
+     "SELECTION": 5844,
+     "OPEN": 567,
+     "COVERAGE": 28473,
+     "BOUNDARY": 1917,
+     "OPTIONAL_ABSENT": 4070,
+     "CONFLICT": 3807
+    },
+    "obligations_discharged_by_named_14a_relation": 21284,
+    "residuals": {
+     "SELECTION": 21451,
+     "BOUNDARY": 369,
+     "COVERAGE": 1705,
+     "REQUIRED": 534
+    },
+    "rejected_faces": 74
+   },
+   "note": "closed وF_complete من الطبقة القديمة وحدها؛ وunified من شهادة الإغلاق الموحَّدة v2 (sarf.algebra.closure_certificate): أحكام الجملة السبعة، وحالات الالتزامات بأنواعها (لا يُستوفى التزامٌ إلا بعلاقةٍ من نوعه للوحدة والوجه)، وما في 14أ داخل المدى مؤجَّلاً مصنَّفاً (اختيار، حدّ، تغطية، لازم). closed_unreconciled: المغلقة التي في مداها علاقةٌ في 14أ مؤجَّلة أو إطارٌ بالتزامٍ مفتوح"
+  }
+ },
+ "qac_measurement_only": {
+  "E02_v2": {
+   "noun": 794,
+   "verb": 0,
+   "particle_label_on_fa": 1
+  },
+  "E03_v2": "disabled (P1 pending owner)",
+  "E02_v1_withdrawn": 156,
+  "E03_v1_withdrawn": 91
+ },
+ "corrections": {
+  "E02": "v1 عدّ «رُدُّهُ، مُدُّهُ» (الأمر المضعّف) اسماً؛ v2 تمتنع في الجذع ذي الحرفين: سُحبت اسمية 156 وقوعاً (رَبُّ، كُلُّ… مع الضمير)، ولا خطأ عند QAC في 794 الباقية",
+  "E03": "v1 جعل «لا يبدأ فعلٌ بـإِ» عامّةً وتنقضها التلتلة (إِخَالُ)؛ v2 معطَّلة حتى يُعتمد P1: سُحبت اسمية 91 وقوعاً (إِحۡدَى، إِلَٰهَ، إِثۡمَ…)",
+  "governor_circularity": "العامل لا يُثبت زمن معموله إلا بحرف مضارعةٍ مكتوب مستقل: 7 أطرٍ صارت مؤجَّلة (منها يَجِدُوا 18:53، وجذره غير مقبول)",
+  "rival_check": "لا «لا منافس» ووراء المرشّح مرفوعٌ كتابةً صنفه غير محسوم: 9 فواعل صارت مؤجَّلة — 4:11 اللَّهُ، 4:95 الْقَٰعِدُونَ، 7:89 اللَّهُ، 10:27 وُجُوهُ، 11:123 الْأَمْرُ، 16:69 مُّخْتَلِفٌ، 16:103 بَشَرٌ، 74:56 اللَّهُ، 81:29 اللَّهُ",
+  "alla": "«أَلَّا» مع حذف النون: 22 من 32 مؤجَّلة بوجهي المصدرية والتفسير؛ و10 مرخَّصة بالفتحة"
+ },
+ "registry_status": {
+  "منفّذ ومختبر ويصل إلى المستهلك": 26,
+  "منفّذ جزئياً": 16,
+  "مسألة تحتاج حكم المالك": 3,
+  "غير منفّذ": 3,
+  "مؤجَّل لنقص مورد": 1,
+  "منفّذ غير مختبر": 1
+ },
+ "tests": {
+  "test_closure": "ALL OK (G01–G24, M20–M23)",
+  "test_batch_b": "ALL OK",
+  "test_batch_d": "ALL OK",
+  "test_batch_e": "ALL OK",
+  "test_batch_f": "ALL OK (v2)",
+  "test_round006": "ALL OK (93)",
+  "test_relations": "ALL OK (30 PASS, 6 DIFFERS الموثّقة)",
+  "test_inflection": "ALL OK",
+  "test_algebra": "ALL OK",
+  "contract_batch2": "9/14"
+ }
+}
