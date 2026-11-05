@@ -582,8 +582,12 @@ def _inflection(t, nxt=None):
                             f'({"، ".join(str(x.get("id")) for x in o.get("meanings") or [])}) لا تذكر «{cap}»، وفئته تذكره']
         g_ = str(o['group'])
         role_name, rule_ = None, None
+        pp_ = next((x for x in t.roles if x['src'] == 'pp'), None)
         if g_ == NASIKH_KANA and cap == 'رفع' or g_ == NASIKH_INNA and cap == 'نصب':
             role_name, rule_ = f'اسم «{o["operator"]}»', f'حكم الناسخ في المرحلة ١١ (مج {g_})'
+        elif pp_ and cap == 'جر':
+            # مكمّل الجار في P01 المرخَّصة: دوره «مجرور بحرف الجر» من العلاقة نفسها (كما في P03)، لا «لا دور»
+            role_name, rule_ = 'مجرور بحرف الجر', 'P01'
         out['governor'] = dict(kind='عامل', operator=o['operator'], position=op.loc, group=o['group'], expected=cap,
                                observed=r.get('observed'), consistent=r.get('consistent'), role=r.get('role'),
                                target_uid=t.uid, operator_proof=list((o.get('judgement') or {}).get('proof') or []),
@@ -593,6 +597,7 @@ def _inflection(t, nxt=None):
                                target_slot=(r.get('target') or {}).get('slot'), target_word=(r.get('target') or {}).get('word_index'),
                                level='محلّي' if r.get('observed') == 'محلاً' else 'لفظي',
                                role_name=role_name, role_rule=rule_, relation_status=LICENSED if role_name else None,
+                               **(dict(relation_id=pp_['rid']) if rule_ == 'P01' else {}),
                                relation='مباشر' if cap in caps else
                                'بوساطة (في الجرد)' if cap in capd['mediated'] else 'غير مرخَّص في الجرد')
         gov_txt = f'بـ«{o["operator"]}»' if cap not in capd['mediated'] or cap in caps else \
@@ -626,7 +631,9 @@ def _inflection(t, nxt=None):
         out['cause'] = f'{kw} مبني' + (f' على {bv}: حركة آخره حركة بناءٍ لا علامة إعراب' if bv else '') + \
             '؛ والحكم إعرابٌ محلّي'
         role_part = g.get('role_name') or ''
-        if g.get('kind') == 'عامل' and not role_part:
+        if g.get('role_rule') == 'P01':
+            tail = f'، مجرور بحرف الجر «{g.get("operator")}»'
+        elif g.get('kind') == 'عامل' and not role_part:
             tail = f' {gov_txt}'
         else:
             tail = f' {role_part}' + (f'، والمضاف «{src.get("of")}»' if src.get('src') in ('idafa',) and src.get('of') else
@@ -663,7 +670,9 @@ def _inflection(t, nxt=None):
     out['cause'] = ev.split('؛ والجذر غير مثبت')[0]   # احتمال حذف اللام لا يخصّ وجهاً اتفق فيه العامل والعلامة
     mp = _mark_phrase(name, cap)
     rn = g.get('role_name')
-    if rn and src['src'] == 'operator':
+    if rn and g.get('role_rule') == 'P01':
+        out['statement'] = f'{kind} مجرور بحرف الجر «{g.get("operator")}» وعلامة {STATE_NOUN[cap]} {mp}'
+    elif rn and src['src'] == 'operator':
         out['statement'] = f'{rn} {STATE_ADJ[cap]} وعلامة {STATE_NOUN[cap]} {mp}'
     elif rn:
         lead = {'ibtida': f'{rn} {STATE_ADJ[cap]} بالابتداء', 'zarf': f'{rn} {STATE_ADJ[cap]} على الظرفية'}.get(
@@ -1895,6 +1904,8 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
         if rec['type'] == 'PREDICATION' and hd.get('predicate') in by_uid:
             by_uid[hd['predicate']].roles.append(dict(src='khabar', expected='رفع', rid=rid, role_name='خبر', rule=rec['rule_id'],
                                                       of=by_uid[hd['subject']].text))
+        if rec['type'] == 'PP' and rec['rule_id'] == 'P01' and hd.get('complement') in by_uid:
+            by_uid[hd['complement']].roles.append(dict(src='pp', expected='جر', rid=rid, role_name='مجرور بحرف الجر', rule='P01'))
         if rec['type'] == 'ADVP' and hd.get('complement') in by_uid:
             by_uid[hd['complement']].roles.append(dict(src='idafa', expected='جر', rid=rid, role_name='مضاف إليه', rule='P02',
                                                        of=by_uid[hd['adverb']].text))
@@ -2219,6 +2230,30 @@ def check_cross(records, axes):
         r = ids.get(g.get('relation_id'))
         if r is not None and r.get('selection') == DEFERRED and g.get('role_name') and not g.get('face'):
             errs.append(f'{u}: الدور «{g["role_name"]}» من وجهٍ غير مختار ({r["relation_id"]}) بلا تسمية وجهه')
+    # ٧ هوية المرشّح: لا تأخذ الوحدة سماتها في الطبقات من مرشّحين مختلفين — الزمن المثبت في الإطار يوافق البناء في المحور
+    #   وأثر العامل، والبناء للمعلوم والمجهول المثبت يوافق دور المسند إليه
+    for r in records:
+        if r['type'] != 'VERB_FRAME':
+            continue
+        fr = r.get('frame') or {}
+        vu = r['heads'].get('verb')
+        ax = axes.get(vu) or {}
+        inf = ax.get('inflection') or {}
+        tense, tst = (fr.get('tense') or (None, None))[:2]
+        voice, vst = (fr.get('voice') or (None, None))[:2]
+        bld = (inf.get('build') or (None,))[0]
+        if tst == 'مثبت' and tense in ('ماضٍ', 'أمر') and bld == 'معرب':
+            errs.append(f'{vu}: الزمن المثبت في الإطار «{tense}» والمحور يقول «معرب» — سماتٌ من مرشّحين مختلفين')
+        if tst == 'مثبت' and tense == 'مضارع' and bld == 'مبني' and 'نون' not in str((inf.get('build') or (None, ''))[1]):
+            errs.append(f'{vu}: الزمن المثبت في الإطار «مضارع» والمحور يقول «مبني» بلا نونٍ مكتوبة — سماتٌ من مرشّحين مختلفين')
+        g = inf.get('governor') or {}
+        if tst == 'مثبت' and tense != 'مضارع' and g.get('kind') == 'عامل' and g.get('expected') in ('جزم', 'نصب'):
+            errs.append(f'{vu}: عاملٌ يقتضي «{g.get("expected")}» على فعلٍ زمنه المثبت «{tense}» — سماتٌ من مرشّحين مختلفين')
+        if vst == 'مثبت' and voice in ('معلوم', 'مجهول'):
+            want = 'نائب فاعل' if voice == 'مجهول' else 'فاعل'
+            for s_ in records:
+                if s_['type'] == 'SUBJECT' and s_['heads'].get('verb') == vu and s_.get('role_name') and s_['role_name'] != want:
+                    errs.append(f'{s_["relation_id"]}: الدور «{s_["role_name"]}» والبناء المثبت في الإطار «{voice}» — سماتٌ من مرشّحين مختلفين')
     # ٦ ربط المقدّمات: كل رابطٍ يسمّي علاقةً موجودة، ومقدّمته (إن كانت معرّف علاقة) هي العلاقة نفسها،
     #   وحالته المسجّلة حالتها الفعلية؛ ومرشّحه من مرشّحات السجل أو أوجهه
     for r in records:

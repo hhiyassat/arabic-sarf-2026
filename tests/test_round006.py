@@ -404,5 +404,15 @@ m = copy.deepcopy(o1249)
 next(r for r in m['records'] if r['relation_id'] == s1249['relation_id'])['selection'] = 'DEFERRED'
 check('M16 إفساد الاختيار (دورٌ من علاقةٍ اختيارها مؤجَّل بلا تسمية وجه) يكشفه الفاحص العابر للطبقات', bool(check_cross(m['records'], m['axes'])))
 
+# ١٩ هوية المرشّح في الطبقات: الزمن والبناء والعامل والدور من مرشّحٍ واحد
+check('X52 هوية المرشّح: 2:282 و12:49 بلا خلطٍ بين الإطار والمحور والعامل والدور', not clean(o) and not clean(o1249), (clean(o)[:2], clean(o1249)[:2]))
+f19 = rec(o, 'VERB_FRAME', verb=at(o, '2:282:19', 'يَكْتُبَ')[0])
+m = copy.deepcopy(o)
+next(r for r in m['records'] if r['relation_id'] == f19['relation_id'])['frame']['tense'] = ('ماضٍ', 'مثبت', None)
+check('M17 إفساد الزمن في الإطار (ماضٍ مثبت ومحوره معرب منصوبٌ بـ«أن») يكشفه الفاحص العابر للطبقات', bool(check_cross(m['records'], m['axes'])))
+m = copy.deepcopy(o1249)
+next(r for r in m['records'] if r['relation_id'] == s1249['relation_id'])['role_name'] = 'فاعل'
+check('M18 إفساد الدور (فاعل لفعلٍ بناؤه المجهول مثبت) يكشفه الفاحص العابر للطبقات', bool(check_cross(m['records'], m['axes'])))
+
 print('ALL OK' if not FAIL else f'FAILED {len(FAIL)}: {FAIL}')
 sys.exit(1 if FAIL else 0)
