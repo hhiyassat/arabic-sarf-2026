@@ -29,6 +29,32 @@ REL_SPECIFIC = ('الَّذِي', 'الَّتِي', 'الَّذِينَ', 'ال�
 REL_AGR = {'الَّذِي': (3, 'singular', 'masc'), 'الَّتِي': (3, 'singular', 'fem'), 'الَّذِينَ': (3, 'plural', 'masc')}
 
 
+def _voice_faces(text):
+    """F02 (مقترحة): أوجه البناء للمعلوم والمجهول في المضارع، كلٌّ بتحقيقه للمكتوب (حرفاً وحركة)، لا بالافتراض.
+    يُفَالُّ (المضعّف بعد الألف): يُفَاعِلُ ويُفَاعَلُ يُدغمان فتخفى الحركة الفارقة ← الوجهان يحقّقان المكتوب.
+    يُفَالُ (الأجوف): المجهول في الثلاثي والمزيد بالهمزة؛ والمعلوم يَفُولُ/يَفِيلُ/يَفَالُ بفتح حرف المضارعة، أو يُفِيلُ بالياء ← لا يحقّقه.
+    → [{id, voice, status, why}] أو None إن لم يكن الرسم من هذين"""
+    marks = set(chr(c) for c in range(0x064B, 0x0653)) | {'\u0670'}
+    g = []
+    for ch in text:
+        if ch in marks and g:
+            g[-1][1].add(ch)
+        elif ch not in marks:
+            g.append([ch, set()])
+    if len(g) != 4 or g[0][0] not in 'يتنأ' or DAMMA not in g[0][1] or FATHA not in g[1][1] or g[2][0] not in 'اآ':
+        return None
+    if SHADDA in g[3][1]:
+        return [dict(id='V1', voice='معلوم', status=LICENSED,
+                     why='يُفَاعِلُ من المضعّف (كسرة العين) يُدغم فيُكتب «يُفَالُّ»: يحقّق المكتوب، والحركة الفارقة لا تظهر'),
+                dict(id='V2', voice='مجهول', status=LICENSED,
+                     why='يُفَاعَلُ من المضعّف (فتحة العين) يُدغم فيُكتب «يُفَالُّ»: يحقّق المكتوب، والحركة الفارقة لا تظهر')]
+    return [dict(id='V1', voice='معلوم', status=REJECTED,
+                 why='المعلوم من الأجوف يَفُولُ أو يَفِيلُ أو يَفَالُ بفتح حرف المضارعة (الثلاثي)، أو يُفِيلُ بالياء (المزيد بالهمزة): '
+                     'لا يحقّق المكتوب «يُفَالُ» (ضمة حرف المضارعة، وفتحة الفاء، وألفٌ بعدها)'),
+            dict(id='V2', voice='مجهول', status=LICENSED,
+                 why='يُفَالُ مجهول الأجوف في الثلاثي والمزيد بالهمزة: يحقّق المكتوب حرفاً وحركة')]
+
+
 def _pron_ar(d):
     """ضمير الصيغة بالعربية: الشخص والعدد والجنس (والقيمة غير المعيَّنة «—»)."""
     if not isinstance(d, dict):
@@ -83,6 +109,7 @@ class _Tok:
         self.mabni_state = None                         # حالة المبني بلا دور: NO_MAHALL، MAHALL_UNRESOLVED، ROLE_RULE_NOT_IMPLEMENTED، EVIDENCE_NOT_ADOPTED
         self.usage = None                               # استعمال العامل في هذا التحليل (للوحدة العاملة)
         self.frame_cands = None                         # مرشّحات إطار الفعل القائمة والممنوعة (F01)
+        self.voice_faces = None                         # أوجه البناء بتحقيقها للمكتوب (F02)
 
         prot = G.Theta.get('protected') or {}
         self.golden = prot.get('cls') == 'اسم ذهبي'
@@ -1364,6 +1391,14 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
         usage = f'ناسخ «{nas["operator"]}» (مج 10، حكم المرحلة ١١)' if nas else \
             (f'صيغةٌ من صيغ «{vb}» في الجرد المعتمد (VERBAL): ناسخٌ أو تامّ، غير محسوم في حكم المرحلة ١١' if vb else
              'غير ناسخ في حكم المرحلة ١١')
+        # F02: البناء غير المثبت في المرحلة ١٣ يُفحص بأوجهه، كلٌّ بتحقيقه للمكتوب؛ فإن منع الرسمُ وجهاً بمانعٍ مثبت ثبت الآخر
+        v.voice_faces = None
+        if vf.get('st') != 'مثبت' and not nas and 'مجهول' in (vf.get('alt') or []):
+            v.voice_faces = _voice_faces(v.text)
+            live_v = [f_ for f_ in v.voice_faces or [] if f_['status'] == LICENSED]
+            if v.voice_faces and len(live_v) == 1:
+                vf = dict(v=live_v[0]['voice'], st='مثبت', ev=f'F02: {live_v[0]["why"]}؛ والوجه الآخر ممنوع: ' +
+                          next(f_['why'] for f_ in v.voice_faces if f_['status'] == REJECTED))
         # البناء للمعلوم أو المجهول لا ينطبق على الفعل العامل من الجرد (كان، ليس): غيابه ليس نقصاً
         coherent = all(x.get('st') == 'مثبت' for x in (tf, sf)) and (vf.get('st') == 'مثبت' or not vf and (nas or vb))
         cands = []
@@ -1400,10 +1435,15 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
         # البناء غير المثبت لا يُعامَل معلوماً بالافتراض: الدور وجهان (فاعل في المعلوم، ونائب فاعل في المجهول)،
         # والمشترك بينهما مثبت (مسندٌ إليه مرفوع)، والاختيار مؤجَّل بتأجيل البناء
         srole = 'نائب فاعل' if passive else 'فاعل' if voice_known or nas else 'فاعل أو نائب فاعل'
+        vfl = v.voice_faces or []
         voice_faces = None if voice_known or nas else dict(
             معلوم='فاعل', مجهول='نائب فاعل',
-            note=f'بناء «{v.text}» غير مثبت ({vf.get("st") or "مؤجَّل"}): فاعلٌ إن كان مبنياً للمعلوم، ونائب فاعلٍ إن كان مبنياً للمجهول؛ '
-                 'والرفع مشتركٌ بين الوجهين')
+            faces=[dict(f_, role='فاعل' if f_['voice'] == 'معلوم' else 'نائب فاعل') for f_ in vfl] or None,
+            note=f'بناء «{v.text}» غير مثبت ({vf.get("st") or "مؤجَّل"}): ' +
+                 ('؛ '.join(f'{"فاعلٌ" if f_["voice"] == "معلوم" else "نائب فاعلٍ"} في وجه {f_["voice"]} ({f_["id"]} {f_["status"]}: {f_["why"]})'
+                            for f_ in vfl) if vfl else
+                  'فاعلٌ إن كان مبنياً للمعلوم، ونائب فاعلٍ إن كان مبنياً للمجهول، ولم يُفحص تحقيق الوجهين') +
+                 '؛ والرفع مشتركٌ بين الوجهين')
         if nas:
             # التزامات الناسخ تُسوّى بسجلّ V01 نفسه: ما رخّصه لا يبقى مفتوحاً، وما نقص يُسمّى بسببه
             v01 = next((r_ for r_ in R if r_['type'] == 'NASIKH' and r_['heads'].get('nasikh') == v.uid), None)
@@ -1508,7 +1548,10 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                   ('مرشّحاتٌ صرفية كاملة متنافسة' if cands else 'بعض سمات الفعل مرشّحة: لا تُجمع من مرشّحاتٍ متفرقة'),
                   premises=([f'الصنف: فعل — {(v.feats.get("pos") or {}).get("ev")}'] +
                             [f'{n_}: {_pron_ar(x.get("v")) if isinstance(x.get("v"), dict) else (x.get("v") or "—")} ({x.get("st") or "مؤجَّل"})'
-                             for n_, x in (('الزمن', tf), ('البناء', vf), ('ضمير الصيغة', sf)) if x])
+                             for n_, x in (('الزمن', tf), ('البناء', vf), ('ضمير الصيغة', sf)) if x]) +
+                            ([f'البناء بأوجهه: {vf["ev"]}'] if str(vf.get('ev') or '').startswith('F02') else
+                             [f'البناء بأوجهه (F02): ' + '؛ '.join(f'{f_["id"]} {f_["voice"]} [{f_["status"]}]: {f_["why"]}' for f_ in v.voice_faces)]
+                             if v.voice_faces else [])
                   if not cands else
                   ['الصنف: فعل في كل المرشّحات القائمة'] +
                   [f'المرشّح القائم {c_["id"]}: {c_["tense"]}، {c_["voice"]}، {c_["subject_role"]}' for c_ in cands if c_['status'] != REJECTED] +
@@ -1543,7 +1586,8 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                           checked=['منافسٌ مرفوعٌ في الإطار', 'عاملٌ مقبول في المرفوع', 'طرفٌ في علاقةٍ أخرى'],
                           role_name=srole, mark_fact=dict(uid=u.uid, mark=subj.get('mark')), edges=[('SUBJECT', v.uid, u.uid)],
                           **(dict(face='المعلوم أو المجهول', selection=DEFERRED, face_note=voice_faces['note'],
-                                  voice_faces={k_: v_ for k_, v_ in voice_faces.items() if k_ != 'note'},
+                                  voice_faces={k_: v_ for k_, v_ in voice_faces.items() if k_ not in ('note', 'faces')},
+                                  voice_face_evidence=voice_faces.get('faces'),
                                   alternatives=[f'«{u.text}» نائب فاعل (إن كان «{v.text}» مبنياً للمجهول)',
                                                 f'«{u.text}» فاعل (إن كان «{v.text}» مبنياً للمعلوم)'])
                              if voice_faces else {})))
