@@ -539,6 +539,8 @@ for pv in per_verse:
                     + ''.join(f"<br>مرشّح {h(c['id'])}: {h(c.get('tense'))}، {h(c.get('voice'))}، {h(c.get('subject_role'))} "
                               f"[{h(c['status'])}] {h(c.get('realization') or '')} {h(c.get('reason') or '')}" for c in fr.get('candidates') or [])
                     + ''.join(f"<br>التزامٌ مفتوح: {h(x)}" for x in fr.get('open') or [])
+                    + (f"<br>المفعول به: {h(fr['object_requirement']['status'])} ({h(fr['object_requirement']['kind'])}) — {h(fr['object_requirement']['note'])}"
+                       if fr.get('object_requirement') else '')
                     + (f"<br>سمات المرحلة ٨: {h(fr['stage8'].get('tense'))}، {h(fr['stage8'].get('voice'))} — {h(fr['stage8'].get('note'))}"
                        if fr.get('stage8') else ''))
         if r.get('parts'):

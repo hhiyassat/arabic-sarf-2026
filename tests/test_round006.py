@@ -414,5 +414,13 @@ m = copy.deepcopy(o1249)
 next(r for r in m['records'] if r['relation_id'] == s1249['relation_id'])['role_name'] = 'فاعل'
 check('M18 إفساد الدور (فاعل لفعلٍ بناؤه المجهول مثبت) يكشفه الفاحص العابر للطبقات', bool(check_cross(m['records'], m['axes'])))
 
+# ٢٠ نوع متطلَّب المفعول وحالته، لا «التزامٌ مفتوح» عامّ
+f28 = rec(o, 'VERB_FRAME', verb=at(o, '2:282:28', 'يَتَّقِ')[0])['frame']
+f3 = rec(o, 'VERB_FRAME', verb=at(o, '2:282:3', 'ءَامَنُوا')[0])['frame']
+check('X53 «يَتَّقِ اللَّهَ»: منصوبٌ مكتوب لم يُربط (نقص ربطٍ لا نقص نص)؛ و«ءَامَنُوا» بلا مفعولٍ مكتوب والتعدّي مرشّح: لا متطلَّب مثبت؛ ولا يدخل أيٌّ منهما الالتزامات المفتوحة',
+      (f28.get('object_requirement') or {}).get('kind') == 'UNLINKED_WRITTEN' and 'اللَّهَ' in f28['object_requirement']['note']
+      and (f3.get('object_requirement') or {}).get('kind') == 'NO_WRITTEN_OBJECT' and not f28['open'] and not f3['open'],
+      (f28.get('object_requirement'), f3.get('object_requirement')))
+
 print('ALL OK' if not FAIL else f'FAILED {len(FAIL)}: {FAIL}')
 sys.exit(1 if FAIL else 0)

@@ -1519,6 +1519,7 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                         why=f'ضمير الصيغة غير مثبت ({sf.get("st")}): {sf.get("ev")}')
         objs = [r_ for r_ in R if r_['type'] == 'OBJECT' and r_['heads'].get('verb') == v.uid]
         obj2 = None
+        obj_req = None
         if not nas and trf.get('st') == 'مثبت' and trf.get('v') == 'متعدٍّ' and not any(o_['status'] == LICENSED for o_ in objs):
             j = i + 1
             start = idx[subj['unit'].k] + 1 if subj and subj.get('unit') else i + 1
@@ -1540,7 +1541,18 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                             mark_fact=dict(uid=u.uid, mark=_written_mark(u)[0]), edges=[('OBJECT', v.uid, u.uid)])
                 R.append(obj2)
         elif trf.get('v') == 'متعدٍّ' and not objs:
-            opn.append(f'المفعول به غير مربوط (التعدّي {trf.get("st")}): ظاهرٌ لم تغطّه O02، أو محذوفٌ جائز؛ ولا يُحكم بنقصٍ')
+            # نوع المتطلَّب وحالته، لا «التزامٌ مفتوح» عامّ: منصوبٌ مكتوب لم يُربط (نقص ربطٍ لا نقص نص)، أو لا مفعول مكتوب
+            # والتعدّي مرشّح (لازمٌ في الاستعمال أو محذوفٌ مفعوله): ولا متطلَّب لازمٌ ثبت عدم استيفائه
+            st0 = idx[subj['unit'].k] + 1 if subj and subj.get('unit') else i + 1
+            wn = next((toks[j_] for j_ in range(st0, fe_) if word_start(toks[j_]) and not toks[j_].conj and toks[j_].nounish()
+                       and (toks[j_].case == 'نصب' or 'نصب' in (_written_mark(toks[j_])[1] or ()))
+                       and toks[j_].k not in governed and toks[j_].k not in bound), None)
+            obj_req = dict(kind='UNLINKED_WRITTEN', status='غير مربوط',
+                           note=f'منصوبٌ مكتوب «{wn.text}» ({wn.loc}) في الإطار لم يُربط مفعولاً: التعدّي {trf.get("st")} فلا تجري O02؛ '
+                                'نقصٌ في الربط لا في النص') if wn else \
+                dict(kind='NO_WRITTEN_OBJECT', status='لا متطلَّب مثبت',
+                     note=f'لا مفعول مكتوب في الإطار، والتعدّي {trf.get("st")}: لازمٌ في هذا الاستعمال أو محذوفٌ مفعوله؛ '
+                          'ولا متطلَّب لازمٌ ثبت عدم استيفائه')
         if cands:
             live = [c_ for c_ in cands if c_['status'] != REJECTED]
             subj = dict(kind='من المرشّح القائم' if len(live) == 1 else 'مرشّحات متنافسة',
@@ -1579,7 +1591,7 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                              subject=dict({k: x for k, x in (subj or {}).items() if k != 'unit'},
                                           unit=(subj or {}).get('unit').uid if (subj or {}).get('unit') else None) if subj else None,
                              objects=[o_['relation_id'] for o_ in objs] + ([obj2['relation_id']] if obj2 else []),
-                             candidates=cands, open=opn))
+                             candidates=cands, open=opn, object_requirement=obj_req))
         R.append(fr)
         frames[v.k] = fr
         if subj and subj['status'] != LICENSED and subj.get('candidates'):
