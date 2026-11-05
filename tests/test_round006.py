@@ -378,7 +378,7 @@ check('X46 أجزاء الشرط في السبب بأسمائها العربية
       cr and all('=' not in r['reason'] and 'answer' not in r['reason'] and 'condition_verb' not in r['reason'] for r in cr), [r['reason'] for r in cr])
 import re as _re
 leak = [p for r in o['records'] for p in r['premises'] + [r['reason']] + list(r.get('alternatives') or [])
-        if isinstance(p, str) and _re.search(r"\b(singular|dual|plural|masc|fem)\b|\{'|\['", p)]
+        if isinstance(p, str) and _re.search(r"\b(singular|dual|plural|masc|fem|common)\b|\{'|\['|ملف المبنيات: [a-z_]+(?! \()", p)]
 check('X47 لا سماتٌ بالإنجليزية ولا تمثيل بايثون في سبب العلاقات ومقدّماتها وبدائلها', not leak, leak[:3])
 
 noev = [(o['tokens'][i][1], o['tokens'][i][2]) for i, (u, l, t) in enumerate(o['tokens'])

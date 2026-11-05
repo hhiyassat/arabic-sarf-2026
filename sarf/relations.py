@@ -61,7 +61,7 @@ def _pron_ar(d):
         return str(d)
     P = {1: 'متكلم', 2: 'مخاطب', 3: 'غائب'}
     N = {'singular': 'مفرد', 'dual': 'مثنى', 'plural': 'جمع'}
-    G = {'masc': 'مذكر', 'fem': 'مؤنث'}
+    G = {'masc': 'مذكر', 'fem': 'مؤنث', 'common': 'مشترك'}
     return '، '.join(m.get(d.get(k), '—' if d.get(k) is None else str(d.get(k)))
                      for k, m in (('person', P), ('number', N), ('gender', G)))
 
@@ -177,7 +177,7 @@ class _Tok:
         wc = ('اسم', self.noun_ev if (self.pos == 'اسم' and self.pos_st == 'مثبت' and not self.shape_only or self.divine) and self.noun_ev else
                    'لفظ الجلالة' if self.divine else 'اسمٌ ذهبي' if self.golden else self.elative_proof()) \
             if self.nounish() else \
-            ('اسم', f'ملف المبنيات: {self.mcat}') if self.mcat in ('separate_pronoun', 'demonstrative', 'relative', 'attached_pronoun') else \
+            ('اسم', f'ملف المبنيات: {CAT_AR.get(self.mcat, self.mcat)} ({self.mcat})') if self.mcat in ('separate_pronoun', 'demonstrative', 'relative', 'attached_pronoun') else \
             ('اسم', f'ظرفٌ من جرد المشروع (sarf.algebra.ZURUF_V) في علاقة P02 مرخَّصة: الظرف اسم') if self.adverb == 'P02:LICENSED' else \
             ('اسم', '«أيّ» منادى في V02 (و«ها» حرف تنبيه في الوحدة نفسها)') if any(r['src'] == 'munada' for r in self.roles) else \
             ('حرف + اسم', 'وحدةٌ مكتوبة مندمجة (sarf.protected.MERGED): حرف جرٍّ واسمٌ مبني، P03') if any(r['src'] == 'merged_pp' for r in self.roles) else \
@@ -185,7 +185,7 @@ class _Tok:
              ('؛ وصيغة المرحلة ١٣ «' + str((self.feats.get('pos') or {}).get('ev')) + '» من وجهٍ ممنوع' if self.frame_cands['rejected'] else '')) \
             if self.pos == 'فعل' and self.pos_st == 'مثبت' and self.frame_cands else \
             ('فعل', (self.feats.get('pos') or {}).get('ev')) if self.pos == 'فعل' and self.pos_st == 'مثبت' else \
-            ('حرف', f'ملف المبنيات: {self.mcat}') if self.mcat == 'particle' else \
+            ('حرف', f'ملف المبنيات: {CAT_AR.get(self.mcat, self.mcat)} ({self.mcat})') if self.mcat == 'particle' else \
             ('حرف', (self.mabni_state or {}).get('text')) if (self.mabni_state or {}).get('code') == 'NO_MAHALL' and self.pos != 'فعل' else \
             (None, 'الاسمية من شكل التنوين وحده: غير محسوم في هذه الطبقة (العقد T19)؛ وسمة المرحلة ١٣ «اسم» بدليل التنوين '
                    'قديمةٌ (LEGACY) لم تُغيَّر، وهذا المحور يصحّحها إلى التأجيل' if self.shape_only else 'غير محسوم')
@@ -239,7 +239,7 @@ class _Tok:
         if self.golden:
             return True, 'اسمٌ ذهبي في الجرد المعتمد (علم)'
         if self.mcat in ('separate_pronoun', 'demonstrative'):
-            return True, f'ملف المبنيات: {self.mcat}'
+            return True, f'ملف المبنيات: {CAT_AR.get(self.mcat, self.mcat)} ({self.mcat})'
         if self.dkind:
             return True, f'نوع المعرفة: {self.dkind}'
         if self.defin == 'معرفة' and self.defin_st == 'مثبت':
