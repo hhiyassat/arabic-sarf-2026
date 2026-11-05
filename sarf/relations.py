@@ -1567,17 +1567,30 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                                  if ov else 'لا اسم ظاهر بعده في إطاره: مستترٌ جوازاً، أو الفاعل متقدّمٌ مبتدأً') +
                             ('؛ ومنافسٌ مرفوعٌ آخر' if len(raf) > 1 else ''), candidates=[u.uid for u in ov])
         else:
-            alts = [x for x in (sf.get('alt') or []) if isinstance(x, dict)]
-            ov_ = overt_after(i) if any(x.get('person') == 3 for x in alts) else []
-            subj = dict(kind='غير معيَّن', role=srole, status=DEFERRED,
-                        why=f'ضمير الصيغة غير مثبت ({sf.get("st")}): {sf.get("ev")}' +
-                            ('؛ والأوجه: ' + '؛ '.join(
-                                (f'{_pron_ar(x)}: فاعله «{ov_[0].text}» ({ov_[0].loc}) مرشّحٌ ظاهر، أو مستترٌ جوازاً' if ov_ else
-                                 f'{_pron_ar(x)}: مستترٌ جوازاً أو ظاهرٌ بعده')
-                                if x.get('person') == 3 else
-                                f'{_pron_ar(x)}: مستترٌ وجوباً، وما بعده ليس فاعله' for x in alts) +
-                             '؛ ولا يُختار وجهٌ بلا دليل' if alts else ''),
-                        candidates=[u.uid for u in ov_])
+            # الأوجه كلها: المرشّح (sf.v) وبدائله؛ ولكلٍّ فاعله بحسب الصيغة: ضميرٌ متصل مكتوب في المثنى والجمع، ومستترٌ وجوباً
+            # في المتكلم والمخاطب المفرد، وظاهرٌ مرشّح أو مستترٌ جوازاً في الغائب المفرد
+            alts = [x for x in ([sf.get('v')] if isinstance(sf.get('v'), dict) else []) + list(sf.get('alt') or []) if isinstance(x, dict)]
+            ov_ = overt_after(i) if any(x.get('person') == 3 and x.get('number') == 'singular' for x in alts) else []
+
+            def _face(x):
+                if x.get('number') in ('plural', 'dual'):
+                    return f'{_pron_ar(x)}: فاعله الضمير المتصل المكتوب في الصيغة'
+                if x.get('person') in (1, 2):
+                    return f'{_pron_ar(x)}: فاعله مستترٌ وجوباً، وما بعده ليس فاعله'
+                return (f'{_pron_ar(x)}: فاعله «{ov_[0].text}» ({ov_[0].loc}) مرشّحٌ ظاهر، أو مستترٌ جوازاً' if ov_ else
+                        f'{_pron_ar(x)}: فاعله مستترٌ جوازاً أو ظاهرٌ بعده')
+            if alts and all(x.get('number') in ('plural', 'dual') for x in alts) and \
+                    len({(x.get('number'), x.get('gender')) for x in alts}) == 1:
+                # المشترك المثبت بين الأوجه يُحفظ: الفاعل في كلها الضمير المتصل المكتوب (واو الجماعة أو ألف الاثنين أو نون النسوة)،
+                # والمختلف بينها الشخص وحده؛ فالإسناد مرخَّص، والشخص مؤجَّل بأوجهه
+                subj = dict(kind='ضمير متصل مكتوب', role=srole, status=LICENSED,
+                            why=f'الفاعل الضمير المتصل المكتوب في كل أوجه الصيغة ({" / ".join(_pron_ar(x) for x in alts)})، '
+                                f'والمختلف بينها الشخص وحده، فهو مؤجَّل: {sf.get("ev")}')
+            else:
+                subj = dict(kind='غير معيَّن', role=srole, status=DEFERRED,
+                            why=f'ضمير الصيغة غير مثبت ({sf.get("st")}): {sf.get("ev")}' +
+                                ('؛ والأوجه: ' + '؛ '.join(_face(x) for x in alts) + '؛ ولا يُختار وجهٌ بلا دليل' if alts else ''),
+                            candidates=[u.uid for u in ov_])
         objs = [r_ for r_ in R if r_['type'] == 'OBJECT' and r_['heads'].get('verb') == v.uid]
         obj2 = None
         obj_req = None
