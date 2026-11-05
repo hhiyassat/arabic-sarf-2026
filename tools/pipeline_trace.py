@@ -474,6 +474,7 @@ for SP in LT:
         rows_d.append([esc(D.id), esc(f"{dl[0]} … {dl[-1]}" if dl else '—'), esc(len(Js)), 'مغلقة' if D.closed else 'مؤجَّلة',
                        esc(str((D.O.get('boundary') or {}).get('F', ''))[:100])])
         tl_d.append(f"{D.id}: {len(Js)} جملة، {'مغلقة' if D.closed else 'مؤجَّلة'}")
+        d_idx, c0 = len(rows_d) - 1, len(CERTS)
         for J in Js:
             lc = [tuple(x) for x in J.O.get('location', [])]
             frm, to = (f'{lc[0][0]}:{lc[0][1]}:{lc[0][2] + 1}', f'{lc[-1][0]}:{lc[-1][1]}:{lc[-1][2] + 1}') if lc else ('—', '—')
@@ -498,24 +499,37 @@ for SP in LT:
             from sarf.algebra import closure_certificate
             cert_ = closure_certificate(J, recs_)
             CERTS.append(cert_)
-            un_ = [f"{x['rule']} {x['status']}" for x in cert_['relation_open']]
-            sat_ = [f"{o_['name']} ← " + '، '.join((x['relation'] or x.get('evidence') or '') + (f" ({x['status']})" if x['relation'] else '')
-                                                for x in o_['satisfied_by'])
+            un_ = [f"{x['rule']} {x['status']} ({x['kind']})" for x in cert_['residuals']]
+            sat_ = [f"{o_['obligation_id'].split('/')[-1]} {o_['name']} [{o_['requirement_kind']}، {o_['status_ar']}] ← " +
+                    '، '.join((x['relation'] or x.get('evidence') or '') + (f" ({x['status']})" if x['relation'] else '') for x in o_['satisfied_by']) +
+                    (f" — باقٍ: {o_['residual_reason']}" if o_['residual_reason'] else '')
                     for o_ in cert_['obligations'] if o_['met'] and o_['satisfied_by']]
-            conf_ = [f"{o_['name']}: {o_['note']}" for o_ in cert_['obligations'] if not o_['met'] and o_['legacy_met']]
+            conf_ = [f"{o_['obligation_id'].split('/')[-1]} {o_['name']} [{o_['requirement_kind']}، {o_['status_ar']}]: {o_['residual_reason']}"
+                     for o_ in cert_['obligations'] if not o_['met'] and o_['status'] != 'OPTIONAL_ABSENT']
             scope_ = (f"الشهادة الموحَّدة: {cert_['verdict_ar']}؛ " +
-                      (f'وفي 14أ داخل مداها {len(un_)} مفتوحاً (' +
+                      (f'وفي 14أ داخل مداها {len(un_)} باقياً مصنَّفاً (' +
                        '، '.join(f'{k_}×{c_}' for k_, c_ in sorted(__import__('collections').Counter(un_).items())) + ')'
                        if un_ else 'ولا علاقة في 14أ داخل مداها مؤجَّلةٌ أو بالتزامٍ مفتوح أو باختيارٍ مؤجَّل') +
+                      f"؛ والحدّ: {'مثبت' if cert_['boundary']['proven'] else 'غير مثبت'} ({cert_['boundary']['evidence'] or '—'})" +
                       (('؛ ومستوفى: ' + ' | '.join(sat_)) if sat_ else '') +
-                      (('؛ وتعارض الطبقتين: ' + ' | '.join(conf_)) if conf_ else ''))
+                      (('؛ وغير مستوفى: ' + ' | '.join(conf_)) if conf_ else '') +
+                      (('؛ ووجوهٌ ممنوعة بمانعٍ مثبت: ' + ' | '.join(f"{x['rule']}: {x['barrier'][:80]}" for x in cert_['rejected_faces'])) if cert_['rejected_faces'] else ''))
             bonds = '<br>'.join(h(f'{b[0]}: {b[1]} → {b[2]}') for b in (J.O.get('bound') or [])) or '—'
             rows_j.append([esc(J.id), f'{frm} – {to}', f"<span class='ar'>{h(' '.join(words))}</span>",
                            ('مغلقة (الطبقة القديمة)' if J.closed else 'مفتوحة') + f"<br><b>{h(cert_['verdict_ar'])}</b><br><sub>{h(scope_)}</sub>",
                            esc(bnd.get('F') or '—'), bonds, esc(len(J.O.get('unplaced') or [])), esc('، '.join(opn) or '—')])
-            tl_j.append(f"{J.id:<14} {frm}–{to}  {'مغلقة' if J.closed else 'مفتوحة'} [{cert_['verdict_ar']}] ({'مفتوح في 14أ: ' + str(len(un_)) if un_ else 'لا مفتوح في 14أ'})  روابط {len(J.O.get('bound') or [])}  "
+            # ١٥ تحمل قيد جملها: الوحدة الخطابية لا تُعرض «مغلقة» وفي جملها حكمٌ موحَّد غير مغلق؛ ويُعرض أشدّ أحكامها
+            from sarf.algebra import CLOSURE_AR
+            order_ = list(CLOSURE_AR)
+            vs_ = [c['verdict'] for c in CERTS[c0:]]
+            worst_ = max(vs_, key=lambda x: (x not in ('CLOSED_IN_FACE', 'CLOSED_WITH_SHARED_STRUCTURE'), order_.index(x)))
+            dv_ = ('مغلقة (الطبقة القديمة)' if D.closed else 'مؤجَّلة (الطبقة القديمة)') + \
+                f"<br><b>الحكم الموحَّد لجملها: {h(CLOSURE_AR[worst_])}</b><br><sub>{h('، '.join(f'{k_}×{c_}' for k_, c_ in sorted(__import__('collections').Counter(vs_).items())))}</sub>"
+            rows_d[d_idx][3] = dv_
+            tl_d[d_idx] = f"{D.id}: {len(Js)} جملة، {'مغلقة' if D.closed else 'مؤجَّلة'} [الموحَّد: {worst_}]"
+            tl_j.append(f"{J.id:<14} {frm}–{to}  {'مغلقة' if J.closed else 'مفتوحة'} [{cert_['verdict']}] ({'باقٍ في 14أ: ' + str(len(un_)) if un_ else 'لا باقٍ في 14أ'})  روابط {len(J.O.get('bound') or [])}  "
                         f"بلا موضع {len(J.O.get('unplaced') or [])}  {' '.join(words)[:70]}")
-section(14, 'الجملة', '(الجملة تُبنى في الطبقة القديمة قبل علاقات 14أ؛ ثم تمرّ شهادة الإغلاق الموحَّدة (sarf.algebra.closure_certificate) بعدهما: كل التزامٍ للجملة يُطابَق بهوية وحدته مع العلاقة التي تستوفيه في 14أ ومعرّفها، وما استوفته الطبقة القديمة وأجّلته 14أ لا يُعدّ مستوفى، وكل علاقةٍ في 14أ داخل المدى مؤجَّلة أو بالتزامٍ مفتوح أو باختيارٍ مؤجَّل التزامٌ مفتوح. فـ«مغلقة ومصالَحة» لا تكون إلا بإغلاق الطبقة القديمة وخلوّ 14أ في المدى من مفتوح.) جهتان مختلفتان: «التمام» (F) أن في المدى نواةً ولا التزامَ نحويٍّ لازمٍ مفتوحاً (معمول، خبر، فاعل)؛ و«الإغلاق» أن تُستوفى '
+section(14, 'الجملة', '(الجملة تُبنى في الطبقة القديمة قبل علاقات 14أ؛ ثم تمرّ شهادة الإغلاق الموحَّدة v2 (sarf.algebra.closure_certificate) بعدهما: لكل التزامٍ سجلٌّ بمعرّفه ونوعه ووجهه وحالته، ولا يُستوفى إلا بعلاقةٍ من نوعه للوحدة والوجه نفسيهما (فلا يُختزل «فاعل أو نائب فاعل» في «فاعل»، ولا يُلغي جدول الإسناد القديم تأجيلاً صريحاً في 14أ)؛ وما في 14أ داخل المدى مؤجَّلاً ليس التزاماً لازماً تلقائياً، بل يُصنَّف اختياراً أو حدّاً أو نقص تغطية؛ والحكم واحدٌ من سبعة: مغلقة في وجهها، مغلقة بالبنية المشتركة، التزامٌ لازمٌ غير مستوفى، حدٌّ مؤجَّل، اختيارٌ مؤجَّل، نقص تغطية، والوجه الممنوع يُعرض بمانعه) جهتان مختلفتان: «التمام» (F) أن في المدى نواةً ولا التزامَ نحويٍّ لازمٍ مفتوحاً (معمول، خبر، فاعل)؛ و«الإغلاق» أن تُستوفى '
         'الالتزامات كلها: إغلاق كل وحدة، وموضع كل كلمة، وحسم كل علاقة. فالجملة قد تكون تامّةً في التحليل مفتوحةً غير مغلقة. والآية لا تُغلق الجملة. '
         'والروابط معروضةٌ بأطرافها، والالتزامات المفتوحة كاملةً بلا اختصار',
         rows_j, ['الجملة', 'من – إلى', 'النص', 'الإغلاق', 'التمام (F)', 'الروابط', 'كلمات بلا موضع', 'التزامات مفتوحة'], tl_j)

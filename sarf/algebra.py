@@ -2610,59 +2610,191 @@ def render_layer(G):
     return [c for c in flatten(G)]
 
 
-# ---------- شهادة الإغلاق الموحَّدة (خطة الاستكمال، الدفعة F) ----------
-# الطبقة القديمة (المرحلة ١٤) تُبنى قبل علاقات 14أ (sarf.relations)، فلا تستهلكها في بنائها. والشهادة الموحَّدة تمرّ بعدهما:
-# كل التزامٍ للجملة في الطبقة القديمة يُطابَق بهوية وحدته مع العلاقة التي تستوفيه في 14أ (ومعرّفها وحالتها)، وكل علاقةٍ في 14أ
-# داخل مدى الجملة غير مرخَّصة أو بإطارٍ فيه التزامٌ مفتوح التزامٌ مفتوحٌ في الشهادة. فلا تُعدّ الجملة مغلقةً إغلاقاً موحَّداً
-# إلا إذا أغلقتها الطبقة القديمة ولم يبقَ في 14أ داخل مداها مفتوح.
-CLOSURE_AR = {'CLOSED_RECONCILED': 'مغلقة ومصالَحة', 'CLOSED_UNRECONCILED': 'مغلقةٌ في الطبقة القديمة، غير مصالَحة مع 14أ',
-              'OPEN': 'غير مغلقة'}
+# ---------- شهادة الإغلاق الموحَّدة v2 (SARF_MAJOR_CLOSURE_01 §7) ----------
+# تمرّ بعد الطبقتين (المرحلة ١٤ وعلاقات 14أ). لكل التزامٍ سجلٌّ بهويته ومالكه ووجهه ونوعه ودليل لزومه، وحالته، والعلاقة التي استوفته
+# ودليلها، وما بقي منه. ولا يُستوفى التزامٌ إلا بعلاقةٍ من نوعه للوحدة والوجه نفسيهما: فلا يُختزل «فاعل أو نائب فاعل» في «فاعل»،
+# ولا يُسمّى طرف إسناد «تكون» فاعلاً والوجه الناقص قائم، ولا يُلغي «جدول الإسناد» في الطبقة القديمة تأجيلاً صريحاً في 14أ،
+# ولا يُخفي LICENSED في رأس سجلٍّ محلّاً أو اختياراً أو متطلّباً مؤجَّلاً داخله.
+# وما في 14أ داخل المدى مؤجَّلاً ليس التزاماً لازماً تلقائياً: يُصنَّف اختياراً بين أوجهٍ داخل المدى، أو مسألة حدٍّ إذا خرج بديلٌ
+# عن المدى، أو نقص تغطية، أو وجهاً ممنوعاً بمانعٍ مثبت.
+CLOSURE_AR = {
+    'CLOSED_IN_FACE': 'مغلقة في وجهها: الالتزامات اللازمة مستوفاة، والحدّ مثبت، ولا اختيار مؤجَّل',
+    'CLOSED_WITH_SHARED_STRUCTURE': 'مغلقة بالبنية المشتركة: الالتزامات اللازمة مستوفاة في كل الأوجه، والحدّ مثبت، والاختيار بين أوجهٍ داخل المدى مؤجَّل',
+    'OPEN_REQUIRED_OBLIGATION': 'التزامٌ لازمٌ غير مستوفى',
+    'DEFERRED_BOUNDARY': 'الحدّ مؤجَّل: غير مثبت، أو لبديلٍ موضعٌ خارج المدى',
+    'DEFERRED_ANALYSIS_SELECTION': 'اختيارٌ مؤجَّل يتعلّق به التزامٌ لازم (يختلف المتطلَّب بين الأوجه)',
+    'INCOMPLETE_RULE_COVERAGE': 'نقص تغطية: متطلَّبٌ لازم لا قاعدة له بعد أو لا مورد',
+}
+OBL_STATUS_AR = {'MET': 'مستوفى', 'MET_IN_ALL_FACES': 'مستوفى في كل الأوجه', 'SELECTION': 'اختيارٌ مؤجَّل يختلف به المتطلَّب',
+                 'OPEN': 'لازمٌ غير مستوفى', 'COVERAGE': 'نقص تغطية', 'BOUNDARY': 'مسألة حدّ', 'OPTIONAL_ABSENT': 'جائزٌ لم يُكتشف',
+                 'CONFLICT': 'الطبقة القديمة تستوفيه و14أ تؤجّله'}
 OBLIGATION_RELATION = (('فاعل «', 'SUBJECT', 'verb'), ('مفعول «', 'OBJECT', 'verb'), ('خبر «', 'NASIKH', 'nasikh'),
                        ('معمول «', 'PP', 'preposition'), ('معمول «', 'MASDAR', 'harf'), ('معمول «', 'NASIKH', 'nasikh'))
+_KIND = {'فاعل': 'SUBJECT', 'مفعول': 'OBJECT', 'خبر': 'KHABAR', 'معمول': 'GOVERNED', 'نواة الجملة': 'NUCLEUS', 'إغلاق': 'UNIT_CLOSURE',
+         'موضع كل كلمة': 'PLACEMENT', 'علاقة غير محسومة': 'RELATION_SELECTION', 'نوى غير مرتبطة': 'NUCLEI_LINKING',
+         'استقلال الحدّ لفظاً': 'BOUNDARY_INDEPENDENCE'}
+_RULE_GAP = ('غير منفّذة', 'لا مدخل', 'لا يطابق', 'ROLE_RULE_NOT_IMPLEMENTED', 'لا قاعدة', 'لا جرد', 'لم تُحلَّل')
+
+
+def _locs(r):
+    return {l_ for v_ in r['positions'].values() for l_ in v_}
 
 
 def closure_certificate(J, records):
-    """→ dict: الجملة ومداها، وحكم الطبقة القديمة، والتزاماتها بما استوفاها (satisfied_by: معرّف العلاقة وحالتها)،
-    والتزامات 14أ المفتوحة داخل مداها، والحكم الموحَّد (CLOSED_RECONCILED أو CLOSED_UNRECONCILED أو OPEN).
-    records: سجلات 14أ لآيات مدى الجملة (verse_relations()['records'])"""
+    """→ dict: الجملة ومداها، ودليل حدّها، والتزاماتها بسجلّاتها (obligations)، وعناصر 14أ المؤجَّلة داخل المدى مصنَّفةً (residuals)،
+    والأوجه الممنوعة بمانعها، والحكم (verdict) من CLOSURE_AR. records: سجلات 14أ لآيات مدى الجملة"""
     span = {f'{s_}:{v_}:{w_ + 1}' for (s_, v_, w_) in J.O.get('location', [])}
-    inside = [r for r in records if (lambda ls: ls and ls <= span)({l_ for v_ in r['positions'].values() for l_ in v_})]
-    obls = []
-    for o in J.Omega:
-        sat = []
-        for pre, typ, role in OBLIGATION_RELATION:
-            if o.name.startswith(pre):
-                sat += [dict(relation=r['relation_id'], status=r['status'], rule=r['rule_id']) for r in inside
-                        if r['type'] == typ and r['heads'].get(role) in (o.units or [])]
-        if o.name == 'نواة الجملة':
-            sat = [dict(relation=r['relation_id'], status=r['status'], rule=r['rule_id']) for r in inside
-                   if r['type'] in ('PREDICATION', 'PREDICATIVE_PP', 'VERB_FRAME', 'NASIKH') and r['status'] == 'LICENSED']
-        lic = [x for x in sat if x['status'] == 'LICENSED']
-        pend = [x for x in sat if x['status'] != 'LICENSED']
-        # 14أ هي المعتمدة فيما تبنيه: ما استوفته الطبقة القديمة وأجّلته 14أ لا يُعدّ مستوفى، ويُعرض الحكمان
-        conflict = bool(o.met) and not lic and bool(pend)
-        met = bool(lic) or bool(o.met) and not conflict
-        legacy_ev = None
-        if o.met and not lic:
-            legacy_ev = dict(relation=None, status='LEGACY', rule='المرحلة ١٤',
-                             evidence=(o.ev.cause if o.ev is not None else 'استيفاءٌ في الطبقة القديمة'))
-        obls.append(dict(name=o.name, required=o.required, legacy_met=bool(o.met), met=met, units=list(o.units or []),
-                         satisfied_by=lic or ([legacy_ev] if legacy_ev and not conflict else None), candidates=pend or None,
-                         source=('14أ' if lic else 'الطبقة القديمة' if met else None),
-                         note=('الطبقة القديمة تستوفيه، و14أ تؤجّله: ' + '، '.join(f"{x['rule']} {x['status']}" for x in pend))
-                         if conflict else (o.reason or '') if not met else ''))
-    open_rel = []
+    inside = [r for r in records if (lambda ls: ls and ls <= span)(_locs(r))]
+    frames = {r['heads'].get('verb'): r for r in inside if r['type'] == 'VERB_FRAME'}
+    by_member = {}
     for r in inside:
-        if r['status'] != 'LICENSED':
-            open_rel.append(dict(relation=r['relation_id'], type=r['type'], rule=r['rule_id'], status=r['status'], why=r['reason'][:200]))
-        elif r['type'] == 'VERB_FRAME' and (r.get('frame') or {}).get('open'):
-            open_rel.append(dict(relation=r['relation_id'], type=r['type'], rule=r['rule_id'], status='OPEN_OBLIGATION',
-                                 why='؛ '.join(r['frame']['open'])[:200]))
+        if r['status'] == 'LICENSED':
+            for us in r['members'].values():
+                for u in us:
+                    by_member.setdefault(u, []).append(r['relation_id'])
+    bnd = J.O.get('boundary') or {}
+    boundary_proven = bool(J.closed) or bnd.get('J') == 'proven'
+    obls = []
+    for n_, o in enumerate(J.Omega):
+        base = o.name.split(' «')[0]
+        kind = _KIND.get(base, base)
+        rec = dict(obligation_id=f'{J.id}/O{n_}', owner=(o.units or [J.id])[0] if o.units else J.id, name=o.name, face_id='—',
+                   requirement_kind=kind, requirement_evidence=(o.ev.cause if o.ev is not None else 'المرحلة ١٤: ' + (o.reason or o.name)),
+                   required=bool(o.required), legacy_met=bool(o.met), status=None, discharge_relation_id=None, discharge_evidence_id=None,
+                   residual_reason='', satisfied_by=None, candidates=None)
+        if kind == 'SUBJECT':
+            fr = frames.get((o.units or [None])[0])
+            sj = ((fr or {}).get('frame') or {}).get('subject') or {}
+            subs = [r for r in inside if r['type'] == 'SUBJECT' and r['heads'].get('verb') in (o.units or [])]
+            lic = [r for r in subs if r['status'] == 'LICENSED']
+            role = sj.get('role') or (subs[0].get('role_name') if subs else None)
+            rec['requirement_kind'] = {'فاعل': 'SUBJECT', 'نائب فاعل': 'AGENT_PASSIVE', 'فاعل أو نائب فاعل': 'SUBJECT_OR_PASSIVE_AGENT',
+                                       'اسم الناسخ': 'NASIKH_ISM', 'اسم الناسخ أو فاعل التامّ': 'NASIKH_ISM_OR_SUBJECT'}.get(role, 'SUBJECT')
+            if fr is None:
+                rec['status'] = 'MET' if o.met else 'OPEN'
+                rec['face_id'] = 'الطبقة القديمة'
+                rec['discharge_evidence_id'] = 'LEGACY:' + rec['requirement_evidence'] if o.met else None
+                rec['residual_reason'] = '' if o.met else (o.reason or 'لا إطار فعلٍ في 14أ')
+            elif rec['requirement_kind'] == 'NASIKH_ISM_OR_SUBJECT':
+                rec.update(status='SELECTION', face_id='ناقص | تامّ', residual_reason='«' + fr['texts']['verb'] + '» من صيغ «كان» غير محسوم الاستعمال: '
+                           'المتطلَّب اسم الناسخ وخبره في وجه الناقص، والفاعل في وجه التامّ؛ فلا يُسمّى طرف إسناده فاعلاً مستوفى')
+            elif sj.get('status') == 'LICENSED' or lic:
+                rid = lic[0]['relation_id'] if lic else fr['relation_id']
+                # الإطار المؤجَّل (زمنٌ مرشّح) لا يُعرض مستوفياً بإطلاق: المستوفي بنيته الفرعية (الفاعل المرخَّص فيه)، مشتركةً في أوجه الإطار
+                frame_def = not lic and fr['status'] != 'LICENSED'
+                faced = rec['requirement_kind'] == 'SUBJECT_OR_PASSIVE_AGENT' or frame_def
+                rec.update(status='MET_IN_ALL_FACES' if faced else 'MET',
+                           face_id=('أوجه الإطار' if frame_def else 'معلوم | مجهول') if faced else (role or 'فاعل'),
+                           discharge_relation_id=rid, discharge_evidence_id=f'{rid}#subject:{sj.get("kind") or "ظاهر"}',
+                           residual_reason=('الإطار مؤجَّل (' + fr['reason'][:80] + ')، والفاعل المرخَّص فيه مشتركٌ في أوجهه' if frame_def else
+                                            'الدور «فاعل أو نائب فاعل»: البناء مؤجَّل، والمسند إليه مستوفى في الوجهين') if faced else '',
+                           satisfied_by=[dict(relation=rid, status='LICENSED' if not frame_def else 'SUBSTRUCTURE_LICENSED',
+                                              rule=(lic[0]['rule_id'] if lic else 'F01'))])
+            elif sj:
+                cands = sj.get('candidates') or []
+                rec.update(status='CONFLICT' if o.met else 'SELECTION', face_id='أوجه الفاعل',
+                           residual_reason=('الطبقة القديمة تستوفيه («' + rec['requirement_evidence'][:60] + '»)، و14أ تؤجّله: ' if o.met else '') +
+                           (sj.get('why') or '')[:220], candidates=[dict(relation=r['relation_id'], status=r['status'], rule=r['rule_id']) for r in subs] or None)
+                rec['candidates_units'] = cands
+        elif kind in ('OBJECT', 'KHABAR', 'GOVERNED', 'NUCLEUS'):
+            sat = []
+            for pre, typ, role in OBLIGATION_RELATION:
+                if o.name.startswith(pre):
+                    sat += [r for r in inside if r['type'] == typ and r['heads'].get(role) in (o.units or [])]
+            if kind == 'NUCLEUS':
+                sat = [r for r in inside if r['type'] in ('PREDICATION', 'PREDICATIVE_PP', 'VERB_FRAME', 'NASIKH')]
+            if kind == 'KHABAR':
+                sat = [r for r in sat if 'khabar' in r['heads']]
+            lic = [r for r in sat if r['status'] == 'LICENSED']
+            # الوجه المرخَّص لا يُخفي ما بداخله مؤجَّلاً: وظيفة المصدر المؤوَّل المؤجَّلة لا تمنع استيفاء «معمول أَنْ» (المعمول هو الفعل)،
+            # لكنها تُسجَّل باقياً
+            inner = [r for r in lic if (r.get('function') or {}).get('status') == 'DEFERRED' or r.get('selection') == 'DEFERRED']
+            if lic:
+                rec.update(status='MET', discharge_relation_id=lic[0]['relation_id'], discharge_evidence_id=lic[0]['relation_id'] + '#premises',
+                           face_id=lic[0].get('face') or 'الوجه المرخَّص',
+                           satisfied_by=[dict(relation=r['relation_id'], status='LICENSED', rule=r['rule_id']) for r in lic],
+                           residual_reason='؛ '.join(f'{r["rule_id"]}: ' + ((r.get('function') or {}).get('text') or r.get('face_note') or '')[:120]
+                                                    for r in inner))
+            elif sat:
+                rec.update(status='CONFLICT' if o.met else ('SELECTION' if o.required else 'OPTIONAL_ABSENT'),
+                           candidates=[dict(relation=r['relation_id'], status=r['status'], rule=r['rule_id']) for r in sat],
+                           residual_reason=sat[0]['reason'][:200])
+            elif o.met:
+                rec.update(status='MET', face_id='الطبقة القديمة', discharge_evidence_id='LEGACY:' + rec['requirement_evidence'],
+                           satisfied_by=[dict(relation=None, status='LEGACY', rule='المرحلة ١٤', evidence=rec['requirement_evidence'])])
+            else:
+                rec.update(status='OPEN' if o.required else 'OPTIONAL_ABSENT', residual_reason=o.reason or '')
+        elif kind == 'PLACEMENT':
+            import re as _re
+            unp = [m_ for x in (J.O.get('unplaced') or []) for m_ in _re.findall(r'\[([^\]]+)\]', str(x))]
+            left = [u for u in unp if u not in by_member]
+            pend_m = {u for r in inside if r['status'] != 'LICENSED' for us in r['members'].values() for u in us}
+            sel_left = [u for u in left if u in pend_m]
+            # بلا موضعٍ مرخَّص: عضوٌ في علاقةٍ مؤجَّلة ← اختيار؛ ولا علاقة له أصلاً (لا قاعدة أنتجت له سجلاً) ← نقص تغطية، لا التزامٌ مثبت الفتح
+            rec.update(status='MET' if not left else ('SELECTION' if len(sel_left) == len(left) else 'COVERAGE'),
+                       residual_reason='' if not left else
+                       f'{len(left)} وقوعاً بلا موضعٍ مرخَّص في الطبقتين: ' + '، '.join(left[:6]) +
+                       ('؛ منها في علاقةٍ مؤجَّلة: ' + '، '.join(sel_left[:6]) if sel_left else '') +
+                       ('؛ ولا قاعدة أنتجت سجلاً لـ' + '، '.join([u for u in left if u not in pend_m][:6]) if len(sel_left) < len(left) else ''),
+                       discharge_evidence_id=('14أ: ' + '، '.join(sorted({by_member[u][0] for u in unp if u in by_member}))[:300]) if unp else None)
+            if unp and not left:
+                rec['satisfied_by'] = [dict(relation=by_member[u][0], status='LICENSED', rule='14أ') for u in unp]
+        elif kind == 'UNIT_CLOSURE':
+            rec.update(status='MET' if o.met else 'COVERAGE', residual_reason='' if o.met else (o.reason or ''))
+        elif kind in ('RELATION_SELECTION', 'NUCLEI_LINKING'):
+            rec.update(status='MET' if o.met else 'SELECTION', residual_reason='' if o.met else (o.reason or ''))
+        elif kind == 'BOUNDARY_INDEPENDENCE':
+            rec.update(status='MET' if o.met else 'BOUNDARY', residual_reason='' if o.met else (o.reason or ''))
+        else:
+            rec.update(status='MET' if o.met else ('OPEN' if o.required else 'OPTIONAL_ABSENT'), residual_reason=o.reason or '')
+        if rec['status'] == 'MET' and rec['satisfied_by'] is None:
+            rec['satisfied_by'] = [dict(relation=None, status='LEGACY', rule='المرحلة ١٤', evidence=rec['requirement_evidence'])]
+        if rec['status'] == 'OPEN' and any(g_ in rec['residual_reason'] for g_ in _RULE_GAP):
+            rec['status'] = 'COVERAGE'
+        rec['met'] = rec['status'] in ('MET', 'MET_IN_ALL_FACES')
+        rec['source'] = '14أ' if rec['met'] and rec.get('discharge_relation_id') else ('الطبقة القديمة' if rec['met'] else None)
+        rec['note'] = rec['residual_reason']
+        rec['status_ar'] = OBL_STATUS_AR.get(rec['status'], rec['status'])
+        obls.append(rec)
+    residuals, rejected = [], []
+    for r in inside:
+        if r['status'] == 'REJECTED':
+            rejected.append(dict(relation=r['relation_id'], rule=r['rule_id'], barrier=r['reason'][:200], status='REJECTED_FACE_WITH_PROVEN_BARRIER'))
+            continue
+        for c_ in ((r.get('frame') or {}).get('candidates') or []):
+            if c_.get('status') == 'REJECTED':
+                rejected.append(dict(relation=r['relation_id'], rule=c_.get('id'), barrier=(c_.get('reason') or '')[:200],
+                                     status='REJECTED_FACE_WITH_PROVEN_BARRIER'))
+        alt_locs = {x.get('host_position') for x in r.get('alternatives') or [] if isinstance(x, dict) and x.get('host_position')}
+        outside = sorted(l_ for l_ in alt_locs if l_ not in span)
+        if r['status'] == 'DEFERRED':
+            k = 'BOUNDARY' if outside else ('COVERAGE' if r.get('search_status') == 'SEARCH_INCOMPLETE' and not alt_locs else 'SELECTION')
+            residuals.append(dict(relation=r['relation_id'], type=r['type'], rule=r['rule_id'], status='DEFERRED', kind=k,
+                                  why=r['reason'][:200], outside=outside))
         elif r.get('selection') == 'DEFERRED':
-            open_rel.append(dict(relation=r['relation_id'], type=r['type'], rule=r['rule_id'], status='SELECTION_DEFERRED',
-                                 why=(r.get('face_note') or r['reason'])[:200]))
-    req_open = [o for o in obls if o['required'] and not o['met']]
-    verdict = 'OPEN' if not J.closed or req_open else 'CLOSED_UNRECONCILED' if open_rel else 'CLOSED_RECONCILED'
+            residuals.append(dict(relation=r['relation_id'], type=r['type'], rule=r['rule_id'], status='SELECTION_DEFERRED', kind='SELECTION',
+                                  why=(r.get('face_note') or r['reason'])[:200], outside=outside))
+        elif (r.get('function') or {}).get('status') == 'DEFERRED':
+            residuals.append(dict(relation=r['relation_id'], type=r['type'], rule=r['rule_id'], status='FUNCTION_DEFERRED', kind='SELECTION',
+                                  why=r['function']['text'][:200], outside=[]))
+        elif r['type'] == 'VERB_FRAME' and (r.get('frame') or {}).get('open'):
+            residuals.append(dict(relation=r['relation_id'], type=r['type'], rule=r['rule_id'], status='OPEN_OBLIGATION', kind='REQUIRED',
+                                  why='؛ '.join(r['frame']['open'])[:200], outside=[]))
+    req = [o for o in obls if o['required']]
+    # تعارض الطبقتين (القديمة تستوفي و14أ تؤجّل) تأجيلٌ لا فتحٌ مثبت: يدخل حكم الاختيار المؤجَّل، ولا يُعدّ مستوفى
+    if any(o['status'] == 'OPEN' for o in req) or any(x['kind'] == 'REQUIRED' for x in residuals):
+        verdict = 'OPEN_REQUIRED_OBLIGATION'
+    elif not boundary_proven or any(o['status'] == 'BOUNDARY' for o in req) or any(x['kind'] == 'BOUNDARY' for x in residuals):
+        verdict = 'DEFERRED_BOUNDARY'
+    elif any(o['status'] == 'COVERAGE' for o in req):
+        verdict = 'INCOMPLETE_RULE_COVERAGE'
+    elif any(o['status'] in ('SELECTION', 'CONFLICT') for o in req):
+        verdict = 'DEFERRED_ANALYSIS_SELECTION'
+    elif any(o['status'] == 'MET_IN_ALL_FACES' for o in req) or residuals:
+        verdict = 'CLOSED_WITH_SHARED_STRUCTURE'
+    else:
+        verdict = 'CLOSED_IN_FACE'
     return dict(sentence=J.id, span=sorted(span, key=lambda x: tuple(int(p) for p in x.split(':'))), legacy_closed=bool(J.closed),
-                legacy_F=(J.O.get('boundary') or {}).get('F'), obligations=obls, relation_open=open_rel,
+                legacy_F=bnd.get('F'), boundary=dict(proven=boundary_proven, evidence=bnd.get('J_why') or bnd.get('category')),
+                obligations=obls, residuals=residuals, relation_open=residuals, rejected_faces=rejected,
                 verdict=verdict, verdict_ar=CLOSURE_AR[verdict])

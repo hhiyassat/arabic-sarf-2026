@@ -86,8 +86,9 @@ def _surah(items):
         out.append(dict(verse=ref, units=units, records=recs, check=chk))
     J['closed_unreconciled'] = sum(any(ls_ <= sp for ls_ in unrec) for sp in closed_spans)
     # شهادة الإغلاق الموحَّدة (الدفعة F): الحكم لكل جملة، والتزاماتها المستوفاة بمصدرها، وتعارض الطبقتين
-    from sarf.algebra import closure_certificate
-    for k_ in ('CLOSED_RECONCILED', 'CLOSED_UNRECONCILED', 'OPEN', 'obl_met_14a', 'obl_met_legacy', 'obl_conflict', 'obl_open'):
+    from sarf.algebra import closure_certificate, CLOSURE_AR, OBL_STATUS_AR
+    for k_ in list(CLOSURE_AR) + ['obl:' + x for x in OBL_STATUS_AR] + ['obl_discharged_by_14a', 'residual:SELECTION', 'residual:BOUNDARY',
+                                                                        'residual:COVERAGE', 'residual:REQUIRED', 'rejected_faces']:
         J[k_] = 0
     for SP in LT:
         for D in SP.A + SP.O.get('pending', []):
@@ -96,8 +97,11 @@ def _surah(items):
                 c_ = closure_certificate(Jx, [r for x in vv for r in RECS_BY_VERSE.get(x, [])])
                 J[c_['verdict']] += 1
                 for ob in c_['obligations']:
-                    J['obl_met_14a' if ob['source'] == '14أ' else 'obl_met_legacy' if ob['met'] else
-                      'obl_conflict' if ob['legacy_met'] else 'obl_open'] += 1
+                    J['obl:' + ob['status']] += 1
+                    J['obl_discharged_by_14a'] += bool(ob.get('discharge_relation_id'))
+                for x in c_['residuals']:
+                    J['residual:' + x['kind']] += 1
+                J['rejected_faces'] += len(c_['rejected_faces'])
     return dict(verses=out, sentences=J)
 
 
@@ -189,15 +193,17 @@ def main():
                           nasikh=dict(total=len(nas), complete=sum(r['status'] == 'LICENSED' for r in nas)),
                           nominal=dict(total=len(pr), complete=sum(bool(r['nucleus_complete']) for r in pr)),
                           note='الفعل لا يحتاج كلُّه فاعلاً ومفعولاً: المتطلَّب بحسب البناء والاستعمال (الناسخ يطلب اسماً وخبراً، والمبني للمجهول نائب فاعل)')
+    from sarf.algebra import CLOSURE_AR, OBL_STATUS_AR
     M['M7_sentences'] = dict(unit='جملة الطبقة القديمة (المرحلة ١٤)', total=SENT['total'], closed=SENT['closed'], F_complete=SENT['F_complete'],
                              closed_unreconciled=SENT['closed_unreconciled'],
-                             unified=dict(CLOSED_RECONCILED=SENT['CLOSED_RECONCILED'], CLOSED_UNRECONCILED=SENT['CLOSED_UNRECONCILED'],
-                                          OPEN=SENT['OPEN'], obligations_met_by_14a=SENT['obl_met_14a'],
-                                          obligations_met_legacy_only=SENT['obl_met_legacy'],
-                                          obligations_layer_conflict=SENT['obl_conflict'], obligations_open=SENT['obl_open']),
-                             note='closed وF_complete من الطبقة القديمة وحدها؛ وunified من شهادة الإغلاق الموحَّدة (sarf.algebra.closure_certificate) التي تستهلك علاقات 14أ: '
-                                  'CLOSED_RECONCILED مغلقةٌ في الطبقة القديمة ولا مفتوح في 14أ داخل مداها، وobligations_met_by_14a التزاماتٌ استوفتها علاقةٌ مرخَّصة مسمّاة، '
-                                  'وobligations_layer_conflict ما استوفته الطبقة القديمة وأجّلته 14أ. '
+                             unified=dict(verdicts={k: SENT.get(k, 0) for k in CLOSURE_AR},
+                                          obligations={k: SENT.get('obl:' + k, 0) for k in OBL_STATUS_AR},
+                                          obligations_discharged_by_named_14a_relation=SENT.get('obl_discharged_by_14a', 0),
+                                          residuals={k: SENT.get('residual:' + k, 0) for k in ('SELECTION', 'BOUNDARY', 'COVERAGE', 'REQUIRED')},
+                                          rejected_faces=SENT.get('rejected_faces', 0)),
+                             note='closed وF_complete من الطبقة القديمة وحدها؛ وunified من شهادة الإغلاق الموحَّدة v2 (sarf.algebra.closure_certificate): '
+                                  'أحكام الجملة السبعة، وحالات الالتزامات بأنواعها (لا يُستوفى التزامٌ إلا بعلاقةٍ من نوعه للوحدة والوجه)، '
+                                  'وما في 14أ داخل المدى مؤجَّلاً مصنَّفاً (اختيار، حدّ، تغطية، لازم). '
                                   'closed_unreconciled: المغلقة التي في مداها علاقةٌ في 14أ مؤجَّلة أو إطارٌ بالتزامٍ مفتوح')
     unres = collections.Counter()
     ex = collections.defaultdict(list)

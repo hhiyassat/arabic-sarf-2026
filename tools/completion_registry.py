@@ -16,9 +16,18 @@ import argparse, csv, importlib, json, os, re, subprocess, sys
 H = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, H)
 
-STAGES = {1: 'المصدر', 2: 'التطبيع', 3: 'الخلايا', 4: 'المقاطع', 5: 'التقشير', 6: 'الحماية', 7: 'الصنف', 8: 'الجذر والوزن',
-          9: 'السمات', 10: 'المعجم', 11: 'العوامل', 12: 'الإعراب', 13: 'الإسناد', 14: 'العلاقات', 15: 'التعلّق', 16: 'الجملة',
-          17: 'الدلالة', 18: 'المرجع والخطاب', 19: 'الفقرة', 20: 'القياس والتقرير'}
+STAGES = {1: 'استلام المصدر', 2: 'التطبيع', 3: 'خلايا المكتوب والترقيم', 4: 'المقاطع', 5: 'التقشير والوحدات', 6: 'الحماية',
+          7: 'صنف اللفظ', 8: 'الجذر والوزن والتحقيق', 9: 'السمات الصرفية', 10: 'المعجم وأطر الاستعمال', 11: 'العوامل وقدراتها',
+          12: 'البناء والإعراب', 13: 'الإسناد الفعلي ومعمولاته', 14: 'الإسناد الاسمي والنواسخ', 15: 'العلاقات الممتدة',
+          16: 'التعلّق والنطاق', 17: 'هندسة الجملة وتصنيفها', 18: 'الدلالة السياقية والمراجع', 19: 'الاكتمال والحد والإغلاق',
+          20: 'الخطاب والفقرة والموضوع'}
+# مراحل SARF_MAJOR_CLOSURE_01 §10 لكل بند (تعلو على رقم المرحلة في SPEC)
+STAGE_OF = {'C01.1': 1, 'C01.2': 1, 'C02.1': 2, 'C02.2': 2, 'C02.3': 2, 'C03.1': 3, 'C03.2': 3, 'C04.1': 4, 'C04.2': 4, 'C05.1': 5,
+            'C06.1': 6, 'C06.2': 6, 'C07.1': 7, 'C07.2': 7, 'C07.3': 7, 'C08.1': 8, 'C08.2': 8, 'C08.3': 8, 'C08.4': 8, 'C09.1': 9,
+            'C09.2': 9, 'C09.3': 9, 'C10.1': 10, 'C10.2': 10, 'C11.1': 11, 'C11.2': 11, 'C12.1': 12, 'C12.2': 12, 'C13.1': 13,
+            'C13.2': 13, 'C13.3': 13, 'C13.6': 13, 'C13.4': 14, 'C13.5': 14, 'C14.1': 15, 'C14.2': 15, 'C14.3': 15, 'C14.4': 15,
+            'C14.5': 15, 'C14.6': 15, 'C14.7': 15, 'C15.1': 16, 'C15.2': 16, 'C16.1': 17, 'C16.2': 19, 'C16.3': 19, 'C17.1': 18,
+            'C18.1': 18, 'C18.2': 20, 'C19.1': 20, 'C20.1': 19}
 
 # (id, stage, scope, rule, symbols, consumers, tests, counter, mutations, measurement, declared, residual)
 # symbols: «module:attr»؛ consumers: «ملف::نص يدلّ على استهلاك المخرج»؛ tests: «ملف::معرّف»
@@ -52,7 +61,8 @@ SPEC = [
      ['tools/pipeline_trace.py::protection'], ['tests/test_round006.py::X01'], ['tests/test_round006.py::X04'], [], '2:282', None, ''),
     ('C07.3', 7, 'الاسمية بنفي صيغ الفعل المكتوبة (E02 قبل الضمير، E03 الهمزة المكسورة)', 'E02/E03',
      ['sarf.features:host_case_vowel_proof', 'sarf.features:initial_hamza_kasra_proof'], ['sarf/features.py::host_case_vowel_proof('],
-     ['tests/test_batch_b.py::B01', 'tests/test_batch_b.py::B04'], ['tests/test_batch_b.py::B02'], [], 'E02: 949 اسماً عند QAC، E03: 91', None, ''),
+     ['tests/test_batch_b.py::B01', 'tests/test_closure.py::G01'], ['tests/test_batch_b.py::B02', 'tests/test_closure.py::G03'], [],
+     'E02 v2 بعد تدقيق 032', 'owner', 'E02 v2 تعمل بموانعها المسمّاة؛ وE03 معطَّلة حتى يحكم المالك في مقدّمتها P1 (لا تلتلة في حفص)'),
     ('C07.1', 7, 'الصنف (اسم، فعل، حرف) مستقلاً عن البناء والعمل والحماية', 'axes', ['sarf.relations:_Tok'],
      ['tools/pipeline_trace.py::word_class'], ['tests/test_round006.py::X48'], ['tests/test_relations.py::T19'], [], 'M1', None, ''),
     ('C07.2', 7, 'الصنف من التنوين وحده لا يُثبت (T19)', 'T19', ['sarf.relations:_Tok'],
@@ -102,9 +112,10 @@ SPEC = [
     ('C14.2', 14, 'الصلة والعائد (R01/R02) بأوجهها', 'R01/R02', ['sarf.relations:verse_relations'], ['tools/pipeline_trace.py::verse_relations', 'tools/measure_axes.py::verse_relations'],
      ['tests/test_round006.py::X44'], ['tests/test_round006.py::X49'], ['tests/test_round006.py::M13'], 'M5', 'partial',
      'بنية الوجه المنافس (المتعلَّق وفاعله) غير مبنية'),
-    ('C14.3', 14, 'المصدر المؤوَّل ومحلّه', 'M02', ['sarf.relations:verse_relations'], ['sarf/algebra.py::MASDAR'],
-     ['tests/test_batch_e.py::E04', 'tests/test_batch_e.py::E07'], ['tests/test_batch_e.py::E09'], ['tests/test_batch_e.py::E08'], 'M5',
-     'partial', 'من «أَنْ» الناصبة وحدها؛ و«أَنَّ» و«ما» المصدرية و«كي» و«لو» غير منفّذة؛ والوظيفة مؤجَّلة إلا بحرف جرٍّ قبله'),
+    ('C14.3', 14, 'المصدر المؤوَّل بنيةً: الحرف ورأس الفعل والامتداد المثبت والمرشّح والوظيفة', 'M02/M02.b', ['sarf.relations:verse_relations'],
+     ['sarf/algebra.py::MASDAR'], ['tests/test_batch_e.py::E04', 'tests/test_closure.py::G16', 'tests/test_closure.py::G15b'],
+     ['tests/test_batch_e.py::E09', 'tests/test_closure.py::G15', 'tests/test_closure.py::G18'], ['tests/test_batch_e.py::E08'], 'M5',
+     'partial', 'من «أَنْ» و«أَلَّا» وحدهما؛ و«أَنَّ» و«ما» و«كي» و«لو» غير منفّذة؛ والوظيفة مؤجَّلة إلا بحرف جرٍّ قبله؛ والحدّ مثبتٌ حيث لا شيء بعد الأعضاء المرخَّصة'),
     ('C14.4', 14, 'الشرط وفعله وجوابه وملكيته (C01)', 'C01', ['sarf.relations:verse_relations'], ['tools/pipeline_trace.py::verse_relations', 'tools/measure_axes.py::verse_relations'],
      ['tests/test_round006.py::X26'], ['tests/test_round006.py::X27'], [], 'M5', None, ''),
     ('C14.5', 14, 'العطف داخل المفردات والتراكيب والجمل', 'coord', ['sarf.coord:check_coord'], ['sarf/algebra.py::coord'],
@@ -127,12 +138,23 @@ SPEC = [
     ('C17.1', 17, 'الدال وتمثيله والمدلولات المعجمية المرشّحة', 'HFN', ['sarf.features:unit_features'], ['tools/pipeline_trace.py::المدلول'],
      ['tests/test_features_ext.py::'], [], [], 'المرحلة ١٣', 'deferred',
      'تعيين المعنى بالسياق ودلالات المطابقة والتضمن والالتزام: لا مورد مقرّ (مداخل HFN is_fact=False) ولا قاعدة'),
-    ('C18.1', 18, 'مرجع الضمير والمطابقة معه', 'REF', [], [], [], [], [], '', 'deferred',
-     'لا قاعدة مكتوبة لتعيين المرجع؛ والمطابقة وحدها ترشّح ولا تثبت، والمعنى ليس دليلاً في المشروع'),
+    ('C18.1', 18, 'مرجع الضمير والمطابقة معه', 'REF', [], [], [], [], [], '', 'unimplemented',
+     'لا قاعدة مكتوبة لتعيين المرجع، والمطابقة وحدها ترشّح ولا تثبت؛ وهو عملٌ غير منفّذ، لا تأجيلٌ لغوي'),
     ('C18.2', 18, 'الوحدة الخطابية والعلاقات بين الجمل', 'algebra', ['sarf.algebra:sentence_geo'], ['tools/pipeline_trace.py::الوحدة الخطابية'],
      ['tests/test_algebra.py::'], [], [], 'القسم ١٥', 'partial', 'العلاقات بين الجمل واستمرار الموضوع غير منفّذة'),
-    ('C19.1', 19, 'هندسة الفقرة وحدّها', 'PARA', [], [], [], [], [], '', 'deferred',
+    ('C19.1', 19, 'هندسة الفقرة وحدّها', 'PARA', [], [], [], [], [], '', 'unimplemented',
      'لا قاعدة مكتوبة لحدّ الفقرة، ولا يُخترع حدٌّ (الخطة §4 G)؛ والوحدة الخطابية من الطبقة القديمة أعلى ما يُبنى'),
+    ('C08.4', 8, 'هوية المرشّح الصرفي الواحد (زمن، بناء، ضمير) في الإطار والمحور، ومنع الخلط بين مرشّحي الوحدة', 'IDENTITY',
+     ['sarf.relations:check_cross'], ['sarf/relations.py::morph_candidate'], ['tests/test_closure.py::G05'], [],
+     ['tests/test_closure.py::M20', 'tests/test_closure.py::M21', 'tests/test_closure.py::M22'], 'الفاحص العابر ١٠', None, ''),
+    ('C13.6', 13, 'الفاعل المستتر جوازاً عقدةً مستدلّاً عليها (S01.h) بلا خلايا مكتوبة، وحدّ بحثه', 'S01.h', ['sarf.relations:verse_relations'],
+     ['sarf/algebra.py::SUBJECT'], ['tests/test_closure.py::G22'], ['tests/test_closure.py::G21', 'tests/test_closure.py::G23'], [], 'M4',
+     'partial', 'مقترحة؛ والمرجع غير معيَّن (المرحلة ١٨)'),
+    ('C16.3', 19, 'شهادة الإغلاق v2: سجلّ الالتزام بنوعه ووجهه ومستوفيه، والأحكام السبعة، والمؤجَّل مصنَّفاً', 'CERT-v2',
+     ['sarf.algebra:closure_certificate'], ['tools/pipeline_trace.py::closure_certificate', 'tools/measure_coverage.py::closure_certificate'],
+     ['tests/test_closure.py::G06', 'tests/test_closure.py::G12'], ['tests/test_closure.py::G13', 'tests/test_closure.py::G08'],
+     ['tests/test_closure.py::M23', 'tests/test_batch_f.py::F06'], 'M7 unified', 'partial',
+     'مصالحةٌ بعد البناء لا إعادة بناء؛ والوحدة الخطابية (§15) تحمل أشدّ أحكام جملها ولا التزامات خاصةً بها'),
     ('C20.1', 20, 'القياس بالمسار نفسه للصفحة (الجسران)', 'bridged', ['tools.bridged:surah_outputs'],
      ['tools/eval_inflection.py::bridged', 'tools/compare_relations.py::bridged', 'tools/measure_axes.py::linguistic_layer'],
      [], [], [], 'المصحف كله', None, ''),
@@ -207,13 +229,20 @@ def build():
         elif declared == 'partial':
             status = 'منفّذ جزئياً'
         elif declared == 'deferred':
-            status = 'مؤجَّل لنقص موردٍ أو دليل'
+            status = 'مؤجَّل لنقص مورد'
+        elif declared == 'deferred_evidence':
+            status = 'مؤجَّل لنقص دليلٍ لغوي'
+        elif declared == 'candidate':
+            status = 'مرشّح فقط'
+        elif declared == 'template':
+            status = 'قالب أو حقل موجود'
         elif declared == 'owner':
             status = 'مسألة تحتاج حكم المالك'
         elif tests and all(tests_ok.get(t) for t in tests):
             status = 'منفّذ ومختبر ويصل إلى المستهلك'
         else:
             status = 'منفّذ غير مختبر'
+        st = STAGE_OF.get(rid, st)
         rows.append(dict(requirement_id=rid, stage=st, stage_name=STAGES[st], linguistic_scope=scope, rule_id=rule,
                          implementation=syms, symbol_exists=ex, callers=calls, actual_consumers=cons, consumers_found=cons_ok,
                          positive_tests=tests, counterexamples=counter, mutation_tests=muts, tests_found=tests_ok,

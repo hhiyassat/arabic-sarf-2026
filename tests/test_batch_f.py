@@ -49,22 +49,27 @@ def check(name, cond, got=''):
 o, Js, C = certs(2, 282)
 ids = {r['relation_id']: r for r in o['records']}
 obs = [ob for c in C for ob in c['obligations']]
-check('F01 كل التزامٍ مستوفى يسمّي ما استوفاه: علاقةً موجودةً مرخَّصة في 14أ، أو دليل الطبقة القديمة',
-      all(ob['satisfied_by'] and all((x['relation'] in ids and ids[x['relation']]['status'] == 'LICENSED') if x['relation'] else
-                                     x['status'] == 'LEGACY' for x in ob['satisfied_by']) for ob in obs if ob['met']),
-      [ob['name'] for ob in obs if ob['met'] and not ob['satisfied_by']])
+check('F01 (v2) كل التزامٍ مستوفى يسمّي ما استوفاه: معرّف علاقةٍ موجودةٍ مرخَّصة في 14أ ودليلها، أو دليل الطبقة القديمة موسوماً LEGACY',
+      all((ob['discharge_relation_id'] in ids and ob['discharge_evidence_id'] and
+           (ids[ob['discharge_relation_id']]['status'] == 'LICENSED' or ob['status'] == 'MET_IN_ALL_FACES' and
+            ((ids[ob['discharge_relation_id']].get('frame') or {}).get('subject') or {}).get('status') == 'LICENSED'))
+          if ob.get('discharge_relation_id') else all(x['status'] in ('LEGACY', 'LICENSED') for x in ob['satisfied_by'] or [{'status': None}])
+          for ob in obs if ob['met']),
+      [ob['obligation_id'] for ob in obs if ob['met'] and not ob.get('discharge_relation_id') and not ob['satisfied_by']])
 w = next(ob for ob in obs if ob['name'] == 'فاعل «وَلْيُمْلِلِ»' or ob['name'] == 'فاعل «يُمْلِلِ»')
 check('F02 «وليملل الذي»: الطبقة القديمة تستوفي الفاعل و14أ تؤجّله، فالالتزام غير مستوفى والحكمان معروضان',
       w['legacy_met'] and not w['met'] and 'تؤجّله' in w['note'] and w['candidates'], w)
 k = [ob for ob in obs if ob['name'].startswith('فاعل «يَكْتُبْ»') and ob['source'] == '14أ']
 check('F03 «وليكتب بينكم كاتب»: الفاعل مستوفى في 14أ بمعرّف S01', k and 'SUBJECT:S01' in k[0]['satisfied_by'][0]['relation'], k)
-check('F04 لا «مغلقة ومصالَحة» مع مفتوحٍ في 14أ داخل المدى، ولا مع التزامٍ لازمٍ غير مستوفى',
-      all(not (c['verdict'] == 'CLOSED_RECONCILED' and (c['relation_open'] or any(ob['required'] and not ob['met'] for ob in c['obligations'])))
-          for c in C))
+check('F04 (v2) لا «مغلقة» مع التزامٍ لازمٍ غير مستوفى، ولا «مغلقة في وجهها» مع باقٍ في 14أ داخل المدى',
+      all(not (c['verdict'] in ('CLOSED_IN_FACE', 'CLOSED_WITH_SHARED_STRUCTURE') and any(ob['required'] and not ob['met'] for ob in c['obligations']))
+          and not (c['verdict'] == 'CLOSED_IN_FACE' and c['residuals']) for c in C))
 closed = [(J, c) for J, c in zip(Js, C) if J.closed]
-check('F05 الجملة المغلقة في الطبقة القديمة وفي مداها مؤجَّلٌ في 14أ: «غير مصالَحة»، لا «مغلقة»',
-      closed and all(c['verdict'] == ('CLOSED_UNRECONCILED' if c['relation_open'] else 'CLOSED_RECONCILED') for _, c in closed),
-      [(c['sentence'], c['verdict'], len(c['relation_open'])) for _, c in closed])
+check('F05 (v2) الجملة المغلقة في الطبقة القديمة وفي مداها اختيارٌ مؤجَّل في 14أ: «مغلقة بالبنية المشتركة» لا «مغلقة في وجهها»؛ '
+      'والمؤجَّل في المدى لا يصير التزاماً لازماً تلقائياً (SARF_MAJOR_CLOSURE_01 §7)',
+      closed and all(c['verdict'] != 'CLOSED_IN_FACE' for _, c in closed if c['residuals']) and
+      all(c['verdict'] == 'CLOSED_WITH_SHARED_STRUCTURE' for _, c in closed if c['residuals'] and all(x['kind'] == 'SELECTION' for x in c['residuals'])),
+      [(c['sentence'], c['verdict'], len(c['residuals'])) for _, c in closed])
 # إفساد: علاقةٌ مرخَّصة تُنزَّل إلى مؤجَّلة داخل مدى جملةٍ مصالَحة أو مستوفاة ← يتغيّر الحكم أو الاستيفاء
 J0, c0 = next(((J, c) for J, c in zip(Js, C) for ob in c['obligations'] if ob['source'] == '14أ'), (None, None))
 rid = next(ob['satisfied_by'][0]['relation'] for ob in c0['obligations'] if ob['source'] == '14أ')

@@ -223,7 +223,8 @@ class _Tok:
         ident = dict(analysis_id=f'{self.uid}@{VERSION}', unit=self.uid, loc=self.loc, text=self.text,
                      slots=[s_['index'] for s_ in self.slots],
                      stage11=[f"A{self.loc.rsplit(':', 1)[0]}:{self.wi + 1}.{s_['index']}" for s_ in self.slots],
-                     parts=[p_['part_id'] for p_ in (getattr(self, 'parts', None) or [])])
+                     parts=[p_['part_id'] for p_ in (getattr(self, 'parts', None) or [])],
+                     morph_candidate=getattr(self, 'morph_candidate', None))
         return dict(identity=ident, word_class=wc, build=inf['build'], inflection=inf,
                     role=role, role_status=g.get('relation_status') if g.get('role_name') else None,
                     case_axis=case_axis, mabni_state=self.mabni_state,
@@ -1430,6 +1431,33 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                    edges=[('MASDAR', an.uid, vt.uid)])
         R.append(rec)
         masdar[an.uid] = rec
+    # M02.b (مقترحة): «أَلَّا» المندمجة رسماً (MERGED: أَنْ + لَا) لا تحكم عليها المرحلة ١١؛ فإذا تلاها مضارعٌ نصبُه مكتوبٌ لا يحتمل الرفع
+    # (الفتحة، أو حذف النون) فـ«أَنْ» فيها ناصبةٌ مصدرية، والتركيب «أَنْ لا + الفعل» في تأويل مصدرٍ منفي. والدليل العلامة المكتوبة
+    # على الفعل، لا حكم عاملٍ بُني عليها
+    for t_i, an in enumerate(toks):
+        if an.text != 'أَلَّا' or an.uid in masdar or t_i + 1 >= len(toks):
+            continue
+        vt = toks[t_i + 1]
+        wm_ = _written_mark(vt)
+        if vt.pos != 'فعل' or 'نصب' not in (wm_[1] or ()) or 'رفع' in (wm_[1] or ()) or (vt.feats.get('tense') or {}).get('v') == 'ماضٍ':
+            continue
+        fn = 'محلّه غير معيَّن: أبواب الفحص فاعل، أو مفعول به، أو مبتدأ، أو خبر، أو مجرورٌ بحرفٍ قبله؛ لا أوجهٌ ثبت جوازها'
+        # النصب الخالص (الفتحة) يحسم المصدرية؛ و«حذف النون» علامة نصبٍ أو جزم، فيبقى معه وجه «أَنْ» المفسّرة و«لا» الناهية (أَلَّا تَعۡبُدُوٓاْ)
+        excl = set(wm_[1] or ()) == {'نصب'}
+        rec = _rec(ref, 'MASDAR', 'M02', {'harf': an, 'verb': vt}, {'harf': [an], 'verb': [vt]}, LICENSED if excl else DEFERRED,
+                   (f'«{an.text} {vt.text}» = «أَنْ لَا {vt.text}» في تأويل مصدرٍ منفي: «أَنْ» في «أَلَّا» ناصبةٌ مصدرية، بدليل النصب الخالص المكتوب '
+                    f'على الفعل ({wm_[0]})؛ والوظيفة: {fn}') if excl else
+                   (f'«{an.text} {vt.text}»: علامة الفعل «{wm_[0]}» نصبٌ أو جزم، فالوجهان قائمان: «أَنْ» مصدريةٌ و«لا» نافيةٌ والفعل منصوب '
+                    f'(مصدرٌ مؤوَّل)، أو «أَنْ» مفسّرةٌ و«لا» ناهيةٌ والفعل مجزوم؛ ولا يُختار وجهٌ بلا دليل (شرط المفسّرة: جملةٌ قبلها فيها معنى القول '
+                    f'دون حروفه — غير مفحوص)'),
+                   premises=[f'«{an.text}» في الجرد المعتمد MERGED: أَنْ + لَا', f'«{vt.text}»: النصب مكتوب ({wm_[0]}) ولا يحتمل الرفع'],
+                   checked=['الجرد المعتمد MERGED', 'العلامة المكتوبة على الفعل', 'الماضي (لا تنصبه أَنْ)'],
+                   alternatives=['فاعل', 'مفعول به', 'مبتدأ', 'خبر', 'مجرورٌ بحرفٍ قبله'] if excl else
+                   ['أَنْ المصدرية + لا النافية + المنصوب (مصدرٌ مؤوَّل)', 'أَنْ المفسّرة + لا الناهية + المجزوم'],
+                   function=dict(status=DEFERRED, text=fn, governor=None), negation='لَا (جزءٌ من «أَلَّا»)', rule_part='M02.b',
+                   edges=[('MASDAR', an.uid, vt.uid)])
+        R.append(rec)
+        masdar[an.uid] = rec
     frames = {}
     by_uid_ = {t.uid: t for t in toks}
     for i, v in enumerate(toks):
@@ -1498,9 +1526,13 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                             for f_ in vfl) if vfl else
                   'فاعلٌ إن كان مبنياً للمعلوم، ونائب فاعلٍ إن كان مبنياً للمجهول، ولم يُفحص تحقيق الوجهين') +
                  '؛ والرفع مشتركٌ بين الوجهين')
+        scan = {}
+
         def overt_after(i):
-            """المرشّحات الاسمية الظاهرة بعد الفعل في إطاره، بلا عبور فعلٍ آخر أو عاطفٍ أو عامل"""
+            """المرشّحات الاسمية الظاهرة بعد الفعل في إطاره، بلا عبور فعلٍ آخر أو عاطفٍ أو عامل؛ وتُسجَّل في scan علّة التوقف
+            (حدّ الإطار، أو فعل، أو عاطف، أو عامل) وما مرّ به البحث من وحدةٍ صنفها غير محسوم"""
             ov = []
+            scan.update(stop='حدّ الإطار', unresolved=[])
             j = i + 1
             while j < fe_:
                 u = toks[j]
@@ -1508,14 +1540,21 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                     j += 1
                     continue                        # وما في صلة المرشّح الأول أو حاويةٍ مرخَّصة ليس منافساً
                 if u.conj or (u.lex or '').startswith('عامل') and not u.nounish():
+                    scan['stop'] = 'عاطف' if u.conj else f'عامل «{u.text}»'
                     break
                 if word_start(u) and u.mcat == 'particle' and u.text in COORD_PARTICLES:
+                    scan['stop'] = 'عاطف'
                     break                           # عاطفٌ مستقل (ثُمَّ، أَوْ، بَلْ…): ما بعده معطوفٌ أو جملةٌ أخرى، لا منافسٌ في هذا الإسناد
                 if u.pos == 'فعل' or 'فعل' in ((u.feats.get('pos') or {}).get('alt') or []) and not u.nounish():
+                    scan['stop'] = 'فعل' if u.pos == 'فعل' else 'فعلٌ محتمل'
+                    if u.pos != 'فعل':
+                        scan['unresolved'].append(u)    # صنفه غير محسوم (اسم أو فعل): لا يُعدّ حدّاً مثبتاً ولا يُغفل منافساً
                     break                           # فعلٌ آخر قبل المرشّح: ما بعده في إسناده لا في إسناد هذا الفعل (قَالَتۡ أَنَّىٰ يَكُونُ … غُلَٰمٌ)
                 if word_start(u) and (u.nounish() or u.divine or u.mcat in ('relative', 'demonstrative', 'separate_pronoun')) \
                         and u.k not in governed and u.case not in ('نصب', 'جر', 'نصب أو جر', 'جر أو نصب'):
                     ov.append(u)                    # المنصوب والمجرور كتابةً لا يكونان فاعلاً
+                elif word_start(u) and u.pos is None and u.mcat is None and not u.lex and u.k not in governed:
+                    scan['unresolved'].append(u)
                 j += 1
             return ov
 
@@ -1553,18 +1592,36 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
             ov = overt_after(i)
             raf = [u for u in ov if u.nominative()[0] is True and (u.nounish() or u.divine)]   # الرفع من مصدر العلامة الواحد
             pp_between = bool(ov) and any(toks[j_].k in span_of for j_ in range(i + 1, idx[ov[0].k]))
+            # المنافس المحتمل: وحدةٌ بعد المرشّح صنفها غير محسوم وعلى آخرها علامة رفعٍ مكتوبة (رَبُّنَا، كُلُّهُۥ)؛ فلا يُقال «لا منافس»
+            # وقد غاب الدليل على صنفها (لا نتيجة صحيحة بشهادةٍ ناقصة)
+            unres_raf = [u for u in scan.get('unresolved') or [] if ov and idx[u.k] > idx[ov[0].k] and 'رفع' in (_written_mark(u)[1] or ())
+                         and DAMMA in (letters(u.text)[-1][1] if letters(u.text) else set())]
             if passive and pp_between and len(raf) == 1:
                 subj = dict(kind='غير معيَّن', role=srole, status=DEFERRED,
                             why=f'بين الفعل المبني للمجهول و«{raf[0].text}» شبه جملة: قد تكون هي نائب الفاعل', candidates=[raf[0].uid])
+            elif len(raf) == 1 and ov and ov[0] is raf[0] and unres_raf:
+                subj = dict(kind='غير معيَّن', role=srole, status=DEFERRED,
+                            why=f'«{raf[0].text}» المرشّح الاسمي الأول بعد الفعل مرفوعٌ كتابةً، وبعده ' +
+                                '، '.join(f'«{u.text}» ({u.loc})' for u in unres_raf) + ' مرفوعٌ كتابةً صنفه غير محسوم: منافسٌ محتمل أو تابع، '
+                                'فلا يُقال «لا منافس» بلا دليل صنفه', candidates=[raf[0].uid])
             elif len(raf) == 1 and ov and ov[0] is raf[0] and raf[0].k not in bound and raf[0].k not in licensed_subjects:
                 u = raf[0]
                 subj = dict(kind='اسم ظاهر', role=srole, status=LICENSED, unit=u,
                             why=f'«{u.text}» المرشّح الاسمي الأول بعد الفعل في إطاره، مرفوعٌ كتابةً ({u.nominative()[1]})، ولا منافس مرفوعٌ غيره',
                             mark=_written_mark(u)[0])
+            elif not ov and scan.get('stop') in ('حدّ الإطار', 'فعل', 'عاطف') and not scan.get('unresolved'):
+                # S01.h (مقترحة): لا اسم ظاهر في إطاره، والبحث بلغ حدّ الإطار أو فعلاً آخر أو عاطفاً، ولم يمرّ بوحدةٍ صنفها غير محسوم:
+                # فالفاعل ضميرٌ مستتر في كل الأوجه (والاسم المتقدّم إن وُجد مبتدأٌ يعود إليه الضمير)؛ والمرجع غير معيَّن
+                subj = dict(kind='ضمير مستتر جوازاً (غير مكتوب)', role=srole, status=LICENSED,
+                            why=f'S01.h (مقترحة): لا اسم ظاهر بعد «{v.text}» في إطاره، والبحث توقّف عند {scan["stop"]} لا عند عامل، ولم يمرّ '
+                                f'بوحدةٍ صنفها غير محسوم: فالفاعل ضميرٌ مستتر في كل الأوجه، ومرجعه غير معيَّن ({_pron_ar(sp)})')
             else:
                 subj = dict(kind='غير معيَّن', role=srole, status=DEFERRED,
                             why=('المرشّحات: ' + '، '.join(f'«{u.text}» ({u.loc})' for u in ov) + '، أو ضميرٌ مستتر'
-                                 if ov else 'لا اسم ظاهر بعده في إطاره: مستترٌ جوازاً، أو الفاعل متقدّمٌ مبتدأً') +
+                                 if ov else 'لا اسم ظاهر بعده في إطاره: مستترٌ جوازاً، أو الفاعل متقدّمٌ مبتدأً' +
+                                 (f'؛ والبحث توقّف عند {scan.get("stop")}، فقد يكون الفاعل بعده' if str(scan.get('stop', '')).startswith('عامل') else '') +
+                                 ('؛ ومرّ البحث بما صنفه غير محسوم: ' + '، '.join(f'«{u.text}»' for u in scan.get('unresolved') or [])
+                                  if scan.get('unresolved') else '')) +
                             ('؛ ومنافسٌ مرفوعٌ آخر' if len(raf) > 1 else ''), candidates=[u.uid for u in ov])
         else:
             # الأوجه كلها: المرشّح (sf.v) وبدائله؛ ولكلٍّ فاعله بحسب الصيغة: ضميرٌ متصل مكتوب في المثنى والجمع، ومستترٌ وجوباً
@@ -1674,7 +1731,9 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                                     f'الكتابة لا تعيّن رفعه ولا نصبه، فهو مرشّحٌ للفاعلية وللمكمّلية معاً؛ و{trs}: لا ترخيص بلا دليل')
             elif first is not None:
                 obj_req = dict(kind='NOT_FOUND_IN_SCOPE', status='لم يُكتشف ضمن النطاق',
-                               note=f'أول ما يلي الفعل في إطاره «{first.text}» ({first.loc}) ليس منصوباً مرشّحاً؛ و{trs}: '
+                               note=f'أول ما يلي الفعل في إطاره «{first.text}» ({first.loc}) ' +
+                                    ('ليس منصوباً مرشّحاً' if first.nounish() or first.pos == 'فعل' else
+                                     'صنفه غير محسوم، فلا يُفحص مرشّحاً للمكمّل ولا يُنفى') + f'؛ و{trs}: '
                                     'لا يُحكم بلزومٍ ولا بحذفٍ بلا قاعدة')
             else:
                 obj_req = dict(kind='NOT_FOUND_IN_SCOPE', status='لم يُكتشف ضمن النطاق',
@@ -1692,6 +1751,20 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
         if subj and subj.get('unit') and subj['status'] == LICENSED:
             heads['subject'] = subj['unit']
             members['subject'] = [subj['unit']]
+        # هوية المرشّح الصرفي (SARF_MAJOR_CLOSURE_01 §4): زمنه وبناؤه وضمير صيغته من تحليلٍ واحد، والأزمنة القائمة والممنوعة بأسبابها؛
+        # ويحمل محور الوحدة الهوية نفسها، فلا يُجمع زمنٌ من مرشّحٍ وبناءٌ أو ضميرٌ من آخر
+        _sv = sf.get('v') if isinstance(sf.get('v'), dict) else {}
+        cand_rec = dict(
+            id=f"{v.uid}#T={tf.get('v')}|V={vf.get('v')}|S={_sv.get('person')}{_sv.get('number')}{_sv.get('gender')}" if not cands else
+               f"{v.uid}#" + '+'.join(c_['id'] for c_ in cands if c_['status'] != REJECTED),
+            tense=tf.get('v') if not cands else None, tense_status=tf.get('st') if not cands else 'مرشّح',
+            tense_live=([tf.get('v')] if tf.get('st') == 'مثبت' else list(tf.get('alt') or [tf.get('v')])) if not cands else
+                       sorted({c_['tense'] for c_ in cands if c_['status'] != REJECTED} - {None}),
+            tense_rejected=dict(tf.get('rejected') or {}) if not cands else
+                           {c_['tense']: c_['reason'] for c_ in cands if c_['status'] == REJECTED and c_.get('tense')},
+            tense_evidence=tf.get('ev'), realization=tf.get('realization'),
+            voice=vf.get('v') if not cands else None, subject=_sv or None)
+        v.morph_candidate = cand_rec['id']
         fr = _rec(ref, 'VERB_FRAME', 'F01', heads, members, LICENSED if coherent else DEFERRED,
                   'سمات الفعل كلها مثبتة من تحليلٍ واحد' if coherent else
                   ('مرشّحاتٌ صرفية كاملة متنافسة' if cands else 'بعض سمات الفعل مرشّحة: لا تُجمع من مرشّحاتٍ متفرقة'),
@@ -1705,7 +1778,7 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                   ['الصنف: فعل في كل المرشّحات القائمة'] +
                   [f'المرشّح القائم {c_["id"]}: {c_["tense"]}، {c_["voice"]}، {c_["subject_role"]}' for c_ in cands if c_['status'] != REJECTED] +
                   [f'الوجه الممنوع {c_["id"]} ({c_["tense"]}): {c_["reason"]} — لا يُبنى عليه' for c_ in cands if c_['status'] == REJECTED],
-                  frame=dict(identity=v.text, root=v.G.Theta.get('R'), pattern=v.G.Theta.get('P'),
+                  frame=dict(identity=v.text, root=v.G.Theta.get('R'), pattern=v.G.Theta.get('P'), candidate=cand_rec,
                              tense=(tf.get('v'), tf.get('st'), tf.get('alt')) if not cands else
                              ('، '.join(sorted({c_['tense'] for c_ in cands if c_['status'] != REJECTED} - {None})) or None, 'مرشّح', None),
                              voice=(vf.get('v'), vf.get('st'), vf.get('alt')) if not cands else
@@ -2043,6 +2116,38 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
         for l_ in lk:
             if l_.get('relation') in ids:
                 l_['status'] = ids[l_['relation']]['status']
+    # امتداد المصدر المؤوَّل (SARF_MAJOR_CLOSURE_01 §6): المثبت منه أعضاءٌ بعلاقاتٍ مرخَّصة — الحرف، والفعل وضمائره المتصلة في كلمته،
+    # والفاعل الظاهر المرخَّص، والمفاعيل المرخَّصة؛ وما بعدها إلى حدّ إطار الفعل امتدادٌ مرشّح حدّه غير مثبت. ولكلّ عضوٍ هويته
+    for rec in [r_ for r_ in R if r_['type'] == 'MASDAR']:
+        vt = by_uid_.get(rec['heads']['verb'])
+        an = by_uid_.get(rec['heads']['harf'])
+        if vt is None or an is None:
+            continue
+        fr_ = frames.get(vt.k)
+        mem = [an.uid, vt.uid] + [t.uid for t in toks if t.wi == vt.wi and idx[t.k] > idx[vt.k]]
+        why = ['الحرف والفعل (M02)'] + ([f'الضمير المتصل في كلمة الفعل'] if len(mem) > 2 else [])
+        sj_ = ((fr_ or {}).get('frame') or {}).get('subject') or {}
+        if sj_.get('status') == LICENSED and sj_.get('unit'):
+            mem.append(sj_['unit'])
+            why.append(f'الفاعل المرخَّص في الإطار ({fr_["relation_id"]})')
+        for o_ in R:
+            if o_['type'] == 'OBJECT' and o_['status'] == LICENSED and o_['heads'].get('verb') == vt.uid and o_['heads'].get('object') not in mem:
+                mem.append(o_['heads']['object'])
+                why.append(f'المفعول المرخَّص ({o_["relation_id"]})')
+        mem = sorted(set(mem), key=lambda u: idx[by_uid_[u].k])
+        fe2 = frame_end(idx[vt.k])
+        last = max(idx[by_uid_[u].k] for u in mem)
+        cand = [toks[j] for j in range(last + 1, fe2)]
+        rec['members']['extent'] = mem
+        rec['positions']['extent'] = [by_uid_[u].loc for u in mem]
+        rec['texts']['extent'] = ' '.join(by_uid_[u].text for u in mem)
+        rec['extent'] = dict(proven=mem, proven_text=rec['texts']['extent'], evidence=why,
+                             candidate=[t.uid for t in cand], candidate_text=' '.join(t.text for t in cand),
+                             boundary_status=LICENSED if not cand else DEFERRED,
+                             boundary_note='الحدّ مثبت: لا شيء بعد الأعضاء المرخَّصة في إطار الفعل' if not cand else
+                             f'ما بعد الأعضاء المرخَّصة إلى حدّ إطار الفعل ({cand[0].loc}–{cand[-1].loc}) امتدادٌ مرشّح: '
+                             'لم تثبت علاقاتُه بالفعل، فحدّ المصدر غير مثبت')
+
     # أدوار العمل من العلاقات المرخَّصة وحدها (لا من المؤجَّل)
     by_uid = {t.uid: t for t in toks}
     for rec in R:
@@ -2473,6 +2578,24 @@ def check_cross(records, axes):
         for p_ in r['premises']:
             if r.get('premise_links') is not None and not any(l_.get('premise') == p_ for l_ in r['premise_links']):
                 errs.append(f'{r["relation_id"]}: مقدّمةٌ بلا رابط: {str(p_)[:60]}')
+    # ١٠ هوية المرشّح الصرفي: زمن الإطار هو زمن مرشّحه، ومن أزمنته القائمة لا الممنوعة؛ ومحور الفعل يحمل هوية مرشّح إطاره نفسها
+    ax_c = {u: (ax.get('identity') or {}).get('morph_candidate') for u, ax in axes.items()}
+    for r in records:
+        if r['type'] != 'VERB_FRAME':
+            continue
+        fc = (r.get('frame') or {}).get('candidate') or {}
+        if not fc:
+            continue
+        t_ = (r['frame'].get('tense') or (None,))[0]
+        if fc.get('tense') is not None and t_ != fc['tense']:
+            errs.append(f'{r["relation_id"]}: زمن الإطار «{t_}» غير زمن مرشّحه «{fc["tense"]}»')
+        if t_ is not None and fc.get('tense') is not None and t_ in (fc.get('tense_rejected') or {}):
+            errs.append(f'{r["relation_id"]}: زمن الإطار «{t_}» وجهٌ ممنوع: {fc["tense_rejected"][t_]}')
+        if fc.get('tense') is not None and fc.get('tense_live') and fc['tense'] not in fc['tense_live']:
+            errs.append(f'{r["relation_id"]}: زمن المرشّح «{fc["tense"]}» ليس من أزمنته القائمة {_join_ar(fc["tense_live"])}')
+        vu = r['heads'].get('verb')
+        if vu in ax_c and ax_c[vu] is not None and ax_c[vu] != fc.get('id'):
+            errs.append(f'{r["relation_id"]}: هوية المرشّح في المحور «{ax_c[vu]}» غير هوية مرشّح الإطار «{fc.get("id")}»')
     # ٨ ما له بدائل خارج التغطية لا يكون مختاراً ولا مكتمل البحث (الترخيص وجهٌ لا اختيار)
     for r in records:
         if (r.get('search_scope') or {}).get('outside_coverage'):

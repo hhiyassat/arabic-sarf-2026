@@ -258,25 +258,38 @@ def verb_features(G, agr, morph, obj_pron, governor=None):
             tense_ambig = True
             why_amb = f'صنف الإسناد ماضٍ («{sig}»)، وفي أوله «{f0}» من أحرف المضارعة ليس من قالب الماضي' + \
                 (f' (الجذر «{R0}»، الوزن {P0})' if R0 else '') + ': فاللاحقة قد تكون من الجذر أو ضمير مفعول'
-    if governor:
-        out['tense'] = feat('مضارع', PROVEN, f'العامل «{governor[0]}» قبله يقتضي {governor[1]}، ولا يُنصب ولا يُجزم إلا المضارع')
-        if kind != 'mudari':
-            out['tense']['ev'] += f'؛ وخالفه صنف الإسناد ({TENSE.get(kind)})'
-            kind = 'mudari'
+    R_g, P_g = G.Theta.get('R'), G.Theta.get('P')
+    pref_ind = bool(tl) and tl[0][0] in 'أنيت' and bool(tl[0][1] & {FATHA, DAMMA}) and bool(R_g) and \
+        tl[0][0] != ('ء' if R_g[0] in 'ءأ' else R_g[0]) and not (tl[0][0] == 'ت' and P_g in ('V', 'VI')) and \
+        not (tl[0][0] == 'أ' and P_g == 'IV') and not (len(tl) > 1 and tl[1][0] == tl[0][0])
+    if governor and (kind == 'mudari' or pref_ind):
+        out['tense'] = feat('مضارع', PROVEN, f'العامل «{governor[0]}» قبله يقتضي {governor[1]}، ولا يُنصب ولا يُجزم إلا المضارع؛ '
+                                               'وفي أوله حرف مضارعةٍ مكتوب ليس من الجذر ولا من قالب الوزن (أصلٌ مستقلٌّ عن العامل)' +
+                                               ('' if kind == 'mudari' else f'؛ وخالفه صنف الإسناد ({TENSE.get(kind)}) فلم يُعتمد'))
+        kind = 'mudari'
+    elif governor:
+        # قبول العامل قام على أثره المتوقَّع في هذا المعمول، فلا يُثبت به زمن المعمول نفسه (منع الدور): يبقى الزمن مرشّحاً بالتعارض
+        out['tense'] = feat(TENSE.get(kind), CAND, f'العامل «{governor[0]}» يقتضي المضارع، وصنف الإسناد {TENSE.get(kind)}: تعارضٌ '
+                                                    'لا يُحسم بالعامل وحده، لأن قبوله قام على أثره في هذا المعمول',
+                            alt=sorted({TENSE.get(kind), 'مضارع'} - {None}))
     elif tense_ambig:
         out['tense'] = feat(TENSE.get(kind), CAND, why_amb, alt=['ماضٍ', 'أمر', 'مضارع'])
         tr_ = tense_realization(G.O['text'], R0, P0, G.closed)
         if tr_:
             live = [x for x in ('ماضٍ', 'أمر', 'مضارع') if tr_.get(x, ('LICENSED',))[0] != 'REJECTED']
             rej = '؛ '.join(f'{x} ممنوع: {tr_[x][1]}' for x in ('ماضٍ', 'أمر', 'مضارع') if tr_.get(x, ('',))[0] == 'REJECTED')
+            rejected_ = {x: tr_[x][1] for x in ('ماضٍ', 'أمر', 'مضارع') if tr_.get(x, ('',))[0] == 'REJECTED'}
             if len(live) == 1 and live[0] == TENSE.get(kind):
                 # يثبت الزمن إذا وافق الباقي صنفَ الإسناد الذي بُني عليه ضمير الصيغة؛ وإن خالفه بقي مرشّحاً (لا يُجمع زمنٌ من وجهٍ
                 # وضميرٌ من آخر)
                 out['tense'] = feat(live[0], PROVEN, f'F03 (مقترحة): {why_amb}؛ و{rej}؛ فبقي {live[0]}' +
                                     (f' ({tr_[live[0]][1]})' if live[0] in tr_ else ''))
+                out['tense']['rejected'] = rejected_
+                out['tense']['realization'] = tr_.get(live[0], ('LICENSED', 'لم يُمنع'))[1]
             elif rej:
                 out['tense'] = feat(TENSE.get(kind) if TENSE.get(kind) in live else live[0], CAND, why_amb + f'؛ F03 (مقترحة): {rej}',
                                     alt=live)
+                out['tense']['rejected'] = rejected_
     else:
         out['tense'] = feat(TENSE.get(kind), PROVEN if kind in TENSE else DEFER, 'صنف الإسناد: ' + sig)
     vo = agr.get('voice')
@@ -392,43 +405,73 @@ def _peel_verbal_proclitics(t):
     return t[i:]
 
 
+# سجلّ القاعدتين بعد تدقيق 032 (SARF_MAJOR_CLOSURE_01 §3): المجال، والمقدّمات، والموانع، والأمثلة المقابلة، والمصدر
+E_RULES = {
+    'E02': dict(version='v2', status='مقترحة', scope='جذعٌ غير محمي متصلٌ به ضميرٌ متصل من الضمائر المسمّاة (ATTACHED_PRONOUNS)، '
+                                                 'وآخر الجذع ضمةٌ أو كسرة بلا تنوين، وفي الجذع بعد نزع السوابق ثلاثة أحرفٍ مكتوبة فأكثر',
+                positive_premises=['الفعل قبل الضمير المتصل: ماضٍ آخره فتحة أو ضمير رفع، أو مضارعٌ أوله حرف مضارعة، أو أمرٌ',
+                                   'الأمر من الثلاثي يبدأ بهمزة وصل، أو يبقى حرفين (المضعّف رُدَّ، واللفيف قِ)، ومن المزيد بهمزة أَفۡعِلۡ أو همزة وصل، '
+                                   'أو على فَعِّ وفَاعِ وتَفَعَّلۡ'],
+                barriers=['حرف مضارعة (أ ن ي ت) مفتوح أو مضموم بعد نزع «فَـ/وَـ» و«سَـ» وهمزة الاستفهام', 'همزة وصل في أوله',
+                          'همزة في أوله (أ ء آ)', 'ضمير رفع تُ أو تِ بعد ساكن', 'حرفان مكتوبان أو أقل (رُدُّ، مُدُّ، فِرِّ، وَلِّ، قِ)',
+                          'فَاعِ (ألفٌ ثانيةٌ وآخره مكسور: نَادِ)', 'فُوعِلَ (ضمّ الأول ومدٌّ بعده: بُورِكَ)', 'تنوين على الآخر'],
+                counterexamples=['رُدُّهُ', 'مُدُّهُ', 'قِهِمُ', 'وَلِّهِ', 'نَادِهِ', 'ٱدۡعُهُ', 'أَلۡقِهِ', 'سَنُدۡخِلُهُمۡ', 'أَيَأۡمُرُكُم', 'كَتَبۡتُهُ', 'بُورِكَ'],
+                source='صيغ الفعل المكتوبة قبل الضمير المتصل في أبواب التصريف؛ وقيست على QAC للقياس وحده',
+                tests=['tests/test_batch_b.py::B01', 'tests/test_batch_b.py::B02', 'tests/test_closure.py::G01'],
+                dependent_outputs=['word_class (14ب)', 'IDAFA I01', 'SUBJECT S01', 'inflection AGREE', 'closure certificate'],
+                v1_defect='v1 عدّ الجذع ذا الحرفين المشدَّد الآخر (رُدُّهُ، مُدُّهُ) اسماً: الأمر المضعّف من الثلاثي يُضمّ آخره قبل «هُ»'),
+    'E03': dict(version='v2', status='معطَّلة: مقدّمة نطاقٍ تنتظر حكم المالك', scope='المدخل المعتمد (hafs_kfgqpc) وحده',
+                positive_premises=['P1 (غير مثبتة في المشروع): رواية حفص لا تكسر حرف المضارعة (لا تلتلة)',
+                                   'الماضي والأمر من أَفۡعَلَ بهمزةٍ مفتوحة، والمجهول بمضمومة، وهمزة الوصل تُكتب «ٱ»'],
+                barriers=['التلتلة: مضارع المتكلم بهمزةٍ مكسورة (إِخَالُ) في غير حفص', 'الأدوات المبدوءة بـ«إِ» (محمية قبل الجذر)'],
+                counterexamples=['إِخَالُ'],
+                source='لا مصدر في المشروع للمقدّمة P1؛ ومسح المدخل بالمحلّل نفسه لم يجد مضارعاً بحرف مضارعة مكسور (اتّساقٌ لا إثبات)',
+                tests=['tests/test_batch_b.py::B04'],
+                dependent_outputs=['word_class «إِحۡدَى»', 'IDAFA «إِحۡدَى ← هُمَا»', 'كاشف المكمّل CASE_NOT_WRITTEN', 'مرشّح الفاعل في وجه الغائبة'],
+                v1_defect='v1 جعل «لا يبدأ فعلٌ بـإِ» قاعدةً عامة، وتنقضها التلتلة (إِخَالُ)'),
+}
+# المقدّمة P1 لـE03 لا تُعدّ مثبتة إلا بحكم المالك؛ ومع تعطيلها لا تُثبت E03 اسميةً، فتؤجَّل نتائجها التابعة
+E03_PREMISE_P1_APPROVED = False
+
+
 def host_case_vowel_proof(stem, enclitic):
-    """E02 (مقترحة): الجذع قبل ضميرٍ متصل آخره ضمةٌ أو كسرة اسمٌ بنفي صيغ الفعل المكتوبة قبل الضمير:
-    الماضي آخره فتحة أو ضمير رفعٍ (تُ، تِ بعد ساكن، وا، نا بعد ساكن)؛ والمضارع آخره ضمةٌ أو كسرة لا تكون إلا بعد حرف مضارعة
-    (أ ن ي ت مفتوحاً أو مضموماً)، والسين والفاء قبله تُنزعان؛ والأمر يبدأ بهمزة وصل، أو بهمزة أَفۡعِلۡ (ءَاتِ)، أو هو حرفان (قِ)،
-    أو على فَعِّ وفَاعِ من الناقص (يُترك الحكم فيهما)؛ والمبني للمجهول فُوعِلَ يُترك. → نصّ الدليل أو None"""
+    """E02 v2 (مقترحة): الاسمية قبل الضمير المتصل بنفي صيغ الفعل المكتوبة، بالمجال والموانع المسمّاة في E_RULES['E02'].
+    → نصّ الدليل أو None"""
     if not enclitic or enclitic not in ATTACHED_PRONOUNS:
         return None
     t = _peel_verbal_proclitics(letters(stem))
-    n_eff = len(t) + sum(1 for _, m_ in t if SHADDA in m_)      # المشدَّد حرفان
-    if n_eff < 3:
-        return None
+    if len(t) < 3:
+        return None                                             # حرفان أو أقل: رُدُّ، مُدُّ، فِرِّ، وَلِّ، قِ (أمرٌ ممكن)
     f0, m0 = t[0]
     if f0 in 'اٱ' and not m0 & {FATHA, DAMMA, KASRA}:
         return None
-    if f0 == 'آ' or f0 in 'أءنيت' and m0 & {FATHA, DAMMA}:
+    if f0 in 'أءآ' or f0 in 'نيت' and m0 & {FATHA, DAMMA}:
         return None
     if DAMMA in m0 and t[1][0] in 'وي' and not t[1][1]:
         return None
     L, m = t[-1]
     if L == 'ت' and SUKUN in t[-2][1]:
         return None
-    if n_eff == 3 and KASRA in m and (SHADDA in m or SHADDA in t[1][1] or t[1][0] == 'ا'):
-        return None                                             # فَعِّ وفَاعِ من الناقص (وَلِّ، وَالِ): أمرٌ محتمل
+    if len(t) == 3 and KASRA in m and t[1][0] == 'ا':
+        return None                                             # فَاعِ من الناقص (نَادِ)
     if not m & {DAMMA, KASRA} or m & {FATHATAN, DAMMATAN, KASRATAN}:
         return None
     v = 'الضمة' if DAMMA in m else 'الكسرة'
-    return (f'E02 (مقترحة): آخر الجذع {v} قبل الضمير المتصل «{enclitic}»، ولا يبدأ بحرف مضارعةٍ ولا همزة وصلٍ ولا همزة أَفۡعِلۡ، '
-            f'ولا يُختم بضمير رفع: فلا يكون فعلاً قبل ضمير')
+    return (f'E02 v2 (مقترحة): آخر الجذع {v} قبل الضمير المتصل «{enclitic}»، وفيه ثلاثة أحرفٍ فأكثر، ولا يبدأ بحرف مضارعةٍ '
+            f'ولا همزةٍ ولا همزة وصل، ولا يُختم بضمير رفع، وليس على فَاعِ ولا فُوعِلَ: فلا يكون فعلاً قبل ضمير')
 
 
 def initial_hamza_kasra_proof(stem):
-    """E03 (مقترحة): الجذع غير المحمي يبدأ بهمزة قطعٍ مكسورة مكتوبة (إِ): لا يبدأ بها فعل؛ فالماضي والأمر من أَفۡعَلَ بهمزةٍ مفتوحة،
-    والمبني للمجهول بمضمومة، ومضارع المتكلم بمفتوحةٍ أو مضمومة، وهمزة الوصل تُكتب «ٱ». والأدوات المبدوءة بها (إِلَّا، إِلَى، إِنَّ)
-    خارج هذا المجال: محميةٌ قبل توليد الجذر. → نصّ الدليل أو None"""
+    """E03 v2: لا تُثبت اسميةً ما دامت مقدّمتها P1 (لا تلتلة في حفص) غير مثبتة في المشروع (E03_PREMISE_P1_APPROVED).
+    ومع اعتمادها تعمل في المدخل المعتمد وحده. → نصّ الدليل أو None"""
+    if not E03_PREMISE_P1_APPROVED:
+        return None
+    from . import quran_source
+    if quran_source.name() != 'hafs_kfgqpc':
+        return None
     t = _peel_verbal_proclitics(letters(stem))
     if len(t) >= 3 and t[0][0] == 'إ' and KASRA in t[0][1]:
-        return 'E03 (مقترحة): يبدأ الجذع بهمزة قطعٍ مكسورة مكتوبة (إِ)، ولا يبدأ بها فعل'
+        return 'E03 v2 (مقترحة، بمقدّمة P1 المعتمدة): همزة قطعٍ مكسورة مكتوبة في أول الجذع، ولا تلتلة في رواية حفص'
     return None
 
 

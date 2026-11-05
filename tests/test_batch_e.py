@@ -61,7 +61,7 @@ check('E03 إفساد A02 (اختيارٌ وبحثٌ مكتمل مع بدائل 
       sum('خارج التغطية' in e for e in check_cross(m['records'], m['axes'])) >= 2)
 
 # ---------- M02 ----------
-ms = [r for r in o['records'] if r['type'] == 'MASDAR']
+ms = [r for r in o['records'] if r['type'] == 'MASDAR' and r['texts']['harf'] == 'أَنْ']   # و«أَلَّا» في tests/test_closure.py (G15)
 check('E04 M02 في 2:282: خمسة مصادر مؤوَّلة («أن يكتب»، «أن يملّ»، «أن تضلّ»، «أن تكتبوه»، «أن تكون») مرخَّصةٌ تركيباً',
       sorted(r['texts']['verb'] for r in ms) == sorted(['يَكْتُبَ', 'يُمِلَّ', 'تَضِلَّ', 'تَكْتُبُو', 'تَكُونَ'])
       and all(r['status'] == 'LICENSED' for r in ms), [r['texts'] for r in ms])
