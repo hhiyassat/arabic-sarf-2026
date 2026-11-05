@@ -1546,21 +1546,61 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                 R.append(obj2)
         if not nas and not any(o_['status'] == LICENSED for o_ in objs) and not (obj2 and obj2['status'] == LICENSED) \
                 and trf.get('v') != 'لازم':
-            # نوع متطلَّب المفعول وحالته، لا «التزامٌ مفتوح» عامّ: منصوبٌ مكتوب لم يُربط (نقص ربطٍ لا نقص نص، أياً كان التعدّي)،
-            # أو لا مفعول مكتوب والتعدّي مرشّح أو غير معروف: لا متطلَّب لازمٌ ثبت عدم استيفائه
+            # كاشف المكمّل بحدوده: يبدأ بعد الفعل (أو فاعله الظاهر)، ويتجاوز شبه الجملة (الجار ومجروره) وحدها،
+            # ويقف عند أول ما سواها: فعلٌ آخر، أو أداةٌ غير الجار (أنْ، إلّا، لا…)، أو عاطف، أو حدّ الإطار.
+            # ولا يقول «لازم» ولا «محذوف» بلا قاعدة: غياب الاكتشاف ليس دليل غياب المكمّل
             st0 = idx[subj['unit'].k] + 1 if subj and subj.get('unit') else i + 1
-            wn = next((toks[j_] for j_ in range(st0, fe_) if word_start(toks[j_]) and not toks[j_].conj and toks[j_].nounish()
-                       and (toks[j_].case == 'نصب' or 'نصب' in (_written_mark(toks[j_])[1] or ()))
-                       and toks[j_].k not in governed and toks[j_].k not in bound
-                       and not (obj2 and obj2['heads'].get('object') == toks[j_].uid)), None)
             trs = f'التعدّي {trf.get("v") or "غير معروف"} ({trf.get("st") or "مؤجَّل"})'
-            if wn:
-                obj_req = dict(kind='UNLINKED_WRITTEN', status='غير مربوط',
-                               note=f'منصوبٌ مكتوب «{wn.text}» ({wn.loc}) في الإطار لم يُربط مفعولاً، و{trs}: نقصٌ في الربط لا في النص')
-            elif obj2 is None and trf.get('v') in ('متعدٍّ', None):
-                obj_req = dict(kind='NO_WRITTEN_OBJECT', status='لا متطلَّب مثبت',
-                               note=f'لا مفعول مكتوب في الإطار، و{trs}: لازمٌ في هذا الاستعمال أو محذوفٌ مفعوله؛ '
-                                    'ولا متطلَّب لازمٌ ثبت عدم استيفائه')
+            jarr_w = {o_['word_index'] for o_ in a['operators'] if str(o_['group']) == JARR and o_.get('status') == 'accepted'}
+            first, stop, j_, skipped = None, None, st0, False
+            while j_ < fe_:
+                t_ = toks[j_]
+                if t_.wi == v.wi or t_.enclitic:
+                    j_ += 1
+                    continue
+                if t_.conj:
+                    stop = (t_, 'عاطف')
+                    break
+                is_op = 'عامل' in (t_.lex or '') or str(t_.pos or '').startswith('عامل')
+                if is_op and t_.wi in jarr_w:
+                    # شبه جملةٍ تُتجاوز: الجار ومجروره (في كلمته أو الكلمة التالية)
+                    nxt_ = toks[j_ + 1] if j_ + 1 < fe_ else None
+                    j_ += 2 if nxt_ is not None and nxt_.k in governed and governed[nxt_.k][0] is t_ else 1
+                    skipped = True
+                    continue
+                if t_.k in governed and str(governed[t_.k][1]['group']) == JARR:
+                    j_ += 1
+                    skipped = True
+                    continue
+                if is_op or t_.pos == 'فعل':
+                    stop = (t_, 'أداة' if is_op else 'فعلٌ آخر')
+                    break
+                first = t_
+                break
+            if vb:
+                obj_req = dict(kind='KHABAR_CANDIDATE', status='ليس متطلَّب مفعول',
+                               note=f'«{v.text}» من صيغ «{vb}» (VERBAL): ناقصٌ أو تامّ غير محسوم' +
+                                    (f'؛ و«{first.text}» ({first.loc}) خبرٌ مرشّح في وجه الناقص، لا مفعول' if first else '') +
+                                    '؛ والتامّ منه لا يطلب مفعولاً')
+            elif first is not None and first.nounish() and (first.case == 'نصب' or 'نصب' in (_written_mark(first)[1] or ())) \
+                    and first.k not in governed and first.k not in bound and not (obj2 and obj2['heads'].get('object') == first.uid):
+                obj_req = dict(kind='UNLINKED_CANDIDATE', status='مرشّح غير مربوط',
+                               note=f'«{first.text}» ({first.loc}) منصوبٌ مكتوب يلي الفعل في إطاره، مرشّحُ مكمّلٍ غير مربوط '
+                                    f'(مفعول به، أو حال، أو تمييز، أو مفعول مطلق)، و{trs}: لا ترخيص بلا دليل الوظيفة')
+            elif stop is not None and stop[1] == 'أداة' and stop[0].text.startswith('أَن') and not skipped and j_ + 1 < fe_ \
+                    and toks[j_ + 1].pos == 'فعل':
+                obj_req = dict(kind='UNANALYZED_COMPLEMENT', status='مكمّلٌ غير محلَّل',
+                               note=f'بعد الفعل «{stop[0].text} {toks[j_ + 1].text}» ({stop[0].loc}): تركيبٌ مكتوب (مصدرٌ مؤوَّل) '
+                                    'قد يكون مكمّلَه، وقاعدته غير منفّذة؛ فالمكمّل موجودٌ غير محلَّل، لا منفيّ')
+            elif first is not None:
+                obj_req = dict(kind='NOT_FOUND_IN_SCOPE', status='لم يُكتشف ضمن النطاق',
+                               note=f'أول ما يلي الفعل في إطاره «{first.text}» ({first.loc}) ليس منصوباً مرشّحاً؛ و{trs}: '
+                                    'لا يُحكم بلزومٍ ولا بحذفٍ بلا قاعدة')
+            else:
+                obj_req = dict(kind='NOT_FOUND_IN_SCOPE', status='لم يُكتشف ضمن النطاق',
+                               note=('وقف البحث عند ' + (f'{stop[1]} «{stop[0].text}» ({stop[0].loc})' if stop else 'حدّ الإطار')) +
+                                    ('، بعد شبه جملةٍ تجاوزها؛ وما بعد الحدّ تركيبٌ لا يُنسب إلى هذا الفعل بلا قاعدة' if skipped and stop else '') +
+                                    f'، ولم يُكتشف مكمّلٌ منصوب قبله؛ و{trs}: لا يُحكم بلزومٍ ولا بحذفٍ بلا قاعدة')
         if cands:
             live = [c_ for c_ in cands if c_['status'] != REJECTED]
             subj = dict(kind='من المرشّح القائم' if len(live) == 1 else 'مرشّحات متنافسة',

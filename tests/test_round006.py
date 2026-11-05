@@ -414,14 +414,28 @@ m = copy.deepcopy(o1249)
 next(r for r in m['records'] if r['relation_id'] == s1249['relation_id'])['role_name'] = 'فاعل'
 check('M18 إفساد الدور (فاعل لفعلٍ بناؤه المجهول مثبت) يكشفه الفاحص العابر للطبقات', bool(check_cross(m['records'], m['axes'])))
 
-# ٢٠ نوع متطلَّب المفعول وحالته، لا «التزامٌ مفتوح» عامّ
-f28 = rec(o, 'VERB_FRAME', verb=at(o, '2:282:28', 'يَتَّقِ')[0])['frame']
-f3 = rec(o, 'VERB_FRAME', verb=at(o, '2:282:3', 'ءَامَنُوا')[0])['frame']
-check('X53 «يَتَّقِ اللَّهَ»: منصوبٌ مكتوب لم يُربط (نقص ربطٍ لا نقص نص)؛ و«ءَامَنُوا» بلا مفعولٍ مكتوب والتعدّي مرشّح: لا متطلَّب مثبت؛ ولا يدخل أيٌّ منهما الالتزامات المفتوحة',
-      (f28.get('object_requirement') or {}).get('kind') == 'UNLINKED_WRITTEN' and 'اللَّهَ' in f28['object_requirement']['note']
-      and (f3.get('object_requirement') or {}).get('kind') == 'NO_WRITTEN_OBJECT' and not f28['open'] and not f3['open'],
-      (f28.get('object_requirement'), f3.get('object_requirement')))
-
+# ٢٠ كاشف المكمّل بحدوده (مراجعة 025): لا يعبر أداةً ولا فعلاً ولا يجعل خبر الناسخ مفعولاً، ولا ينفي ما لم يكشفه
+def _oreq(loc, txt):
+    return rec(o, 'VERB_FRAME', verb=at(o, loc, txt)[0])['frame'].get('object_requirement') or {}
+q95, q79, q58, q98 = _oreq('2:282:95', 'تَرْتَابُوا'), _oreq('2:282:79', 'تَسْءَمُوا'), _oreq('2:282:58', 'يَكُونَا'), _oreq('2:282:98', 'تَكُونَ')
+q45, q28, q63 = _oreq('2:282:45', 'يَسْتَطِيعُ'), _oreq('2:282:28', 'يَتَّقِ'), _oreq('2:282:63', 'تَرْضَوْنَ')
+check('X53 «ترتابوا إلّا أن تكون تجارةً»: يقف الكاشف عند «إلّا» ولا يُسند «تجارةً» إلى «ترتابوا»',
+      q95.get('kind') == 'NOT_FOUND_IN_SCOPE' and 'إِلَّا' in q95['note'] and 'تِجَٰرَةً' not in q95['note'], q95)
+check('X56 «تسأموا أن تكتبوه صغيراً»: «أن تكتبوه» مكمّلٌ مكتوب غير محلَّل، ولا يُشخَّص «صغيراً» مفعولاً لـ«تسأموا»',
+      q79.get('kind') == 'UNANALYZED_COMPLEMENT' and 'صَغِيرًا' not in q79['note'], q79)
+check('X57 «يكونا رجلين» و«تكون تجارةً»: خبرٌ مرشّح في وجه الناقص، لا مفعول',
+      q58.get('kind') == q98.get('kind') == 'KHABAR_CANDIDATE' and 'رَجُلَيْنِ' in q58['note'] and 'تِجَٰرَةً' in q98['note'], (q58, q98))
+check('X58 «يستطيع أن يُملّ»: مكمّلٌ غير محلَّل مُعلَن، لا «لا مفعول مكتوب»؛ و«ترضون من الشهداء أن تضلّ»: الحدّ بعد شبه الجملة لا يُنسب إليه',
+      q45.get('kind') == 'UNANALYZED_COMPLEMENT' and q63.get('kind') == 'NOT_FOUND_IN_SCOPE' and 'لا يُنسب' in q63['note'], (q45, q63))
+check('X59 «يتق الله»: مرشّح مكمّلٍ غير مربوط ببدائله، بلا ترخيص؛ ولا «لازم» ولا «محذوف» في أيّ تشخيص',
+      q28.get('kind') == 'UNLINKED_CANDIDATE' and 'اللَّهَ' in q28['note'] and 'حال' in q28['note']
+      and not any('لازمٌ في هذا الاستعمال' in str((r['frame'].get('object_requirement') or {}).get('note')) for r in o['records'] if r['type'] == 'VERB_FRAME'),
+      q28)
+f112 = next((r for r in o['records'] if r['type'] == 'VERB_FRAME' and r['texts'].get('verb') == 'يُضَارَّ'), None)
+s112 = next((r for r in o['records'] if r['type'] == 'SUBJECT' and r['texts'].get('verb') == 'يُضَارَّ'), None)
+check('X60 «يُضَآرَّ كاتبٌ» (إن كان فعلاً في المعجم): الوجهان باقيان والرفع مشترك بلا اختيارٍ خفي',
+      f112 is None or (s112 and s112['role_name'] == 'فاعل أو نائب فاعل' and s112.get('selection') == 'DEFERRED'
+                       and {f_['voice'] for f_ in s112.get('voice_face_evidence') or []} == {'معلوم', 'مجهول'}), s112 and s112.get('role_name'))
 c77 = next(r for r in o['records'] if r['type'] == 'CONDITION' and r['heads'].get('condition_verb') == u77)
 check('X54 شرط «إذا ما دُعُوا»: المصالحة مع F01 أولُ المقدّمات، ومقدّمة الطبقة القديمة القائمة على وجه الأمر الممنوع موسومةٌ بأنه لا يُبنى عليها',
       c77['premises'][0].startswith('المصالحة مع F01') and any('قائمةٌ على وجهٍ ممنوع في F01' in p for p in c77['premises'][1:]), c77['premises'])
