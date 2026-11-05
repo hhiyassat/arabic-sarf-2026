@@ -1,0 +1,847 @@
+{
+ "plan": "SARF_SEQUENTIAL_COMPLETION_PLAN_01",
+ "identity": {
+  "baseline_commit": "38b6faf",
+  "final_code_commit": "66b1389",
+  "final_page": "reports/arabic-sarf-030.html",
+  "final_run": "af1330192da4",
+  "code_fingerprint": "61123176a8d9087f",
+  "hfn": "release_v36",
+  "hfn_fingerprint": "d15da9926cdb3788",
+  "source": "data/quran_hafs.tsv (hafs_kfgqpc)",
+  "source_fingerprint": "a6dc1c01d94bd67f",
+  "pythonhashseed": 0,
+  "bridged": true
+ },
+ "batch_A": {
+  "verses": 6236,
+  "joined_source_words": 2417,
+  "words": 77430,
+  "cells": 288991,
+  "syllables": 225856,
+  "stray_cells": 43,
+  "stray_muqattaat": 41,
+  "stray_cross_word": 2
+ },
+ "batch_B": {
+  "compare_vs_baseline": {
+   "checker": [
+    0,
+    0
+   ],
+   "units": [
+    106557,
+    106557
+   ],
+   "rels": [
+    50001,
+    51498
+   ],
+   "unit_transitions": {
+    "UNVERIFIED→MABNI": 1176,
+    "N/A→AGREE": 292,
+    "UNGOVERNED→AGREE": 1014,
+    "N/A→UNGOVERNED": 743,
+    "UNVERIFIED→UNGOVERNED": 198,
+    "AGREE→UNGOVERNED": 7,
+    "added": 0
+   },
+   "relation_status_changes": {
+    "VERB_FRAME|F01|DEFERRED→LICENSED": 1649,
+    "VERB_FRAME|removed": 129,
+    "ADVP|removed": 35,
+    "SUBJECT|removed": 7,
+    "NASIKH|removed": 5,
+    "PREDICATION|removed": 4,
+    "ATTACH|removed": 11,
+    "PREDICATION|N01|LICENSED→DEFERRED": 2,
+    "IDAFA|added": 969,
+    "VERB_FRAME|added": 129,
+    "SUBJECT|added": 394,
+    "PREDICATION|added": 103,
+    "ADVP|added": 35,
+    "ATTACH|added": 38,
+    "PREDICATIVE_PP|added": 15,
+    "NASIKH|added": 5
+   },
+   "relation_text_only": 117,
+   "empty_class_evidence": [
+    0,
+    0
+   ],
+   "english_or_python_leaks": [
+    0,
+    0
+   ],
+   "object_requirement": [
+    {
+     "NOT_FOUND_IN_SCOPE": 8171,
+     "UNLINKED_CANDIDATE": 1749,
+     "null": 2412,
+     "KHABAR_CANDIDATE": 1195,
+     "UNANALYZED_COMPLEMENT": 91
+    },
+    {
+     "NOT_FOUND_IN_SCOPE": 8143,
+     "UNLINKED_CANDIDATE": 1680,
+     "null": 2412,
+     "KHABAR_CANDIDATE": 1195,
+     "UNANALYZED_COMPLEMENT": 93,
+     "CASE_NOT_WRITTEN": 95
+    }
+   ]
+  },
+  "qac": {
+   "E02": {
+    "noun": 949,
+    "verb": 1,
+    "verb_fixed": "3:80 أَيَأْمُرُكُمْ",
+    "particle_label": 1
+   },
+   "E03": {
+    "noun": 91,
+    "other": 0
+   },
+   "F03": {
+    "proven_agree": 1718,
+    "proven_disagree": 0,
+    "narrowed_contains_qac": 67,
+    "narrowed_excludes_qac": 0,
+    "qac_none": 3
+   }
+  }
+ },
+ "batch_E": {
+  "compare_vs_B": {
+   "checker": [
+    0,
+    0
+   ],
+   "units": [
+    106557,
+    106557
+   ],
+   "rels": [
+    51498,
+    51890
+   ],
+   "unit_transitions": {
+    "added": 0
+   },
+   "relation_status_changes": {
+    "MASDAR|added": 392
+   },
+   "relation_text_only": 39,
+   "empty_class_evidence": [
+    0,
+    0
+   ],
+   "english_or_python_leaks": [
+    0,
+    0
+   ],
+   "object_requirement": [
+    {
+     "NOT_FOUND_IN_SCOPE": 8143,
+     "UNLINKED_CANDIDATE": 1680,
+     "null": 2412,
+     "KHABAR_CANDIDATE": 1195,
+     "UNANALYZED_COMPLEMENT": 93,
+     "CASE_NOT_WRITTEN": 95
+    },
+    {
+     "NOT_FOUND_IN_SCOPE": 8143,
+     "UNLINKED_CANDIDATE": 1680,
+     "null": 2412,
+     "KHABAR_CANDIDATE": 1195,
+     "UNANALYZED_COMPLEMENT": 93,
+     "CASE_NOT_WRITTEN": 95
+    }
+   ]
+  },
+  "masdar": {
+   "total": 392,
+   "function_licensed_by_jar": 17,
+   "function_deferred": 375
+  },
+  "A02_records": 39
+ },
+ "batch_D": {
+  "compare_vs_E": {
+   "checker": [
+    0,
+    0
+   ],
+   "units": [
+    106557,
+    106557
+   ],
+   "rels": [
+    51890,
+    51856
+   ],
+   "unit_transitions": {
+    "added": 0
+   },
+   "relation_status_changes": {
+    "SUBJECT|removed": 53,
+    "SUBJECT|added": 19
+   },
+   "relation_text_only": 192,
+   "empty_class_evidence": [
+    0,
+    0
+   ],
+   "english_or_python_leaks": [
+    0,
+    0
+   ],
+   "object_requirement": [
+    {
+     "NOT_FOUND_IN_SCOPE": 8143,
+     "UNLINKED_CANDIDATE": 1680,
+     "null": 2412,
+     "KHABAR_CANDIDATE": 1195,
+     "UNANALYZED_COMPLEMENT": 93,
+     "CASE_NOT_WRITTEN": 95
+    },
+    {
+     "NOT_FOUND_IN_SCOPE": 8143,
+     "UNLINKED_CANDIDATE": 1680,
+     "null": 2412,
+     "KHABAR_CANDIDATE": 1195,
+     "UNANALYZED_COMPLEMENT": 93,
+     "CASE_NOT_WRITTEN": 95
+    }
+   ]
+  }
+ },
+ "batch_F": {
+  "M7_baseline": {
+   "unit": "جملة الطبقة القديمة (المرحلة ١٤)",
+   "total": 6190,
+   "closed": 53,
+   "F_complete": 5178,
+   "closed_unreconciled": 47,
+   "note": "العلاقات المحلية الجديدة لا تستهلكها الطبقة القديمة بعد: هذا المقياس من الطبقة القديمة وحدها؛ و«مغلقة» فيه ليست شهادة إغلاقٍ موحَّدة. closed_unreconciled: المغلقة التي في مداها علاقةٌ في 14أ مؤجَّلة أو إطارٌ بالتزامٍ مفتوح"
+  },
+  "M7_final": {
+   "unit": "جملة الطبقة القديمة (المرحلة ١٤)",
+   "total": 6190,
+   "closed": 53,
+   "F_complete": 5178,
+   "closed_unreconciled": 42,
+   "unified": {
+    "CLOSED_RECONCILED": 11,
+    "CLOSED_UNRECONCILED": 32,
+    "OPEN": 6147,
+    "obligations_met_by_14a": 13788,
+    "obligations_met_legacy_only": 11875,
+    "obligations_layer_conflict": 3657,
+    "obligations_open": 40782
+   },
+   "note": "closed وF_complete من الطبقة القديمة وحدها؛ وunified من شهادة الإغلاق الموحَّدة (sarf.algebra.closure_certificate) التي تستهلك علاقات 14أ: CLOSED_RECONCILED مغلقةٌ في الطبقة القديمة ولا مفتوح في 14أ داخل مداها، وobligations_met_by_14a التزاماتٌ استوفتها علاقةٌ مرخَّصة مسمّاة، وobligations_layer_conflict ما استوفته الطبقة القديمة وأجّلته 14أ. closed_unreconciled: المغلقة التي في مداها علاقةٌ في 14أ مؤجَّلة أو إطارٌ بالتزامٍ مفتوح"
+  }
+ },
+ "total": {
+  "compare_baseline_to_final": {
+   "checker": [
+    0,
+    0
+   ],
+   "units": [
+    106557,
+    106557
+   ],
+   "rels": [
+    50001,
+    51856
+   ],
+   "unit_transitions": {
+    "UNVERIFIED→MABNI": 1176,
+    "N/A→AGREE": 292,
+    "UNGOVERNED→AGREE": 1014,
+    "N/A→UNGOVERNED": 743,
+    "UNVERIFIED→UNGOVERNED": 198,
+    "AGREE→UNGOVERNED": 7,
+    "added": 0
+   },
+   "relation_status_changes": {
+    "VERB_FRAME|F01|DEFERRED→LICENSED": 1649,
+    "VERB_FRAME|removed": 129,
+    "ADVP|removed": 35,
+    "SUBJECT|removed": 7,
+    "NASIKH|removed": 5,
+    "PREDICATION|removed": 4,
+    "ATTACH|removed": 11,
+    "PREDICATION|N01|LICENSED→DEFERRED": 2,
+    "IDAFA|added": 969,
+    "VERB_FRAME|added": 129,
+    "SUBJECT|added": 360,
+    "PREDICATION|added": 103,
+    "MASDAR|added": 392,
+    "ADVP|added": 35,
+    "ATTACH|added": 38,
+    "PREDICATIVE_PP|added": 15,
+    "NASIKH|added": 5
+   },
+   "relation_text_only": 153,
+   "empty_class_evidence": [
+    0,
+    0
+   ],
+   "english_or_python_leaks": [
+    0,
+    0
+   ],
+   "object_requirement": [
+    {
+     "NOT_FOUND_IN_SCOPE": 8171,
+     "UNLINKED_CANDIDATE": 1749,
+     "null": 2412,
+     "KHABAR_CANDIDATE": 1195,
+     "UNANALYZED_COMPLEMENT": 91
+    },
+    {
+     "NOT_FOUND_IN_SCOPE": 8143,
+     "UNLINKED_CANDIDATE": 1680,
+     "null": 2412,
+     "KHABAR_CANDIDATE": 1195,
+     "UNANALYZED_COMPLEMENT": 93,
+     "CASE_NOT_WRITTEN": 95
+    }
+   ]
+  },
+  "relation_type_status": {
+   "ADVP|DEFERRED": [
+    382,
+    347
+   ],
+   "ADVP|LICENSED": [
+    842,
+    877
+   ],
+   "ATTACH|DEFERRED": [
+    11919,
+    11943
+   ],
+   "ATTACH|LICENSED": [
+    36,
+    39
+   ],
+   "CONDITION|DEFERRED": [
+    1304,
+    1304
+   ],
+   "CONDITION|LICENSED": [
+    183,
+    183
+   ],
+   "CONTAINER_RELATIVE|DEFERRED": [
+    2,
+    2
+   ],
+   "CONTAINER_RELATIVE|LICENSED": [
+    16,
+    16
+   ],
+   "IDAFA|DEFERRED": [
+    40,
+    40
+   ],
+   "IDAFA|LICENSED": [
+    1595,
+    2564
+   ],
+   "MASDAR|LICENSED": [
+    0,
+    392
+   ],
+   "NASIKH|DEFERRED": [
+    1906,
+    1901
+   ],
+   "NASIKH|LICENSED": [
+    295,
+    300
+   ],
+   "OBJECT|DEFERRED": [
+    72,
+    72
+   ],
+   "OBJECT|LICENSED": [
+    1423,
+    1423
+   ],
+   "PP|LICENSED": [
+    11518,
+    11518
+   ],
+   "PREDICATION|DEFERRED": [
+    1963,
+    2047
+   ],
+   "PREDICATION|LICENSED": [
+    205,
+    213
+   ],
+   "PREDICATION|REJECTED": [
+    62,
+    69
+   ],
+   "PREDICATIVE_PP|DEFERRED": [
+    89,
+    96
+   ],
+   "PREDICATIVE_PP|LICENSED": [
+    80,
+    88
+   ],
+   "RESUMPTIVE|DEFERRED": [
+    13,
+    13
+   ],
+   "SILAH|DEFERRED": [
+    417,
+    417
+   ],
+   "SILAH|LICENSED": [
+    1051,
+    1051
+   ],
+   "SUBJECT|DEFERRED": [
+    226,
+    456
+   ],
+   "SUBJECT|LICENSED": [
+    458,
+    581
+   ],
+   "VERB_FRAME|DEFERRED": [
+    5331,
+    3668
+   ],
+   "VERB_FRAME|LICENSED": [
+    8287,
+    9950
+   ],
+   "VOCATIVE|LICENSED": [
+    143,
+    143
+   ],
+   "VOC_FOLLOWER|LICENSED": [
+    143,
+    143
+   ],
+   "AGREE": [
+    18500,
+    19799
+   ],
+   "CONFLICT": [
+    167,
+    167
+   ],
+   "MABNI": [
+    30302,
+    31478
+   ],
+   "N/A": [
+    14826,
+    13791
+   ],
+   "UNGOVERNED": [
+    38447,
+    38381
+   ],
+   "UNVERIFIED": [
+    4315,
+    2941
+   ],
+   "wc:None": [
+    27713,
+    26655
+   ],
+   "wc:اسم": [
+    33248,
+    34306
+   ],
+   "wc:حرف": [
+    31749,
+    31749
+   ],
+   "wc:حرف + اسم": [
+    254,
+    254
+   ],
+   "wc:فعل": [
+    13593,
+    13593
+   ]
+  },
+  "inflection_baseline": {
+   "UNGOVERNED": 38447,
+   "MABNI": 30302,
+   "AGREE": 18500,
+   "N/A": 14826,
+   "UNVERIFIED": 4315,
+   "CONFLICT": 167
+  },
+  "inflection_final": {
+   "UNGOVERNED": 38381,
+   "MABNI": 31478,
+   "AGREE": 19799,
+   "N/A": 13791,
+   "UNVERIFIED": 2941,
+   "CONFLICT": 167
+  },
+  "inflection_checker_errors": [
+   0,
+   0
+  ],
+  "inflection_conflicts": [
+   167,
+   167
+  ],
+  "judgments_by_status": [
+   {
+    "accepted": 14935,
+    "deferred": 18372,
+    "blocked": 16972
+   },
+   {
+    "accepted": 14935,
+    "deferred": 18372,
+    "blocked": 16972
+   }
+  ],
+  "coverage_metrics_baseline": {
+   "M1_class": {
+    "unit": "وحدة التحليل",
+    "scope": "كل الوحدات",
+    "exclusions": [],
+    "total": 106557,
+    "resolved": 78844
+   },
+   "M2_build": {
+    "unit": "وحدة التحليل",
+    "scope": "كل الوحدات",
+    "exclusions": [],
+    "total": 106557,
+    "resolved": 87793
+   },
+   "M3_irab": {
+    "unit": "وحدة التحليل",
+    "scope": "(أ) المعرب، (ب) المبني غير الحرف وغير الفعل (الاسم، والأداة ذات المداخل الاسمية)، (ج) غير محسوم البناء",
+    "exclusions": "الحرف والأداة والماضي والأمر المبنيّان: لا ينتظر علامة إعرابٍ لفظية ولا يُعدّ فاقداً",
+    "murab": {
+     "total": 28548,
+     "resolved": 9721,
+     "by_agreement": {
+      "UNGOVERNED": 18299,
+      "AGREE": 9721,
+      "UNVERIFIED": 377,
+      "CONFLICT": 151
+     }
+    },
+    "unknown_build_units": {
+     "total": 18764,
+     "note": "بناؤها غير محسوم (صنفٌ غير محسوم أو زمنٌ مرشّح): في المقام غير محسومة"
+    },
+    "mabni_nonparticle": {
+     "total": 24835,
+     "resolved": 8779,
+     "by_state": {
+      "MAHALL_UNRESOLVED": 1567,
+      "ROLE_RULE_NOT_IMPLEMENTED": 11609,
+      "AGREE": 8779,
+      "LEXICAL_ENTRY_MISSING": 2386,
+      "EVIDENCE_NOT_ADOPTED": 270,
+      "MABNI": 208,
+      "CONFLICT": 16
+     }
+    },
+    "excluded": 34410,
+    "excluded_by": {
+     "NO_MAHALL": 31166,
+     "MABNI": 3241,
+     "ROLE_RULE_NOT_IMPLEMENTED": 3
+    },
+    "unknown_build": 18764
+   },
+   "M4_roles": {
+    "unit": "وحدة التحليل",
+    "scope": "الأسماء (صنفها اسم بدليل)",
+    "exclusions": "الأفعال والحروف: أدوارها ليست موضع هذا المقياس",
+    "total": 33502,
+    "resolved": 14388,
+    "by_role": {
+     "مجرور بحرف الجر": 8889,
+     "اسم ": 1233,
+     "مبتدأ": 257,
+     "ظرف": 419,
+     "مضاف إليه": 1620,
+     "منادى": 143,
+     "تابعٌ لـ": 143,
+     "خبر ": 224,
+     "مفعول به": 797,
+     "خبر": 205,
+     "فاعل": 440,
+     "فاعل أو نائب فاعل": 1,
+     "نائب فاعل": 17
+    },
+    "note": "الدور من علاقةٍ مرخَّصة وحدها؛ ووجود الوحدة في علاقةٍ مؤجَّلة لا يُعدّ دوراً"
+   },
+   "M5_relations": {
+    "unit": "سجل العلاقة"
+   },
+   "M6_nuclei": {
+    "unit": "سجل النواة",
+    "verb_frames": {
+     "total": 13618,
+     "subject_satisfied": 5202,
+     "coherent": 8287,
+     "by_subject_kind": {
+      "ضمير متصل مكتوب": 4037,
+      "غير معيَّن": 7137,
+      "اسم الناسخ (V01)": 624,
+      "ضمير الصيغة أو اسمٌ ظاهر": 1231,
+      "اسم ظاهر": 458,
+      "مرشّحات متنافسة": 42,
+      "ضمير مستتر وجوباً (غير مكتوب)": 83,
+      "من المرشّح القائم": 6
+     }
+    },
+    "nasikh": {
+     "total": 2201,
+     "complete": 295
+    },
+    "nominal": {
+     "total": 2399,
+     "complete": 285
+    },
+    "note": "الفعل لا يحتاج كلُّه فاعلاً ومفعولاً: المتطلَّب بحسب البناء والاستعمال (الناسخ يطلب اسماً وخبراً، والمبني للمجهول نائب فاعل)"
+   },
+   "M7_sentences": {
+    "unit": "جملة الطبقة القديمة (المرحلة ١٤)",
+    "total": 6190,
+    "closed": 53,
+    "F_complete": 5178,
+    "closed_unreconciled": 47,
+    "note": "العلاقات المحلية الجديدة لا تستهلكها الطبقة القديمة بعد: هذا المقياس من الطبقة القديمة وحدها؛ و«مغلقة» فيه ليست شهادة إغلاقٍ موحَّدة. closed_unreconciled: المغلقة التي في مداها علاقةٌ في 14أ مؤجَّلة أو إطارٌ بالتزامٍ مفتوح"
+   }
+  },
+  "coverage_metrics_final": {
+   "M1_class": {
+    "unit": "وحدة التحليل",
+    "scope": "كل الوحدات",
+    "exclusions": [],
+    "total": 106557,
+    "resolved": 79902,
+    "by_value": {
+     "None": 26655,
+     "اسم": 34306,
+     "فعل": 13593,
+     "حرف": 31749,
+     "حرف + اسم": 254
+    }
+   },
+   "M2_build": {
+    "unit": "وحدة التحليل",
+    "scope": "كل الوحدات",
+    "exclusions": [],
+    "total": 106557,
+    "resolved": 90202,
+    "by_value": {
+     "None": 16355,
+     "معرب": 29781,
+     "مبني": 60421
+    }
+   },
+   "M3_irab": {
+    "unit": "وحدة التحليل",
+    "scope": "(أ) المعرب، (ب) المبني غير الحرف وغير الفعل (الاسم، والأداة ذات المداخل الاسمية)، (ج) غير محسوم البناء",
+    "exclusions": "الحرف والأداة والماضي والأمر المبنيّان: لا ينتظر علامة إعرابٍ لفظية ولا يُعدّ فاقداً",
+    "murab": {
+     "total": 29781,
+     "resolved": 10057,
+     "by_agreement": {
+      "UNGOVERNED": 19196,
+      "AGREE": 10057,
+      "UNVERIFIED": 377,
+      "CONFLICT": 151
+     }
+    },
+    "unknown_build_units": {
+     "total": 16355,
+     "note": "بناؤها غير محسوم (صنفٌ غير محسوم أو زمنٌ مرشّح): في المقام غير محسومة"
+    },
+    "mabni_nonparticle": {
+     "total": 24835,
+     "resolved": 9742,
+     "by_state": {
+      "MAHALL_UNRESOLVED": 1612,
+      "ROLE_RULE_NOT_IMPLEMENTED": 10601,
+      "AGREE": 9742,
+      "LEXICAL_ENTRY_MISSING": 2386,
+      "EVIDENCE_NOT_ADOPTED": 270,
+      "MABNI": 208,
+      "CONFLICT": 16
+     }
+    },
+    "excluded": 35586,
+    "excluded_by": {
+     "NO_MAHALL": 31166,
+     "MABNI": 4417,
+     "ROLE_RULE_NOT_IMPLEMENTED": 3
+    },
+    "unknown_build": 16355
+   },
+   "M4_roles": {
+    "unit": "وحدة التحليل",
+    "scope": "الأسماء (صنفها اسم بدليل)",
+    "exclusions": "الأفعال والحروف: أدوارها ليست موضع هذا المقياس",
+    "total": 34560,
+    "resolved": 15313,
+    "by_role": {
+     "مجرور بحرف الجر": 8976,
+     "اسم ": 1259,
+     "مبتدأ": 273,
+     "فاعل": 556,
+     "ظرف": 442,
+     "مضاف إليه": 2257,
+     "منادى": 143,
+     "تابعٌ لـ": 143,
+     "خبر ": 229,
+     "مفعول به": 797,
+     "خبر": 213,
+     "فاعل أو نائب فاعل": 1,
+     "نائب فاعل": 24
+    },
+    "note": "الدور من علاقةٍ مرخَّصة وحدها؛ ووجود الوحدة في علاقةٍ مؤجَّلة لا يُعدّ دوراً"
+   },
+   "M5_relations": {
+    "unit": "سجل العلاقة",
+    "by_type_status": {
+     "PP|P01|LICENSED": 11264,
+     "ATTACH|A01|DEFERRED": 11943,
+     "PREDICATION|N01|DEFERRED": 2047,
+     "IDAFA|I03|LICENSED": 606,
+     "VERB_FRAME|F01|LICENSED": 9950,
+     "SILAH|R02|LICENSED": 1051,
+     "PP|P03|LICENSED": 254,
+     "ADVP|P02|LICENSED": 877,
+     "IDAFA|I01|LICENSED": 1958,
+     "OBJECT|O01|LICENSED": 1423,
+     "NASIKH|V01|DEFERRED": 1901,
+     "VERB_FRAME|F01|DEFERRED": 3668,
+     "PREDICATIVE_PP|N02|LICENSED": 88,
+     "CONDITION|C01|DEFERRED": 1304,
+     "SUBJECT|S01|LICENSED": 581,
+     "SILAH|R02|DEFERRED": 417,
+     "VOCATIVE|V02|LICENSED": 143,
+     "VOC_FOLLOWER|V02|LICENSED": 143,
+     "CONDITION|C01|LICENSED": 183,
+     "ADVP|P02|DEFERRED": 347,
+     "NASIKH|V01|LICENSED": 300,
+     "MASDAR|M02|LICENSED": 392,
+     "PREDICATION|N01|LICENSED": 213,
+     "ATTACH|A02|LICENSED": 39,
+     "OBJECT|O01|DEFERRED": 68,
+     "PREDICATION|N01|REJECTED": 69,
+     "PREDICATIVE_PP|N02|DEFERRED": 96,
+     "SUBJECT|S01|DEFERRED": 456,
+     "IDAFA|I01|DEFERRED": 12,
+     "IDAFA|I03|DEFERRED": 28,
+     "CONTAINER_RELATIVE|R01|LICENSED": 16,
+     "RESUMPTIVE|R01|DEFERRED": 13,
+     "OBJECT|O02|DEFERRED": 4,
+     "CONTAINER_RELATIVE|R01|DEFERRED": 2
+    }
+   },
+   "M6_nuclei": {
+    "unit": "سجل النواة",
+    "verb_frames": {
+     "total": 13618,
+     "subject_satisfied": 8716,
+     "coherent": 9950,
+     "by_subject_kind": {
+      "ضمير متصل مكتوب": 7428,
+      "غير معيَّن": 3623,
+      "اسم الناسخ (V01)": 624,
+      "ضمير الصيغة أو اسمٌ ظاهر": 1231,
+      "اسم ظاهر": 581,
+      "مرشّحات متنافسة": 42,
+      "ضمير مستتر وجوباً (غير مكتوب)": 83,
+      "من المرشّح القائم": 6
+     }
+    },
+    "nasikh": {
+     "total": 2201,
+     "complete": 300
+    },
+    "nominal": {
+     "total": 2513,
+     "complete": 301
+    },
+    "note": "الفعل لا يحتاج كلُّه فاعلاً ومفعولاً: المتطلَّب بحسب البناء والاستعمال (الناسخ يطلب اسماً وخبراً، والمبني للمجهول نائب فاعل)"
+   },
+   "M7_sentences": {
+    "unit": "جملة الطبقة القديمة (المرحلة ١٤)",
+    "total": 6190,
+    "closed": 53,
+    "F_complete": 5178,
+    "closed_unreconciled": 42,
+    "unified": {
+     "CLOSED_RECONCILED": 11,
+     "CLOSED_UNRECONCILED": 32,
+     "OPEN": 6147,
+     "obligations_met_by_14a": 13788,
+     "obligations_met_legacy_only": 11875,
+     "obligations_layer_conflict": 3657,
+     "obligations_open": 40782
+    },
+    "note": "closed وF_complete من الطبقة القديمة وحدها؛ وunified من شهادة الإغلاق الموحَّدة (sarf.algebra.closure_certificate) التي تستهلك علاقات 14أ: CLOSED_RECONCILED مغلقةٌ في الطبقة القديمة ولا مفتوح في 14أ داخل مداها، وobligations_met_by_14a التزاماتٌ استوفتها علاقةٌ مرخَّصة مسمّاة، وobligations_layer_conflict ما استوفته الطبقة القديمة وأجّلته 14أ. closed_unreconciled: المغلقة التي في مداها علاقةٌ في 14أ مؤجَّلة أو إطارٌ بالتزامٍ مفتوح"
+   }
+  }
+ },
+ "contract_batch2": {
+  "baseline": "8/14",
+  "final": "9/14",
+  "met_now": [
+   "B2.01",
+   "B2.03",
+   "B2.05",
+   "B2.06",
+   "B2.08",
+   "B2.10",
+   "B2.11",
+   "B2.12",
+   "B2.13"
+  ],
+  "pending_owner": [
+   "B2.02 (D1)",
+   "B2.04 (D2)",
+   "B2.07 (D3)",
+   "B2.09 (D4)",
+   "B2.14 (D5)"
+  ]
+ },
+ "registry_status": {
+  "منفّذ ومختبر ويصل إلى المستهلك": 26,
+  "منفّذ جزئياً": 14,
+  "مسألة تحتاج حكم المالك": 2,
+  "غير منفّذ": 1,
+  "مؤجَّل لنقص موردٍ أو دليل": 3,
+  "منفّذ غير مختبر": 1
+ },
+ "tests": {
+  "test_round006": "ALL OK (93)",
+  "test_batch_b": "ALL OK (12)",
+  "test_batch_d": "ALL OK (5)",
+  "test_batch_e": "ALL OK (13)",
+  "test_batch_f": "ALL OK (6)",
+  "test_relations": "ALL OK; PASS 30, DIFFERS 6 (الأصناف الموثّقة نفسها في الأساس)",
+  "test_inflection": "ALL OK",
+  "test_algebra": "ALL OK"
+ }
+}

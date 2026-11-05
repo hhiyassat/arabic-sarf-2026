@@ -1,0 +1,66 @@
+kind,id_or_location,stage_or_batch,scope_or_text,rule,status_or_transition,residual_reason,implementation_or_before,tests_or_after,measurement
+registry,C01.1,المصدر,المصدر المعتمد وروايته وبصمته,quran_source,منفّذ ومختبر ويصل إلى المستهلك,,sarf.quran_source:rows sarf.quran_source:name,tests/test_quran_source.py::,بصمة المدخل في هوية التشغيل
+registry,C01.2,المصدر,هوية التشغيل وبصمات الشيفرة والمعجم والمصادر,provenance,منفّذ ومختبر ويصل إلى المستهلك,,tools.provenance:identity,tests/test_behaviour.py::هوية التشغيل,رأس كل تقرير
+registry,C02.1,التطبيع,التطبيع الموثّق بسجل العمليات ومجالاتها,N3.1,منفّذ ومختبر ويصل إلى المستهلك,,sarf.normalize_trace:normalize_traced,tests/test_normalize_trace.py::,الأمثلة والمصحف
+registry,C02.2,التطبيع,استرجاع المصدر من التمثيل التحليلي,N3.1,منفّذ ومختبر ويصل إلى المستهلك,,sarf.normalize_trace:reconstruct_source sarf.normalize_trace:verify_reconstructed_source,tests/test_normalize_trace.py::,اختبار الاسترجاع
+registry,C02.3,التطبيع,الخنجرية مع المقصورة (تُحذف وحدها),T25,منفّذ ومختبر ويصل إلى المستهلك,,sarf.normalize:uthmani_normalize,tests/test_relations.py::T25 tests/test_relations.py::T25,شاهد T25
+registry,C03.1,الخلايا,خلايا المكتوب وترقيمها,numbering,منفّذ ومختبر ويصل إلى المستهلك,,sarf.numbering:cell_code sarf.numbering:encode,tests/test_numbering.py::,القسم ٣
+registry,C03.2,الخلايا,خلايا الجبر (Cell) والشدة والتنوين بلا نون مكتوبة,cells,منفّذ ومختبر ويصل إلى المستهلك,,sarf.cells:cells_of,tests/test_cell_rules.py::,الأمثلة
+registry,C04.1,المقاطع,المقاطع المرخّصة الستة من الخلايا,syllables,منفّذ ومختبر ويصل إلى المستهلك,,sarf.syllables:syllabify sarf.syllables:cell_shape,tests/test_syllables.py::,القسم ٤ و١٠
+registry,C04.2,المقاطع,خريطة المصدر ← الخلايا ← المقاطع واسترجاعها,align,منفّذ جزئياً,لا يُثبت فحصٌ مستقل استرجاع الخلايا من المقاطع في المصحف كله (يُقاس في الدفعة A),sarf.align:align sarf.align:syllables_by_word,tests/test_syllables.py::,القسم ٤ (عمود الفرق)
+registry,C05.1,التقشير,التقشير المرخّص: السوابق والجذوع واللواحق,R10,منفّذ ومختبر ويصل إلى المستهلك,,sarf.segment:segment sarf.evidence:reject_candidates,tests/test_segment.py::,مقابل QAC (HANDOFF)
+registry,C06.1,الحماية,الحماية الدستورية قبل الجذر,protected,منفّذ ومختبر ويصل إلى المستهلك,,sarf.protected:protected sarf.protected:protected_slot,tests/test_protected.py::,tools/eval_protected.py
+registry,C06.2,الحماية,الحماية لا تمنع التحليل النحوي,X01,منفّذ ومختبر ويصل إلى المستهلك,,sarf.relations:verse_relations,tests/test_round006.py::X01 tests/test_round006.py::X04,2:282
+registry,C07.3,الصنف,الاسمية بنفي صيغ الفعل المكتوبة (E02 قبل الضمير، E03 الهمزة المكسورة),E02/E03,منفّذ ومختبر ويصل إلى المستهلك,,sarf.features:host_case_vowel_proof sarf.features:initial_hamza_kasra_proof,tests/test_batch_b.py::B01 tests/test_batch_b.py::B04 tests/test_batch_b.py::B02,E02: 949 اسماً عند QAC، E03: 91
+registry,C07.1,الصنف,الصنف (اسم، فعل، حرف) مستقلاً عن البناء والعمل والحماية,axes,منفّذ ومختبر ويصل إلى المستهلك,,sarf.relations:_Tok,tests/test_round006.py::X48 tests/test_relations.py::T19,M1
+registry,C07.2,الصنف,الصنف من التنوين وحده لا يُثبت (T19),T19,منفّذ ومختبر ويصل إلى المستهلك,,sarf.relations:_Tok,tests/test_relations.py::T19 tests/test_round006.py::X13,M1
+registry,C08.1,الجذر والوزن,الجذر والوزن بشهادة HFN، والترجيح لا الإثبات,T19c,منفّذ ومختبر ويصل إلى المستهلك,,sarf.root:morph sarf.root:candidates,tests/test_root.py::,مقابل QAC (HANDOFF)
+registry,C08.2,الجذر والوزن,خريطة الجذر والوزن إلى الخلايا والمقاطع,algebra,منفّذ ومختبر ويصل إلى المستهلك,,sarf.algebra:align_radicals sarf.algebra:realize_skeleton,tests/test_algebra.py::,القسم ١٢
+registry,C08.3,الجذر والوزن,التحقيق الصرفي لكل بديلٍ زمني وبنائي (لا قائمة عامة),F02/F03,منفّذ جزئياً,F03 يمتنع في المعتلّ والمضعّف والمهموز الأول وحرف المضارعة المكرَّر وتاء تفعّل وتفاعل,sarf.relations:_voice_faces sarf.features:tense_realization,tests/test_batch_b.py::B05 tests/test_round006.py::X51 tests/test_batch_b.py::B06 tests/test_round006.py::X50 tests/test_round006.py::M16,F03: 1718 زمناً مثبتاً توافق QAC كلها
+registry,C09.1,السمات,سمات الاسم (الاشتقاق، العدد، التعريف، الإعراب الممكن),features,منفّذ ومختبر ويصل إلى المستهلك,,sarf.features:noun_features,tests/test_features.py::,المرحلة ١٣
+registry,C09.2,السمات,سمات الفعل (الزمن، البناء، ضمير الصيغة، التعدّي),features,منفّذ ومختبر ويصل إلى المستهلك,,sarf.features:verb_features,tests/test_features.py::,المرحلة ١٣
+registry,C09.3,السمات,الضمائر المتصلة والمنفصلة ومضيفها,features_ext,منفّذ ومختبر ويصل إلى المستهلك,,sarf.features_ext:enclitic_case,tests/test_round006.py::X07,M3
+registry,C10.1,المعجم,مطابقة المدخل المعجمي مفصولةً عن المعنى السياقي,HFN,منفّذ جزئياً,تعيين المعنى بالسياق غير منفّذ (الدفعة G),sarf.root:hfn,tests/test_root.py::,المدلول في المرحلة ١٣
+registry,C10.2,المعجم,أطر الاستعمال: اللزوم والتعدّي والمكمّلات والحذف المرخّص,F01,مسألة تحتاج حكم المالك,التعدّي لا يثبت إلا بضمير مفعولٍ متصل، فـO02 لا يُبلغ (D5)؛ والحذف المرخّص بلا قاعدة,sarf.relations:verse_relations,tests/test_round006.py::X59 tests/test_batch_b.py::B08 tests/test_round006.py::X53,توزيع كاشف المكمّل
+registry,C11.1,العوامل,العوامل المائة: المطابقة والنفي والحكم,judge,منفّذ ومختبر ويصل إلى المستهلك,,sarf.judge:judge sarf.evidence:reject_candidates,tests/test_mood.py:: tests/test_round006.py::X18,tools/audit_judgments.py
+registry,C11.2,العوامل,قدرة العامل المعجمية مفصولةً عن استعماله,usage,منفّذ ومختبر ويصل إلى المستهلك,,sarf.relations:_usage_capacity,tests/test_round006.py::X09 tests/test_round006.py::M03,M3
+registry,C12.1,الإعراب,سلسلة الإعراب: الصنف ← البناء ← العامل ← الحالة ← العلامة ← السبب ← العبارة,inflection,منفّذ ومختبر ويصل إلى المستهلك,,sarf.relations:_inflection sarf.relations:check_inflection,tests/test_inflection.py:: tests/test_round006.py::X20 tests/test_round006.py::M08,eval_inflection
+registry,C12.2,الإعراب,الجزم بالحذف وموانعه (M01),M01,منفّذ ومختبر ويصل إلى المستهلك,,sarf.evidence:jazm_faces,tests/test_round006.py::X16 tests/test_round006.py::X18,المرحلة ٧
+registry,C13.1,الإسناد,الفاعل الظاهر والمتصل والمستتر,S01,مسألة تحتاج حكم المالك,«وليّه» مرخَّص (E02 ثم S01)؛ و«الذي» و«إحداهما» والمرفوع الملاصق تحتاج حكم المالك (D1، D2، D6),sarf.relations:verse_relations,tests/test_round006.py::X23 tests/test_batch_b.py::B07 tests/test_round006.py::X22 tests/test_batch_b.py::B12,M4
+registry,C13.2,الإسناد,نائب الفاعل والبناء بأوجهه,F02,منفّذ ومختبر ويصل إلى المستهلك,,sarf.relations:_voice_faces,tests/test_round006.py::X50 tests/test_round006.py::X60 tests/test_round006.py::M18,M4
+registry,C13.3,الإسناد,المفعول الظاهر والمتصل (O01/O02),O01/O02,منفّذ جزئياً,O02 للمعرفة المنصوبة بعد متعدٍّ مثبت فقط,sarf.relations:verse_relations,tests/test_round006.py::X08 tests/test_round006.py::X24,M5
+registry,C13.4,الإسناد,المبتدأ والخبر (N01/N02),N01/N02,منفّذ ومختبر ويصل إلى المستهلك,,sarf.relations:verse_relations,tests/test_relations.py::T02 tests/test_relations.py::T15,M6
+registry,C13.5,الإسناد,اسم الناسخ وخبره (V01) والتامّ والناقص,V01,منفّذ جزئياً,حسم «يكونا» تامّاً أو ناقصاً (B2.09),sarf.relations:verse_relations,tests/test_round006.py::X41 tests/test_round006.py::X30,M6
+registry,C14.1,العلاقات,الإضافة (I01/I03),I01/I03,منفّذ جزئياً,تستهلك شهادة الإغلاق الموحَّدة IDAFA عامّاً (المؤجَّل منها مفتوح)، ولا تستوفي بها التزاماً مسمّى,sarf.relations:verse_relations,tests/test_round006.py::X12 tests/test_round006.py::X34 tests/test_round006.py::M06,M5
+registry,C14.2,العلاقات,الصلة والعائد (R01/R02) بأوجهها,R01/R02,منفّذ جزئياً,بنية الوجه المنافس (المتعلَّق وفاعله) غير مبنية؛ تستهلك شهادة الإغلاق الموحَّدة SILAH عامّاً (المؤجَّل منها مفتوح)، ولا تستوفي بها التزاماً مسمّى,sarf.relations:verse_relations,tests/test_round006.py::X44 tests/test_round006.py::X49 tests/test_round006.py::M13,M5
+registry,C14.3,العلاقات,المصدر المؤوَّل ومحلّه,M02,منفّذ جزئياً,من «أَنْ» الناصبة وحدها؛ و«أَنَّ» و«ما» المصدرية و«كي» و«لو» غير منفّذة؛ والوظيفة مؤجَّلة إلا بحرف جرٍّ قبله,sarf.relations:verse_relations,tests/test_batch_e.py::E04 tests/test_batch_e.py::E07 tests/test_batch_e.py::E09 tests/test_batch_e.py::E08,M5
+registry,C14.4,العلاقات,الشرط وفعله وجوابه وملكيته (C01),C01,منفّذ جزئياً,تستهلك شهادة الإغلاق الموحَّدة CONDITION عامّاً (المؤجَّل منها مفتوح)، ولا تستوفي بها التزاماً مسمّى,sarf.relations:verse_relations,tests/test_round006.py::X26 tests/test_round006.py::X27,M5
+registry,C14.5,العلاقات,العطف داخل المفردات والتراكيب والجمل,coord,منفّذ جزئياً,لا يصل العطف إلى سجلات 14أ (غير مجسور)؛ والعاطف المستقل يحدّ بحث الفاعل (الدفعة B),sarf.coord:check_coord,tests/test_coord.py::,الطبقة القديمة
+registry,C14.6,العلاقات,النعت والحال والتوكيد والبدل وعطف البيان والتمييز,TAWABI,غير منفّذ,لا قاعدة موجبة,,,
+registry,C14.7,العلاقات,النداء (V02) والاستثناء والعدد والقسم,V02,منفّذ جزئياً,الاستثناء والعدد والقسم غير منفّذة؛ تستهلك شهادة الإغلاق الموحَّدة VOCATIVE عامّاً (المؤجَّل منها مفتوح)، ولا تستوفي بها التزاماً مسمّى,sarf.relations:verse_relations,tests/test_round006.py::X05 tests/test_round006.py::X04,M5
+registry,C15.1,التعلّق,تعلّق الجار والمجرور والظرف (A01/A02),A01/A02,منفّذ جزئياً,A02 وجهٌ مرخَّص غير مختار؛ وجرد أطر التعلّق غير موجود، فـA01 مؤجَّل في عامّة المواضع؛ تستهلك شهادة الإغلاق الموحَّدة ATTACH عامّاً (المؤجَّل منها مفتوح)، ولا تستوفي بها التزاماً مسمّى,sarf.relations:verse_relations,tests/test_relations.py::T34 tests/test_batch_e.py::E01 tests/test_relations.py::T14 tests/test_batch_e.py::E03,M5
+registry,C16.1,الجملة,الجملة: النوى والالتزامات وشهادة الإغلاق الموحَّدة,F-CERT,منفّذ جزئياً,الشهادة تمرّ بعد الطبقتين ولا تعيد بناء الجملة؛ والإضافة والصلة والشرط والنداء والتعلّق تُستهلك عامّاً لا استيفاءً,sarf.algebra:sentence_geo sarf.algebra:closure_certificate,tests/test_batch_f.py::F01 tests/test_batch_f.py::F03 tests/test_batch_f.py::F02 tests/test_batch_f.py::F05 tests/test_batch_f.py::F06,M7 unified
+registry,C16.2,الجملة,نطاق شهادة الإغلاق,M7,منفّذ ومختبر ويصل إلى المستهلك,,tools.measure_coverage:main,tests/test_round006.py::X52,closed_unreconciled
+registry,C17.1,الدلالة,الدال وتمثيله والمدلولات المعجمية المرشّحة,HFN,مؤجَّل لنقص موردٍ أو دليل,تعيين المعنى بالسياق ودلالات المطابقة والتضمن والالتزام: لا مورد مقرّ (مداخل HFN is_fact=False) ولا قاعدة,sarf.features:unit_features,tests/test_features_ext.py::,المرحلة ١٣
+registry,C18.1,المرجع والخطاب,مرجع الضمير والمطابقة معه,REF,مؤجَّل لنقص موردٍ أو دليل,لا قاعدة مكتوبة لتعيين المرجع؛ والمطابقة وحدها ترشّح ولا تثبت، والمعنى ليس دليلاً في المشروع,,,
+registry,C18.2,المرجع والخطاب,الوحدة الخطابية والعلاقات بين الجمل,algebra,منفّذ جزئياً,العلاقات بين الجمل واستمرار الموضوع غير منفّذة,sarf.algebra:sentence_geo,tests/test_algebra.py::,القسم ١٥
+registry,C19.1,الفقرة,هندسة الفقرة وحدّها,PARA,مؤجَّل لنقص موردٍ أو دليل,لا قاعدة مكتوبة لحدّ الفقرة، ولا يُخترع حدٌّ (الخطة §4 G)؛ والوحدة الخطابية من الطبقة القديمة أعلى ما يُبنى,,,
+registry,C20.1,القياس والتقرير,القياس بالمسار نفسه للصفحة (الجسران),bridged,منفّذ غير مختبر,,tools.bridged:surah_outputs,,المصحف كله
+witness,2:282:50,B,وَلِيُّهُ,,مؤجَّل←صحيح,,الصنف غير محسوم؛ لا فاعل,اسم (E02)؛ فاعل «فليملل» مرخَّص (S01),
+witness,2:282:68/70,B,إِحْدَىٰهُمَا,,مؤجَّل←مرخَّص محلياً (الصنف)؛ الفاعل مؤجَّل (D2),,غير محسوم,اسم (E03)؛ CASE_NOT_WRITTEN؛ الفاعل مؤجَّل بوجهيه ومرشّحه «إحدى»,
+witness,2:282:25,F,الَّذِي,,تغيّر في الدليل والعرض (D1),,فاعل مؤجَّل,فاعل مؤجَّل؛ والشهادة الموحَّدة تعرض تعارض الطبقتين,
+witness,2:282:3,D,ءَامَنُوا,,مؤجَّل←مرخَّص محلياً,,زمن مرشّح؛ فاعل مؤجَّل,زمن مرشّح (F03 يمتنع: همزة)؛ الفاعل واو الجماعة مرخَّص والشخص مؤجَّل,
+witness,2:282:52,B,اسْتَشْهِدُوا,,مؤجَّل←صحيح,,زمن مرشّح بثلاثة أوجه,أمر مثبت (F03),
+witness,2:282:79,B,تَسْءَمُوا,,مؤجَّل←صحيح,,زمن مرشّح,مضارع مثبت (F03),
+witness,2:282:77,D,دُعُوا,,لا تغيّر (D3),,مرشّحان,مرشّحان بلا حسم,
+witness,2:282:58-59,D,يَكُونَا رَجُلَيْنِ,,لا تغيّر (D4),,الاستعمال غير محسوم,كما هو,
+witness,2:282:18 وغيرها,E,أَنْ + المضارع (5 مواضع),,مؤجَّل←مرخَّص محلياً (تركيب),,UNANALYZED_COMPLEMENT بلا سجل,MASDAR M02 مرخَّص تركيباً، والوظيفة مؤجَّلة,
+witness,2:282:125-128,E,وَٱللَّهُ بِكُلِّ شَيۡءٍ عَلِيمٞ,,مختار←مرخَّص محلياً,,A02 مرخَّص مختار، SEARCH_COMPLETE، «مضيفها الوحيد»,وجهٌ مرخَّص غير مختار، SEARCH_INCOMPLETE، البدائل خارج التغطية مسمّاة,
+witness,6:60:13,B,أَجَلٌ,,لا تغيّر,,نائب فاعل مرخَّص,كما هو (بعد حدّ «ثُمَّ»),
+witness,18:58:14,B,مَوْعِدٌ,,خطأ←مؤجَّل,,فاعل «عَجَّلَ» مرخَّص (عابرٌ «بَلۡ»),مؤجَّل,
+witness,7:89:24,B,اللَّهُ (رَبُّنَا بعده),,صحيح←مؤجَّل (D6),,فاعل مرخَّص,مؤجَّل (مرفوعٌ ثانٍ),
+witness,11:123:7,B,الْأَمْرُ (كُلُّهُ بعده),,صحيح←مؤجَّل (D6),,نائب فاعل مرخَّص,مؤجَّل (مرفوعٌ ثانٍ),
+witness,18:110:3-4 و41:6:3-4,B,أَنَا بَشَرٌ مِثْلُكُمْ,,صحيح←مؤجَّل,,نواة N01 مرخَّصة,مؤجَّلة (مرفوعٌ بعد الخبر),
+witness,2:27 و2:67 و5:116 و19:35,E,أَن بعد جارٍّ له مجروره,,لا تغيّر في الملتزم,,—,الوظيفة مؤجَّلة (أُصلح قبل الالتزام),
+witness,6:37 وأمثالها (17 موضعاً),E,عَلَىٰٓ أَن / بِأَن / لِأَنۡ,,جديد صحيح,,—,المصدر مجرورٌ محلاً بالحرف,
+witness,3:80:8,B,أَيَأْمُرُكُمْ,,أُصلح قبل الالتزام,,—,لا يُحكم باسميته (همزة الاستفهام تُنزع),
