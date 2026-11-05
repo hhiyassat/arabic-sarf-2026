@@ -1540,19 +1540,23 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                             alternatives=[] if df is True else ['حال', 'تمييز', 'مفعول مطلق'],
                             mark_fact=dict(uid=u.uid, mark=_written_mark(u)[0]), edges=[('OBJECT', v.uid, u.uid)])
                 R.append(obj2)
-        elif trf.get('v') == 'متعدٍّ' and not objs:
-            # نوع المتطلَّب وحالته، لا «التزامٌ مفتوح» عامّ: منصوبٌ مكتوب لم يُربط (نقص ربطٍ لا نقص نص)، أو لا مفعول مكتوب
-            # والتعدّي مرشّح (لازمٌ في الاستعمال أو محذوفٌ مفعوله): ولا متطلَّب لازمٌ ثبت عدم استيفائه
+        if not nas and not any(o_['status'] == LICENSED for o_ in objs) and not (obj2 and obj2['status'] == LICENSED) \
+                and trf.get('v') != 'لازم':
+            # نوع متطلَّب المفعول وحالته، لا «التزامٌ مفتوح» عامّ: منصوبٌ مكتوب لم يُربط (نقص ربطٍ لا نقص نص، أياً كان التعدّي)،
+            # أو لا مفعول مكتوب والتعدّي مرشّح أو غير معروف: لا متطلَّب لازمٌ ثبت عدم استيفائه
             st0 = idx[subj['unit'].k] + 1 if subj and subj.get('unit') else i + 1
             wn = next((toks[j_] for j_ in range(st0, fe_) if word_start(toks[j_]) and not toks[j_].conj and toks[j_].nounish()
                        and (toks[j_].case == 'نصب' or 'نصب' in (_written_mark(toks[j_])[1] or ()))
-                       and toks[j_].k not in governed and toks[j_].k not in bound), None)
-            obj_req = dict(kind='UNLINKED_WRITTEN', status='غير مربوط',
-                           note=f'منصوبٌ مكتوب «{wn.text}» ({wn.loc}) في الإطار لم يُربط مفعولاً: التعدّي {trf.get("st")} فلا تجري O02؛ '
-                                'نقصٌ في الربط لا في النص') if wn else \
-                dict(kind='NO_WRITTEN_OBJECT', status='لا متطلَّب مثبت',
-                     note=f'لا مفعول مكتوب في الإطار، والتعدّي {trf.get("st")}: لازمٌ في هذا الاستعمال أو محذوفٌ مفعوله؛ '
-                          'ولا متطلَّب لازمٌ ثبت عدم استيفائه')
+                       and toks[j_].k not in governed and toks[j_].k not in bound
+                       and not (obj2 and obj2['heads'].get('object') == toks[j_].uid)), None)
+            trs = f'التعدّي {trf.get("v") or "غير معروف"} ({trf.get("st") or "مؤجَّل"})'
+            if wn:
+                obj_req = dict(kind='UNLINKED_WRITTEN', status='غير مربوط',
+                               note=f'منصوبٌ مكتوب «{wn.text}» ({wn.loc}) في الإطار لم يُربط مفعولاً، و{trs}: نقصٌ في الربط لا في النص')
+            elif obj2 is None and trf.get('v') in ('متعدٍّ', None):
+                obj_req = dict(kind='NO_WRITTEN_OBJECT', status='لا متطلَّب مثبت',
+                               note=f'لا مفعول مكتوب في الإطار، و{trs}: لازمٌ في هذا الاستعمال أو محذوفٌ مفعوله؛ '
+                                    'ولا متطلَّب لازمٌ ثبت عدم استيفائه')
         if cands:
             live = [c_ for c_ in cands if c_['status'] != REJECTED]
             subj = dict(kind='من المرشّح القائم' if len(live) == 1 else 'مرشّحات متنافسة',
