@@ -1,0 +1,178 @@
+<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>HFN v36 مقابل v18</title><style>:root{--bg:#fff;--fg:#1b1b1b;--mut:#666;--line:#ddd;--hd:#f6f8fa;--acc:#0b5cad}@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0d1117;--fg:#e6edf3;--mut:#9da7b3;--line:#30363d;--hd:#161b22;--acc:#58a6ff}}body{background:var(--bg);color:var(--fg);font-family:system-ui,"Noto Naskh Arabic",sans-serif;max-width:1100px;margin:auto;padding:16px;line-height:1.8}h1{font-size:1.5rem}h2{font-size:1.25rem;border-bottom:1px solid var(--line);padding-bottom:4px;margin-top:2em}h3{font-size:1.05rem}table{border-collapse:collapse;width:100%;margin:8px 0;font-size:14px}td,th{border:1px solid var(--line);padding:4px 6px;vertical-align:top}th{background:var(--hd)}.wrap{overflow-x:auto}code{font-size:13px;background:var(--hd);padding:0 3px;border-radius:3px}pre{background:var(--hd);padding:8px;overflow-x:auto}blockquote{border-inline-start:3px solid var(--acc);margin:8px 0;padding:4px 12px;color:var(--mut)}.meta{color:var(--mut);font-size:13px}a{color:var(--acc)}</style><body><h1>HFN v36 مقابل v18</h1>
+<h2>قياس HFN v36 مقابل v18 بالشيفرة نفسها</h2>
+<h3>الإعداد</h3>
+<div class="wrap"><table><tr><th>البند</th><th>القيمة</th></tr>
+<tr><td>الشيفرة</td><td><code>86434ca</code> (رأس الفرع <code>f360f6b</code>)، مجمَّدة طوال القياس (<code>freeze.txt</code> في القياسين متطابق)</td></tr>
+<tr><td>المصدر</td><td>مصحف المجمّع (بصمة المدخل <code>a6dc1c01d94bd67f</code>)، والبيئة <code>PYTHONHASHSEED=0</code></td></tr>
+<tr><td>HFN v18</td><td><code>release_v18</code> (بصمة <code>8f5dd3684b0f1f80</code>)</td></tr>
+<tr><td>HFN v36</td><td><code>release_v36</code> من <code>hhiyassat/husseinframenet</code> في الالتزام <code>f96c5ec</code> (بصمة <code>d15da9926cdb3788</code>)</td></tr>
+</table></div>
+<p><b>ما يفصل القياسين متغيّرٌ واحد هو <code>SARF_HFN</code>.</b> فكل فرقٍ أدناه أثرُ البيانات لا الشيفرة.</p>
+<ul>
+<li><code>release_v18</code> في الالتزام <code>f96c5ec</code> مطابقٌ ملفاً ملفاً للنسخة السابقة.</li>
+<li>لم يُغيَّر في المستودع شيء:</li>
+<ul>
+<li><code>sarf/root.py</code> ما زال ثابته الافتراضي <code>release_v18</code>.</li>
+<li>v36 مُرِّر بمتغيّر البيئة وحده.</li>
+</ul>
+<li>لم يُحسب للصفحة رقمٌ تسلسلي، لأن هذا قياس موردٍ لا تقرير تحليل:</li>
+<ul>
+<li>صفحة 2:282 على v36 محفوظةٌ هنا باسم <code>trace_2282_v36.html</code>.</li>
+<li>ولا تُسجَّل في الفهرس.</li>
+</ul>
+</ul>
+<p><b>الاختبارات على v36:</b></p>
+<ul>
+<li><code>tests/test_round006.py</code> ينجح في فحوصه الثمانية والسبعين (ALL OK).</li>
+<li>الفواحص الثلاثة: 0 أعطال في المصحف كله.</li>
+</ul>
+<h3>الخلاصة</h3>
+<div class="wrap"><table><tr><th>المقياس (المصحف كله)</th><th>v18</th><th>v36</th></tr>
+<tr><td>أحداث HFN (events.csv)</td><td>13027</td><td>14265</td></tr>
+<tr><td>الوحدات</td><td>106551</td><td>106557</td></tr>
+<tr><td>العلاقات (المسار المجسور)</td><td>49228</td><td>50001</td></tr>
+<tr><td>AGREE (المجسور، كما في الصفحة)</td><td>18307</td><td>18501</td></tr>
+<tr><td>CONFLICT</td><td>167</td><td>167</td></tr>
+<tr><td>أعطال الفواحص</td><td>0</td><td>0</td></tr>
+<tr><td>الجذر: مؤجَّل ← مقبول</td><td>—</td><td>1119</td></tr>
+<tr><td>الجذر: مقبول ← مؤجَّل</td><td>—</td><td>347</td></tr>
+<tr><td>M1 الصنف المحسوم</td><td>78261</td><td>78844</td></tr>
+<tr><td>M1 الفعل</td><td>13055</td><td>13593</td></tr>
+<tr><td>M2 البناء المحسوم</td><td>87157</td><td>87793</td></tr>
+<tr><td>M3 المعرب المحسوم</td><td>9662</td><td>9722</td></tr>
+<tr><td>M4 الأدوار المحسومة</td><td>5622</td><td>5754 (الفاعل 393 ← 443، والمفعول به 715 ← 797)</td></tr>
+<tr><td>F01 إطار متّسق</td><td>7780</td><td>8274</td></tr>
+<tr><td>S01 مرخَّص</td><td>409</td><td>459</td></tr>
+<tr><td>O01 مرخَّص</td><td>1294</td><td>1423</td></tr>
+<tr><td>C01 مرخَّص</td><td>174</td><td>183</td></tr>
+<tr><td>R02 مرخَّص</td><td>1031</td><td>1051</td></tr>
+<tr><td>N01 مرخَّص</td><td>207</td><td>205</td></tr>
+<tr><td>أحكام المرحلة ٧: مقبول / ممنوع / مؤجَّل</td><td>14935 / 16976 / 18368</td><td>14935 / 16972 / 18372</td></tr>
+</table></div>
+<p><b>الحصيلة:</b> v36 يرفع التغطية كثيراً.</p>
+<ul>
+<li>جلّ الكسب من أفعالٍ صار لها حدثٌ في HFN يطابقها حرفاً وحركة:</li>
+<ul>
+<li>544 فعلاً كانت «لا يطابق فعلاً في HFN».</li>
+<li>وتعدّد الجذور حُسم بالوزن: «ءمن» (293)، و«ءخذ/تخذ» (101)، و«ءتو» (54).</li>
+</ul>
+<li>وفيه <b>خسائر سببها مداخل جديدة</b>، بعضها يحمل في الإصدار نفسه علامة شكّ. تفصيلها في القسم ٢.</li>
+</ul>
+<h3>١ في 2:282</h3>
+<div class="wrap"><table><tr><th>الموضع</th><th>v18</th><th>v36</th><th>السبب في v36</th></tr>
+<tr><td>«يُضَآرَّ» (112)</td><td>صنفه وبناؤه غير محسومين</td><td>فعلٌ مضارع: «ضرر» III، والحدث «ضَارَّ»</td><td>مدخل «ضَارَّ». فصار «كَاتِبٌ» (113) فاعله مرخَّصاً (S01)، وانحلّ بندٌ مسجَّل في الدفعة الأولى</td></tr>
+<tr><td>«ءَامَنُوا» (3)، «تَرْتَابُوا» (95)</td><td>الجذر مؤجَّل بين جذرين</td><td>«ءمن» IV، «ريب» VIII</td><td>حدثٌ بالوزن يحسم الجذر</td></tr>
+<tr><td>سبعة أفعال (تداينتم، يملل×2، يمل، يتق، تبايعتم، تفعلوا، اتقوا)</td><td>الجذر مقبول، والحدث ومعناه مؤجَّلان</td><td>الحدث ومدلوله في HFN</td><td>مداخل الأحداث</td></tr>
+<tr><td>«الحق» (27، 39)</td><td>«لا مدخل له في HFN»</td><td>«أكثر من جذر: حقق، حقو»</td><td>مدخلٌ جديد</td></tr>
+<tr><td>«ذَٰلِكُمْ أَقْسَطُ» (87–88)</td><td>N01 مرخَّص، و«أَقْسَطُ» اسمٌ بـE01، وAGREE</td><td>N01 مؤجَّل، و«أَقْسَطُ» صنفه غير محسوم</td><td>المدخل الجديد «قَسِطَ» على فَعِلَ (<code>HFN-E-6be7c792fe</code>)؛ تفصيله تحت الجدول</td></tr>
+<tr><td>القسم ١٤</td><td>«وَإِنْ تَفْعَلُوا…» داخل جملة «وَأَشْهِدُوا…»</td><td>جملةٌ مستقلة مغلقة</td><td>ثبوت «يُضَآرَّ» فعلاً غيّر الحدود في الطبقة القديمة</td></tr>
+</table></div>
+<p><b>تفصيل «أَقْسَطُ»:</b></p>
+<ul>
+<li>مضارع فَعِلَ يَفْعَلُ، فيحتمل «أَقْسَطُ» أن يكون مضارع المتكلم منه.</li>
+<li>فلا ينتفي البديل الذي يشترط E01 نفيه، فيمتنع E01. والتأجيل صحيحٌ بقاعدته.</li>
+<li><b>المدخل نفسه</b> مشهودٌ في المحكم والقاموس (<code>muhkam·qamus</code>)، وحالته <code>NO_RESTRICTION</code>. لكن عليه علامتان معلَّقتان:</li>
+<ul>
+<li><code>OWNER_CELL_LETTERS_NOT_OF_ROOT:قَسْم</code>.</li>
+<li><code>M1_v1_FLAG:DEFER_OWNER_FILE_ROW_ISSUE</code>.</li>
+</ul>
+<li><b>والأثر نفسه</b> في 33:5 «هُوَ أَقْسَطُ».</li>
+</ul>
+<h3>٢ الخسائر: كلها من مداخل جديدة، ولا تغيّر في الشيفرة</h3>
+<h4>أ. جذورٌ نادرة تُبقي السابقة جزءاً من الكلمة</h4>
+<p>الجذور «ورض» و«ونك» و«تمش» جديدة في v36:</p>
+<ul>
+<li>«وَرَضَ» <code>HFN-E-a735aade31</code>.</li>
+<li>«وَنَكَ» <code>HFN-E-0dbd43bb41</code>.</li>
+<li>«تَمَشَ» <code>HFN-E-aa6491a761</code>.</li>
+</ul>
+<p>حين يرخّص جذرٌ حروفَ الكلمة كلها، تحكم قاعدة التقطيع القائمة بأن «الحرف من أصل الكلمة».</p>
+<div class="wrap"><table><tr><th>الكلمة</th><th>الموضع</th><th>الأثر في v36</th></tr>
+<tr><td>«وَنَكُونَ»</td><td>5:113، 6:27، 28:47</td><td>لا تُفصل الواو. والكلمة كلها تُعامَل وحدةً محمية من صيغ «كان». وهذا خطأ</td></tr>
+<tr><td>«وَرَضِيتُ»</td><td>5:3:47</td><td>لا تُفصل الواو. وهذا خطأ</td></tr>
+<tr><td>«تَمْشِي/تَمْشِ»</td><td>17:37، 20:40، 28:25، 31:18</td><td>«تمش» ينافس «مشي»، فيتأجّل الجذر ويسقط صنف الفعل</td></tr>
+</table></div>
+<p>وزاد الممنوع في «رخصة البقية: الأبنية والمعجم وHFN» من 1528 إلى 1538.</p>
+<h4>ب. مداخل بعلامة شكٍّ تنافس مداخل صحيحة</h4>
+<div class="wrap"><table><tr><th>المدخل الجديد</th><th>المواضع</th><th>الأثر</th></tr>
+<tr><td>«نَفِخَ» على فَعِلَ (<code>HFN-E-4de4a2ef9f</code>)</td><td>«يُنْفَخُ» في 6:73، 20:102، 27:87، 78:18</td><td>يسقط حدث «نَفَخَ» وصنف الفعل</td></tr>
+<tr><td>«شَاءَ» من جذر «شوء»</td><td>174 موضعاً (يشاء، شئتم…)</td><td>الجذر مؤجَّل بين «شوء» و«شيء». وهو أكبر الخسائر</td></tr>
+</table></div>
+<p>علامتا مدخل «نَفِخَ»: <code>OWNER_CELL_LETTERS_NOT_OF_ROOT:نَفَد</code> و<code>DEFER_OWNER_FILE_ROW_ISSUE</code>.</p>
+<h4>ج. ثنائيات واوي ويائي، ومجرد ومزيد</h4>
+<p>ومن هذا الباب الأحكام التالية، وكلها مقبولٌ صار مؤجَّلاً:</p>
+<div class="wrap"><table><tr><th>التنافس</th><th>عدد المواضع</th></tr>
+<tr><td>«وعد» I و«وعد» IV</td><td>22</td></tr>
+<tr><td>«وحي» I و«وحي» IV</td><td>14</td></tr>
+<tr><td>«خشو» و«خشي»</td><td>12</td></tr>
+<tr><td>«نسو» و«نسي»</td><td>11</td></tr>
+<tr><td>«هود» و«هيد»</td><td>11</td></tr>
+<tr><td>«بلو» و«بلي»</td><td>11</td></tr>
+<tr><td>«عصي» و«عصو»</td><td>8</td></tr>
+</table></div>
+<ul>
+<li><b>مجموعها:</b> 347 جذراً.</li>
+<li><b>التأجيل صحيحٌ بالقاعدة:</b> لا يُختار وجهٌ ومنافسه قائم.</li>
+<li><b>وصحّة المداخل قرارٌ في HFN.</b></li>
+</ul>
+<h4>د. ما خسر AGREE: خمس وحدات</h4>
+<div class="wrap"><table><tr><th>الموضع</th><th>الوحدة</th><th>السبب</th></tr>
+<tr><td>2:282:87–88</td><td>«ذَٰلِكُمْ» و«أَقْسَطُ»</td><td>E01 ممتنع بمدخل «قَسِطَ»</td></tr>
+<tr><td>33:5:3–4</td><td>«هُوَ» و«أَقْسَطُ»</td><td>E01 ممتنع بمدخل «قَسِطَ»</td></tr>
+<tr><td>38:75:14</td><td>«الْعَالِينَ»</td><td>سمة العدد صارت مرشّحة في v36 (جمع أو مفرد). فلا تتعيّن العلامة بين «الياء» والحركة، وصار UNVERIFIED</td></tr>
+</table></div>
+<p><b>صنف الاسم:</b> فقدت 15 وحدةً صنفها، منها:</p>
+<ul>
+<li>«أَمْوَٰتًا» (3 مواضع)، و«هَارٍ»، و«عَالٍ»، و«دَائِمٌ»، و«بَاقٍ»، و«نَسْيًا».</li>
+<li>و«أَقْسَطُ» مرتين، وضمائر في كلماتٍ تغيّر تقطيعها.</li>
+</ul>
+<p>السبب: كانت اسميتها من دليلٍ صار له منافسٌ فعلي في v36.</p>
+<h3>٣ المكاسب في التقطيع</h3>
+<div class="wrap"><table><tr><th>الكلمة</th><th>الموضع</th><th>v18</th><th>v36</th></tr>
+<tr><td>«فَعَلُوا»</td><td>3:135، 4:66، 7:28</td><td>«فَ» + «عَلُوا» (علو/وعل)</td><td>كلمةٌ واحدة، «فعل» (مرجَّح)</td></tr>
+<tr><td>«فَتَحُوا»، «فَتَنُوا»، «فَعَمُوا»</td><td>12:65، 85:10، 5:71</td><td>جذر «وتح» و«وتن»، أو تقطيعٌ خاطئ</td><td>كلمةٌ واحدة</td></tr>
+<tr><td>«فَتَنْفَعَهُ»</td><td>80:4</td><td>«فَتَنْفَعَ» جذعٌ غير محلَّل</td><td>«فَ» + «تَنْفَعَ» («نفع» I) + «هُ»</td></tr>
+<tr><td>«فَحَيُّوا»</td><td>4:86</td><td>جذر «فحو» IX (خطأ)</td><td>«فَ» + «حَيُّوا» (حيي، مؤجَّل بين I وII)</td></tr>
+<tr><td>«فَأَحْيَا»، «فَيُحْيِ»، «فَتُكْوَى»، «فَأَوْجَسَ»…</td><td>13 موضعاً</td><td>جذعٌ واحد</td><td>الفاء منفصلة، والفعل وحده</td></tr>
+</table></div>
+<h3>٤ ما لا تقرؤه الشيفرة من v36</h3>
+<p>في <code>events.csv</code> أعمدةٌ جديدة.</p>
+<p><b><code>licensing_status</code>:</b></p>
+<div class="wrap"><table><tr><th>القيمة</th><th>عدد المداخل</th></tr>
+<tr><td><code>NO_RESTRICTION</code></td><td>13798</td></tr>
+<tr><td><code>LEXICON_UNATTESTED_v35</code></td><td>140</td></tr>
+<tr><td><code>CLASS_DEFERRED_OPERATOR</code></td><td>27</td></tr>
+</table></div>
+<p><b><code>event_review_v36</code>:</b></p>
+<div class="wrap"><table><tr><th>القيمة</th><th>عدد المداخل</th></tr>
+<tr><td><code>DUPLICATE_OF</code></td><td>27</td></tr>
+<tr><td><code>SUSPECT_SPURIOUS_AFALA</code></td><td>17</td></tr>
+</table></div>
+<p>وفي <code>residual</code> علامات <code>OWNER_CELL_LETTERS_NOT_OF_ROOT</code> على 171 مدخلاً.</p>
+<p>الشيفرة الحالية تعامل كل مدخلٍ مرخِّصاً بلا تمييز. <b>فاحترام هذه الحالات تغيير شيفرةٍ أقترحه ولا أنفّذه إلا بإذنكم</b>، وصورته:</p>
+<ul>
+<li>مدخلٌ موسوم بشكٍّ في مصدره (<code>DEFER_OWNER_FILE_ROW_ISSUE</code>، <code>SUSPECT_SPURIOUS_AFALA</code>، <code>DUPLICATE_OF</code>، <code>LEXICON_UNATTESTED_v35</code>) لا يكون وحده مرخِّصاً للتقطيع، ولا منافساً يُسقط حكماً مقبولاً. يُحفظ مرشّحاً بعلامته.</li>
+<li>ويُقاس الأثر قبل وبعد.</li>
+</ul>
+<h3>٥ ما ينتظر قراركم</h3>
+<ol>
+<li><b>تثبيت المورد:</b></li>
+<ul>
+<li>هل يصير v36 مورد القياس الثابت؟ عندها يُغيَّر ثابت <code>sarf/root.py</code>، وتُقاس عليه الصفحات القادمة.</li>
+<li>أم يبقى v18 حتى تُراجَع المداخل المعلَّقة؟</li>
+</ul>
+<li><b>المداخل المعلَّقة التي تؤثر في التحليل مباشرة:</b></li>
+<ul>
+<li>«قَسِطَ» (أَقْسَطُ: موضعان).</li>
+<li>«نَفِخَ» (يُنْفَخُ: 4 مواضع).</li>
+<li>«شَاءَ / شوء» (174).</li>
+<li>الجذور النادرة «ورض» و«ونك» و«تمش».</li>
+</ul>
+<li><b>قراءة أعمدة الحالة في v36</b> بالصورة المقترحة في القسم ٤.</li>
+</ol>
+<h3>الملفات</h3>
+<div class="wrap"><table><tr><th>الملف</th><th>المحتوى</th></tr>
+<tr><td><code>measurements.json</code></td><td>المقاييس كلها، والتغيّرات بالوحدة والعلاقة</td></tr>
+<tr><td><code>trace_2282_v36.html</code></td><td>صفحة مسار التحليل لـ2:282 على v36 (للقياس، بلا رقمٍ تسلسلي)</td></tr>
+</table></div>
+</body></html>
