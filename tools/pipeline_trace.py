@@ -616,7 +616,7 @@ for pv in per_verse:
             (f"<br><sub>حالة المبني: {h((ax.get('mabni_state') or {}).get('code'))}</sub>" if ax.get('mabni_state') else '')
         ca = ax.get('case_axis') or (None, '')
         role_cell += f"<br>الحالة أو المحلّ: {h(ca[0] or 'غير محسوم')}" + (f" ({h(ca[1])})" if ca[0] and not ca[0].startswith('لا محلّ') else '')
-        wcell = cell(ax['word_class']) + ''.join(f"<br><sub>جزء {h(p_['part'])}: «{h(p_['text'])}» {h(p_['part_id'])} م{h(str(p_.get('span') or '—'))} مق{h(str(p_.get('syllables') or '—'))}</sub>"
+        wcell = cell(ax['word_class']) + ''.join(f"<br><sub>جزء {h(p_['part'])}: «{h(p_['text'])}» {h(p_['part_id'])} المحارف {h('[' + '، '.join(map(str, p_['span'])) + ')' if p_.get('span') else '—')} المقاطع {h('، '.join(map(str, p_.get('syllables') or [])) or '—')}</sub>"
                                                  for p_ in ax.get('parts') or [])
         us = ax.get('operator_usage') or {}
         ucell = cell(ax['operator']) + ''.join(
