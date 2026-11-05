@@ -1390,6 +1390,46 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
     # S01 الفاعل (أو نائبه): الضمير المتصل المكتوب، أو المستتر وجوباً (المتكلم والمخاطب المفرد)، أو اسمٌ ظاهرٌ مرفوعٌ كتابةً هو المرشّح
     #     الوحيد في إطار الفعل بعده (لا يُختار أقرب مرفوع إذا نافسه آخر)؛ وما سوى ذلك مرشّحاتٌ مؤجَّلة
     # O02 المفعول الظاهر: اسمٌ معرفةٌ منصوبٌ كتابةً بعد فعلٍ مثبت التعدّي غير ناسخ، ولا مفعول متصل قبله؛ والنكرة المنصوبة مؤجَّلة (حال، تمييز، مفعول مطلق)
+    # M02 v1 (مقترحة): المصدر المؤوَّل من «أَنْ» الناصبة والمضارع. «أَنْ» التي تنصب المضارع مصدريةٌ دائماً؛ فإذا قبلها المرحلة ١١
+    # عاملاً في مضارعٍ بعدها بنصبٍ متّسق، فالتركيب المكتوب «أَنْ + الفعل» في تأويل مصدر: مرخَّصٌ بوصفه تركيباً.
+    # ووظيفته (محلّه) لا تُعيَّن إلا بدليلٍ مكتوب: حرف جرٍّ مقبولٌ قبله مباشرةً يجعله مجروراً به؛ وما سوى ذلك مؤجَّل بأبوابه
+    # (فاعل، مفعول به، مبتدأ، خبر) أبواباً للفحص لا أوجهاً ثبت جوازها. ولا يُحكم بحرف جرٍّ محذوف بلا قاعدة
+    masdar = {}
+    unit_of = lambda wi, si: next((ui for ui, u in enumerate(a['segments'][wi]['units']) if si in u.get('slots', [])), None)
+    for o in a['operators']:
+        r_ = o.get('relation') or {}
+        tg = r_.get('target') or {}
+        if not (o.get('status') == 'accepted' and str(o.get('group')) == '5' and o['operator'] in ('أَنْ', 'أَن') and
+                tg.get('pos') == 'verb' and r_.get('consistent') and r_.get('expected') == 'نصب'):
+            continue
+        an = by_k.get((o['word_index'], (o.get('slot') or {}).get('unit', 0)))
+        vt = by_k.get((tg['word_index'], unit_of(tg['word_index'], tg['slot'])))
+        if an is None or vt is None:
+            continue
+        pv = toks[idx[an.k] - 1] if idx[an.k] > 0 else None
+        # حرف الجر قبله مباشرةً: مقبولٌ في المرحلة ١١، أو مؤجَّلٌ وهدفه «أَنْ» نفسها (لأنها ليست اسماً)؛ والجار لا يدخل إلا على
+        # اسم، والمصدر المؤوَّل اسمٌ في التأويل، فهو مجروره
+        # والحكم بهدف الحرف في المرحلة ١١ نفسه: هدفه «أَنْ» هذه، لا مجرورٌ له قبلها (بِهِۦٓ أَن يُوصَلَ، لِيٓ أَنۡ أَقُولَ،
+        # لِلَّهِ أَن يَتَّخِذَ: للحرف مجروره، فلا يُجرّ به المصدر)
+        def _tg(o2):
+            return (o2.get('relation') or {}).get('target') or {}
+        jop = next((o2 for o2 in a['operators'] if pv is not None and o2['word_index'] == pv.wi and str(o2['group']) == JARR and
+                    _tg(o2).get('word_index') == an.wi and str(_tg(o2).get('text') or '').startswith('أَن')), None)
+        jar = jop is not None and not any(t_.wi == pv.wi and idx[t_.k] > idx[pv.k] and t_.k != an.k for t_ in toks if t_.wi == pv.wi)
+        fn = (f'مجرورٌ محلاً بحرف الجر «{pv.text}» قبله مباشرةً' +
+              (' (مقبولٌ في المرحلة ١١)' if jop.get('status') == 'accepted' else
+               ' (مؤجَّلٌ في المرحلة ١١ لأن ما يليه «أَنْ» لا اسم؛ والمصدر المؤوَّل هو الاسم المجرور)') if jar else
+              'محلّه غير معيَّن: أبواب الفحص فاعل، أو مفعول به، أو مبتدأ، أو خبر؛ لا أوجهٌ ثبت جوازها')
+        rec = _rec(ref, 'MASDAR', 'M02', {'harf': an, 'verb': vt}, {'harf': [an], 'verb': [vt]}, LICENSED,
+                   f'«{an.text} {vt.text}» في تأويل مصدر: «أَنْ» الناصبة للمضارع مصدرية؛ والوظيفة: {fn}',
+                   premises=[f'المرحلة ١١: «{an.text}» (مج 5) مقبولٌ عاملاً في «{vt.text}» ({tg.get("text")})، والنصب متّسق '
+                             f'({r_.get("observed")})'] + ([f'«{pv.text}» حرف جرٍّ مقبول قبله مباشرةً'] if jar else []),
+                   checked=['قبول العامل في المرحلة ١١', 'اتّساق النصب', 'حرف جرٍّ قبله مباشرةً'],
+                   alternatives=[] if jar else ['فاعل', 'مفعول به', 'مبتدأ', 'خبر'],
+                   function=dict(status=LICENSED if jar else DEFERRED, text=fn, governor=pv.uid if jar else None),
+                   edges=[('MASDAR', an.uid, vt.uid)])
+        R.append(rec)
+        masdar[an.uid] = rec
     frames = {}
     by_uid_ = {t.uid: t for t in toks}
     for i, v in enumerate(toks):
@@ -1609,8 +1649,11 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
             elif stop is not None and stop[1] == 'أداة' and stop[0].text.startswith('أَن') and not skipped and j_ + 1 < fe_ \
                     and toks[j_ + 1].pos == 'فعل':
                 obj_req = dict(kind='UNANALYZED_COMPLEMENT', status='مكمّلٌ غير محلَّل',
-                               note=f'بعد الفعل «{stop[0].text} {toks[j_ + 1].text}» ({stop[0].loc}): تركيبٌ مكتوب مرشّحٌ للمكمّلية؛ '
-                                    'وظيفته وتعلّقه غير محلَّلين (قاعدة المصدر المؤوَّل غير منفّذة)؛ ولا يُنفى المكمّل')
+                               note=f'بعد الفعل «{stop[0].text} {toks[j_ + 1].text}» ({stop[0].loc}): تركيبٌ مكتوب مرشّحٌ للمكمّلية؛ ' +
+                                    (f'وهو مصدرٌ مؤوَّل مرخَّص تركيباً ({masdar[stop[0].uid]["relation_id"]})، ' if stop[0].uid in masdar else
+                                     '(لا سجلّ M02 له)، ') +
+                                    'ووظيفته وتعلّقه بهذا الفعل غير محلَّلين؛ ولا يُنفى المكمّل',
+                               masdar=masdar[stop[0].uid]['relation_id'] if stop[0].uid in masdar else None)
             elif first is not None and first.nounish() and first.k not in governed and first.k not in bound and \
                     {'رفع', 'نصب'} <= set(_written_mark(first)[1] or ()):
                 obj_req = dict(kind='CASE_NOT_WRITTEN', status='حالةٌ غير مكتوبة',
@@ -1743,18 +1786,25 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                 'derivation_candidates' in pf or bool(nuc['p'].elative_proof())
             if not frame_verbs and not others and p_is_host and p_wasf:
                 pr = nuc['p']
+                # الترخيص وجهٌ لا اختيار: وجها الخبر المتعدّد والحال المقدَّمة خارج التغطية، فلا يُقال «المضيف الوحيد» ولا يكتمل البحث
                 R.append(_rec(ref, 'ATTACH', 'A02', {'oblique': ous[0], 'host': pr}, {'oblique': ous, 'host': [pr]}, LICENSED,
-                              f'شبه الجملة بين طرفي النواة المرخَّصة قبل الخبر، ولا فعل في الإطار، والخبر الوصف «{pr.text}» مضيفها الوحيد',
+                              f'شبه الجملة بين طرفي النواة المرخَّصة قبل الخبر، ولا فعل في الإطار، والخبر الوصف «{pr.text}» '
+                              'المضيفُ الوحيد بين مضيفي A01 في الإطار: وجه التعلّق به مرخَّص؛ واختياره مؤجَّل، '
+                              'لأن وجهي الخبر المتعدّد والحال المقدَّمة خارج التغطية لم يُفحصا',
+                              face='التعلّق بالخبر الوصف', selection=DEFERRED,
+                              face_note='وجهٌ مرخَّص غير مختار: وجها شبه الجملة خبراً أول (تعدّد الخبر) وحالاً مقدَّمة خارج تغطية A02 v1، '
+                                        'مؤجَّلان لا مرفوضان',
                               premises=[nuc['rec']['relation_id'], orec['relation_id'],
                                         f'الإطار {toks[nuc["lo"]].loc}–{toks[nuc["hi"] - 1].loc}: لا فعل ولا فعل محتمل',
-                                        f'مضيفو A01 في الإطار: «{pr.text}» وحده'] + ([pr.elative_proof()] if pr.elative_proof() else []),
+                                        f'مضيفو A01 في الإطار: «{pr.text}» وحده (لا يشمل وجهي الخبر المتعدّد والحال)'] + ([pr.elative_proof()] if pr.elative_proof() else []),
                               checked=['فعلٌ في الإطار (ولو محتمل)', 'وصفٌ آخر في الإطار', 'حدّ حاوية',
                                        'وجه النعت: شبه الجملة قبل الخبر، والنعت لا يتقدّم منعوته'],
                               alternatives=['شبه الجملة خبرٌ أول وتعدّد الخبر: خارج تغطية v1 (مؤجَّل لا مرفوض)',
                                             'شبه الجملة حالٌ مقدَّمة من الخبر النكرة: خارج تغطية v1 (مؤجَّل لا مرفوض)'] +
                               [dict(h, status=DEFERRED, reason='خارج إطار النواة: لا يُعبر إليه في A02') for h in hosts
                                if h['host'] != pr.uid],
-                              search_status=SEARCH_COMPLETE, search_scope=dict(rule='A02 v1', frame=[toks[nuc['lo']].loc, toks[nuc['hi'] - 1].loc]),
+                              search_status=SEARCH_INCOMPLETE, search_scope=dict(rule='A02 v1', frame=[toks[nuc['lo']].loc, toks[nuc['hi'] - 1].loc],
+                                                                                 outside_coverage=['خبرٌ أول (تعدّد الخبر)', 'حالٌ مقدَّمة']),
                               edges=[('ATTACH', ous[0].uid, pr.uid)]))
                 continue
         R.append(_rec(ref, 'ATTACH', 'A01', {'oblique': ous[0]}, {'oblique': ous}, DEFERRED,
@@ -2410,4 +2460,15 @@ def check_cross(records, axes):
         for p_ in r['premises']:
             if r.get('premise_links') is not None and not any(l_.get('premise') == p_ for l_ in r['premise_links']):
                 errs.append(f'{r["relation_id"]}: مقدّمةٌ بلا رابط: {str(p_)[:60]}')
+    # ٨ ما له بدائل خارج التغطية لا يكون مختاراً ولا مكتمل البحث (الترخيص وجهٌ لا اختيار)
+    for r in records:
+        if (r.get('search_scope') or {}).get('outside_coverage'):
+            if r.get('selection') != DEFERRED:
+                errs.append(f'{r["relation_id"]}: بدائل خارج التغطية ({_join_ar(r["search_scope"]["outside_coverage"])}) والاختيار غير مؤجَّل')
+            if r.get('search_status') == SEARCH_COMPLETE:
+                errs.append(f'{r["relation_id"]}: بدائل خارج التغطية والبحث موسومٌ بالاكتمال')
+    # ٩ المصدر المؤوَّل: وظيفته المرخَّصة تسمّي حاكمها المكتوب
+    for r in records:
+        if r['type'] == 'MASDAR' and (r.get('function') or {}).get('status') == LICENSED and not r['function'].get('governor'):
+            errs.append(f'{r["relation_id"]}: وظيفة المصدر المؤوَّل مرخَّصة بلا حاكمٍ مكتوب')
     return errs

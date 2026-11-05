@@ -367,14 +367,17 @@ def t33():
 
 
 def t34():
-    # A02 موجب قبل الخبر؛ ويُمنع بفعلٍ في الإطار؛ وبعد الخبر يبقى A01 مؤجَّلاً بوجه النعت
+    # A02 موجب قبل الخبر؛ ويُمنع بفعلٍ في الإطار؛ وبعد الخبر يبقى A01 مؤجَّلاً بوجه النعت.
+    # والترخيص وجهٌ غير مختار (خطة الاستكمال، الدفعة E): وجها الخبر المتعدّد والحال المقدَّمة خارج التغطية، فالبحث غير مكتمل
+    # ولا يُقال «مضيفها الوحيد»
     _, _, _, o = run('ٱلرَّجُلُ فِي ٱلدَّارِ كَاتِبٌ')
     at = one(o, 'ATTACH', host='كَاتِبٌ')
     _, _, _, o2 = run('ٱلرَّجُلُ فِي ٱلدَّارِ كَاتِبٌ يَكۡتُبُ')
     at2 = [x for x in recs(o2, 'ATTACH') if x['rule_id'] == 'A02']
     _, _, _, o3 = run('ٱلرَّجُلُ كَاتِبٌ فِي ٱلدَّارِ')
     at3 = recs(o3, 'ATTACH')
-    return ok(at and at['status'] == LICENSED and at['rule_id'] == 'A02' and at['search_status'] == 'SEARCH_COMPLETE' and not at2 and
+    return ok(at and at['status'] == LICENSED and at['rule_id'] == 'A02' and at['search_status'] == 'SEARCH_INCOMPLETE' and
+              at.get('selection') == DEFERRED and 'مضيفها الوحيد' not in at['reason'] and not at2 and
               len(at3) == 1 and at3[0]['rule_id'] == 'A01' and at3[0]['status'] == DEFERRED,
               (at and (at['rule_id'], at['status']), len(at2), [(x['rule_id'], x['status']) for x in at3]))
 
