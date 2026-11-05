@@ -545,7 +545,7 @@ for pv in per_verse:
                        if fr.get('stage8') else ''))
         if r.get('parts'):
             alts += ''.join(f"<br>جزء {h(p_['part'])}: «<span class='ar'>{h(p_['text'])}</span>» <code>{h(p_['part_id'])}</code> "
-                            f"المحارف {h(str(p_.get('span') or '—'))}، المقاطع {h(str(p_.get('syllables') or '—'))}" + (f" — {h(p_['note'])}" if p_.get('note') else '')
+                            f"المحارف {h('[' + '، '.join(map(str, p_['span'])) + ')' if p_.get('span') else '—')}، المقاطع {h('، '.join(map(str, p_.get('syllables') or [])) or '—')}" + (f" — {h(p_['note'])}" if p_.get('note') else '')
                             for p_ in r['parts'])
         if r.get('parts_status'):
             alts += '<br>' + h('، '.join(f'{k}={v}' for k, v in r['parts_status'].items()))
@@ -560,6 +560,8 @@ for pv in per_verse:
             alts += f"<br>المشترك بين الأوجه: الحدّ {h(r['shared'].get('boundary'))} — {h(r['shared'].get('note'))}"
         if r.get('face') and r.get('selection'):
             alts += f"<br>الوجه: {h(r['face'])}، ترخيصه [{h(r['status'])}]؛ الاختيار: {h(r['selection'])} — {h(r.get('face_note') or '')}"
+        if r.get('parts'):
+            alts += '<br><sub>المحارف: مواضع الحروف المجمَّعة (الحرف بحركاته) في نص الوحدة التحليلي، بمجالٍ نصف مفتوح [من، إلى)؛ والمقاطع أرقام مقاطع الوحدة</sub>'
         if r.get('head_parts'):
             alts += '<br>أجزاء الأطراف: ' + h('، '.join(f'{k}={v}' for k, v in r['head_parts'].items()))
         if r.get('kind_status'):

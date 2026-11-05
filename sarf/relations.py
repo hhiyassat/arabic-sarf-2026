@@ -784,7 +784,9 @@ def _pron_feats(text):
 
 
 def _rec(ref, typ, rule, heads, members, status, reason, premises=(), checked=(), alternatives=(), container=None, **kw):
-    rid = f'{ref}:{typ}:{rule}:' + '+'.join(f'{r}={u.uid}' for r, u in sorted(heads.items()))
+    hp = kw.get('head_parts') or {}
+    # طرفٌ هو جزءٌ من وحدةٍ مكتوبة (لِ في لِلشَّهَٰدَةِ، أيّ في أيّها): معرّف العلاقة بهوية الجزء لا بالوحدة كلها
+    rid = f'{ref}:{typ}:{rule}:' + '+'.join(f'{r}={hp.get(r) or u.uid}' for r, u in sorted(heads.items()))
     out = dict(relation_id=rid, source_id=ref, type=typ, rule_id=rule, rule_version=VERSION,
                analysis_id='+'.join(f'{u.uid}@{VERSION}' for _, u in sorted(heads.items())),
                container_id=container, heads={r: u.uid for r, u in heads.items()},
@@ -1058,6 +1060,8 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
         f_ = toks[i + 2] if i + 2 < len(toks) else None
         ay.parts = [dict(part='منادى', text='أَيُّ', part_id=f'{ay.uid}/p0', unit=ay.uid, source='sarf.protected.MERGED («أَيُّهَا» = أَيُّ + هَا)'),
                     dict(part='حرف تنبيه', text='هَا', part_id=f'{ay.uid}/p1', unit=ay.uid, source='sarf.protected.MERGED')]
+        for p_, x_ in zip(ay.parts, _merged_part_spans(ay, a['segments'][ay.wi], ['أَيُّ', 'هَا']) or []):
+            p_.update(span=x_[0], syllables=x_[1], **({'note': x_[2]} if x_[2] else {}))
         nida = _rec(ref, 'VOCATIVE', 'V02', {'particle': t, 'munada': ay}, {'particle': [t], 'munada': [ay]}, LICENSED,
                     '«يا» حرف نداء، و«أيّ» بعدها منادى نكرةٌ مقصودة مبني على الضم في محلّ نصب، و«ها» للتنبيه',
                     premises=[f'«{t.text}» عامل النداء (الجرد: مج {next((o_["group"] for o_ in a["operators"] if o_["word_index"] == t.wi and o_["operator"].startswith("يَ")), "?")})',
@@ -1709,6 +1713,8 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
         nominal = bool(kinds) and all(k_ != CAT_AR['particle'] for k_ in kinds)
         t.parts = [dict(part='حرف جر', text=mg[0], part_id=f'{t.uid}/p0', unit=t.uid, source='sarf.protected.MERGED'),
                    dict(part='اسم مبني', text=mg[1], part_id=f'{t.uid}/p1', unit=t.uid, kinds=kinds, source='sarf.protected.MERGED')]
+        for p_, x_ in zip(t.parts, _merged_part_spans(t, a['segments'][t.wi], list(mg)) or []):
+            p_.update(span=x_[0], syllables=x_[1], **({'note': x_[2]} if x_[2] else {}))
         R.append(_rec(ref, 'PP', 'P03', {'preposition': t, 'complement': t}, {'preposition': [t], 'complement': [t]},
                       LICENSED if nominal else DEFERRED,
                       f'«{t.text}» = «{mg[0]}» + «{mg[1]}» في الجرد المعتمد: حرف جرٍّ ومجروره المبني في محلّ جر' if nominal else
@@ -2005,6 +2011,51 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                 axes={t.uid: t.axes(toks[i + 1] if i + 1 < len(toks) else None) for i, t in enumerate(toks)})
 
 
+def _letter_syllables(t, seg):
+    """لكل حرفٍ مجمَّع (الحرف بحركاته) في نص الوحدة: أرقام مقاطعه في الوحدة. ولام «أل» الشمسية بلا مقطع، والمشدَّد في مقطعين"""
+    syl = (seg['units'][t.ui].get('syllables') or [])
+    # المقاطع تكتب الهمزة «ء» على كل كرسيّ: تُقابَل صور الهمزة بها في هذه المحاذاة وحدها (والحركات كما هي)
+    hz = {'أ': 'ء', 'إ': 'ء', 'آ': 'ء', 'ؤ': 'ء', 'ئ': 'ء'}
+    lt = [(hz.get(c, c), m) for c, m in letters(t.text)]
+    sylL = [[hz.get(c, c) for c, _ in letters(x['syl'])] for x in syl]
+    flat = [(n, c) for n, cs in enumerate(sylL) for c in cs]
+    out_map, fi = [], 0
+    for n, (c, m) in enumerate(lt):
+        hit = []
+        if c == 'ل' and n + 1 < len(lt) and SHADDA in lt[n + 1][1] and not m - {SUKUN} and n > 0:
+            out_map.append([])
+            continue
+        for _ in range(2 if SHADDA in m else 1):
+            while fi < len(flat) and flat[fi][1] != c and c not in 'اوىي':
+                fi += 1
+            if fi < len(flat) and flat[fi][1] == c:
+                hit.append(flat[fi][0])
+                fi += 1
+        out_map.append(sorted(set(hit)))
+    return out_map
+
+
+def _merged_part_spans(t, seg, texts):
+    """مجالات أجزاء الوحدة المندمجة رسماً (أَيُّهَا = أَيُّ + هَا، مِمَّنْ = مِنْ + مَنْ) بنظام المحارف نفسه (الحروف المجمَّعة
+    في نص الوحدة، نصف مفتوح)، ومقاطعها. فإن زاد مجموع حروف الأجزاء على حروف الوحدة بحرفٍ مشدَّدٍ عند الحدّ، فالحرف المدغم
+    مشتركٌ بين الجزأين ويُعلن ذلك. → [(span, syllables, note)] أو None"""
+    lt = letters(t.text)
+    ns = [len(letters(x)) for x in texts]
+    om = _letter_syllables(t, seg)
+    if len(ns) != 2:
+        return None
+    over = sum(ns) - len(lt)
+    if over == 0:
+        sp = [[0, ns[0]], [ns[0], len(lt)]]
+        note = None
+    elif over == 1 and ns[0] - 1 < len(lt) and SHADDA in lt[ns[0] - 1][1]:
+        sp = [[0, ns[0]], [ns[0] - 1, len(lt)]]
+        note = f'«{lt[ns[0] - 1][0]}» المشدَّد مشتركٌ بين الجزأين: آخر الأول مدغمٌ في أول الثاني'
+    else:
+        return None
+    return [(x, sorted({s_ for n in range(x[0], x[1]) for s_ in (om[n] if n < len(om) else [])}), note) for x in sp]
+
+
 def _parts_map(t, seg):
     """أجزاء الوحدة المكتوبة الواحدة (لِلشَّهَٰدَةِ = لِ + ال + شَّهَٰدَةِ): لكلّ جزءٍ هويته (الوحدة/الخانة)، ونصّه، ومجاله في محارف الكلمة،
     ونوعه، ومقاطعه بأرقامها في الوحدة. ولام «أل» قبل الحرف الشمسي المشدَّد مدغمةٌ فيه: لا مقطع لها، ويُذكر ذلك"""
@@ -2174,6 +2225,10 @@ def check_records(records, tokens, parts=None):
     for r in records:
         if r['status'] == LICENSED and r['premises'] and all(p in ids for p in r['premises']):
             errs.append(f"{r['relation_id']}: مقدّماته كلها علاقاتٌ بلا حقيقةٍ مصدرية مستقلة")
+    for r in records:
+        for role_, pid_ in (r.get('head_parts') or {}).items():
+            if pid_ and f'{role_}={pid_}' not in r['relation_id']:
+                errs.append(f'{r["relation_id"]}: الطرف «{role_}» جزءٌ ({pid_}) ومعرّف العلاقة لا يحمل هويته')
     return errs
 
 

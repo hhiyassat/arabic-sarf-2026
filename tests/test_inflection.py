@@ -54,8 +54,8 @@ def verse_text(s, v):
 _, _, _, o = run('فِي ٱلۡبَيۡتِ')
 _, ax = unit(o, 'الْبَيْتِ')
 i = ax['inflection']
-check('I01 في البيتِ: مجرور بفي وعلامة جره الكسرة الظاهرة',
-      i['agreement'] == 'AGREE' and i['statement'] == 'اسم مجرور بـ«فِي» وعلامة جرّه الكسرة الظاهرة' and i['mark_kind'] == 'ظاهرة'
+check('I01 في البيتِ: مجرور بحرف الجر «في» (دوره من P01) وعلامة جره الكسرة الظاهرة',
+      i['agreement'] == 'AGREE' and i['statement'] == 'اسم مجرور بحرف الجر «فِي» وعلامة جرّه الكسرة الظاهرة' and ax['role'][0] == 'مجرور بحرف الجر' and i['mark_kind'] == 'ظاهرة'
       and ax['word_class'][0] == 'اسم' and i['build'][0] == 'معرب', (i['statement'], i['agreement']))
 
 _, _, _, o = run('فِي ٱلۡبَيۡتَيۡنِ')

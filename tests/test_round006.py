@@ -426,5 +426,18 @@ c77 = next(r for r in o['records'] if r['type'] == 'CONDITION' and r['heads'].ge
 check('X54 شرط «إذا ما دُعُوا»: المصالحة مع F01 أولُ المقدّمات، ومقدّمة الطبقة القديمة القائمة على وجه الأمر الممنوع موسومةٌ بأنه لا يُبنى عليها',
       c77['premises'][0].startswith('المصالحة مع F01') and any('قائمةٌ على وجهٍ ممنوع في F01' in p for p in c77['premises'][1:]), c77['premises'])
 
+# ٢١ الأجزاء: مجالاتها ومقاطعها بنظام إحداثيات واحد، ومعرّف العلاقة بهوية الجزء
+vo_ = next(r for r in o['records'] if r['type'] == 'VOCATIVE')
+p03_ = next(r for r in o['records'] if r['type'] == 'PP' and r['rule_id'] == 'P03')
+check('X55 أجزاء «أيّها» و«مِمَّنْ» بمجالات المحارف (الحروف المجمَّعة في نص الوحدة، نصف مفتوح) ومقاطعها، والمدغم المشترك معلَن؛ ومعرّفات العلاقات بهوية الجزء',
+      [p_['span'] for p_ in vo_['parts']] == [[0, 2], [2, 4]] and all(p_.get('syllables') for p_ in vo_['parts'])
+      and [p_['span'] for p_ in p03_['parts']] == [[0, 2], [1, 3]] and 'مشترك' in (p03_['parts'][0].get('note') or '')
+      and '/s0' in pp92['relation_id'] and '/p0' in vo_['relation_id'] and '/p1' in p03_['relation_id'],
+      ([p_.get('span') for p_ in vo_['parts']], [p_.get('span') for p_ in p03_['parts']], pp92['relation_id']))
+m = copy.deepcopy(o)
+r_ = next(r for r in m['records'] if r['relation_id'] == pp92['relation_id'])
+r_['relation_id'] = r_['relation_id'].replace('/s2', '').replace('/s0', '')
+check('M19 إفساد معرّف العلاقة (بالوحدة لا بالجزء) يكشفه الفاحص البنيوي', bool(check_records(m['records'], m['tokens'], m['parts'])))
+
 print('ALL OK' if not FAIL else f'FAILED {len(FAIL)}: {FAIL}')
 sys.exit(1 if FAIL else 0)
