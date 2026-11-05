@@ -150,6 +150,58 @@ def _radical_vowel(word, R, k):
     return {FATHA: 'a', DAMMA: 'u', KASRA: 'i'}.get(next(iter(v))) if len(v) == 1 else None
 
 
+def tense_realization(text, R, P, closed):
+    """F03 (مقترحة، تنتظر اعتماد صاحب النظرية): تحقيق كل بديلٍ زمني للمكتوب حرفاً وحركة، في الصحيح غير المضعَّف ذي الجذر المقبول
+    والوزن المعروف (I–X)؛ ولا يُرجَّح بديلٌ بترتيب، بل يُمنع ما لا يحقّق المكتوب بمانعٍ مثبت:
+      المضارع: أوله حرف مضارعة (أ ن ي ت) مفتوحٌ أو مضموم ليس من قالب الوزن ولا فاء الجذر — وإلا مُنع؛
+      الأمر في II وIII وIV وVII وVIII وX: عينه مكسورة — فإن فُتحت مُنع؛ وفي الثلاثي المجرد: فاؤه ساكنة بعد همزة وصل —
+           فإن فُتحت الفاء مُنع؛
+      الماضي في II وIII وIV وVII وVIII وX: عينه مفتوحة في المعلوم، وأوله مضموم في المجهول — فإن كُسرت العين ولم يُضمّ أوله مُنع.
+    → {البديل: (الحالة، السبب)} أو None خارج المجال"""
+    if not closed or not R or len(R) != 3 or set(R) & set('وي') or R[1] == R[2] or P not in ('I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'X'):
+        return None
+    t = letters(text)
+    if len(t) < 3:
+        return None
+    norm = lambda c: 'ء' if c in 'ءأإآؤئ' else c
+    f0, m0 = t[0]
+    # مواضع امتناع الحكم، لأن الكتابة لا تفصل فيها:
+    #  الهمزة في أوله: همزة استفهامٍ قبل الفعل (أَقَتَلۡتَ، أَشَهِدُوا)، أو همزة المتكلم (أُفۡرِغۡ)، أو همزة أَفۡعَلَ
+    #  حرف مضارعةٍ محتمل يليه مثله من الجذر أو القالب (تَتَّبِعُوا، نَنۡسَخۡ، نُنَزِّلۡ، تَتَفَكَّرُوا)
+    #  تاء تَفَعَّلَ وتَفَاعَلَ في أوله: قد تكون تاء المضارعة وحُذفت الأخرى (تَصَدَّقُوا = تَتَصَدَّقُوا، تَفَرَّقُوا)
+    if norm(f0) == 'ء':
+        return None
+    if f0 in 'نيت' and m0 & {FATHA, DAMMA} and (f0 == R[0] or f0 == 'ت' and P in ('V', 'VI', 'VIII')) and \
+            t[1][0] in (R[0], 'ت', 'ن', 'س'):
+        return None
+    if f0 == 'ت' and P in ('V', 'VI'):
+        return None
+    ain = _radical_vowel(text, R, 1)
+    fa = _radical_vowel(text, R, 0)
+    if ain is None:
+        return None
+    out = {}
+    pref = f0 in 'أنيت' and m0 & {FATHA, DAMMA} and not (norm(f0) == norm(R[0]) or f0 == 'ت' and P in ('V', 'VI') or
+                                                         f0 == 'أ' and P == 'IV')
+    out['مضارع'] = ('LICENSED', f'أوله حرف مضارعة «{f0}» ليس من قالب الوزن {P}') if pref else \
+        ('REJECTED', f'لا حرف مضارعة في أوله («{f0}» من قالب الوزن {P} أو من الجذر «{R}»): لا يكون مضارعاً')
+    v_ain = {'a': 'مفتوحة', 'i': 'مكسورة', 'u': 'مضمومة'}[ain]
+    if P in ('II', 'III', 'IV', 'VII', 'VIII', 'X'):
+        out['أمر'] = ('LICENSED', f'عينه مكسورة كأمر الوزن {P}') if ain == 'i' else \
+            ('REJECTED', f'عين الجذر «{R[1]}» {v_ain}، وأمر الوزن {P} مكسور العين')
+        passive = DAMMA in m0
+        out['ماضٍ'] = ('LICENSED', f'عينه مفتوحة كماضي الوزن {P} المعلوم' if ain == 'a' else f'أوله مضموم: ماضٍ مجهول') \
+            if ain == 'a' or passive else ('REJECTED', f'عين الجذر «{R[1]}» {v_ain} وأوله غير مضموم، وماضي الوزن {P} مفتوح العين في المعلوم')
+    elif P == 'I' and fa == 'a' and not set(R) & set('ءأ'):
+        out['أمر'] = ('REJECTED', f'فاء الجذر «{R[0]}» مفتوحة، وأمر الثلاثي الصحيح ساكن الفاء بعد همزة وصل')
+    elif P == 'I' and f0 in 'اٱ' and not m0 & {FATHA, DAMMA, KASRA} and fa is None and not set(R) & set('ءأ'):
+        out['ماضٍ'] = ('REJECTED', 'أوله همزة وصل، وماضي الثلاثي المجرد لا يبدأ بها')
+    if pref:
+        out['ماضٍ'] = ('REJECTED', f'في أوله حرف مضارعة «{f0}» ليس من قالب الوزن {P} ولا من الجذر')
+        out['أمر'] = ('REJECTED', f'في أوله حرف مضارعة «{f0}» ليس من قالب الوزن {P}')
+    return out
+
+
 def _bab(R, written, kind, past_verb):
     """باب الثلاثي المجرد: حركة عين الماضي (من فعل HFN المطابق) وحركة عين المضارع (من النص المكتوب)"""
     if not R or len(R) != 3 or set(R) & set('ويءأؤئى') or R[1] == R[2]:
@@ -213,6 +265,18 @@ def verb_features(G, agr, morph, obj_pron, governor=None):
             kind = 'mudari'
     elif tense_ambig:
         out['tense'] = feat(TENSE.get(kind), CAND, why_amb, alt=['ماضٍ', 'أمر', 'مضارع'])
+        tr_ = tense_realization(G.O['text'], R0, P0, G.closed)
+        if tr_:
+            live = [x for x in ('ماضٍ', 'أمر', 'مضارع') if tr_.get(x, ('LICENSED',))[0] != 'REJECTED']
+            rej = '؛ '.join(f'{x} ممنوع: {tr_[x][1]}' for x in ('ماضٍ', 'أمر', 'مضارع') if tr_.get(x, ('',))[0] == 'REJECTED')
+            if len(live) == 1 and live[0] == TENSE.get(kind):
+                # يثبت الزمن إذا وافق الباقي صنفَ الإسناد الذي بُني عليه ضمير الصيغة؛ وإن خالفه بقي مرشّحاً (لا يُجمع زمنٌ من وجهٍ
+                # وضميرٌ من آخر)
+                out['tense'] = feat(live[0], PROVEN, f'F03 (مقترحة): {why_amb}؛ و{rej}؛ فبقي {live[0]}' +
+                                    (f' ({tr_[live[0]][1]})' if live[0] in tr_ else ''))
+            elif rej:
+                out['tense'] = feat(TENSE.get(kind) if TENSE.get(kind) in live else live[0], CAND, why_amb + f'؛ F03 (مقترحة): {rej}',
+                                    alt=live)
     else:
         out['tense'] = feat(TENSE.get(kind), PROVEN if kind in TENSE else DEFER, 'صنف الإسناد: ' + sig)
     vo = agr.get('voice')
@@ -310,6 +374,64 @@ def verb_features(G, agr, morph, obj_pron, governor=None):
     return out
 
 
+# ---------- E02 وE03 (مقترحتان، تنتظران اعتماد صاحب النظرية): الاسمية بنفي صيغ الفعل المكتوبة ----------
+ATTACHED_PRONOUNS = ('هُ', 'هِ', 'هَا', 'هُمَا', 'هِمَا', 'هُمْ', 'هِمْ', 'هُمُ', 'هِمُ', 'هُنَّ', 'هِنَّ', 'كَ', 'كِ', 'كُمْ', 'كُمُ',
+                     'كُمَا', 'كُنَّ', 'نَا', 'ي', 'يَ')
+
+
+def _peel_verbal_proclitics(t):
+    """ما بقي في الجذع من «فَـ/وَـ» وهمزة الاستفهام قبل حرف مضارعة و«سَـ» (سَنُدۡخِلُهُمۡ، فَسَيَحۡشُرُهُمۡ، أَيَأۡمُرُكُم):
+    يُنزع قبل فحص أول الصيغة"""
+    i = 0
+    if len(t) > 3 and t[0][0] in 'وف' and t[0][1] == {FATHA}:
+        i = 1
+    if len(t) > i + 3 and t[i][0] == 'أ' and t[i][1] == {FATHA} and t[i + 1][0] in 'أنيت' and t[i + 1][1] & {FATHA, DAMMA}:
+        i += 1                    # همزة الاستفهام قبل حرف مضارعة متحرّك (أَيَأۡمُرُكُم)
+    if len(t) > i + 3 and t[i][0] == 'س' and t[i][1] == {FATHA}:
+        i += 1
+    return t[i:]
+
+
+def host_case_vowel_proof(stem, enclitic):
+    """E02 (مقترحة): الجذع قبل ضميرٍ متصل آخره ضمةٌ أو كسرة اسمٌ بنفي صيغ الفعل المكتوبة قبل الضمير:
+    الماضي آخره فتحة أو ضمير رفعٍ (تُ، تِ بعد ساكن، وا، نا بعد ساكن)؛ والمضارع آخره ضمةٌ أو كسرة لا تكون إلا بعد حرف مضارعة
+    (أ ن ي ت مفتوحاً أو مضموماً)، والسين والفاء قبله تُنزعان؛ والأمر يبدأ بهمزة وصل، أو بهمزة أَفۡعِلۡ (ءَاتِ)، أو هو حرفان (قِ)،
+    أو على فَعِّ وفَاعِ من الناقص (يُترك الحكم فيهما)؛ والمبني للمجهول فُوعِلَ يُترك. → نصّ الدليل أو None"""
+    if not enclitic or enclitic not in ATTACHED_PRONOUNS:
+        return None
+    t = _peel_verbal_proclitics(letters(stem))
+    n_eff = len(t) + sum(1 for _, m_ in t if SHADDA in m_)      # المشدَّد حرفان
+    if n_eff < 3:
+        return None
+    f0, m0 = t[0]
+    if f0 in 'اٱ' and not m0 & {FATHA, DAMMA, KASRA}:
+        return None
+    if f0 == 'آ' or f0 in 'أءنيت' and m0 & {FATHA, DAMMA}:
+        return None
+    if DAMMA in m0 and t[1][0] in 'وي' and not t[1][1]:
+        return None
+    L, m = t[-1]
+    if L == 'ت' and SUKUN in t[-2][1]:
+        return None
+    if n_eff == 3 and KASRA in m and (SHADDA in m or SHADDA in t[1][1] or t[1][0] == 'ا'):
+        return None                                             # فَعِّ وفَاعِ من الناقص (وَلِّ، وَالِ): أمرٌ محتمل
+    if not m & {DAMMA, KASRA} or m & {FATHATAN, DAMMATAN, KASRATAN}:
+        return None
+    v = 'الضمة' if DAMMA in m else 'الكسرة'
+    return (f'E02 (مقترحة): آخر الجذع {v} قبل الضمير المتصل «{enclitic}»، ولا يبدأ بحرف مضارعةٍ ولا همزة وصلٍ ولا همزة أَفۡعِلۡ، '
+            f'ولا يُختم بضمير رفع: فلا يكون فعلاً قبل ضمير')
+
+
+def initial_hamza_kasra_proof(stem):
+    """E03 (مقترحة): الجذع غير المحمي يبدأ بهمزة قطعٍ مكسورة مكتوبة (إِ): لا يبدأ بها فعل؛ فالماضي والأمر من أَفۡعَلَ بهمزةٍ مفتوحة،
+    والمبني للمجهول بمضمومة، ومضارع المتكلم بمفتوحةٍ أو مضمومة، وهمزة الوصل تُكتب «ٱ». والأدوات المبدوءة بها (إِلَّا، إِلَى، إِنَّ)
+    خارج هذا المجال: محميةٌ قبل توليد الجذر. → نصّ الدليل أو None"""
+    t = _peel_verbal_proclitics(letters(stem))
+    if len(t) >= 3 and t[0][0] == 'إ' and KASRA in t[0][1]:
+        return 'E03 (مقترحة): يبدأ الجذع بهمزة قطعٍ مكسورة مكتوبة (إِ)، ولا يبدأ بها فعل'
+    return None
+
+
 # ---------- الاسم ----------
 def noun_features(G, seg, stem_slot, has_al, enclitic):
     """الاسمية تثبت بعلامةٍ مكتوبة لا يقبلها الفعل: قالب الاسم المغلق، أو «أل»، أو التنوين، أو تاء التأنيث المربوطة،
@@ -335,6 +457,10 @@ def noun_features(G, seg, stem_slot, has_al, enclitic):
         r_ = _rest(stem, sfx0[4])
         if r_ and licence_strength(list(stem_licence(r_))) >= 1:
             marks.append(f'اللاحقة «{sfx0[3]}» ورخصة البقية «{r_}»')
+    if not marks:
+        e = host_case_vowel_proof(stem, enclitic) or initial_hamza_kasra_proof(stem)
+        if e:
+            marks.append(e)
     if marks:
         out = {'pos': feat('اسم', PROVEN, '، '.join(marks))}
     else:

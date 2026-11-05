@@ -25,6 +25,7 @@ VERSION = 'v1'
 LICENSED, REJECTED, DEFERRED, CONFLICT = 'LICENSED', 'REJECTED', 'DEFERRED', 'CONFLICT'
 SEARCH_INCOMPLETE, SEARCH_COMPLETE = 'SEARCH_INCOMPLETE', 'SEARCH_COMPLETE'
 NASIKH_KANA, NASIKH_INNA, JARR = '10', '2', '1'
+COORD_PARTICLES = ('ثُمَّ', 'أَوْ', 'أَمْ', 'بَلْ', 'لَكِنْ', 'لَكِنَّ', 'حَتَّى')
 REL_SPECIFIC = ('الَّذِي', 'الَّتِي', 'الَّذِينَ', 'اللَّذَانِ', 'اللَّتَانِ', 'اللَّذَيْنِ', 'اللَّتَيْنِ', 'اللَّاتِي', 'اللَّائِي', 'اللَّٰتِي')
 REL_AGR = {'الَّذِي': (3, 'singular', 'masc'), 'الَّتِي': (3, 'singular', 'fem'), 'الَّذِينَ': (3, 'plural', 'masc')}
 
@@ -1457,6 +1458,27 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                             for f_ in vfl) if vfl else
                   'فاعلٌ إن كان مبنياً للمعلوم، ونائب فاعلٍ إن كان مبنياً للمجهول، ولم يُفحص تحقيق الوجهين') +
                  '؛ والرفع مشتركٌ بين الوجهين')
+        def overt_after(i):
+            """المرشّحات الاسمية الظاهرة بعد الفعل في إطاره، بلا عبور فعلٍ آخر أو عاطفٍ أو عامل"""
+            ov = []
+            j = i + 1
+            while j < fe_:
+                u = toks[j]
+                if u.wi == v.wi or u.k in span_of or u.enclitic or u.k in bound and ov:
+                    j += 1
+                    continue                        # وما في صلة المرشّح الأول أو حاويةٍ مرخَّصة ليس منافساً
+                if u.conj or (u.lex or '').startswith('عامل') and not u.nounish():
+                    break
+                if word_start(u) and u.mcat == 'particle' and u.text in COORD_PARTICLES:
+                    break                           # عاطفٌ مستقل (ثُمَّ، أَوْ، بَلْ…): ما بعده معطوفٌ أو جملةٌ أخرى، لا منافسٌ في هذا الإسناد
+                if u.pos == 'فعل' or 'فعل' in ((u.feats.get('pos') or {}).get('alt') or []) and not u.nounish():
+                    break                           # فعلٌ آخر قبل المرشّح: ما بعده في إسناده لا في إسناد هذا الفعل (قَالَتۡ أَنَّىٰ يَكُونُ … غُلَٰمٌ)
+                if word_start(u) and (u.nounish() or u.divine or u.mcat in ('relative', 'demonstrative', 'separate_pronoun')) \
+                        and u.k not in governed and u.case not in ('نصب', 'جر', 'نصب أو جر', 'جر أو نصب'):
+                    ov.append(u)                    # المنصوب والمجرور كتابةً لا يكونان فاعلاً
+                j += 1
+            return ov
+
         if nas:
             # التزامات الناسخ تُسوّى بسجلّ V01 نفسه: ما رخّصه لا يبقى مفتوحاً، وما نقص يُسمّى بسببه
             v01 = next((r_ for r_ in R if r_['type'] == 'NASIKH' and r_['heads'].get('nasikh') == v.uid), None)
@@ -1488,21 +1510,7 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
             subj = dict(kind='ضمير مستتر وجوباً (غير مكتوب)', role=srole, status=LICENSED,
                         why=f'المتكلم أو المخاطب المفرد في {tf.get("v")}: لا يكون فاعله اسماً ظاهراً ({sf.get("ev")})')
         elif sf.get('st') == 'مثبت' and sp.get('person') == 3 and sp.get('number') == 'singular' and not cands:
-            ov = []
-            j = i + 1
-            while j < fe_:
-                u = toks[j]
-                if u.wi == v.wi or u.k in span_of or u.enclitic or u.k in bound and ov:
-                    j += 1
-                    continue                        # وما في صلة المرشّح الأول أو حاويةٍ مرخَّصة ليس منافساً
-                if u.conj or (u.lex or '').startswith('عامل') and not u.nounish():
-                    break
-                if u.pos == 'فعل' or 'فعل' in ((u.feats.get('pos') or {}).get('alt') or []) and not u.nounish():
-                    break                           # فعلٌ آخر قبل المرشّح: ما بعده في إسناده لا في إسناد هذا الفعل (قَالَتۡ أَنَّىٰ يَكُونُ … غُلَٰمٌ)
-                if word_start(u) and (u.nounish() or u.divine or u.mcat in ('relative', 'demonstrative', 'separate_pronoun')) \
-                        and u.k not in governed and u.case not in ('نصب', 'جر', 'نصب أو جر', 'جر أو نصب'):
-                    ov.append(u)                    # المنصوب والمجرور كتابةً لا يكونان فاعلاً
-                j += 1
+            ov = overt_after(i)
             raf = [u for u in ov if u.nominative()[0] is True and (u.nounish() or u.divine)]   # الرفع من مصدر العلامة الواحد
             pp_between = bool(ov) and any(toks[j_].k in span_of for j_ in range(i + 1, idx[ov[0].k]))
             if passive and pp_between and len(raf) == 1:
@@ -1519,8 +1527,17 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                                  if ov else 'لا اسم ظاهر بعده في إطاره: مستترٌ جوازاً، أو الفاعل متقدّمٌ مبتدأً') +
                             ('؛ ومنافسٌ مرفوعٌ آخر' if len(raf) > 1 else ''), candidates=[u.uid for u in ov])
         else:
+            alts = [x for x in (sf.get('alt') or []) if isinstance(x, dict)]
+            ov_ = overt_after(i) if any(x.get('person') == 3 for x in alts) else []
             subj = dict(kind='غير معيَّن', role=srole, status=DEFERRED,
-                        why=f'ضمير الصيغة غير مثبت ({sf.get("st")}): {sf.get("ev")}')
+                        why=f'ضمير الصيغة غير مثبت ({sf.get("st")}): {sf.get("ev")}' +
+                            ('؛ والأوجه: ' + '؛ '.join(
+                                (f'{_pron_ar(x)}: فاعله «{ov_[0].text}» ({ov_[0].loc}) مرشّحٌ ظاهر، أو مستترٌ جوازاً' if ov_ else
+                                 f'{_pron_ar(x)}: مستترٌ جوازاً أو ظاهرٌ بعده')
+                                if x.get('person') == 3 else
+                                f'{_pron_ar(x)}: مستترٌ وجوباً، وما بعده ليس فاعله' for x in alts) +
+                             '؛ ولا يُختار وجهٌ بلا دليل' if alts else ''),
+                        candidates=[u.uid for u in ov_])
         objs = [r_ for r_ in R if r_['type'] == 'OBJECT' and r_['heads'].get('verb') == v.uid]
         obj2 = None
         obj_req = None
@@ -1582,7 +1599,8 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                                note=f'«{v.text}» من صيغ «{vb}» (VERBAL): ناقصٌ أو تامّ غير محسوم' +
                                     (f'؛ و«{first.text}» ({first.loc}) خبرٌ مرشّح في وجه الناقص، لا مفعول' if first else '') +
                                     '؛ والتامّ منه لا يطلب مفعولاً')
-            elif first is not None and first.nounish() and (first.case == 'نصب' or 'نصب' in (_written_mark(first)[1] or ())) \
+            elif first is not None and first.nounish() and (first.case == 'نصب' or 'نصب' in (_written_mark(first)[1] or ()) and
+                                                             'رفع' not in (_written_mark(first)[1] or ())) \
                     and first.k not in governed and first.k not in bound and not (obj2 and obj2['heads'].get('object') == first.uid):
                 obj_req = dict(kind='UNLINKED_CANDIDATE', status='مرشّح غير مربوط',
                                note=f'«{first.text}» ({first.loc}) منصوبٌ مكتوب يلي الفعل في إطاره، مرشّحُ مكمّلٍ غير مربوط؛ '
@@ -1593,6 +1611,11 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                 obj_req = dict(kind='UNANALYZED_COMPLEMENT', status='مكمّلٌ غير محلَّل',
                                note=f'بعد الفعل «{stop[0].text} {toks[j_ + 1].text}» ({stop[0].loc}): تركيبٌ مكتوب مرشّحٌ للمكمّلية؛ '
                                     'وظيفته وتعلّقه غير محلَّلين (قاعدة المصدر المؤوَّل غير منفّذة)؛ ولا يُنفى المكمّل')
+            elif first is not None and first.nounish() and first.k not in governed and first.k not in bound and \
+                    {'رفع', 'نصب'} <= set(_written_mark(first)[1] or ()):
+                obj_req = dict(kind='CASE_NOT_WRITTEN', status='حالةٌ غير مكتوبة',
+                               note=f'«{first.text}» ({first.loc}) اسمٌ يلي الفعل في إطاره وعلامته غير ظاهرة ({_written_mark(first)[0]}): '
+                                    f'الكتابة لا تعيّن رفعه ولا نصبه، فهو مرشّحٌ للفاعلية وللمكمّلية معاً؛ و{trs}: لا ترخيص بلا دليل')
             elif first is not None:
                 obj_req = dict(kind='NOT_FOUND_IN_SCOPE', status='لم يُكتشف ضمن النطاق',
                                note=f'أول ما يلي الفعل في إطاره «{first.text}» ({first.loc}) ليس منصوباً مرشّحاً؛ و{trs}: '
