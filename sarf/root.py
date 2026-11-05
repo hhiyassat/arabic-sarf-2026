@@ -11,7 +11,7 @@ sarf.root — T19a–T19c: الخلية، وبناء اللفظ، والتحلي
         مصدره (معجم، أو قاعدة سيبويه)، وقاعدة المصدر عند سيبويه، ومعنى الصيغة.
         ولا يُفرض التحليل الجذري على المبنيات والعوامل (لا يصل إليها).
 
-المصدر: HFN release_v18 (CC0)، يُقرأ من مكانه: متغير البيئة SARF_HFN، أو ../husseinframenet/release/release_v18،
+المصدر: HFN release_v36 (CC0؛ خط الأساس المعتمد)، يُقرأ من مكانه: متغير البيئة SARF_HFN، أو ../husseinframenet/release/release_v36،
 أو data/hfn. فإن لم يوجد بقيت الجذور كلها مرشَّحةً بلا رخصة (مؤجَّلة).
 """
 import csv, os, re
@@ -22,9 +22,10 @@ from .affix import stem_info
 from .agreement import signature
 
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# خط أساس المعجم المعتمد: HFN release_v36 (حكم المالك، SARF_SEQUENTIAL_COMPLETION_PLAN_01، 5 نوفمبر 2026)
 HFN_PATHS = [os.environ.get('SARF_HFN', ''),
-             os.path.join(os.path.dirname(HERE), 'husseinframenet', 'release', 'release_v18'),
-             os.path.expanduser('~/arabic-net/HusseinFrameNet/release/release_v18'),
+             os.path.join(os.path.dirname(HERE), 'husseinframenet', 'release', 'release_v36'),
+             os.path.expanduser('~/arabic-net/HusseinFrameNet/release/release_v36'),
              os.path.join(HERE, 'data', 'hfn')]
 
 MADD = set('اويى')

@@ -12,21 +12,18 @@ tools/compare_relations.py — مقارنة سجلات العلاقات (sarf.re
 import argparse, collections, gzip, json, os, sys
 
 
-def _one(t):
-    from sarf.analyze import analyze
-    from sarf.algebra import Trace, sentence_geo
-    from sarf.features import unit_features
-    from sarf.relations import verse_relations
-    s, v, text = t
-    a = analyze(_CAT[0], text, _MODE[0] if _MODE else 'auto')
-    _, U = sentence_geo(a, f'Q{s}:{v}', Trace())
-    out = verse_relations(a, U, unit_features(a, U), f'{s}:{v}')
+def _surah(items):
+    """الآيات بالجسرين كما في صفحة التتبّع (tools/bridged.py)"""
+    import bridged
     keep = ('relation_id', 'type', 'rule_id', 'rule_version', 'status', 'heads', 'positions', 'texts', 'reason', 'premises',
             'alternatives', 'container_id', 'search_status', 'nucleus_complete')
-    ax = out.get('axes') or {}
-    cls = lambda r: {role: str((ax.get(uid) or {}).get('word_class', (None, ''))[1] or '') for role, uid in r['heads'].items()}
-    return json.dumps(dict(verse=f'{s}:{v}', records=[dict({k: r.get(k) for k in keep}, head_class=cls(r)) for r in out['records']]),
-                      ensure_ascii=False)
+    res = []
+    for s, v, a, U, F, out in bridged.surah_outputs(items, _CAT[0], _MODE[0] if _MODE else 'auto'):
+        ax = out.get('axes') or {}
+        cls = lambda r: {role: str((ax.get(uid) or {}).get('word_class', (None, ''))[1] or '') for role, uid in r['heads'].items()}
+        res.append(json.dumps(dict(verse=f'{s}:{v}', records=[dict({k: r.get(k) for k in keep}, head_class=cls(r)) for r in out['records']]),
+                              ensure_ascii=False))
+    return res
 
 
 _CAT = []
@@ -45,8 +42,10 @@ def dump(root, path, jobs):
     spec.loader.exec_module(qs)
     V = qs.rows()
     _MODE.append(qs.uthmani_mode())
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import bridged
     with mp.get_context('fork').Pool(jobs) as P:
-        lines = P.map(_one, V, chunksize=20)
+        lines = [x for xs in P.map(_surah, bridged.groups(V), chunksize=1) for x in xs]
     with gzip.open(path, 'wt', encoding='utf-8') as f:
         f.write('\n'.join(lines) + '\n')
     return len(lines)

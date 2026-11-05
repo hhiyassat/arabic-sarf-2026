@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 """
 اختبار T19a–T19c: الخلية، والجذر والصيغة المرخَّصان بشهادة HFN.
-يحتاج HFN release_v18 (SARF_HFN، أو ../husseinframenet/release/release_v18، أو
-~/arabic-net/HusseinFrameNet/release/release_v18)؛ وبدونه تُختبر الخلايا وحدها.
+يحتاج HFN release_v36 (SARF_HFN، أو ../husseinframenet/release/release_v36، أو
+~/arabic-net/HusseinFrameNet/release/release_v36)؛ وبدونه تُختبر الخلايا وحدها.
 
     python3 tests/test_root.py
 """
@@ -43,12 +43,12 @@ else:
         ('كُلُوا', 'accepted', 'event', 'ءكل', 'I'),              # أمر المهموز الفاء
         ('فَقُلْ', 'accepted', 'event', 'قول', 'I'),               # بعد نزع الفاء
         ('اكْتُبُو', 'accepted', 'event', 'كتب', 'I'),             # تاء الافتعال مفتوحة: ليس «كبو»
-        ('يُؤْمِنُونَ', 'accepted', 'root', 'ءمن', 'IV'),          # الجذر في HFN ولا حدث «آمَنَ»
-        ('اتَّقُوا', 'accepted', 'root', 'وقي', 'VIII'),
+        ('يُؤْمِنُونَ', 'accepted', 'event', 'ءمن', 'IV'),         # v36: حدث «آمَنَ» مسجَّل (وكان في v18 الجذر وحده)
+        ('اتَّقُوا', 'accepted', 'event', 'وقي', 'VIII'),          # v36: حدث «اتَّقَى»
         ('خِفْتُمْ', 'deferred', None, None, None),               # خوف أم خيف: لا تفصل الكتابة
         ('كَتَبَ', 'deferred', 'lemma', None, None),              # يطابق فعلاً، ولم يثبت أنه فعل
-        ('تَدَايَنْتُمْ', 'accepted', 'root', 'دين', 'VI'),         # العين المتحركة كما كُتبت: لا «دون»
-        ('تُحِبُّونَ', 'accepted', 'root', 'حبب', 'IV'),           # الحاء مكسورة: أَفۡعَلَ المضعَّف لا فَعَّلَ
+        ('تَدَايَنْتُمْ', 'accepted', 'event', 'دين', 'VI'),        # العين المتحركة كما كُتبت: لا «دون»؛ وv36: حدث «تَدَايَنَ»
+        ('تُحِبُّونَ', 'accepted', 'event', 'حبب', 'IV'),          # الحاء مكسورة: أَفۡعَلَ المضعَّف لا فَعَّلَ؛ وv36: حدث «أَحَبَّ»
         ('قُلِ', 'accepted', 'event', 'قول', 'I'),               # الكسر لالتقاء الساكنين
     ]
     for w, st, lv, root, cls in CASES:

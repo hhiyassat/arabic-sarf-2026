@@ -16,27 +16,25 @@ sys.path.insert(0, H)
 _CAT = []
 
 
-def _one(t):
-    from sarf.analyze import analyze
-    from sarf.algebra import Trace, sentence_geo
-    from sarf.features import unit_features
-    from sarf.relations import verse_relations, check_inflection
-    s, v, text = t
+def _surah(items):
+    """الآيات بالجسرين كما في صفحة التتبّع (tools/bridged.py)"""
+    from sarf.relations import check_inflection
     from sarf import quran_source
-    a = analyze(_CAT[0], text, quran_source.uthmani_mode())
-    _, U = sentence_geo(a, f'Q{s}:{v}', Trace())
-    out = verse_relations(a, U, unit_features(a, U), f'{s}:{v}')
-    rows = []
-    for uid, loc, tx in out['tokens']:
-        inf = out['axes'][uid]['inflection']
-        g = inf.get('governor') or {}
-        rows.append(dict(loc=loc, text=tx, build=inf['build'][0], agreement=inf['agreement'], statement=inf['statement'],
-                         state=inf['state'][0], mark=inf['mark'] and inf['mark'][0], governor=g.get('operator') or g.get('kind'),
-                         expected=g.get('expected'), conflicts=inf['conflicts'], word_class=out['axes'][uid]['word_class'][0],
-                         relation=g.get('relation'), effect=inf.get('effect'), mark_dims=inf.get('mark_dims'),
-                         conflict_nature=inf.get('conflict_nature'), uid=uid, notes=inf.get('notes') or [],
-                         capacity_source=g.get('capacity_source')))
-    return dict(verse=f'{s}:{v}', rows=rows, check=check_inflection(out['axes']))
+    import bridged
+    res = []
+    for s, v, a, U, F, out in bridged.surah_outputs(items, _CAT[0], quran_source.uthmani_mode()):
+        rows = []
+        for uid, loc, tx in out['tokens']:
+            inf = out['axes'][uid]['inflection']
+            g = inf.get('governor') or {}
+            rows.append(dict(loc=loc, text=tx, build=inf['build'][0], agreement=inf['agreement'], statement=inf['statement'],
+                             state=inf['state'][0], mark=inf['mark'] and inf['mark'][0], governor=g.get('operator') or g.get('kind'),
+                             expected=g.get('expected'), conflicts=inf['conflicts'], word_class=out['axes'][uid]['word_class'][0],
+                             relation=g.get('relation'), effect=inf.get('effect'), mark_dims=inf.get('mark_dims'),
+                             conflict_nature=inf.get('conflict_nature'), uid=uid, notes=inf.get('notes') or [],
+                             capacity_source=g.get('capacity_source')))
+        res.append(dict(verse=f'{s}:{v}', rows=rows, check=check_inflection(out['axes'])))
+    return res
 
 
 def main():
@@ -51,8 +49,9 @@ def main():
     _CAT.append(Catalog([os.path.join(H, 'operators_catalog.jsonl'), os.path.join(H, 'operators_catalog_split_vocalized.csv')]))
     from sarf import quran_source
     V = quran_source.rows()
+    import bridged
     with mp.get_context('fork').Pool(a.jobs) as P:
-        res = P.map(_one, V, chunksize=20)
+        res = [r for rr in P.map(_surah, bridged.groups(V), chunksize=1) for r in rr]
     C, K, conf, chk, verbs_jarr = collections.Counter(), collections.Counter(), [], [], 0
     REL, EFF, DIM, SRC = collections.Counter(), collections.Counter(), collections.Counter(), collections.Counter()
     noted, unlicensed = [], []

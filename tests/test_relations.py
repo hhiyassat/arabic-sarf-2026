@@ -210,10 +210,17 @@ def t13():
     n = one(o, 'PREDICATION', subject='ذَٰلِكُمْ')
     at = recs(o, 'ATTACH')
     kinds = sorted(h['host_kind'] for x in at for h in x['alternatives'] if isinstance(h, dict) and h['host_text'] == 'أَقْسَطُ')
+    if n and n['status'] == DEFERRED and 'مضارع المتكلم' in n['reason'] and adv and adv['status'] == LICENSED and \
+            len(at) == 1 and at[0]['rule_id'] == 'A01' and at[0]['status'] == DEFERRED:
+        # HFN v36 (خط الأساس المعتمد): مدخل «قَسِطَ» فَعِلَ (HFN-E-6be7c792fe) يجعل «أَقْسَطُ» محتملاً مضارع المتكلم، فيمتنع E01
+        return 'DIFFERS', ('E01 ممتنعٌ بمدخل «قَسِطَ» في v36، فالنواة مؤجَّلةٌ بدليلها؛ والظرف مرخَّص والتعلّق مؤجَّل كما في العقد')
     return ok(adv and adv['status'] == LICENSED and not one(o, 'PP') and n and n['status'] == LICENSED and
               any(p.startswith('E01') for p in n['premises']) and len(at) == 1 and at[0]['rule_id'] == 'A01' and
               at[0]['status'] == DEFERRED and len(kinds) == 2 and any('نعت' in k for k in kinds),
               dict(advp=adv and adv['status'], nucleus=n and n['status'], attach=[(x['rule_id'], x['status']) for x in at], hosts=kinds))
+
+
+CLASS['T13'] = 'RULE_CONFLICT (معجم): مدخل «قَسِطَ» في HFN v36 موسومٌ DEFER_OWNER_FILE_ROW_ISSUE؛ وحكمه للمالك'
 
 
 def t14():
