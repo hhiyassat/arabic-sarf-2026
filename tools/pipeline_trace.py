@@ -578,7 +578,7 @@ for pv in per_verse:
             alts += f"<br>المشترك بين الأوجه: الحدّ {h(r['shared'].get('boundary'))} — {h(r['shared'].get('note'))}"
         if r.get('function'):
             alts += f"<br>الوظيفة (المحلّ): [{h(r['function'].get('status'))}] {h(r['function'].get('text'))}"
-        if r.get('extent'):
+        if isinstance(r.get('extent'), dict):
             e_ = r['extent']
             alts += (f"<br>الامتداد المثبت: «{h(e_['proven_text'])}» ← {h('، '.join(e_['evidence']))}"
                      f"<br>الامتداد المرشّح: «{h(e_['candidate_text'] or '—')}»؛ الحدّ [{h(e_['boundary_status'])}]: {h(e_['boundary_note'])}")
