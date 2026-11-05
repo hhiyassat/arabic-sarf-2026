@@ -1585,13 +1585,14 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
             elif first is not None and first.nounish() and (first.case == 'نصب' or 'نصب' in (_written_mark(first)[1] or ())) \
                     and first.k not in governed and first.k not in bound and not (obj2 and obj2['heads'].get('object') == first.uid):
                 obj_req = dict(kind='UNLINKED_CANDIDATE', status='مرشّح غير مربوط',
-                               note=f'«{first.text}» ({first.loc}) منصوبٌ مكتوب يلي الفعل في إطاره، مرشّحُ مكمّلٍ غير مربوط '
-                                    f'(مفعول به، أو حال، أو تمييز، أو مفعول مطلق)، و{trs}: لا ترخيص بلا دليل الوظيفة')
+                               note=f'«{first.text}» ({first.loc}) منصوبٌ مكتوب يلي الفعل في إطاره، مرشّحُ مكمّلٍ غير مربوط؛ '
+                                    f'ووظائف لم تُفحص بعد (مفعول به، حال، تمييز، مفعول مطلق): أبوابٌ للفحص لا أوجهٌ ثبت جوازها؛ '
+                                    f'و{trs}: لا ترخيص بلا دليل الوظيفة')
             elif stop is not None and stop[1] == 'أداة' and stop[0].text.startswith('أَن') and not skipped and j_ + 1 < fe_ \
                     and toks[j_ + 1].pos == 'فعل':
                 obj_req = dict(kind='UNANALYZED_COMPLEMENT', status='مكمّلٌ غير محلَّل',
-                               note=f'بعد الفعل «{stop[0].text} {toks[j_ + 1].text}» ({stop[0].loc}): تركيبٌ مكتوب (مصدرٌ مؤوَّل) '
-                                    'قد يكون مكمّلَه، وقاعدته غير منفّذة؛ فالمكمّل موجودٌ غير محلَّل، لا منفيّ')
+                               note=f'بعد الفعل «{stop[0].text} {toks[j_ + 1].text}» ({stop[0].loc}): تركيبٌ مكتوب مرشّحٌ للمكمّلية؛ '
+                                    'وظيفته وتعلّقه غير محلَّلين (قاعدة المصدر المؤوَّل غير منفّذة)؛ ولا يُنفى المكمّل')
             elif first is not None:
                 obj_req = dict(kind='NOT_FOUND_IN_SCOPE', status='لم يُكتشف ضمن النطاق',
                                note=f'أول ما يلي الفعل في إطاره «{first.text}» ({first.loc}) ليس منصوباً مرشّحاً؛ و{trs}: '

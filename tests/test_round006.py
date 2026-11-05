@@ -428,7 +428,8 @@ check('X57 «يكونا رجلين» و«تكون تجارةً»: خبرٌ مر�
 check('X58 «يستطيع أن يُملّ»: مكمّلٌ غير محلَّل مُعلَن، لا «لا مفعول مكتوب»؛ و«ترضون من الشهداء أن تضلّ»: الحدّ بعد شبه الجملة لا يُنسب إليه',
       q45.get('kind') == 'UNANALYZED_COMPLEMENT' and q63.get('kind') == 'NOT_FOUND_IN_SCOPE' and 'لا يُنسب' in q63['note'], (q45, q63))
 check('X59 «يتق الله»: مرشّح مكمّلٍ غير مربوط ببدائله، بلا ترخيص؛ ولا «لازم» ولا «محذوف» في أيّ تشخيص',
-      q28.get('kind') == 'UNLINKED_CANDIDATE' and 'اللَّهَ' in q28['note'] and 'حال' in q28['note']
+      q28.get('kind') == 'UNLINKED_CANDIDATE' and 'اللَّهَ' in q28['note'] and 'حال' in q28['note'] and 'لم تُفحص بعد' in q28['note']
+      and 'مرشّحٌ للمكمّلية' in q45['note'] and 'موجودٌ' not in q45['note']
       and not any('لازمٌ في هذا الاستعمال' in str((r['frame'].get('object_requirement') or {}).get('note')) for r in o['records'] if r['type'] == 'VERB_FRAME'),
       q28)
 f112 = next((r for r in o['records'] if r['type'] == 'VERB_FRAME' and r['texts'].get('verb') == 'يُضَارَّ'), None)
