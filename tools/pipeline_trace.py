@@ -111,6 +111,7 @@ for pv in per_verse:
     prev = cur
 COND, RELS = [], []
 REL_CACHE = {}
+CERTS = []                     # شهادات الإغلاق الموحَّدة (الدفعة F) لكل جملة في الصفحة
 LT, lstats, _ = linguistic_layer(items, Trace(), 'trace', cross=cross, checked_ends=frozenset(ends), cond_out=COND,
                                 rel_out=RELS)
 
@@ -483,9 +484,9 @@ for SP in LT:
                     words.append(pv['a']['segments'][w_]['word'])
             opn = [o.name for o in J.Omega if o.required and not o.met]
             bnd = J.O.get('boundary') or {}
-            # نطاق الإغلاق: شهادة الطبقة القديمة وحدها؛ وما في 14أ لمدى الجملة غير مصالَحٍ معها يُعرض بجانبها
-            span_ = {f'{s_}:{v_}:{w_ + 1}' for (s_, v_, w_) in lc}
-            un_ = []
+            # شهادة الإغلاق الموحَّدة (sarf.algebra.closure_certificate، الدفعة F): التزامات الطبقة القديمة بما استوفاها في 14أ،
+            # والتزامات 14أ المفتوحة داخل مدى الجملة، والحكم الموحَّد
+            recs_ = []
             for (s_, v_) in sorted({(x[0], x[1]) for x in lc}):
                 pv_ = next((p for p in per_verse if p['s'] == s_ and p['v'] == v_), None)
                 if pv_ is None:
@@ -493,25 +494,28 @@ for SP in LT:
                 from sarf.relations import verse_relations
                 if (s_, v_) not in REL_CACHE:
                     REL_CACHE[(s_, v_)] = verse_relations(pv_['a'], pv_['units'], pv_['F'], f'{s_}:{v_}', legacy_cond=COND, legacy_rel=RELS)
-                for r_ in REL_CACHE[(s_, v_)]['records']:
-                    locs_ = {l_ for ls_ in r_['positions'].values() for l_ in ls_}
-                    if not locs_ or not locs_ <= span_:
-                        continue
-                    if r_['status'] != 'LICENSED':
-                        un_.append(f"{r_['rule_id']} {r_['status']}")
-                    elif r_['type'] == 'VERB_FRAME' and (r_.get('frame') or {}).get('open'):
-                        un_.append('F01 التزامٌ مفتوح')
-            scope_ = (('إغلاقٌ في الطبقة القديمة وحدها، لا شهادة إغلاقٍ موحَّدة؛ ' if J.closed else 'حكم الطبقة القديمة؛ ') +
-                      (f'وفي 14أ داخل مداها {len(un_)} غير مصالَحة معه (' +
+                recs_ += REL_CACHE[(s_, v_)]['records']
+            from sarf.algebra import closure_certificate
+            cert_ = closure_certificate(J, recs_)
+            CERTS.append(cert_)
+            un_ = [f"{x['rule']} {x['status']}" for x in cert_['relation_open']]
+            sat_ = [f"{o_['name']} ← " + '، '.join((x['relation'] or x.get('evidence') or '') + (f" ({x['status']})" if x['relation'] else '')
+                                                for x in o_['satisfied_by'])
+                    for o_ in cert_['obligations'] if o_['met'] and o_['satisfied_by']]
+            conf_ = [f"{o_['name']}: {o_['note']}" for o_ in cert_['obligations'] if not o_['met'] and o_['legacy_met']]
+            scope_ = (f"الشهادة الموحَّدة: {cert_['verdict_ar']}؛ " +
+                      (f'وفي 14أ داخل مداها {len(un_)} مفتوحاً (' +
                        '، '.join(f'{k_}×{c_}' for k_, c_ in sorted(__import__('collections').Counter(un_).items())) + ')'
-                       if un_ else 'ولا علاقة في 14أ داخل مداها مؤجَّلةٌ أو بالتزامٍ مفتوح'))
+                       if un_ else 'ولا علاقة في 14أ داخل مداها مؤجَّلةٌ أو بالتزامٍ مفتوح أو باختيارٍ مؤجَّل') +
+                      (('؛ ومستوفى: ' + ' | '.join(sat_)) if sat_ else '') +
+                      (('؛ وتعارض الطبقتين: ' + ' | '.join(conf_)) if conf_ else ''))
             bonds = '<br>'.join(h(f'{b[0]}: {b[1]} → {b[2]}') for b in (J.O.get('bound') or [])) or '—'
             rows_j.append([esc(J.id), f'{frm} – {to}', f"<span class='ar'>{h(' '.join(words))}</span>",
-                           ('مغلقة' if J.closed else 'مفتوحة') + f"<br><sub>{h(scope_)}</sub>",
+                           ('مغلقة (الطبقة القديمة)' if J.closed else 'مفتوحة') + f"<br><b>{h(cert_['verdict_ar'])}</b><br><sub>{h(scope_)}</sub>",
                            esc(bnd.get('F') or '—'), bonds, esc(len(J.O.get('unplaced') or [])), esc('، '.join(opn) or '—')])
-            tl_j.append(f"{J.id:<14} {frm}–{to}  {'مغلقة' if J.closed else 'مفتوحة'} ({'غير مصالَحة مع 14أ: ' + str(len(un_)) if un_ else 'لا مؤجَّل في 14أ'})  روابط {len(J.O.get('bound') or [])}  "
+            tl_j.append(f"{J.id:<14} {frm}–{to}  {'مغلقة' if J.closed else 'مفتوحة'} [{cert_['verdict_ar']}] ({'مفتوح في 14أ: ' + str(len(un_)) if un_ else 'لا مفتوح في 14أ'})  روابط {len(J.O.get('bound') or [])}  "
                         f"بلا موضع {len(J.O.get('unplaced') or [])}  {' '.join(words)[:70]}")
-section(14, 'الجملة', '(طبقةٌ قديمة LEGACY: لا تستهلك علاقات 14أ بعد؛ فـ«لا نواة» هنا لا ينفي نواةً مرخَّصة هناك، والمعتمد للنواة 14أ؛ و«مغلقة» شهادةٌ في هذه الطبقة وحدها، لا شهادة إغلاقٍ للنظام الموحَّد، ويُعرض تحتها ما في 14أ لمداها مؤجَّلاً أو مفتوحاً غير مصالَحٍ معها.) جهتان مختلفتان: «التمام» (F) أن في المدى نواةً ولا التزامَ نحويٍّ لازمٍ مفتوحاً (معمول، خبر، فاعل)؛ و«الإغلاق» أن تُستوفى '
+section(14, 'الجملة', '(الجملة تُبنى في الطبقة القديمة قبل علاقات 14أ؛ ثم تمرّ شهادة الإغلاق الموحَّدة (sarf.algebra.closure_certificate) بعدهما: كل التزامٍ للجملة يُطابَق بهوية وحدته مع العلاقة التي تستوفيه في 14أ ومعرّفها، وما استوفته الطبقة القديمة وأجّلته 14أ لا يُعدّ مستوفى، وكل علاقةٍ في 14أ داخل المدى مؤجَّلة أو بالتزامٍ مفتوح أو باختيارٍ مؤجَّل التزامٌ مفتوح. فـ«مغلقة ومصالَحة» لا تكون إلا بإغلاق الطبقة القديمة وخلوّ 14أ في المدى من مفتوح.) جهتان مختلفتان: «التمام» (F) أن في المدى نواةً ولا التزامَ نحويٍّ لازمٍ مفتوحاً (معمول، خبر، فاعل)؛ و«الإغلاق» أن تُستوفى '
         'الالتزامات كلها: إغلاق كل وحدة، وموضع كل كلمة، وحسم كل علاقة. فالجملة قد تكون تامّةً في التحليل مفتوحةً غير مغلقة. والآية لا تُغلق الجملة. '
         'والروابط معروضةٌ بأطرافها، والالتزامات المفتوحة كاملةً بلا اختصار',
         rows_j, ['الجملة', 'من – إلى', 'النص', 'الإغلاق', 'التمام (F)', 'الروابط', 'كلمات بلا موضع', 'التزامات مفتوحة'], tl_j)
@@ -558,6 +562,10 @@ for pv in per_verse:
                             + (f" — {h(x['why'])}" if x.get('why') and x.get('layer') == 'LEGACY' else '') for x in r['silah_kinds'])
         if r.get('shared'):
             alts += f"<br>المشترك بين الأوجه: الحدّ {h(r['shared'].get('boundary'))} — {h(r['shared'].get('note'))}"
+        if r.get('function'):
+            alts += f"<br>الوظيفة (المحلّ): [{h(r['function'].get('status'))}] {h(r['function'].get('text'))}"
+        if (r.get('search_scope') or {}).get('outside_coverage'):
+            alts += '<br>خارج التغطية (مؤجَّل لا مرفوض): ' + h('، '.join(r['search_scope']['outside_coverage']))
         if r.get('face') and r.get('selection'):
             alts += f"<br>الوجه: {h(r['face'])}، ترخيصه [{h(r['status'])}]؛ الاختيار: {h(r['selection'])} — {h(r.get('face_note') or '')}"
         if r.get('parts'):

@@ -12,7 +12,7 @@ tools/measure_coverage.py — مقاييس تغطيةٍ مستقلة لمحاو�
   M5 العلاقات بنوعها    الوحدة: السجل؛ بحالته (LICENSED، DEFERRED، REJECTED، CONFLICT)
   M6 متطلبات النوى      إطار الفعل: الإسناد مستوفى (فاعلٌ أو نائبه أو ضميره مرخَّص، أو ناسخٌ يُحال إلى V01)؛ الناسخ: الخبر مرخَّص؛
                         الإسناد الاسمي: nucleus_complete
-  M7 اكتمال الجملة      من الطبقة القديمة (المرحلة ١٤) بجهتيها: التمام (F) والإغلاق؛ والعلاقات الجديدة لا تستهلكها بعد
+  M7 اكتمال الجملة      من الطبقة القديمة (المرحلة ١٤) بجهتيها: التمام (F) والإغلاق؛ وشهادة الإغلاق الموحَّدة التي تستهلك علاقات 14أ
   وأسباب ما لم يُحسم: قاعدة غير منفذة، مدخل معجمي ناقص، صيغة صرفية متعددة، علاقة منافسة، نطاق غير محسوم، دليل سابق غير موصول،
   تعارض أدلة، غير منطبق.
 
@@ -55,9 +55,11 @@ def _surah(items):
                 J['F_complete'] += 'تام' in str((Jx.O.get('boundary') or {}).get('F') or '')
     out = []
     unrec = []
+    RECS_BY_VERSE = {}
     for s, v, a, U, F in per:
         ref = f'{s}:{v}'
         o = verse_relations(a, U, F, ref, legacy_cond=C, legacy_rel=Rl)
+        RECS_BY_VERSE[(s, v)] = o['records']
         chk = check_records(o['records'], o['tokens']) + check_cross(o['records'], o['axes']) + check_inflection(o['axes'], o['tokens'])
         pend = collections.defaultdict(set)
         for r in o['records']:
@@ -83,6 +85,19 @@ def _surah(items):
                      heads=list(r['heads']), resumptive=(r.get('resumptive') or {}).get('status')) for r in o['records']]
         out.append(dict(verse=ref, units=units, records=recs, check=chk))
     J['closed_unreconciled'] = sum(any(ls_ <= sp for ls_ in unrec) for sp in closed_spans)
+    # شهادة الإغلاق الموحَّدة (الدفعة F): الحكم لكل جملة، والتزاماتها المستوفاة بمصدرها، وتعارض الطبقتين
+    from sarf.algebra import closure_certificate
+    for k_ in ('CLOSED_RECONCILED', 'CLOSED_UNRECONCILED', 'OPEN', 'obl_met_14a', 'obl_met_legacy', 'obl_conflict', 'obl_open'):
+        J[k_] = 0
+    for SP in LT:
+        for D in SP.A + SP.O.get('pending', []):
+            for Jx in D.A + D.O.get('pending', []):
+                vv = sorted({(x[0], x[1]) for x in Jx.O.get('location', [])})
+                c_ = closure_certificate(Jx, [r for x in vv for r in RECS_BY_VERSE.get(x, [])])
+                J[c_['verdict']] += 1
+                for ob in c_['obligations']:
+                    J['obl_met_14a' if ob['source'] == '14أ' else 'obl_met_legacy' if ob['met'] else
+                      'obl_conflict' if ob['legacy_met'] else 'obl_open'] += 1
     return dict(verses=out, sentences=J)
 
 
@@ -176,7 +191,13 @@ def main():
                           note='الفعل لا يحتاج كلُّه فاعلاً ومفعولاً: المتطلَّب بحسب البناء والاستعمال (الناسخ يطلب اسماً وخبراً، والمبني للمجهول نائب فاعل)')
     M['M7_sentences'] = dict(unit='جملة الطبقة القديمة (المرحلة ١٤)', total=SENT['total'], closed=SENT['closed'], F_complete=SENT['F_complete'],
                              closed_unreconciled=SENT['closed_unreconciled'],
-                             note='العلاقات المحلية الجديدة لا تستهلكها الطبقة القديمة بعد: هذا المقياس من الطبقة القديمة وحدها؛ و«مغلقة» فيه ليست شهادة إغلاقٍ موحَّدة. '
+                             unified=dict(CLOSED_RECONCILED=SENT['CLOSED_RECONCILED'], CLOSED_UNRECONCILED=SENT['CLOSED_UNRECONCILED'],
+                                          OPEN=SENT['OPEN'], obligations_met_by_14a=SENT['obl_met_14a'],
+                                          obligations_met_legacy_only=SENT['obl_met_legacy'],
+                                          obligations_layer_conflict=SENT['obl_conflict'], obligations_open=SENT['obl_open']),
+                             note='closed وF_complete من الطبقة القديمة وحدها؛ وunified من شهادة الإغلاق الموحَّدة (sarf.algebra.closure_certificate) التي تستهلك علاقات 14أ: '
+                                  'CLOSED_RECONCILED مغلقةٌ في الطبقة القديمة ولا مفتوح في 14أ داخل مداها، وobligations_met_by_14a التزاماتٌ استوفتها علاقةٌ مرخَّصة مسمّاة، '
+                                  'وobligations_layer_conflict ما استوفته الطبقة القديمة وأجّلته 14أ. '
                                   'closed_unreconciled: المغلقة التي في مداها علاقةٌ في 14أ مؤجَّلة أو إطارٌ بالتزامٍ مفتوح')
     unres = collections.Counter()
     ex = collections.defaultdict(list)

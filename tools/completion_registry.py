@@ -50,6 +50,9 @@ SPEC = [
      ['sarf/root.py::protected'], ['tests/test_protected.py::'], [], [], 'tools/eval_protected.py', None, ''),
     ('C06.2', 6, 'الحماية لا تمنع التحليل النحوي', 'X01', ['sarf.relations:verse_relations'],
      ['tools/pipeline_trace.py::protection'], ['tests/test_round006.py::X01'], ['tests/test_round006.py::X04'], [], '2:282', None, ''),
+    ('C07.3', 7, 'الاسمية بنفي صيغ الفعل المكتوبة (E02 قبل الضمير، E03 الهمزة المكسورة)', 'E02/E03',
+     ['sarf.features:host_case_vowel_proof', 'sarf.features:initial_hamza_kasra_proof'], ['sarf/features.py::host_case_vowel_proof('],
+     ['tests/test_batch_b.py::B01', 'tests/test_batch_b.py::B04'], ['tests/test_batch_b.py::B02'], [], 'E02: 949 اسماً عند QAC، E03: 91', None, ''),
     ('C07.1', 7, 'الصنف (اسم، فعل، حرف) مستقلاً عن البناء والعمل والحماية', 'axes', ['sarf.relations:_Tok'],
      ['tools/pipeline_trace.py::word_class'], ['tests/test_round006.py::X48'], ['tests/test_relations.py::T19'], [], 'M1', None, ''),
     ('C07.2', 7, 'الصنف من التنوين وحده لا يُثبت (T19)', 'T19', ['sarf.relations:_Tok'],
@@ -58,9 +61,10 @@ SPEC = [
      ['sarf/pipeline.py::verse_morph'], ['tests/test_root.py::'], [], [], 'مقابل QAC (HANDOFF)', None, ''),
     ('C08.2', 8, 'خريطة الجذر والوزن إلى الخلايا والمقاطع', 'algebra', ['sarf.algebra:align_radicals', 'sarf.algebra:realize_skeleton'],
      ['tools/pipeline_trace.py::realiz'], ['tests/test_algebra.py::'], [], [], 'القسم ١٢', None, ''),
-    ('C08.3', 8, 'التحقيق الصرفي لكل بديلٍ زمني وبنائي (لا قائمة عامة)', 'F02', ['sarf.relations:_voice_faces'],
-     ['sarf/relations.py::_voice_faces('], ['tests/test_round006.py::X51'], ['tests/test_round006.py::X50'], ['tests/test_round006.py::M16'],
-     'البناء وحده (يُفَالُّ، يُفَالُ)', 'partial', 'الزمن (ماضٍ/أمر/مضارع) لا يُفحص تحقيقه بعد إلا في «دُعُوا» (الدفعة B)'),
+    ('C08.3', 8, 'التحقيق الصرفي لكل بديلٍ زمني وبنائي (لا قائمة عامة)', 'F02/F03', ['sarf.relations:_voice_faces', 'sarf.features:tense_realization'],
+     ['sarf/relations.py::_voice_faces(', 'sarf/features.py::tense_realization('], ['tests/test_batch_b.py::B05', 'tests/test_round006.py::X51'],
+     ['tests/test_batch_b.py::B06', 'tests/test_round006.py::X50'], ['tests/test_round006.py::M16'],
+     'F03: 1718 زمناً مثبتاً توافق QAC كلها', 'partial', 'F03 يمتنع في المعتلّ والمضعّف والمهموز الأول وحرف المضارعة المكرَّر وتاء تفعّل وتفاعل'),
     ('C09.1', 9, 'سمات الاسم (الاشتقاق، العدد، التعريف، الإعراب الممكن)', 'features', ['sarf.features:noun_features'],
      ['sarf/relations.py::feats'], ['tests/test_features.py::'], [], [], 'المرحلة ١٣', None, ''),
     ('C09.2', 9, 'سمات الفعل (الزمن، البناء، ضمير الصيغة، التعدّي)', 'features', ['sarf.features:verb_features'],
@@ -71,8 +75,8 @@ SPEC = [
      ['tools/pipeline_trace.py::HFN'], ['tests/test_root.py::'], [], [], 'المدلول في المرحلة ١٣', 'partial',
      'تعيين المعنى بالسياق غير منفّذ (الدفعة G)'),
     ('C10.2', 10, 'أطر الاستعمال: اللزوم والتعدّي والمكمّلات والحذف المرخّص', 'F01', ['sarf.relations:verse_relations'],
-     ['tools/pipeline_trace.py::object_requirement'], ['tests/test_round006.py::X59'], ['tests/test_round006.py::X53'], [],
-     'توزيع كاشف المكمّل', 'partial', 'الحذف المرخّص والالتزام اللازم بلا قاعدة؛ وحصر المكمّلات المتعددة خارج النطاق'),
+     ['tools/pipeline_trace.py::object_requirement'], ['tests/test_round006.py::X59', 'tests/test_batch_b.py::B08'], ['tests/test_round006.py::X53'], [],
+     'توزيع كاشف المكمّل', 'owner', 'التعدّي لا يثبت إلا بضمير مفعولٍ متصل، فـO02 لا يُبلغ (D5)؛ والحذف المرخّص بلا قاعدة'),
     ('C11.1', 11, 'العوامل المائة: المطابقة والنفي والحكم', 'judge', ['sarf.judge:judge', 'sarf.evidence:reject_candidates'],
      ['sarf/pipeline.py::judge('], ['tests/test_mood.py::'], ['tests/test_round006.py::X18'], [], 'tools/audit_judgments.py', None, ''),
     ('C11.2', 11, 'قدرة العامل المعجمية مفصولةً عن استعماله', 'usage', ['sarf.relations:_usage_capacity'],
@@ -83,8 +87,8 @@ SPEC = [
     ('C12.2', 12, 'الجزم بالحذف وموانعه (M01)', 'M01', ['sarf.evidence:jazm_faces'], ['sarf/segment.py::jazm_faces'],
      ['tests/test_round006.py::X16'], ['tests/test_round006.py::X18'], [], 'المرحلة ٧', None, ''),
     ('C13.1', 13, 'الفاعل الظاهر والمتصل والمستتر', 'S01', ['sarf.relations:verse_relations'], ['tools/pipeline_trace.py::verse_relations', 'tools/measure_axes.py::verse_relations'],
-     ['tests/test_round006.py::X23'], ['tests/test_round006.py::X22'], [], 'M4', 'partial',
-     'الفاعل المبني (الذي)، ووليّه، وإحداهما (الدفعة D)'),
+     ['tests/test_round006.py::X23', 'tests/test_batch_b.py::B07'], ['tests/test_round006.py::X22', 'tests/test_batch_b.py::B12'], [], 'M4',
+     'owner', '«وليّه» مرخَّص (E02 ثم S01)؛ و«الذي» و«إحداهما» والمرفوع الملاصق تحتاج حكم المالك (D1، D2، D6)'),
     ('C13.2', 13, 'نائب الفاعل والبناء بأوجهه', 'F02', ['sarf.relations:_voice_faces'], ['tools/pipeline_trace.py::voice'],
      ['tests/test_round006.py::X50'], ['tests/test_round006.py::X60'], ['tests/test_round006.py::M18'], 'M4', None, ''),
     ('C13.3', 13, 'المفعول الظاهر والمتصل (O01/O02)', 'O01/O02', ['sarf.relations:verse_relations'], ['tools/pipeline_trace.py::verse_relations', 'tools/measure_axes.py::verse_relations'],
@@ -98,27 +102,37 @@ SPEC = [
     ('C14.2', 14, 'الصلة والعائد (R01/R02) بأوجهها', 'R01/R02', ['sarf.relations:verse_relations'], ['tools/pipeline_trace.py::verse_relations', 'tools/measure_axes.py::verse_relations'],
      ['tests/test_round006.py::X44'], ['tests/test_round006.py::X49'], ['tests/test_round006.py::M13'], 'M5', 'partial',
      'بنية الوجه المنافس (المتعلَّق وفاعله) غير مبنية'),
-    ('C14.3', 14, 'المصدر المؤوَّل ومحلّه', 'MASDAR', [], [], [], [], [], '', 'unimplemented', 'لا قاعدة (الدفعة E)'),
+    ('C14.3', 14, 'المصدر المؤوَّل ومحلّه', 'M02', ['sarf.relations:verse_relations'], ['sarf/algebra.py::MASDAR'],
+     ['tests/test_batch_e.py::E04', 'tests/test_batch_e.py::E07'], ['tests/test_batch_e.py::E09'], ['tests/test_batch_e.py::E08'], 'M5',
+     'partial', 'من «أَنْ» الناصبة وحدها؛ و«أَنَّ» و«ما» المصدرية و«كي» و«لو» غير منفّذة؛ والوظيفة مؤجَّلة إلا بحرف جرٍّ قبله'),
     ('C14.4', 14, 'الشرط وفعله وجوابه وملكيته (C01)', 'C01', ['sarf.relations:verse_relations'], ['tools/pipeline_trace.py::verse_relations', 'tools/measure_axes.py::verse_relations'],
      ['tests/test_round006.py::X26'], ['tests/test_round006.py::X27'], [], 'M5', None, ''),
     ('C14.5', 14, 'العطف داخل المفردات والتراكيب والجمل', 'coord', ['sarf.coord:check_coord'], ['sarf/algebra.py::coord'],
-     ['tests/test_coord.py::'], [], [], 'الطبقة القديمة', 'partial', 'لا يصل العطف إلى سجلات 14أ (غير مجسور)'),
+     ['tests/test_coord.py::'], [], [], 'الطبقة القديمة', 'partial',
+     'لا يصل العطف إلى سجلات 14أ (غير مجسور)؛ والعاطف المستقل يحدّ بحث الفاعل (الدفعة B)'),
     ('C14.6', 14, 'النعت والحال والتوكيد والبدل وعطف البيان والتمييز', 'TAWABI', [], [], [], [], [], '', 'unimplemented',
      'لا قاعدة موجبة'),
     ('C14.7', 14, 'النداء (V02) والاستثناء والعدد والقسم', 'V02', ['sarf.relations:verse_relations'], ['tools/pipeline_trace.py::verse_relations', 'tools/measure_axes.py::verse_relations'],
      ['tests/test_round006.py::X05'], ['tests/test_round006.py::X04'], [], 'M5', 'partial', 'الاستثناء والعدد والقسم غير منفّذة'),
     ('C15.1', 15, 'تعلّق الجار والمجرور والظرف (A01/A02)', 'A01/A02', ['sarf.relations:verse_relations'], ['tools/pipeline_trace.py::verse_relations', 'tools/measure_axes.py::verse_relations'],
-     ['tests/test_relations.py::T13'], ['tests/test_relations.py::T14'], [], 'M5', 'partial', 'A02 يعلن مضيفاً وحيداً مع بدائل خارج التغطية'),
-    ('C16.1', 16, 'الجملة: النوى والالتزامات وشهادة الإغلاق', 'algebra', ['sarf.algebra:sentence_geo'], ['tools/pipeline_trace.py::Omega'],
-     ['tests/test_algebra.py::'], [], [], 'M7', 'partial', 'الطبقة القديمة لا تستهلك علاقات 14أ (الدفعة F)'),
+     ['tests/test_relations.py::T34', 'tests/test_batch_e.py::E01'], ['tests/test_relations.py::T14'], ['tests/test_batch_e.py::E03'], 'M5',
+     'partial', 'A02 وجهٌ مرخَّص غير مختار؛ وجرد أطر التعلّق غير موجود، فـA01 مؤجَّل في عامّة المواضع'),
+    ('C16.1', 16, 'الجملة: النوى والالتزامات وشهادة الإغلاق الموحَّدة', 'F-CERT', ['sarf.algebra:sentence_geo', 'sarf.algebra:closure_certificate'],
+     ['tools/pipeline_trace.py::closure_certificate', 'tools/measure_coverage.py::closure_certificate'],
+     ['tests/test_batch_f.py::F01', 'tests/test_batch_f.py::F03'], ['tests/test_batch_f.py::F02', 'tests/test_batch_f.py::F05'],
+     ['tests/test_batch_f.py::F06'], 'M7 unified', 'partial',
+     'الشهادة تمرّ بعد الطبقتين ولا تعيد بناء الجملة؛ والإضافة والصلة والشرط والنداء والتعلّق تُستهلك عامّاً لا استيفاءً'),
     ('C16.2', 16, 'نطاق شهادة الإغلاق', 'M7', ['tools.measure_coverage:main'], ['tools/pipeline_trace.py::scope_'],
      ['tests/test_round006.py::X52'], [], [], 'closed_unreconciled', None, ''),
     ('C17.1', 17, 'الدال وتمثيله والمدلولات المعجمية المرشّحة', 'HFN', ['sarf.features:unit_features'], ['tools/pipeline_trace.py::المدلول'],
-     ['tests/test_features_ext.py::'], [], [], 'المرحلة ١٣', 'partial', 'تعيين المعنى بالسياق ودلالات المطابقة والتضمن والالتزام غير منفّذة'),
-    ('C18.1', 18, 'مرجع الضمير والمطابقة معه', 'REF', [], [], [], [], [], '', 'unimplemented', 'لا قاعدة'),
+     ['tests/test_features_ext.py::'], [], [], 'المرحلة ١٣', 'deferred',
+     'تعيين المعنى بالسياق ودلالات المطابقة والتضمن والالتزام: لا مورد مقرّ (مداخل HFN is_fact=False) ولا قاعدة'),
+    ('C18.1', 18, 'مرجع الضمير والمطابقة معه', 'REF', [], [], [], [], [], '', 'deferred',
+     'لا قاعدة مكتوبة لتعيين المرجع؛ والمطابقة وحدها ترشّح ولا تثبت، والمعنى ليس دليلاً في المشروع'),
     ('C18.2', 18, 'الوحدة الخطابية والعلاقات بين الجمل', 'algebra', ['sarf.algebra:sentence_geo'], ['tools/pipeline_trace.py::الوحدة الخطابية'],
      ['tests/test_algebra.py::'], [], [], 'القسم ١٥', 'partial', 'العلاقات بين الجمل واستمرار الموضوع غير منفّذة'),
-    ('C19.1', 19, 'هندسة الفقرة وحدّها', 'PARA', [], [], [], [], [], '', 'unimplemented', 'لا قاعدة مكتوبة لحدّ الفقرة'),
+    ('C19.1', 19, 'هندسة الفقرة وحدّها', 'PARA', [], [], [], [], [], '', 'deferred',
+     'لا قاعدة مكتوبة لحدّ الفقرة، ولا يُخترع حدٌّ (الخطة §4 G)؛ والوحدة الخطابية من الطبقة القديمة أعلى ما يُبنى'),
     ('C20.1', 20, 'القياس بالمسار نفسه للصفحة (الجسران)', 'bridged', ['tools.bridged:surah_outputs'],
      ['tools/eval_inflection.py::bridged', 'tools/compare_relations.py::bridged', 'tools/measure_axes.py::linguistic_layer'],
      [], [], [], 'المصحف كله', None, ''),
@@ -127,14 +141,20 @@ SPEC = [
 
 # المستهلك اللغوي اللاحق لعلاقات 14أ: طبقة الجملة (sarf/algebra.py وsarf/checker.py). العرض والقياس مستهلكان للعرض لا للتحليل.
 SENTENCE_TYPE = {'C13.1': 'SUBJECT', 'C13.2': 'SUBJECT', 'C13.3': 'OBJECT', 'C13.4': 'PREDICATION', 'C13.5': 'NASIKH',
-                 'C14.1': 'IDAFA', 'C14.2': 'SILAH', 'C14.4': 'CONDITION', 'C14.7': 'VOCATIVE', 'C15.1': 'ATTACH'}
+                 'C14.1': 'IDAFA', 'C14.2': 'SILAH', 'C14.3': 'MASDAR', 'C14.4': 'CONDITION', 'C14.7': 'VOCATIVE', 'C15.1': 'ATTACH'}
 
 
 def _sentence_consumes(t):
-    for f in ('sarf/algebra.py', 'sarf/checker.py'):
-        if re.search(rf"['\"]{t}['\"]", open(os.path.join(H, f), encoding='utf-8').read()):
-            return True
-    return False
+    """→ 'named' إن سمّت طبقة الجملة النوعَ في استيفاء التزامٍ (sarf.algebra.OBLIGATION_RELATION أو نواة الشهادة)،
+    و'generic' إن استهلكته شهادة الإغلاق الموحَّدة عامّاً (المفتوح منه التزامٌ مفتوح) بلا استيفاء، وFalse إن لم تستهلكه"""
+    src = open(os.path.join(H, 'sarf', 'algebra.py'), encoding='utf-8').read()
+    if 'def closure_certificate' not in src:
+        return False
+    cert = src[src.index('def closure_certificate'):]
+    head = src[src.index('OBLIGATION_RELATION'):src.index('def closure_certificate')] if 'OBLIGATION_RELATION' in src else ''
+    if re.search(rf"['\"]{t}['\"]", head + cert):
+        return 'named'
+    return 'generic'
 
 
 def _exists(sym):
@@ -174,6 +194,10 @@ def build():
         sent = _sentence_consumes(SENTENCE_TYPE[rid]) if rid in SENTENCE_TYPE else None
         if sent is False:
             residual = (residual + '؛ ' if residual else '') + f'لا تستهلك طبقةُ الجملة علاقة {SENTENCE_TYPE[rid]} (الدفعة F)'
+        elif sent == 'generic':
+            residual = (residual + '؛ ' if residual else '') + \
+                f'تستهلك شهادة الإغلاق الموحَّدة {SENTENCE_TYPE[rid]} عامّاً (المؤجَّل منها مفتوح)، ولا تستوفي بها التزاماً مسمّى'
+            declared = declared or 'partial'
         if declared == 'unimplemented' or (syms and not all(ex.values())):
             status = 'غير منفّذ'
         elif syms and not all(calls.values()):

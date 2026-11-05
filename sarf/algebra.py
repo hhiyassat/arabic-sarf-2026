@@ -2608,3 +2608,61 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
 def render_layer(G):
     """Render على أي طبقة: نصّ الوحدات/الكلمات بالترتيب (المصحفية: الكلمة نصّها؛ اللغوية: من الخلايا)"""
     return [c for c in flatten(G)]
+
+
+# ---------- شهادة الإغلاق الموحَّدة (خطة الاستكمال، الدفعة F) ----------
+# الطبقة القديمة (المرحلة ١٤) تُبنى قبل علاقات 14أ (sarf.relations)، فلا تستهلكها في بنائها. والشهادة الموحَّدة تمرّ بعدهما:
+# كل التزامٍ للجملة في الطبقة القديمة يُطابَق بهوية وحدته مع العلاقة التي تستوفيه في 14أ (ومعرّفها وحالتها)، وكل علاقةٍ في 14أ
+# داخل مدى الجملة غير مرخَّصة أو بإطارٍ فيه التزامٌ مفتوح التزامٌ مفتوحٌ في الشهادة. فلا تُعدّ الجملة مغلقةً إغلاقاً موحَّداً
+# إلا إذا أغلقتها الطبقة القديمة ولم يبقَ في 14أ داخل مداها مفتوح.
+CLOSURE_AR = {'CLOSED_RECONCILED': 'مغلقة ومصالَحة', 'CLOSED_UNRECONCILED': 'مغلقةٌ في الطبقة القديمة، غير مصالَحة مع 14أ',
+              'OPEN': 'غير مغلقة'}
+OBLIGATION_RELATION = (('فاعل «', 'SUBJECT', 'verb'), ('مفعول «', 'OBJECT', 'verb'), ('خبر «', 'NASIKH', 'nasikh'),
+                       ('معمول «', 'PP', 'preposition'), ('معمول «', 'MASDAR', 'harf'), ('معمول «', 'NASIKH', 'nasikh'))
+
+
+def closure_certificate(J, records):
+    """→ dict: الجملة ومداها، وحكم الطبقة القديمة، والتزاماتها بما استوفاها (satisfied_by: معرّف العلاقة وحالتها)،
+    والتزامات 14أ المفتوحة داخل مداها، والحكم الموحَّد (CLOSED_RECONCILED أو CLOSED_UNRECONCILED أو OPEN).
+    records: سجلات 14أ لآيات مدى الجملة (verse_relations()['records'])"""
+    span = {f'{s_}:{v_}:{w_ + 1}' for (s_, v_, w_) in J.O.get('location', [])}
+    inside = [r for r in records if (lambda ls: ls and ls <= span)({l_ for v_ in r['positions'].values() for l_ in v_})]
+    obls = []
+    for o in J.Omega:
+        sat = []
+        for pre, typ, role in OBLIGATION_RELATION:
+            if o.name.startswith(pre):
+                sat += [dict(relation=r['relation_id'], status=r['status'], rule=r['rule_id']) for r in inside
+                        if r['type'] == typ and r['heads'].get(role) in (o.units or [])]
+        if o.name == 'نواة الجملة':
+            sat = [dict(relation=r['relation_id'], status=r['status'], rule=r['rule_id']) for r in inside
+                   if r['type'] in ('PREDICATION', 'PREDICATIVE_PP', 'VERB_FRAME', 'NASIKH') and r['status'] == 'LICENSED']
+        lic = [x for x in sat if x['status'] == 'LICENSED']
+        pend = [x for x in sat if x['status'] != 'LICENSED']
+        # 14أ هي المعتمدة فيما تبنيه: ما استوفته الطبقة القديمة وأجّلته 14أ لا يُعدّ مستوفى، ويُعرض الحكمان
+        conflict = bool(o.met) and not lic and bool(pend)
+        met = bool(lic) or bool(o.met) and not conflict
+        legacy_ev = None
+        if o.met and not lic:
+            legacy_ev = dict(relation=None, status='LEGACY', rule='المرحلة ١٤',
+                             evidence=(o.ev.cause if o.ev is not None else 'استيفاءٌ في الطبقة القديمة'))
+        obls.append(dict(name=o.name, required=o.required, legacy_met=bool(o.met), met=met, units=list(o.units or []),
+                         satisfied_by=lic or ([legacy_ev] if legacy_ev and not conflict else None), candidates=pend or None,
+                         source=('14أ' if lic else 'الطبقة القديمة' if met else None),
+                         note=('الطبقة القديمة تستوفيه، و14أ تؤجّله: ' + '، '.join(f"{x['rule']} {x['status']}" for x in pend))
+                         if conflict else (o.reason or '') if not met else ''))
+    open_rel = []
+    for r in inside:
+        if r['status'] != 'LICENSED':
+            open_rel.append(dict(relation=r['relation_id'], type=r['type'], rule=r['rule_id'], status=r['status'], why=r['reason'][:200]))
+        elif r['type'] == 'VERB_FRAME' and (r.get('frame') or {}).get('open'):
+            open_rel.append(dict(relation=r['relation_id'], type=r['type'], rule=r['rule_id'], status='OPEN_OBLIGATION',
+                                 why='؛ '.join(r['frame']['open'])[:200]))
+        elif r.get('selection') == 'DEFERRED':
+            open_rel.append(dict(relation=r['relation_id'], type=r['type'], rule=r['rule_id'], status='SELECTION_DEFERRED',
+                                 why=(r.get('face_note') or r['reason'])[:200]))
+    req_open = [o for o in obls if o['required'] and not o['met']]
+    verdict = 'OPEN' if not J.closed or req_open else 'CLOSED_UNRECONCILED' if open_rel else 'CLOSED_RECONCILED'
+    return dict(sentence=J.id, span=sorted(span, key=lambda x: tuple(int(p) for p in x.split(':'))), legacy_closed=bool(J.closed),
+                legacy_F=(J.O.get('boundary') or {}).get('F'), obligations=obls, relation_open=open_rel,
+                verdict=verdict, verdict_ar=CLOSURE_AR[verdict])
