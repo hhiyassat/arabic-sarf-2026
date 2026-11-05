@@ -422,5 +422,9 @@ check('X53 «يَتَّقِ اللَّهَ»: منصوبٌ مكتوب لم يُ�
       and (f3.get('object_requirement') or {}).get('kind') == 'NO_WRITTEN_OBJECT' and not f28['open'] and not f3['open'],
       (f28.get('object_requirement'), f3.get('object_requirement')))
 
+c77 = next(r for r in o['records'] if r['type'] == 'CONDITION' and r['heads'].get('condition_verb') == u77)
+check('X54 شرط «إذا ما دُعُوا»: المصالحة مع F01 أولُ المقدّمات، ومقدّمة الطبقة القديمة القائمة على وجه الأمر الممنوع موسومةٌ بأنه لا يُبنى عليها',
+      c77['premises'][0].startswith('المصالحة مع F01') and any('قائمةٌ على وجهٍ ممنوع في F01' in p for p in c77['premises'][1:]), c77['premises'])
+
 print('ALL OK' if not FAIL else f'FAILED {len(FAIL)}: {FAIL}')
 sys.exit(1 if FAIL else 0)

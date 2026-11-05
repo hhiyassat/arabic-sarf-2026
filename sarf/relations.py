@@ -1866,7 +1866,11 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
         cv = heads.get('condition_verb')
         fc = getattr(cv, 'frame_cands', None) if cv is not None else None
         if fc:
-            prem.append('المصالحة مع F01: ' + ('المرشّح القائم ' + '، '.join(f"{c_['id']} ({c_['tense']}، {c_['voice']})" for c_ in fc['live'])) +
+            # المصالحة أولاً؛ ومقدّمة الطبقة القديمة القائمة على وجهٍ ممنوع في F01 تُوسَم به، فلا يبدأ السجلّ بتعليلٍ مُبطَل
+            rej_t = {c_['tense'] for c_ in fc['rejected']}
+            prem[:] = [p_ + (f' — قائمةٌ على وجهٍ ممنوع في F01 ({"، ".join(c_["id"] for c_ in fc["rejected"])}): لا يُبنى عليها'
+                             if any(t_ and t_ in p_ for t_ in rej_t) and p_.startswith('المرحلة ١٤') else '') for p_ in prem]
+            prem.insert(0, 'المصالحة مع F01: ' + ('المرشّح القائم ' + '، '.join(f"{c_['id']} ({c_['tense']}، {c_['voice']})" for c_ in fc['live'])) +
                         ('؛ ووجه ' + '، '.join(f"{c_['id']} ({c_['tense']})" for c_ in fc['rejected']) + ' ممنوعٌ في F01، فلا يُبنى عليه' if fc['rejected'] else '') +
                         '؛ ولا تُرفع رتبة الشرط بهذه المصالحة')
         R.append(_rec(ref, 'CONDITION', 'C01', heads, members, LICENSED if ok else DEFERRED,
