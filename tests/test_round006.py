@@ -385,5 +385,18 @@ noev = [(o['tokens'][i][1], o['tokens'][i][2]) for i, (u, l, t) in enumerate(o['
         if o['axes'][u]['word_class'][0] and not o['axes'][u]['word_class'][1]]
 check('X48 لا صنفَ بلا دليل: دليل الاسم من أساس الحكم نفسه (سمة المرحلة ١٣ المثبتة، أو لفظ الجلالة، أو الاسم الذهبي، أو E01)', not noev, noev[:5])
 
+# ١٨ البناء غير المثبت لا يُعامَل معلوماً بالافتراض: «يُغَاثُ النَّاسُ» (12:49)
+a1249, o1249 = run(verse_text(12, 49), '12:49')
+s1249 = next(r for r in o1249['records'] if r['type'] == 'SUBJECT' and r['status'] == 'LICENSED' and r['texts'].get('verb') == 'يُغَاثُ')
+u1249 = s1249['heads']['subject']
+ax1249 = o1249['axes'][u1249]
+check('X50 «يُغَاثُ النَّاسُ»: البناء غير مثبت، فـ«النَّاسُ» مسندٌ إليه مرفوع مرخَّص، ودوره «فاعل أو نائب فاعل» والاختيار مؤجَّل؛ وحكم الرفع AGREE بعبارةٍ تسمّي الوجهين',
+      s1249['role_name'] == 'فاعل أو نائب فاعل' and s1249.get('selection') == 'DEFERRED' and set(s1249['voice_faces'].values()) == {'فاعل', 'نائب فاعل'}
+      and ax1249['inflection']['agreement'] == 'AGREE' and 'نائب فاعلٍ إن كان مبنياً للمجهول' in ax1249['inflection']['statement']
+      and 'غير مختار' in ax1249['inflection']['statement'] and not clean(o1249), (s1249.get('role_name'), ax1249['inflection']['statement']))
+m = copy.deepcopy(o1249)
+m['axes'][u1249]['inflection']['governor'].pop('face', None)
+check('M16 إفساد تسمية الوجه (دورٌ من بناءٍ غير محسوم بلا وجه) يكشفه الفاحص العابر للطبقات', bool(check_cross(m['records'], m['axes'])))
+
 print('ALL OK' if not FAIL else f'FAILED {len(FAIL)}: {FAIL}')
 sys.exit(1 if FAIL else 0)

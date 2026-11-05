@@ -645,7 +645,8 @@ def _inflection(t, nxt=None):
                 'object': f'، والفعل «{src.get("of")}»', 'subject': f'، والفعل «{src.get("of")}»',
                 'nasikh': ''}.get(src['src'], '')
         out['statement'] = f'{lead} وعلامة {STATE_NOUN[cap]} {mp}{tail}' + \
-            (f' — في وجه {src["face"]} المرخَّص، والوجه غير مختار (بديله محفوظ)' if src.get('face') else '')
+            ((f' — {src["face_note"]}؛ والوجه غير مختار' if src['src'] == 'subject' and src.get('face_note') else
+              f' — في وجه {src["face"]} المرخَّص، والوجه غير مختار (بديله محفوظ)') if src.get('face') else '')
     else:
         out['statement'] = f'{kind} {STATE_ADJ[cap]} {gov_txt} وعلامة {STATE_NOUN[cap]} {mp}'
     dims = out['mark_dims'] or {}
@@ -1395,7 +1396,14 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
         subj = None
         sp = sf.get('v') if isinstance(sf.get('v'), dict) else {}
         passive = vf.get('v') == 'مجهول' and vf.get('st') == 'مثبت'
-        srole = 'نائب فاعل' if passive else 'فاعل'
+        voice_known = vf.get('st') == 'مثبت'
+        # البناء غير المثبت لا يُعامَل معلوماً بالافتراض: الدور وجهان (فاعل في المعلوم، ونائب فاعل في المجهول)،
+        # والمشترك بينهما مثبت (مسندٌ إليه مرفوع)، والاختيار مؤجَّل بتأجيل البناء
+        srole = 'نائب فاعل' if passive else 'فاعل' if voice_known or nas else 'فاعل أو نائب فاعل'
+        voice_faces = None if voice_known or nas else dict(
+            معلوم='فاعل', مجهول='نائب فاعل',
+            note=f'بناء «{v.text}» غير مثبت ({vf.get("st") or "مؤجَّل"}): فاعلٌ إن كان مبنياً للمعلوم، ونائب فاعلٍ إن كان مبنياً للمجهول؛ '
+                 'والرفع مشتركٌ بين الوجهين')
         if nas:
             # التزامات الناسخ تُسوّى بسجلّ V01 نفسه: ما رخّصه لا يبقى مفتوحاً، وما نقص يُسمّى بسببه
             v01 = next((r_ for r_ in R if r_['type'] == 'NASIKH' and r_['heads'].get('nasikh') == v.uid), None)
@@ -1499,7 +1507,7 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                   'سمات الفعل كلها مثبتة من تحليلٍ واحد' if coherent else
                   ('مرشّحاتٌ صرفية كاملة متنافسة' if cands else 'بعض سمات الفعل مرشّحة: لا تُجمع من مرشّحاتٍ متفرقة'),
                   premises=([f'الصنف: فعل — {(v.feats.get("pos") or {}).get("ev")}'] +
-                            [f'{n_}: {_pron_ar(x.get("v")) if isinstance(x.get("v"), dict) else x.get("v")} ({x.get("st")})'
+                            [f'{n_}: {_pron_ar(x.get("v")) if isinstance(x.get("v"), dict) else (x.get("v") or "—")} ({x.get("st") or "مؤجَّل"})'
                              for n_, x in (('الزمن', tf), ('البناء', vf), ('ضمير الصيغة', sf)) if x])
                   if not cands else
                   ['الصنف: فعل في كل المرشّحات القائمة'] +
@@ -1533,7 +1541,12 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                           premises=[fr['relation_id'] if coherent else f'«{v.text}»: ضمير الصيغة غائبٌ مفرد مثبت ({sf.get("ev")})',
                                     f'«{u.text}»: {u.nominative()[1]}'],
                           checked=['منافسٌ مرفوعٌ في الإطار', 'عاملٌ مقبول في المرفوع', 'طرفٌ في علاقةٍ أخرى'],
-                          role_name=srole, mark_fact=dict(uid=u.uid, mark=subj.get('mark')), edges=[('SUBJECT', v.uid, u.uid)]))
+                          role_name=srole, mark_fact=dict(uid=u.uid, mark=subj.get('mark')), edges=[('SUBJECT', v.uid, u.uid)],
+                          **(dict(face='المعلوم أو المجهول', selection=DEFERRED, face_note=voice_faces['note'],
+                                  voice_faces={k_: v_ for k_, v_ in voice_faces.items() if k_ != 'note'},
+                                  alternatives=[f'«{u.text}» نائب فاعل (إن كان «{v.text}» مبنياً للمجهول)',
+                                                f'«{u.text}» فاعل (إن كان «{v.text}» مبنياً للمعلوم)'])
+                             if voice_faces else {})))
             bound[u.k] = R[-1]['relation_id']
 
     # A01 توليد مرشّحات التعلّق
@@ -1852,7 +1865,9 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                                                    of=by_uid[hd['verb']].text))
         if rec['type'] == 'SUBJECT' and hd.get('subject') in by_uid:
             by_uid[hd['subject']].roles.append(dict(src='subject', expected='رفع', rid=rid, role_name=rec.get('role_name') or 'فاعل',
-                                                    rule='S01', of=by_uid[hd['verb']].text))
+                                                    rule='S01', of=by_uid[hd['verb']].text,
+                                                    face=rec.get('face') if rec.get('selection') == DEFERRED else None,
+                                                    face_note=rec.get('face_note') if rec.get('selection') == DEFERRED else None))
         if rec['type'] == 'VOC_FOLLOWER' and hd.get('follower') in by_uid:
             by_uid[hd['follower']].roles.append(dict(src='voc_follower', expected='رفع', rid=rid, rule='V02',
                                                      role_name=ROLE_NAME['voc_follower']))
