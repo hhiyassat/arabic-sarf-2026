@@ -2778,8 +2778,11 @@ def closure_certificate(J, records):
             residuals.append(dict(relation=r['relation_id'], type=r['type'], rule=r['rule_id'], status='FUNCTION_DEFERRED', kind='SELECTION',
                                   why=r['function']['text'][:200], outside=[]))
         elif r['type'] == 'VERB_FRAME' and (r.get('frame') or {}).get('open'):
-            residuals.append(dict(relation=r['relation_id'], type=r['type'], rule=r['rule_id'], status='OPEN_OBLIGATION', kind='REQUIRED',
-                                  why='؛ '.join(r['frame']['open'])[:200], outside=[]))
+            # «الاستعمال (ناسخ أو تامّ) غير محسوم» اختيارٌ بين أوجه؛ وما سواه (خبرٌ غير مرخَّص، ولا سجلّ V01) متطلَّبٌ لازمٌ غير مستوفى
+            op_ = r['frame']['open']
+            sel_ = all('غير محسوم' in x for x in op_)
+            residuals.append(dict(relation=r['relation_id'], type=r['type'], rule=r['rule_id'], status='OPEN_OBLIGATION',
+                                  kind='SELECTION' if sel_ else 'REQUIRED', why='؛ '.join(op_)[:200], outside=[]))
     req = [o for o in obls if o['required']]
     # تعارض الطبقتين (القديمة تستوفي و14أ تؤجّل) تأجيلٌ لا فتحٌ مثبت: يدخل حكم الاختيار المؤجَّل، ولا يُعدّ مستوفى
     if any(o['status'] == 'OPEN' for o in req) or any(x['kind'] == 'REQUIRED' for x in residuals):
