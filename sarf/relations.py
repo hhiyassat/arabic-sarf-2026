@@ -934,7 +934,8 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
         """أول وحدةٍ بعد i تبدأ إطاراً جديداً: كلمةٌ أولها عاطف، أو ما له الصدارة؛ أو آخر الآية (حدّ مصدر لا حدّ تركيب)"""
         from .algebra import clause_start, idha_reading
         # «إذا» الفجائية تبدأ جملتها الاسمية (SARF_COMPREHENSIVE_REPAIR_04 §٧): لا شرط بها، لكنها حدّ إطارٍ كالشرطية
-        fuj = {f_['word_index'] for f_ in a['operators'] if (idha_reading(a, f_) or {}).get('decision') == 'FUJAIYYA'}
+        # والقرينة وحدها تكفي هنا: الوجهان (الشرطية والفجائية) كلاهما يبدأ جملته، فهو حدّ إطارٍ في كلٍّ منهما
+        fuj = {f_['word_index'] for f_ in a['operators'] if idha_reading(a, f_)}
         for j in range(i + 1, len(toks)):
             t = toks[j]
             if t.ui == 0 and (t.conj or clause_start(a, t.wi) or t.wi in fuj):
@@ -2258,6 +2259,18 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                 if lk is not None and 'فاء' in str(c.get('q_kind') or ''):
                     heads['linker'], members['linker'] = lk, [lk]
         ok = all(parts_st.get(r_, ('',))[0] == LICENSED for r_ in ('condition_verb', 'answer')) and not c['amb']
+        # «إذا» بقرينة الفجائية (§٩): وجهان محفوظان، الشرطية والفجائية، والاختيار مؤجَّل؛ ولا ترخيص للشرط ووجه الفجائية منافسٌ قائم
+        idha_faces = None
+        if c['tool'].startswith('إِذَا'):
+            from .algebra import idha_reading, IDHA_ROUTE
+            op_ = next((o_ for o_ in a['operators'] if o_['word_index'] == tool.wi and o_['operator'] == 'إِذَا'), None)
+            rd_ = idha_reading(a, op_) if op_ else None
+            if rd_:
+                idha_faces = [dict(face=x['face'], status=x['status'], why=x['why']) for x in rd_['faces']]
+                if any(x['face'] == 'FUJAIYYA' and x['status'] in ('CONDITIONS_MET', 'CANDIDATE') for x in rd_['faces']):
+                    ok = False
+                prem.append(f"قرينة «إذا»: {rd_['cue']} — القرار {rd_['decision']}؛ ومسلك الفجائية غير مقبول "
+                            f"(ويلسون {IDHA_ROUTE['wilson_low']} دون {IDHA_ROUTE['threshold']})، فلا يحذف الشرط")
         cv = heads.get('condition_verb')
         fc = getattr(cv, 'frame_cands', None) if cv is not None else None
         if fc:
@@ -2277,7 +2290,9 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                       parts_status={k_: v_[0] for k_, v_ in parts_st.items()}, legacy=dict(head=c['head'], q_kind=c.get('q_kind'),
                                                                                          obligations=c.get('obligations')),
                       alternatives=(['«إذا» ظرفٌ لما يُستقبل من الزمان متضمّنٌ معنى الشرط، وجوابه متعلَّقه أو دليله']
-                                    if c['tool'].startswith('إِذَا') else [])))
+                                    if c['tool'].startswith('إِذَا') else []) +
+                                   (['«إذا» الفجائية: تدخل على الجملة الاسمية ولا جواب لها'] if idha_faces else []),
+                      **(dict(faces=idha_faces, selection=DEFERRED) if idha_faces else {})))
 
     # رتبة المقدّمات: العلاقة المرخَّصة لا تقوم على مقدّمةٍ غير مرخَّصة؛ وما قام عليها يُنزَّل إلى التأجيل بسببه (إلى الثبات)
     ids = {r_['relation_id']: r_ for r_ in R}

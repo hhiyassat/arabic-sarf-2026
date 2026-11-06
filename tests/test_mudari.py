@@ -235,6 +235,11 @@ check('G06 هوية الوجه تميّز المرشّح الكامل: مرشّ�
 check('G07 حاصل ضرب الزمن والبناء من قائمتين مستقلتين نقصُ بيانات (UNLINKED_PRODUCT) لا أوجهٌ مرخّصة: لا يستوفيها شيء',
       all(f['pairing'] == 'UNLINKED_PRODUCT' and f['data_gap'] for f in ff) and
       _face_cover(ff[:1], [dict(_ok, relation='R', verb='U', candidate='U#c', role='فاعل أو نائب فاعل')])[0]['relations'] == [], ff)
+fm9 = _face_cover([_F1], [dict(_ok, relation='R_fake', rule='FAKE', faces=['F1']), dict(_ok, relation='R_noprem', premises=[], faces=['F1']),
+                          dict(_ok, relation='R_rolef', role='نائب فاعل', faces=['F1']), dict(_ok, relation='R_good', premises=['p'], faces=['F1'])])
+check('G09 هوية الوجه المطابقة لا تكفي (§٩): قاعدةٌ مصطنعة، أو علاقةٌ بلا مقدّمات، أو دورٌ لا يوافق البناء — تُرفض ولو سمّت الوجه نفسه',
+      fm9[0]['relations'] == ['R_good'] and fm9[0]['refused'] == {'R_fake': 'UNKNOWN_RULE:FAKE', 'R_noprem': 'NO_PREMISES',
+                                                                  'R_rolef': 'ROLE_VOICE_MISMATCH'}, fm9)
 from sarf.algebra import _rel_met_faces
 _r2 = dict(relation_id='R2', faces=[dict(status='CONDITIONS_MET'), dict(status='CONDITIONS_MET')])
 check('G08 _rel_face_id لا يختار أول وجهٍ مستوفٍ: وجهان مستوفيان → لا معرّف منفرد، والقائمة كاملة',

@@ -1224,12 +1224,16 @@ def idha_reading(a, f):
         if nk is None:
             return None
     g2 = agr.get(wi + 1)
-    madi_after = bool(g2) and g2.get('kind') == 'madi'
+    # «إذا أنت لم تفعل»: «لَمۡ» والمضارع المجزوم بعدها في معنى الماضي، فوجه الشرط قائم كما مع الماضي (§٩)
+    lam_after = wi + 2 < len(segs) and is_form(segs[wi + 1]['word'], ('لَمْ', 'لَمۡ', 'لَم'))
+    madi_after = bool(g2) and g2.get('kind') == 'madi' or lam_after
     host = segs[f['word_index']]['word']
     pre_fa = host.startswith('فَ')
     pre_thumma = f['word_index'] > 0 and is_form(segs[f['word_index'] - 1]['word'], ('ثُمَّ',))
+    # ملكية الجواب (§٩): الأداة السابقة ترشّح الفجائية جواباً لها إن لم يسبق «إذا» جوابٌ بالفاء لتلك الأداة بينهما
     prev_ops = [o for o in a.get('operators') or [] if o['word_index'] < f['word_index'] and o.get('status') != 'blocked' and
-                is_form(o['operator'], ('لَمَّا', 'إِن', 'إِنْ', 'إِذَا', 'إِذَآ'))]
+                is_form(o['operator'], ('لَمَّا', 'إِن', 'إِنْ', 'إِذَا', 'إِذَآ')) and
+                not any(segs[k]['word'].startswith('فَ') for k in range(o['word_index'] + 1, f['word_index']))]
     ev = []
     if pre_fa:
         ev.append('فاءٌ قبل «إذا»')
@@ -1250,10 +1254,16 @@ def idha_reading(a, f):
                 after_pronoun=(segs[wi + 1]['word'] if wi + 1 < len(segs) else None), madi_after=madi_after, source=IDHA_SOURCE)
 
 
+# مسلك الفجائية مقيسٌ بمرجع QAC (tools/eval_idha.py): حدّ ويلسون الأدنى للدقة 0.733 دون عتبة المالك 0.78، فلا يُقبل مسلكاً يحسم
+# استبعاد الشرطية (SARF_DEPENDENCY_PIPELINE_AND_COMPLETION_05 §٩): يُسجَّل وجهاً منافساً في سجلّ الشرط، ولا يحذف الشرط
+IDHA_ROUTE = dict(route='IDHA_FUJAIYYA', precision='38/44', wilson_low=0.733, threshold=0.78, accepted=False,
+                  measured_by='tools/eval_idha.py (QAC SUR، للقياس وحده)')
+
+
 def idha_fujaiyya(a, f):
-    """→ (فجائية؟، السبب): فجائيةٌ إن حسمها idha_reading وحده؛ والملتبس ليس فجائيةً (يبقى وجه الشرط)"""
+    """→ (فجائية محسومة؟، السبب): لا حسم إلا بمسلكٍ مقبول؛ والمسلك دون العتبة فلا تُحسم الفجائية ويبقى الشرط بوجهيه"""
     r = idha_reading(a, f)
-    if not r or r['decision'] != 'FUJAIYYA':
+    if not r or r['decision'] != 'FUJAIYYA' or not IDHA_ROUTE['accepted']:
         return False, None
     return True, r['cue'] + ': ' + r['faces'][0]['why'] + '؛ فهي الفجائية لا الشرطية (لا جواب ولا صدارة شرط)'
 
@@ -2837,6 +2847,7 @@ def _rel_face_id(r):
 
 
 COVER_REQUIRED = ('relation', 'verb', 'candidate', 'status', 'rule')
+COVER_RULES = ('S01', 'F01')            # قواعد الإسناد التي يُستوفى بها وجه الفاعل
 
 
 def _cover_reason(f, r_):
@@ -2845,6 +2856,11 @@ def _cover_reason(f, r_):
     miss = [k for k in COVER_REQUIRED if not r_.get(k)]
     if miss:
         return 'MISSING_FIELD:' + ','.join(miss)
+    # القاعدة ومقدّماتها تُفحص ولو طابقت هوية الوجه (§٩): اسم قاعدةٍ غير معروف، أو علاقةٌ بلا مقدّمات، لا يُستوفى بها
+    if not (r_['rule'] in COVER_RULES or str(r_['rule']).startswith(tuple(x + '.' for x in COVER_RULES))):
+        return 'UNKNOWN_RULE:' + str(r_['rule'])
+    if 'premises' in r_ and not r_.get('premises'):
+        return 'NO_PREMISES'
     if f.get('data_gap'):
         return 'FACE_PAIRING_DATA_GAP'
     if f.get('unit') and r_['verb'] != f['unit']:
@@ -2856,6 +2872,8 @@ def _cover_reason(f, r_):
     if r_.get('faces'):
         if f['face_id'] not in r_['faces'] and f.get('morph_candidate_id') not in r_['faces']:
             return 'OTHER_FACE'
+        if f.get('voice') and r_.get('role') in _ROLE_VOICES and f['voice'] not in _ROLE_VOICES[r_['role']]:
+            return 'ROLE_VOICE_MISMATCH'
         return None
     # علاقةٌ بلا قائمة أوجه: اشتراكها في الأوجه مبرهنٌ إن كان دورها يسمّي بناء الوجه صراحةً («فاعل أو نائب فاعل»)، وإلا فوجهها وجه دورها
     if f['voice'] not in _ROLE_VOICES.get(r_.get('role'), ()):
@@ -3042,9 +3060,10 @@ def closure_certificate(J, records, upstream=None):
                 faces = _frame_faces(fr)
                 fcid = ((fr.get('frame') or {}).get('candidate') or {}).get('id')
                 rels = ([dict(relation=r['relation_id'], role=r.get('role_name') or role, verb=r['heads'].get('verb'), status=r['status'],
-                              faces=r.get('licensed_in_faces'), candidate=r.get('verb_candidate'), rule=r.get('rule_id')) for r in lic] if lic else
+                              faces=r.get('licensed_in_faces'), candidate=r.get('verb_candidate'), rule=r.get('rule_id'),
+                              premises=r.get('premises')) for r in lic] if lic else
                         [dict(relation=fr['relation_id'], role=sj.get('role') or role, verb=fr['heads'].get('verb'), status=sj.get('status'),
-                              candidate=fcid, rule=sj.get('rule') or fr.get('rule_id'))])
+                              candidate=fcid, rule=sj.get('rule') or fr.get('rule_id'), premises=fr.get('premises'))])
                 fmap = _face_cover(faces, rels)
                 covered = [x for x in fmap if x['relations']]
                 gap_ = [x for x in fmap if x.get('data_gap')]
@@ -3367,17 +3386,60 @@ def _references(Js, records):
             if not k_:
                 continue
             loc = ((r.get('positions') or {}).get(role) or [None])[0]
+            L = loc_of(loc)
+            # وقوع الضمير نفسه داخل مدى الفقرة شرطٌ قبل البحث عن مرجعه (§٩): المرجع الخارجي جائز، ووقوعٌ من فقرةٍ أخرى لا يدخل
+            if L is None or (L[0], L[1], L[2] - 1) not in span:
+                continue
             uid = ((r.get('members') or {}).get(role) or [None])[0]
             if any(x['ref_id'] == f'REF:{uid}' for x in refs):
                 continue
             refs.append(dict(ref_id=f'REF:{uid}', pronoun=txt, form=txt, owner=uid, face=None,
                              signature=dict(person=3, number=None, gender=None), location=loc, kind=k_))
+    # مرشّحو المرجع داخل الفقرة: أسماءٌ أطرافٌ في علاقاتٍ داخل المدى (غير ضمائر ولا إشارة)، قبل الوقوع أو بعده؛ وهي مرشّحون لا تعيين
+    noms = {}
+    for r in records:
+        for role, us in (r.get('members') or {}).items():
+            if role in ('verb', 'preposition', 'tool', 'linker', 'harf', 'nasikh', 'subject_candidate'):
+                continue
+            for u, pos, txt in zip(us, (r.get('positions') or {}).get(role) or [], [(r.get('texts') or {}).get(role)] * len(us)):
+                L = loc_of(pos)
+                if L is None or (L[0], L[1], L[2] - 1) not in span or is_form(str(txt), REF_PRON_3 + REF_DEM):
+                    continue
+                noms[u] = L
+    for x in refs:
+        L = loc_of(x['location'])
+        x['in_paragraph_candidates'] = sorted(u for u, p_ in noms.items() if L is None or p_ != L)[:12]
     for x in refs:
         x.update(status='DEFERRED', candidates_rule='سابقٌ أو لاحقٌ أو خارجيٌّ تجيزه القاعدة؛ والموافقة في العدد والجنس تولّد مرشّحين ولا تثبت المرجع',
                  reason='تعيين المرجع غير منفَّذ (مانعٌ مسمّى: REFERENCE_RESOLUTION)',
                  structure_required=False, discourse_required=True)
     refs.sort(key=lambda x: x['ref_id'])
     return refs
+
+
+def pb_conditions(Js, allJ, refs):
+    """شروط PB-L1 مولَّدةً من أدلّتها (§٩)، ولكل شرطٍ مرجع دليله:
+    (أ) البداية: أول الفقرة أول السورة (الموضع ٠ من الآية ١)؛ والنهاية: آخر كلمةٍ في السورة (source_boundary_kinds)
+    (ب) لا جملة قبلها/بعدها في المدخل (فلا رابط مرشّح يعبر)
+    (ج) البداية: لكل إحالةٍ في الفقرة مرشّحٌ داخلها (فلا تحتاج ما قبل الحدّ)؛ والنهاية: لا جملة بعدها في المدخل تحيل إليها
+    وليس شيءٌ منها تعييناً للمرجع"""
+    locs = [l for J in Js for l in J.O.get('location') or []]
+    all_locs = [l for J in allJ for l in J.O.get('location') or []]
+    if not locs:
+        return {}
+    first, last = min(locs), max(locs)
+    end_kinds = source_boundary_kinds(last, max(all_locs) if all_locs else None)
+    nxt = next((J.id for J in allJ if min(J.O.get('location') or [(0, 0, 0)]) > last), None)
+    prv = next((J.id for J in reversed(allJ) if max(J.O.get('location') or [(0, 0, 0)]) < first), None)
+    no_cand = [x['ref_id'] for x in refs if not x.get('in_paragraph_candidates')]
+    return dict(
+        start=dict(a=('MET: بداية السورة' if first[1] == 1 and first[2] == 0 else 'NOT_MET: ليست بداية سورة'),
+                   b=('MET: لا جملة قبلها في المدخل' if prv is None else f'NOT_MET: جملةٌ قبلها ({prv})'),
+                   c=('MET: لكل إحالةٍ مرشّحٌ داخل الفقرة' if not no_cand else 'NOT_MET: إحالاتٌ بلا مرشّحٍ داخلها: ' + '، '.join(no_cand))),
+        end=dict(a=('MET: ' + '، '.join(end_kinds)) if 'SURA_END' in end_kinds else 'NOT_MET: ليس آخر السورة',
+                 b=('MET: لا جملة بعدها في المدخل' if nxt is None else f'NOT_MET: جملةٌ بعدها ({nxt})'),
+                 c=('MET: لا جملة بعدها في المدخل تحيل إليها' if nxt is None else f'NOT_CHECKED: إحالات ما بعدها ({nxt}) لا تُعيَّن')),
+        evidence=dict(first=list(first), last=list(last), prev=prv, next=nxt, end_kinds=end_kinds, refs_without_candidate=no_cand))
 
 
 def paragraph_candidates(LT, certs, records, vocative_starts=()):
@@ -3429,22 +3491,13 @@ def _paragraph(Js, LT, certs, records, allJ, competing=None):
     src_start = bool(first) and first[1] == 1 and first[2] == 0
     end_kinds = source_boundary_kinds(last, max(all_locs) if all_locs else None)
     # PB-L1 بشروطه: (أ) حدّ مصدرٍ أو بدء خطابٍ جديد، (ب) لا رابط مرشّح يعبر، (ج) لا إحالة معلّقة تعبر
-    nxt = next((J for J in allJ if min(J.O.get('location') or [(0, 0, 0)]) > last), None) if last else None
-    prv = next((J for J in reversed(allJ) if max(J.O.get('location') or [(0, 0, 0)]) < first), None) if first else None
-    cond = dict(
-        start=dict(a=('MET: بداية السورة' if src_start else 'MET: لا جملة قبله في المدخل' if prv is None else 'NOT_MET: جملةٌ قبله'),
-                   b='MET: لا رابط قبله' if prv is None else 'NOT_MET: رابطٌ مرشّح من الجملة السابقة',
-                   c='NOT_CHECKED: تعيين المرجع غير منفّذ'),
-        end=dict(a=('MET: ' + '، '.join(end_kinds)) if 'SURA_END' in end_kinds else
-                   ('NOT_MET: آخر المدخل ليس حدّ سورة' if nxt is None else 'NOT_MET: جملةٌ بعده'),
-                 b='MET: لا رابط بعده' if nxt is None else 'NOT_MET: رابطٌ مرشّح إلى ما بعده',
-                 c='NOT_CHECKED: تعيين المرجع غير منفّذ'))
-    ling = 'PROVEN' if all(v_.startswith('MET') for side in cond.values() for v_ in side.values()) else 'NOT_PROVEN'
+    cond = pb_conditions(Js, allJ, refs)
+    ling = 'PROVEN' if cond and all(v_.startswith('MET') for side in ('start', 'end') for v_ in cond[side].values()) else 'NOT_PROVEN'
     boundary = dict(source_start=('SOURCE:sura_start' if src_start else None),
                     source_end=('SOURCE:sura_end' if 'SURA_END' in end_kinds else None), source_end_kinds=end_kinds,
                     linguistic=ling, linguistic_rule='PB-L1', conditions=cond,
                     reason=('PB-L1 مستوفاة' if ling == 'PROVEN' else 'PB-L1 غير مستوفاة: ' + '؛ '.join(
-                        f'{side}.{k_} {v_}' for side, d_ in cond.items() for k_, v_ in d_.items() if not v_.startswith('MET'))))
+                        f'{side}.{k_} {v_}' for side in ('start', 'end') for k_, v_ in cond[side].items() if not v_.startswith('MET'))))
     obls.append(dict(kind='BOUNDARY', rule='PC-R4', id='paragraph#boundary', required=True,
                      status='MET' if ling == 'PROVEN' else 'DEFERRED', reason=boundary['reason']))
     st, reasons = paragraph_status(obls)
@@ -3470,6 +3523,9 @@ PARAGRAPH_CHECKS = {
     'PX10_BOUNDARY': 'حدّ المصدر مستقلٌّ عن الحدّ اللغوي، وكلٌّ معاد الحساب',
     'PX11_REFERENCES': 'الإحالات اللازمة من السجلات موجودة',
     'PX12_FINGERPRINT': 'سلامة البصمة (تكاملٌ لا صحة دلالية)',
+    'PX13_COMPONENT_VERDICTS': 'أحكام المكوّنات بالمستويات هي أحكام شهاداتها',
+    'PX14_PREMISES': 'مقدّمات الرابط هي مقدّمات دليل الحدّ (صدق المقدّمات ضمن النطاق)',
+    'PX15_DUPLICATES': 'لا التزامٌ ولا إحالةٌ ولا رابطٌ مكرّر (يُفحص قبل التحويل إلى قواميس)',
 }
 
 
@@ -3524,18 +3580,39 @@ def check_paragraph(pc, LT, certs=None, records=None):
             err.append('PX10_BOUNDARY: حدّ مصدرٍ «بداية السورة» لا يوافق الموضع')
         if bool(b.get('source_end')) != ('SURA_END' in source_boundary_kinds(last, all_last)):
             err.append('PX10_BOUNDARY: حدّ مصدرٍ «آخر السورة» لا يوافق آخر كلمةٍ في السورة')
+        # لا يُوثق بـ«MET» المكتوبة في الشهادة (§٩): تُعاد الشروط من أدلّتها (المواقع، والجمل المجاورة، ومرشّحو الإحالات المعادون)
+        refs_src = (_references([byJ[i] for i in ids], records) if records is not None else pc.get('references') or [])
+        exp_c = pb_conditions([byJ[i] for i in ids], allJ, refs_src)
         conds = b.get('conditions') or {}
-        exp_ling = 'PROVEN' if conds and all(str(v_).startswith('MET') for d_ in conds.values() for v_ in d_.values()) else 'NOT_PROVEN'
-        if b.get('linguistic') != exp_ling or any('NOT_CHECKED' in str(v_) for d_ in conds.values() for v_ in d_.values()) and \
-                b.get('linguistic') == 'PROVEN':
-            err.append('PX10_BOUNDARY: الحدّ اللغوي لا يُعاد حسابه من شروط PB-L1 (حدّ المصدر ليس حدّاً لغوياً)')
+        for side in ('start', 'end'):
+            for k_ in ('a', 'b', 'c'):
+                if (conds.get(side) or {}).get(k_) != (exp_c.get(side) or {}).get(k_):
+                    err.append(f'PX10_BOUNDARY: شرط PB-L1 {side}.{k_} مكتوبٌ «{(conds.get(side) or {}).get(k_)}» '
+                               f'والمعاد من أدلّته «{(exp_c.get(side) or {}).get(k_)}»')
+        exp_ling = 'PROVEN' if exp_c and all(v_.startswith('MET') for side in ('start', 'end') for v_ in exp_c[side].values()) else 'NOT_PROVEN'
+        if b.get('linguistic') != exp_ling:
+            err.append(f"PX10_BOUNDARY: الحدّ اللغوي {b.get('linguistic')} والمعاد من أدلّة PB-L1 {exp_ling}")
+    for what, xs, key in (('التزام', pc.get('obligations') or [], lambda o: (o.get('kind'), o.get('id'))),
+                          ('إحالة', pc.get('references') or [], lambda x: x.get('ref_id')),
+                          ('رابط', pc.get('links') or [], lambda k: k.get('link_id'))):
+        ks = [key(x) for x in xs]
+        dup = sorted({str(k_) for k_ in ks if ks.count(k_) > 1})
+        if dup:
+            err.append(f'PX15_DUPLICATES: {what} مكرّر: ' + '، '.join(dup))
+    for k in links:
+        if k.get('src') in byJ and k.get('dst') in byJ and k.get('premises') != _link_from_boundary(byJ[k['src']], byJ[k['dst']])['premises']:
+            err.append(f"PX14_PREMISES: {k['link_id']}: مقدّماتٌ لا تطابق دليل الحدّ")
     st, _ = paragraph_status(pc.get('obligations') or [])
     if pc.get('status') != 'PARAGRAPH_CANDIDATE_' + st:
         err.append(f"PX08_VERDICT: الحكم {pc.get('status')} والالتزامات تقتضي {st}")
     if certs is not None and records is not None and ids and all(i in byJ for i in ids):
         exp = _paragraph([byJ[i] for i in ids], LT, certs, records, allJ, competing=pc.get('competing_groupings'))
         eo = {(o['kind'], o['id']): o for o in exp['obligations']}
-        go = {(o['kind'], o['id']): o for o in pc.get('obligations') or []}
+        go = {}
+        for o in pc.get('obligations') or []:
+            if (o['kind'], o['id']) in go and go[(o['kind'], o['id'])] != o:
+                err.append(f"PX06_OBLIGATIONS_GENERATED: التزامٌ مكرّر بحالتين مختلفتين: {o['kind']}:{o['id']}")
+            go.setdefault((o['kind'], o['id']), o)
         if set(eo) - set(go):
             err.append('PX06_OBLIGATIONS_GENERATED: التزاماتٌ تولّدها القواعد غائبة: ' + '، '.join(f'{k}:{i}' for k, i in sorted(set(eo) - set(go))))
         if set(go) - set(eo):
@@ -3543,10 +3620,19 @@ def check_paragraph(pc, LT, certs=None, records=None):
         for k_ in set(eo) & set(go):
             if eo[k_]['status'] != go[k_]['status'] or eo[k_]['required'] != go[k_]['required']:
                 err.append(f'PX07_OBLIGATION_STATUS: {k_[0]}:{k_[1]} الحالة {go[k_]["status"]} والمعاد حسابه {eo[k_]["status"]}')
-        er = {x['ref_id'] for x in exp['references']}
-        gr = {x['ref_id'] for x in pc.get('references') or []}
-        if er - gr:
-            err.append('PX11_REFERENCES: إحالاتٌ لازمة غائبة: ' + '، '.join(sorted(er - gr)))
+        er = {x['ref_id']: x for x in exp['references']}
+        gr = {x['ref_id']: x for x in pc.get('references') or []}
+        if set(er) - set(gr):
+            err.append('PX11_REFERENCES: إحالاتٌ لازمة غائبة: ' + '، '.join(sorted(set(er) - set(gr))))
+        if set(gr) - set(er):
+            err.append('PX11_REFERENCES: إحالاتٌ زائدة لا تولّدها السجلات داخل المدى: ' + '، '.join(sorted(set(gr) - set(er))))
+        for k_ in set(er) & set(gr):
+            if _pc_fingerprint(er[k_]) != _pc_fingerprint(gr[k_]):
+                err.append(f'PX11_REFERENCES: محتوى الإحالة {k_} لا يطابق المعاد من السجلات')
+        cv = {c_['sentence']: c_.get('verdict_by_level') for c_ in certs}
+        for c in pc.get('components') or []:
+            if c.get('verdict_by_level') != cv.get(c['sentence']) or c.get('local') != (cv.get(c['sentence']) or {}).get('LOCAL_PREDICATION'):
+                err.append(f"PX13_COMPONENT_VERDICTS: أحكام {c['sentence']} ليست أحكام شهادتها")
         ef = {c['sentence']: c['faces'] for c in exp['components']}
         for c in pc.get('components') or []:
             if c.get('faces') != ef.get(c['sentence']):

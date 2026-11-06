@@ -12,6 +12,23 @@ import collections, gzip, json, os, sys
 from concurrent.futures import ProcessPoolExecutor
 
 
+def _h(x):
+    import hashlib
+    def canon(v, d=0):
+        if d > 30:
+            return '…'
+        if isinstance(v, dict):
+            return {str(k): canon(w, d + 1) for k, w in sorted(v.items(), key=lambda kv: str(kv[0]))}
+        if isinstance(v, (list, tuple)):
+            return [canon(w, d + 1) for w in v]
+        if isinstance(v, (set, frozenset)):
+            return sorted(repr(canon(w, d + 1)) for w in v)
+        if isinstance(v, (str, int, float, bool)) or v is None:
+            return v
+        return type(v).__name__
+    return hashlib.sha256(json.dumps(canon(x), ensure_ascii=False, sort_keys=True).encode()).hexdigest()[:12]
+
+
 def _work(args):
     root, s, items = args
     sys.path.insert(0, root)
@@ -42,15 +59,18 @@ def _work(args):
         sents.append(dict(key=f'{min(L)}..{max(L)}' if L else J.id, verdict=c['verdict'], by_level=c.get('verdict_by_level'),
                           boundary_rule=(c.get('boundary') or {}).get('rule_id'), source_kinds=(c.get('boundary') or {}).get('source_kinds'),
                           internal_deferred=bool(J.O.get('deferred_boundaries')),
+                          h=_h(c),
                           obligations=[dict(key=f"{o.get('owner')}|{o['name']}", status=o['status'], face_id=o.get('face_id'),
-                                            kind=o.get('requirement_kind')) for o in c['obligations']]))
-    rels = [dict(id=r['relation_id'], type=r['type'], status=r['status']) for r in recs]
+                                            kind=o.get('requirement_kind'), h=_h(o), residual=str(o.get('residual_reason') or '')[:200])
+                                       for o in c['obligations']]))
+    rels = [dict(id=r['relation_id'], type=r['type'], status=r['status'], h=_h(r), reason=str(r.get('reason') or '')[:200]) for r in recs]
     para = None
     if hasattr(AL, 'paragraph_candidates'):
         pcs = AL.paragraph_candidates(LT, certs, recs)
         para = [dict(id=p['paragraph_id'], status=p['status'], n_comp=len(p['components']), n_obl=len(p['obligations']),
                      kinds=dict(collections.Counter(f"{o['kind']}:{o['status']}" for o in p['obligations'])),
-                     boundary=p['boundary'].get('linguistic'), check=AL.check_paragraph(p, LT, certs, recs)) for p in pcs]
+                     boundary=p['boundary'].get('linguistic'), conditions=p['boundary'].get('conditions'), h=_h(p),
+                     check=AL.check_paragraph(p, LT, certs, recs)) for p in pcs]
     elif hasattr(AL, 'paragraph_candidate'):
         p = AL.paragraph_candidate(LT, certs, recs)
         para = [dict(id=p['paragraph_id'], status=p['status'], n_comp=len(p['components']), n_obl=len(p['obligations']),
@@ -98,18 +118,27 @@ def cmp(a, b, out):
             x, y = (oa.get(k) or {}).get('status'), (ob.get(k) or {}).get('status')
             if x != y:
                 trans[f'obligation:{x}→{y}'] += 1
-                if len(ex[f'obligation:{x}→{y}']) < 12:
-                    ex[f'obligation:{x}→{y}'].append(f'{s}|{k}')
+                ex[f'obligation:{x}→{y}'].append(dict(key=f'{s}|{k}', before=oa.get(k), after=ob.get(k)))
+            elif x is not None and oa[k].get('h') and ob[k].get('h') and oa[k]['h'] != ob[k]['h']:
+                trans[f'obligation_content:{x}'] += 1
+                ex[f'obligation_content:{x}'].append(dict(key=f'{s}|{k}', before=oa.get(k), after=ob.get(k)))
         ra = {r['id']: r for r in A[s]['relations']}
         rb = {r['id']: r for r in B[s]['relations']}
         for k in set(ra) | set(rb):
             x, y = (ra.get(k) or {}).get('status'), (rb.get(k) or {}).get('status')
+            t = (ra.get(k) or rb.get(k))['type']
             if x != y:
-                t = (ra.get(k) or rb.get(k))['type']
                 trans[f'relation:{t}:{x}→{y}'] += 1
-                if len(ex[f'relation:{t}:{x}→{y}']) < 50:
-                    ex[f'relation:{t}:{x}→{y}'].append(k)
+                ex[f'relation:{t}:{x}→{y}'].append(dict(key=k, before=ra.get(k), after=rb.get(k)))
+            elif x is not None and ra[k].get('h') and rb[k].get('h') and ra[k]['h'] != rb[k]['h']:
+                trans[f'relation_content:{t}:{x}'] += 1
+                ex[f'relation_content:{t}:{x}'].append(dict(key=k, before=ra.get(k), after=rb.get(k)))
+        pa = {p['id']: p for p in A[s]['paragraphs'] or []}
         for p in B[s]['paragraphs'] or []:
+            q = pa.get(p['id'])
+            if q is not None and q.get('boundary') != p.get('boundary'):
+                trans[f"paragraph_boundary:{q.get('boundary')}→{p.get('boundary')}"] += 1
+                ex[f"paragraph_boundary:{q.get('boundary')}→{p.get('boundary')}"].append(p['id'])
             rep['para_new'] += 1
             rep['para_new_' + p['status']] += 1
             rep['para_check_errors'] += len(p['check'])
