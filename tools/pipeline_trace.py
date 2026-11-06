@@ -59,6 +59,13 @@ h = lambda x, quote=True: html.escape('—' if x is None else x if isinstance(x,
 SECTIONS = []          # (رقم، عنوان، شرح، html، نصّ للطرفية)
 
 
+# أدلّة المنبع (اختيارية): ملفّ tools/upstream_candidates.py إن عُيّن SARF_UP_EVIDENCE؛ وبغيابه لا يتغيّر شيءٌ في الصفحة
+UP_EV = None
+if os.environ.get('SARF_UP_EVIDENCE'):
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__))))
+    from upstream_candidates import load_evidence as _load_ev
+    UP_EV = _load_ev(os.environ['SARF_UP_EVIDENCE'])
+
 def section(no, title, doc, rows, head, text_lines):
     """rows: قائمة صفوف (خلايا نصية)"""
     t = ['<div class="wrap"><table><tr>' + ''.join(f'<th>{h(x)}</th>' for x in head) + '</tr>']
@@ -497,7 +504,7 @@ for SP in LT:
                     REL_CACHE[(s_, v_)] = verse_relations(pv_['a'], pv_['units'], pv_['F'], f'{s_}:{v_}', legacy_cond=COND, legacy_rel=RELS)
                 recs_ += REL_CACHE[(s_, v_)]['records']
             from sarf.algebra import closure_certificate
-            cert_ = closure_certificate(J, recs_)
+            cert_ = closure_certificate(J, recs_, upstream=UP_EV)
             CERTS.append(cert_)
             un_ = [f"{x['rule']} {x['status']} ({x['kind']})" for x in cert_['residuals']]
             # الشهادة كاملةً بلا بتر (مراجعة 038): الملخّص من رموز حالات الالتزامات نفسها، والسجلّ الكامل في عنصرٍ قابلٍ للطيّ
@@ -512,7 +519,9 @@ for SP in LT:
                         (f"؛ خريطة الأوجه: {fm_}" if fm_ else '') +
                         (f"؛ الدليل: {o_['discharge_evidence_id']}" if o_.get('discharge_evidence_id') else '') +
                         (f"؛ الباقي: {o_['residual_reason']}" if o_['residual_reason'] else '') +
-                        (f"؛ القياس: {o_['measure']}" if o_.get('measure') else ''))
+                        (f"؛ القياس: {o_['measure']}" if o_.get('measure') else '') +
+                        ('؛ أدلّةٌ خارجية (لا تستوفي ولا تغلق وجهاً): ' + '، '.join(f"{e['id']} [{e['rank']}]" for e in o_['external_evidence'])
+                         if o_.get('external_evidence') else ''))
             bd_ = cert_['boundary']
             from sarf.algebra import CLOSURE_LEVELS, CLOSURE_LEVEL_AR, CLOSURE_AR as CA_
             lv_ = '؛ '.join(f"{CLOSURE_LEVEL_AR[lv]}: {CA_[cert_['verdict_by_level'][lv]]} (الحدّ {bd_['levels'][lv]})" for lv in CLOSURE_LEVELS)

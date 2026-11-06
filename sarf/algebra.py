@@ -2721,7 +2721,7 @@ def _face_cover(faces, rels):
             for f in faces]
 
 
-def closure_certificate(J, records):
+def closure_certificate(J, records, upstream=None):
     """→ dict: الجملة ومداها، ودليل حدّها، والتزاماتها بسجلّاتها (obligations)، وعناصر 14أ المؤجَّلة داخل المدى مصنَّفةً (residuals)،
     والأوجه الممنوعة بمانعها، والحكم (verdict) من CLOSURE_AR. records: سجلات 14أ لآيات مدى الجملة"""
     span = {f'{s_}:{v_}:{w_ + 1}' for (s_, v_, w_) in J.O.get('location', [])}
@@ -2936,6 +2936,10 @@ def closure_certificate(J, records):
             rec['measure'] = ('تغطية الأدوار المحلية: لكل وقوعٍ دورٌ في علاقةٍ مرخَّصة؛ ولا يشهد هذا باتصال الوحدة بالبنية الأعلى '
                               'ولا باكتمال الجملة وحدّها')
         rec['met'] = rec['status'] in ('MET', 'MET_IN_ALL_FACES')
+        # أدلّة المنبع (UPSTREAM) في نظام الأدلّة نفسه، برتبتها: تُعرض بجانب الالتزام ولا تستوفيه، ولا تغلق وجهاً، ولا تُعدّ CONDITIONS_MET
+        # (حكم المالك، 6 نوفمبر). تُلحق بعد تعيين الحالة، فلا يمكن أن تؤثّر فيها
+        rec['external_evidence'] = [dict(e, discharges_obligation=False, closes_face=False, conditions_met=False)
+                                    for u_ in (o.units or []) for e in ((upstream or {}).get(u_) or [])] or None
         rec['source'] = '14أ' if rec['met'] and rec.get('discharge_relation_id') else ('الطبقة القديمة' if rec['met'] else None)
         rec['note'] = rec['residual_reason']
         rec['status_ar'] = ('دورٌ محلي مرخَّص لكل وقوع' if kind == 'PLACEMENT' and rec['status'] == 'MET' else
@@ -3005,5 +3009,6 @@ def closure_certificate(J, records):
                                                      source=source_boundary,
                                                      evidence=(bnd.get('J_why') or bnd.get('category')) if local_src else None),
                 obligations=obls, residuals=residuals, relation_open=residuals, rejected_faces=rejected,
+                external_evidence_ids=sorted({e['id'] for o_ in obls for e in (o_.get('external_evidence') or [])}) or None,
                 verdict=verdict, verdict_ar=CLOSURE_AR[verdict], verdict_level=verdict_level,
                 verdict_level_ar=CLOSURE_LEVEL_AR[verdict_level], verdict_by_level=verdict_by_level)

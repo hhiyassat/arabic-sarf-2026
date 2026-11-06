@@ -90,10 +90,10 @@ check('U09 جذرٌ بحروفٍ مبعثرة (رسك) لا يسترجع «كس�
 check('U09b لا يُستعمل المسار الاحتياطي في for_root (حروف الجذر في الفعل): العامل لا يستدعيه',
       'for_root' not in open(os.path.join(ROOT, 'tools', 'upstream', 'worker.py'), encoding='utf-8').read().split('def main')[1])
 # ٨ مصدر OCR بلا رابطٍ صالح: حالاتٌ مسمّاة منفصلة
-lx = R['كسر']['root_meaning']['lexicons']
-check('U10 معنى الجذر: غياب ملفّ المعجم (LEXICON_FILE_MISSING) غير غياب السجلّ وغير غياب الجذر من البنك؛ والرتبة مرشّحة',
-      R['كسر']['root_meaning'].get('rank') == 'CANDIDATE' and lx and all(x.get('error') in (None, 'LEXICON_FILE_MISSING', 'RECORD_NOT_FOUND') for x in lx)
-      and client.call([], ['ققق'], P)['root']['ققق']['root_meaning'].get('error') == 'ROOT_NOT_IN_BANK', [x.get('error') for x in lx][:3])
+check('U10 معنى الجذر: لا يُستدعى root_meaning (حكم المالك بالاكتفاء بمقاييس ابن فارس)، وحالته مسمّاة؛ والمقاييس شاهدٌ مرشّح، '
+      'وغياب الجذر منها حالةٌ مسمّاة غير «لا نتائج»', str(R['كسر']['root_meaning'].get('error', '')).startswith('NOT_USED') and
+      R['كسر']['maqayis']['status'] == 'FOUND' and client.call([], ['ققق'], P)['root']['ققق']['maqayis']['status'] == 'ROOT_NOT_IN_MAQAYIS',
+      R['كسر']['root_meaning'])
 # ٩ اختلاف المصدر المطلوب عن الفعلي
 bad = dict(os.environ, SARF_UP_AMLN='/nonexistent/amln')
 q = subprocess.run([sys.executable, '-s', '-c', 'import sys; sys.path.insert(0,"tools/upstream"); import client; client.paths()'],
@@ -103,7 +103,8 @@ q2 = subprocess.run([sys.executable, '-s', '-c', 'from sarf.root import hfn; hfn
 check('U11 المسار الصريح غير الموجود يُعلن ولا يُستبدل به غيره (موارد الإضافة، وSARF_HFN)',
       q.returncode != 0 and 'SARF_UP_AMLN' in q.stderr and q2.returncode != 0 and 'لا رجوع صامت' in q2.stderr, (q.stderr[-200:], q2.stderr[-200:]))
 check('U11b المصدر الفعلي مسجَّلٌ بالتزامه: الالتزامات المثبّتة في الملحق',
-      {k: (S['provenance'][k]['commit'] or '')[:7] for k in S['provenance']} == dict(amln='1cadaa3', wazn='b8a4672', hfn='41dbbeb', maq='6c2c58f'),
+      {k: (S['provenance'][k]['commit'] or '')[:7] for k in S['provenance'] if k != 'hfn37'} == dict(amln='1cadaa3', wazn='b8a4672', hfn='41dbbeb', maq='6c2c58f')
+      and (S['provenance'].get('hfn37') or {}).get('commit', 'a4cac9a')[:7] == 'a4cac9a',
       {k: S['provenance'][k]['commit'] for k in S['provenance']})
 # ١٠ تصادم أسماء الاستيراد، والكتابة في الموارد
 before = set(sys.modules)
@@ -120,6 +121,64 @@ a1 = verse_records(2, 282)
 client.call([dict(lemma='كَتَبَ')], ['كتب'], P)
 a2 = verse_records(2, 282)
 check('U14 المخرجات القديمة مستقلةٌ عن الإضافة: سجلات 2:282 قبل استدعاء الموارد وبعده متطابقة', a1 == a2)
+
+# ---------- حكم المالك (6 نوفمبر): أدلّة المنبع في نظام الأدلّة، والسكون وحده مستبعد ----------
+import re as _re
+from upstream_candidates import load_evidence, feature_rows
+EVD = load_evidence(OUT)
+allev = [e for v in EVD.values() for e in v]
+check('E01 كل دليل منبعٍ بمعرّف UPSTREAM:{الوقوع}:{feature}:{route}:{commit}، ورتبته «دليل خارجي مقيس» أو «شاهد OCR غير محقّق» (لمعنى الجذر وحده)',
+      allev and all(_re.fullmatch(r'UPSTREAM:Q\d+:\d+\.w\d+\.u\d+:[a-z_0-9]+:[A-Z_0-9+]+:[0-9a-f]{7}', e['id']) for e in allev) and
+      all((e['rank'] == 'شاهد OCR غير محقّق') == (e['feature'] == 'root_meaning') and e['rank'] in ('دليل خارجي مقيس', 'شاهد OCR غير محقّق')
+          for e in allev), [e['id'] for e in allev if not _re.fullmatch(r'UPSTREAM:Q\d+:\d+\.w\d+\.u\d+:[a-z_0-9]+:[A-Z_0-9+]+:[0-9a-f]{7}', e['id'])][:3])
+import test_closure_helpers as TH
+from sarf.algebra import closure_certificate
+
+
+def certs(s, v, ev):
+    import json as _j
+    from sarf.catalog import Catalog
+    from sarf.analyze import analyze
+    from sarf.algebra import Trace, sentence_geo, linguistic_layer
+    from sarf.features import unit_features
+    from sarf import relations as RL, quran_source
+    CAT = Catalog([os.path.join(ROOT, 'operators_catalog.jsonl'), os.path.join(ROOT, 'operators_catalog_split_vocalized.csv')])
+    text = next(t for s_, v_, t in quran_source.rows() if (s_, v_) == (s, v))
+    a = analyze(CAT, text, quran_source.uthmani_mode())
+    S_, U_ = sentence_geo(a, f'Q{s}:{v}', Trace())
+    C_, R_ = [], []
+    LT, _, _ = linguistic_layer([(s, v, a, U_, S_)], Trace(), 'e', cond_out=C_, rel_out=R_)
+    o = RL.verse_relations(a, U_, unit_features(a, U_), f'{s}:{v}', legacy_cond=C_, legacy_rel=R_)
+    Js = [J for SP in LT for D in SP.A + SP.O.get('pending', []) for J in D.A + D.O.get('pending', [])]
+    return [closure_certificate(J, o['records'], upstream=ev) for J in Js], [closure_certificate(J, o['records']) for J in Js]
+
+
+c1, c0 = certs(2, 282, EVD)
+st1 = [(o_['obligation_id'], o_['status'], o_['satisfied_by'], o_['discharge_evidence_id']) for c in c1 for o_ in c['obligations']]
+st0 = [(o_['obligation_id'], o_['status'], o_['satisfied_by'], o_['discharge_evidence_id']) for c in c0 for o_ in c['obligations']]
+withev = [o_ for c in c1 for o_ in c['obligations'] if o_.get('external_evidence')]
+check('E02 أدلّة المنبع لا تستوفي التزاماً ولا تغيّر حكماً: حالات الالتزامات واستيفاؤها وأحكام 2:282 بالأدلّة وبدونها متطابقة',
+      withev and st1 == st0 and [c['verdict_by_level'] for c in c1] == [c['verdict_by_level'] for c in c0], len(withev))
+check('E03 لا دليل منبعٍ في satisfied_by ولا معرّفَ استيفاء، ولا يُغلق به وجه، ولا يُعدّ CONDITIONS_MET',
+      not any(str(x.get('id') or x.get('relation') or '').startswith('UPSTREAM:') for c in c1 for o_ in c['obligations'] for x in (o_['satisfied_by'] or []))
+      and not any(str(o_['discharge_evidence_id'] or '').startswith('UPSTREAM:') for c in c1 for o_ in c['obligations']) and
+      all(not e['discharges_obligation'] and not e['closes_face'] and not e['conditions_met'] for o_ in withev for e in o_['external_evidence']))
+# إفساد: دليلٌ يدّعي أنه يستوفي ويغلق ويستوفي الشروط — الشهادة تُسقط الادّعاء ولا تتغيّر حالةٌ
+bad = {u: [dict(e, discharges_obligation=True, closes_face=True, conditions_met=True, rank='إثبات') for e in v] for u, v in EVD.items()}
+c2, _ = certs(2, 282, bad)
+st2 = [(o_['obligation_id'], o_['status'], o_['satisfied_by'], o_['discharge_evidence_id']) for c in c2 for o_ in c['obligations']]
+check('E04 إفساد: دليلٌ خارجي يدّعي الاستيفاء والإغلاق وCONDITIONS_MET لا يغيّر حالة التزام، والشهادة تكتب ادّعاءه باطلاً (False)',
+      st2 == st0 and all(not e['discharges_obligation'] and not e['closes_face'] and not e['conditions_met']
+                         for c in c2 for o_ in c['obligations'] for e in (o_.get('external_evidence') or [])))
+# السكون وحده: مستبعدٌ بسببه
+fr_ = dict(root='كسر', hfn_events=[dict(event_id='E1', verb='انْكَسَرَ')], unit='U')
+W_ = dict(ahdath=[], jiha=[], mutawaa=[], mutawaa_base=[], taadiya_T_JAL=[], hfn_v37=None,
+          transitivity_wasit=[dict(event_id='E1', root='كسر', verb='انكَسَرَ', form='انْفَعَلَ', hfn_transitivity='لازم', transitivity_wasit='لازم',
+                                   harf='', evidence='', match='SUKUN_ONLY_DIFFERENCE')])
+res_ = dict(provenance=dict(amln=dict(commit='x'), wazn=dict(commit='y'), hfn37=dict(commit='z')), resources={})
+k_, d_ = feature_rows(fr_, 'انْكَسَرَ', W_, res_)
+check('E05 المطابقة التي لا تختلف إلا في السكون تبقى مستبعدةً مع سببها (حكم المالك)',
+      not k_ and d_ and d_[0]['match_status'] == 'SUKUN_ONLY_DIFFERENCE' and 'السكون' in d_[0]['exclusion_reason'], (k_, d_))
 
 print('ALL OK' if not FAIL else f'FAILED {len(FAIL)}: {FAIL}')
 sys.exit(1 if FAIL else 0)

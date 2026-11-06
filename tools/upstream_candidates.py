@@ -45,6 +45,12 @@ ROUTES = {
                                 wilson_low=wilson(53, 57), wilson_source='recomputed from 53/57', sanad='الكليات:27626–27627'),
     ('WAZN', 'T_JAL'): dict(status='ACCEPTED_ROUTE', measurement_id='AMLN:ahdath T_JAL 25/25', precision=1.0, wilson_low=wilson(25, 25),
                             wilson_source='recomputed from 25/25', sanad='الكتاب:16451–16455'),
+    ('HFN37', 'MASDAR_WASIT_V37'): dict(status='ACCEPTED_ROUTE', measurement_id='HFN:06_handoff/MASDAR_WASIT_PROPOSE_sample60_judged.tsv',
+                                        precision=round(53 / 59, 3), wilson_low=wilson(53, 59), wilson_source='recomputed from 53/59 (handoff)',
+                                        sanad='المعجم الوسيط (M11)؛ إضافةٌ لا استبدال'),
+    ('HFN37', 'TRANSITIVITY_WASIT_V37'): dict(status='ACCEPTED_ROUTE', measurement_id='WAZN:evidence/transitivity_wasit_sample60_judged.tsv (مصدر FILL)',
+                                              precision=1.0, wilson_low=wilson(44, 44), wilson_source='recomputed from 44/44',
+                                              sanad='المعجم الوسيط (M11)'),
     ('WAZN', 'TRANSITIVITY_WASIT_V1'): dict(status='ACCEPTED_ROUTE', measurement_id='WAZN:evidence/transitivity_wasit_sample60_judged.tsv',
                                             precision=1.0, wilson_low=wilson(44, 44), wilson_source='recomputed from 44/44 (handoff)',
                                             sanad='المعجم الوسيط (M11)'),
@@ -57,7 +63,39 @@ BLOCKED = {
     ('WAZN', 'TRANSITIVITY_WASIT_V3'): 'ويلسون 0.746 (OCR)', ('WAZN', 'MUTAWAA:BASE_UNRESOLVED'): 'أصلٌ غير محسوم',
     ('HFN', 'v37_side_files'): 'غير معتمدة؛ لا تُستهلك في هذه الدفعة',
 }
-ATTACH = ('EXACT_VOCALIZED_MATCH', 'SUKUN_ONLY_DIFFERENCE')   # يُرفق بالمرشّح؛ وما سواهما يُستبعد بسببه
+# يُرفق بالمرشّح المطابقُ التامّ وحده؛ وفرق السكون وحده يبقى مستبعداً بسببه (حكم المالك، 6 نوفمبر)
+ATTACH = ('EXACT_VOCALIZED_MATCH',)
+EXCLUDE_REASON = {'SUKUN_ONLY_DIFFERENCE': 'فرقٌ في السكون وحده: مستبعدٌ بحكم المالك (6 نوفمبر)',
+                  'VOCALIZATION_MISMATCH': 'حروفٌ واحدة وتشكيلٌ مختلف (والشدّة منه)', 'LETTERS_DIFFER': 'حروفٌ مختلفة (ومنها كرسيّ الهمزة)'}
+FEATURE = {('AMLN', 'R1'): 'ahdath_effect', ('AMLN', 'R1W'): 'ahdath_effect', ('AMLN', 'T_JAL'): 'ahdath_effect',
+           ('AMLN', 'J_SAJIYYA'): 'fail_jiha', ('AMLN', 'J_DAA'): 'fail_jiha', ('WAZN', 'T_JAL'): 'taadiya',
+           ('WAZN', 'TRANSITIVITY_WASIT_V1'): 'transitivity_wasit', ('HFN37', 'MASDAR_WASIT_V37'): 'hfn_v37_masdar',
+           ('HFN37', 'TRANSITIVITY_WASIT_V37'): 'hfn_v37_transitivity'}
+RANK_MEASURED = ('EXTERNAL_MEASURED', 'دليل خارجي مقيس')
+RANK_OCR = ('OCR_UNVERIFIED_WITNESS', 'شاهد OCR غير محقّق')
+
+
+def evidence_records(fr, feats, rm, prov):
+    """سمات المنبع في نظام الأدلّة (مراجعة 036): معرّف UPSTREAM:{الوقوع}:{feature}:{route}:{commit}، ورتبة؛ ولا يُستوفى بها التزام،
+    ولا يُغلق بها وجه، ولا تُعدّ CONDITIONS_MET"""
+    out = []
+    for x in feats:
+        com = (x['repository_commit_or_dataset_version'] or '')[:7]
+        out.append(dict(id=f"UPSTREAM:{fr['unit']}:{x['feature']}:{x['route_id']}:{com}", unit=fr['unit'], feature=x['feature'],
+                        route=x['route_id'], provider=x['provider'], commit=com, rank=RANK_MEASURED[1], rank_code=RANK_MEASURED[0],
+                        value=x.get('value') or x.get('effect') or x.get('pair') or x.get('jiha') or x.get('masdar'),
+                        measurement_id=x['measurement_id'], wilson_low=x['wilson_low'], match_status=x['match_status'],
+                        discharges_obligation=False, closes_face=False, conditions_met=False))
+    mq = (rm or {}).get('maqayis') or {}
+    if mq.get('status') == 'FOUND':
+        com = (prov.get('maq', {}).get('commit') or '')[:7]
+        out.append(dict(id=f"UPSTREAM:{fr['unit']}:root_meaning:MAQAYIS_FALLBACK:{com}", unit=fr['unit'], feature='root_meaning',
+                        route='MAQAYIS_FALLBACK', provider='MAQAYIS', commit=com, rank=RANK_OCR[1], rank_code=RANK_OCR[0],
+                        value=dict(retrieval_key=mq['retrieval_key'], records=[dict(id=r['id'], display=r['display'], axes=r['semantic_axes'])
+                                                                              for r in mq['records']]),
+                        note='معنى الجذر ليس المعنى المختار في السياق؛ والنصّ OCR غير محقّق', discharges_obligation=False,
+                        closes_face=False, conditions_met=False))
+    return out
 
 
 def frames(items):
@@ -121,12 +159,13 @@ def feature_rows(fr, lem, W, res):
 
     def base(provider, route, row_id, file_key, form, src_ref, match, scope, extra):
         meta = ROUTES.get((provider, route))
-        return dict(provider=provider, repository_commit_or_dataset_version=P['amln' if provider == 'AMLN' else 'wazn']['commit'],
+        return dict(provider=provider, repository_commit_or_dataset_version=P[{'AMLN': 'amln', 'WAZN': 'wazn', 'HFN37': 'hfn37'}[provider]]['commit'],
                     file_hash=(rs.get(file_key) or {}).get('file_hash'), file=file_key, row_or_entry_id=row_id, route_id=route,
                     vocalized_lemma=lem, root=fr['root'], pattern_or_form=form, source_reference=src_ref,
                     measurement_id=(meta or {}).get('measurement_id'), wilson_low=(meta or {}).get('wilson_low'),
                     route_status=(meta or {}).get('status', 'UNREGISTERED'), owner_status='CANDIDATE_PENDING_OWNER',
-                    match_status=match, consumer_scope=scope, **extra)
+                    match_status=match, consumer_scope=scope, feature=FEATURE.get((provider, route)) or extra.pop('feature', None),
+                    exclusion_reason=None if match in ATTACH else EXCLUDE_REASON.get(match, match), **extra)
 
     if isinstance(W['ahdath'], list):
         for x in W['ahdath']:
@@ -154,7 +193,7 @@ def feature_rows(fr, lem, W, res):
                            x['base_form'] if side == 'base' else x['mutawaa_form'], x['evidence'] or x['lexicons'], x['match'],
                            'mutawaa (المطاوعة): ' + ('اللمّة أصلٌ لها مطاوع' if side == 'base' else 'اللمّة مطاوِعٌ لأصل'),
                            dict(pair=dict(base=x['base'], base_form=x['base_form'], mutawaa=x['mutawaa'], mutawaa_form=x['mutawaa_form'],
-                                          athar=x['athar']), lemma_side=side, upstream_verb=x['base'] if side == 'base' else x['mutawaa']))
+                                          athar=x['athar']), lemma_side=side, feature='mutawaa' if side == 'base' else 'mutawaa_base', upstream_verb=x['base'] if side == 'base' else x['mutawaa']))
                 if unresolved:
                     row['route_status'] = 'BLOCKED: BASE_UNRESOLVED'
                     drop.append(row)
@@ -189,7 +228,27 @@ def feature_rows(fr, lem, W, res):
                 drop.append(row)
             else:
                 (keep if x['match'] in ATTACH else drop).append(row)
+    if isinstance(W.get('hfn_v37'), list):
+        for x in W['hfn_v37']:
+            for fld, route in (('masdar_wasit_v37', 'MASDAR_WASIT_V37'), ('transitivity_wasit_v37', 'TRANSITIVITY_WASIT_V37')):
+                if not x.get(fld):
+                    continue
+                row = base('HFN37', route, x['event_id'], 'HFN37:release_v37/events.csv', x['form'], 'HFN release_v37 (HFN-D059): ' + fld,
+                           x['match'], 'hfn_v37 (إضافة v37 سمةً جديدة): لا تحلّ محلّ قيمة v36 ولا تدخل قرارها',
+                           dict(value=x[fld], upstream_event_id=x['event_id'], upstream_verb=x['verb'],
+                                event_id_agrees=x['event_id'] in {e['event_id'] for e in fr['hfn_events']}))
+                (keep if x['match'] in ATTACH else drop).append(row)
     return keep, drop
+
+
+def load_evidence(path):
+    """→ {الوحدة: [سجلات أدلّة UPSTREAM]} من مخرج هذه الأداة"""
+    out = collections.defaultdict(list)
+    for l in gzip.open(path, 'rt', encoding='utf-8'):
+        r = json.loads(l)
+        if r.get('unit'):
+            out[r['unit']] += r.get('evidence') or []
+    return dict(out)
 
 
 def main():
@@ -232,10 +291,13 @@ def main():
                 S[f"excluded:{x['provider']}:{x['route_id']}:{x['match_status']}:{why_}"] += 1
             rm = res['root'].get(fr['root']) if fr['root'] and st != 'PROTECTED_NOT_QUERIED' else None
             if rm:
-                S['root_meaning:' + (rm['root_meaning'].get('error') or 'IN_BANK')] += 1
+                S['root_meaning:' + (rm['root_meaning'].get('error') or 'IN_BANK').split(':')[0]] += 1
                 S['maqayis:' + rm['maqayis']['status']] += 1
-            row = dict(fr, lemma_status=st, lemma_reason=why, upstream_candidates=dict(features=feats, excluded=drops,
-                                                                                     root_meaning=rm))
+            ev_ = evidence_records(fr, feats, rm, res['provenance'])
+            for e in ev_:
+                S[f"evidence:{e['rank_code']}:{e['feature']}"] += 1
+            row = dict(fr, lemma_status=st, lemma_reason=why, evidence=ev_,
+                       upstream_candidates=dict(features=feats, excluded=drops, root_meaning=rm))
             f.write(json.dumps(row, ensure_ascii=False) + '\n')
             if feats and len(ex['attached']) < 12:
                 ex['attached'].append(dict(verse=fr['verse'], text=fr['text'], lemma=feats[0]['vocalized_lemma'], route=feats[0]['route_id'],

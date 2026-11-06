@@ -88,7 +88,9 @@ def main():
         for r in csv.DictReader(open(R['WAZN:data/transitivity_wasit.tsv']['path'], encoding='utf-8'), delimiter='\t'):
             TW.setdefault(nfc(r['verb']), []).append(r)
     # ---------- HFN: معنى الجذر (tools/root_meaning.py) ----------
-    rm_ok = need('HFN:tools/root_meaning.py', os.path.join(P['hfn'], 'tools', 'root_meaning.py')) and \
+    # حكم المالك (6 نوفمبر): الاكتفاء بمقاييس ابن فارس لمعنى الجذر؛ فلا يُستدعى root_meaning إلا إن طُلب صراحةً
+    rm_ok = req.get('use_root_meaning', False) and \
+        need('HFN:tools/root_meaning.py', os.path.join(P['hfn'], 'tools', 'root_meaning.py')) and \
         need('HFN:02_roots/HFN_ROOTS_v3.csv', os.path.join(P['hfn'], '02_roots', 'HFN_ROOTS_v3.csv'))
     RM = None
     if rm_ok:
@@ -103,6 +105,17 @@ def main():
         except Exception as e:
             R['HFN:tools/root_meaning.py']['status'] = 'IMPORT_FAILED: ' + type(e).__name__ + ': ' + str(e)[:200]
             RM = None
+    # إضافات HFN v37 (سمةٌ جديدة لا تحلّ محلّ v36): عمودا masdar_wasit_v37 وtransitivity_wasit_v37 في events.csv
+    V37 = {}
+    if P.get('hfn37'):
+        p37 = os.path.join(P['hfn37'], 'release', 'release_v37', 'events.csv')
+        if need('HFN37:release_v37/events.csv', p37):
+            for r in csv.DictReader(open(p37, encoding='utf-8')):
+                if r.get('masdar_wasit_v37') or r.get('transitivity_wasit_v37'):
+                    V37.setdefault(nfc(r['verb']), []).append(dict(event_id=r['event_id'], verb=r['verb'], form=r['form'],
+                                                                 masdar_wasit_v37=r.get('masdar_wasit_v37') or None,
+                                                                 transitivity_wasit_v37=r.get('transitivity_wasit_v37') or None,
+                                                                 transitivity_v37=r.get('transitivity')))
     mq_path = os.path.join(P['maq'], 'output', 'maqayis_all_roots.json')
     MQ = {}
     if need('MAQ:output/maqayis_all_roots.json', mq_path):
@@ -111,7 +124,9 @@ def main():
 
     for q in req['lemmas']:
         lem = q['lemma']
-        out = dict(ahdath=None, jiha=None, mutawaa=None, mutawaa_base=None, taadiya_T_JAL=None, transitivity_wasit=None)
+        out = dict(ahdath=None, jiha=None, mutawaa=None, mutawaa_base=None, taadiya_T_JAL=None, transitivity_wasit=None, hfn_v37=None)
+        if P.get('hfn37'):
+            out['hfn_v37'] = [dict(x, match=match_status(lem, x['verb'])[0]) for k, xs in V37.items() if letters(k) == letters(lem) for x in xs]
         if AH is not None:
             out['ahdath'] = [dict(x, match=match_status(lem, x['verb'])[0], diff_pos=match_status(lem, x['verb'])[1])
                              for x in AH.for_verb(lem)]
@@ -162,7 +177,8 @@ def main():
             except Exception as e:
                 o['root_meaning'] = dict(error='CALL_FAILED: ' + type(e).__name__ + ': ' + str(e)[:200])
         else:
-            o['root_meaning'] = dict(error='RESOURCE_MISSING')
+            o['root_meaning'] = dict(error='NOT_USED: حكم المالك بالاكتفاء بمقاييس ابن فارس' if not req.get('use_root_meaning')
+                                     else 'RESOURCE_MISSING')
         if MQ:
             key = RM_K(root, RM)
             hits = [r for d, rs in MQ.items() if RM_K(d, RM) == key for r in rs]

@@ -10,6 +10,7 @@ WORKER = os.path.join(HERE, 'worker.py')
 
 # مسارات الموارد: متغيّرات بيئةٍ صريحة؛ وإن عُيّن متغيّرٌ ومساره غير موجود يُعلن ذلك ولا يُستبدل به غيره
 ENV = dict(amln='SARF_UP_AMLN', wazn='SARF_UP_WAZN', hfn='SARF_UP_HFN', maq='SARF_UP_MAQ')
+OPTIONAL = dict(hfn37='SARF_UP_HFN37')     # إضافات v37 سمةً جديدة (قراءة فقط)
 
 
 class UpstreamError(RuntimeError):
@@ -25,6 +26,12 @@ def paths():
         elif not os.path.isdir(v):
             bad.append(f'{e} يشير إلى مسارٍ غير موجود: {v}')
         out[k] = v
+    for k, e in OPTIONAL.items():
+        v = os.environ.get(e, '')
+        if v and not os.path.isdir(v):
+            bad.append(f'{e} يشير إلى مسارٍ غير موجود: {v}')
+        elif v:
+            out[k] = v
     if bad:
         raise UpstreamError('؛ '.join(bad))
     return out
