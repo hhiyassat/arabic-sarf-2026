@@ -1095,7 +1095,7 @@ def cross_ayah_links(analyze_fn, prev, nxt):
                         proven=False, rule='اسم موصول في أول الآية: قد يكون تابعاً لما قبله، وقد يكون مبتدأ'))
     # شرطٌ لا جواب له في آيته
     for f in pa['operators']:
-        if f['group'] == '7' and f.get('status') != 'blocked' and is_form(f['operator'], COND_STRICT_V):
+        if f['group'] == '7' and f.get('status') != 'blocked' and is_form(f['operator'], COND_STRICT_V) and not idha_fujaiyya(pa, f)[0]:
             after = [g for g in pa.get('agreement', []) if g['word_index'] > f['word_index']]
             later_b = any(clause_start(pa, w) for w in range(f['word_index'] + 1, n1))
             if len(after) <= 1 and not later_b:
@@ -1189,6 +1189,24 @@ def boundary_record(p, words, pos_of, bonds, obls, nuclei, du_start, mark, ayah_
                 mark=mark, ayah_end=ayah_end)
 
 
+SEP_PRON_V = ('هُوَ', 'هِيَ', 'هُمْ', 'هُمَا', 'هُنَّ', 'أَنْتَ', 'أَنْتُمْ', 'أَنْتُمَا', 'أَنَا', 'نَحْنُ', 'أَنتَ', 'أَنتُمْ')
+
+
+def idha_fujaiyya(a, f):
+    """T14-5: «إِذَا» الفجائية لا الشرطية: يليها ضميرٌ منفصل يبدأ جملةً اسمية (فَإِذَا هِيَ حَيَّةٌ، إِذَا هُمۡ يَقۡنَطُونَ).
+    السند: مغني اللبيب (إذا: الفجائية تختصّ بالجمل الاسمية). → (فجائية؟، السبب)"""
+    if not is_form(f['operator'], ('إِذَا',)):
+        return False, None
+    segs = a.get('segments') or []
+    wi = f['word_index'] + 1
+    if wi >= len(segs):
+        return False, None
+    nxt = segs[wi]['word']
+    if is_form(nxt, SEP_PRON_V) or is_form(nxt, tuple(p_.replace('\u0652', '\u06e1') for p_ in SEP_PRON_V)):
+        return True, f'«إِذَا» يليها الضمير المنفصل «{nxt}»: جملةٌ اسمية، فهي الفجائية لا الشرطية (لا جواب ولا صدارة شرط)'
+    return False, None
+
+
 def clause_start(a, wi):
     """ما يبدأ به الكلام في أول الكلمة wi وله الصدارة، فلا يعمل فيه ما قبله ولا يكون من جملةٍ قبله إلا معطوفاً:
     → (النوع، بعد حرف عطف؟) أو None. الأنواع: ناسخ، استفهام، نداء، شرط، تنبيه.
@@ -1210,7 +1228,7 @@ def clause_start(a, wi):
     for f in ops:
         if f['group'] == '2' and f.get('status') == ACCEPTED and is_form(f['operator'], SADARA_V):
             return ('ناسخ له الصدارة', conj)
-        if f['group'] in ('6', '7') and is_form(f['operator'], COND_STRICT_V):
+        if f['group'] in ('6', '7') and is_form(f['operator'], COND_STRICT_V) and not idha_fujaiyya(a, f)[0]:
             return ('شرط', conj)                      # «إِنْ» الشرطية في باب الجزم (6)، وسائر الأدوات في باب الشرط (7)
     if not toks:
         return None
@@ -2760,8 +2778,15 @@ def closure_certificate(J, records, upstream=None):
     why_b = str(bnd.get('J_why') or '')
     alts_b = [x.strip() for x in why_b.split('وما بعدها ', 1)[1].split('،') if x.strip()] if 'وما بعدها ' in why_b else []
     alts_b = [a_.replace('أو ', '').strip() for a_ in alts_b]
+    # آخر السورة يُتحقّق من المصدر نفسه (موضع الحدّ آخرُ كلمةٍ في آخر آيات السورة في المصحف المعتمد)، لا من عبارةٍ في حقل السبب
+    # (SARF_MAJOR_COMPLETION_TO_PARAGRAPH_03 §١٨): ادّعاءٌ بلا موضعٍ يوافقه لا يُرقّي الحدّ
+    loc_b = bnd.get('location')
+    sura_end_src = bool(loc_b) and len(loc_b) >= 2 and _is_sura_end(loc_b[0], loc_b[1]) and \
+        loc_b == max(J.O.get('location') or [loc_b])
+    claim_sura = str(source_boundary or '').startswith('آخر السورة')
     b_rule = 'LEGACY:sentence_boundary (sarf.algebra.sentence_boundary)' if bnd.get('J') == 'proven' and not source_boundary else \
-        ('SOURCE:sura_end' if str(source_boundary or '').startswith('آخر السورة') else None)
+        ('SOURCE:sura_end' if claim_sura and sura_end_src else None)
+    fake_sura_end = claim_sura and not sura_end_src
     b_level = ('نهاية السورة (حدُّ مصدرٍ يوافق حدّ النص)' if b_rule == 'SOURCE:sura_end' else
                'نهاية إسنادٍ محلي' if b_rule else None)
     independence = ('غير مشهود به: بعده ' + '، '.join(alts_b) + '؛ والعطف والحال يصلان ما بعدها بها، والاستئناف وحده يقطع'
@@ -3082,9 +3107,115 @@ def closure_certificate(J, records, upstream=None):
                                                      linguistic_status=(f'مثبت في مستوى الجملة: {b_level}' if boundary_proven else
                                                                         f'مثبت محلياً وحده: {b_level}' if boundary_levels['LOCAL_PREDICATION'] == 'PROVEN'
                                                                         else 'غير مثبت: ' + (stable_b or 'لا حدّ إسنادٍ محلي')),
-                                                     source=source_boundary,
+                                                     source=source_boundary, sura_end_claim_rejected=fake_sura_end or None,
                                                      evidence=(bnd.get('J_why') or bnd.get('category')) if local_src else None),
                 obligations=obls, residuals=residuals, relation_open=residuals, rejected_faces=rejected,
                 external_evidence_ids=sorted({e['id'] for o_ in obls for e in (o_.get('external_evidence') or [])}) or None,
                 verdict=verdict, verdict_ar=CLOSURE_AR[verdict], verdict_level=verdict_level,
                 verdict_level_ar=CLOSURE_LEVEL_AR[verdict_level], verdict_by_level=verdict_by_level)
+
+
+# ---------- الفقرة: ParagraphCandidate (SARF_MAJOR_COMPLETION_TO_PARAGRAPH_03 §٢٠) ----------
+# العقد (مقترحٌ، ينتظر اعتماد المالك تعريفَ الفقرة):
+#   المكوّنات: جملٌ بهوياتها وشهاداتها (verdict_by_level)، متتابعةٌ في الوحدات الخطابية.
+#   الروابط: لكل جملتين متتاليتين رابطٌ مرشّحٌ من دليل حدّ الأولى (J_why: «وما بعدها عطف، أو استئناف»، «له الصدارة»…)؛
+#     وصنفه CONTINUATION (عطف) أو RESUMPTION (استئناف) أو CIRCUMSTANTIAL (حال)؛ والعلاقات الدلالية (CAUSE، PURPOSE، RESULT،
+#     EVIDENTIAL_SUPPORT، EXPLANATION) لا تُقيَّم قبل تنفيذ قواعد الأدوات PC.* — فتُسجَّل NOT_EVALUATED لا غائبة.
+#   الإحالة: لكل ضميرٍ غائب (مستترٍ أو متصل) التزام مرجعٍ بمرشّحيه من الجمل السابقة؛ وتعيين المرجع غير منفَّذ فيبقى مؤجَّلاً.
+#   اللازم: مكوّناتٌ مكتملةٌ محلياً، وروابطُ مثبتة لا مرشّحة، ومراجع محلولة، وحدٌّ لغوي.
+#   الاختياري: امتدادٌ بعد آخر جملةٍ تامّة (لا يمنع الاكتمال).
+#   الحدّ: حدّ المصدر (أول السورة وآخرها من المصحف المعتمد) شاهدُ مصدرٍ لا حدٌّ لغوي؛ فالحدّ اللغوي مؤجَّل ما لم تُنفَّذ قاعدته.
+LINK_KIND = {'عطف': 'CONTINUATION', 'استئناف': 'RESUMPTION', 'حال': 'CIRCUMSTANTIAL', 'صفة': 'ATTRIBUTIVE', 'خبر': 'PREDICATIVE',
+             'معيّة': 'COMITATIVE'}
+SEMANTIC_LINKS = ('CAUSE', 'PURPOSE', 'RESULT', 'EVIDENTIAL_SUPPORT', 'EXPLANATION', 'TEMPORAL_RELATION', 'REFERENCE')
+
+
+def paragraph_status(obligations):
+    """→ (COMPLETE | INCOMPLETE، الأسباب): يمنع الاكتمالَ كلُّ التزامٍ لازمٍ غير مستوفى؛ والاختياري الغائب لا يمنعه"""
+    bad = [o for o in obligations if o['required'] and o['status'] != 'MET']
+    return ('COMPLETE' if not bad else 'INCOMPLETE'), [f"{o['kind']}: {o['status']} — {o.get('reason') or ''}" for o in bad]
+
+
+def paragraph_candidate(LT, certs, records):
+    """→ ParagraphCandidate لمدى المدخل: المكوّنات، والروابط بأدلّتها، والإحالات، والالتزامات، والحدّ، والحكم"""
+    by_id = {c['sentence']: c for c in certs}
+    Js = [J for SP in LT for D in SP.A + SP.O.get('pending', []) for J in D.A + D.O.get('pending', [])]
+    Js.sort(key=lambda J: min(J.O.get('location') or [(0, 0, 0)]))
+    comps, links, refs, obls = [], [], [], []
+    for J in Js:
+        c = by_id.get(J.id) or {}
+        comps.append(dict(sentence=J.id, span=[min(J.O.get('location') or [None]), max(J.O.get('location') or [None])],
+                          verdict_by_level=c.get('verdict_by_level'), local=(c.get('verdict_by_level') or {}).get('LOCAL_PREDICATION')))
+    for a_, b_ in zip(Js, Js[1:]):
+        bnd = a_.O.get('boundary') or {}
+        why = str(bnd.get('J_why') or '')
+        alts = [x.strip().replace('أو ', '').strip() for x in why.split('وما بعدها ', 1)[1].split('،')] if 'وما بعدها ' in why else []
+        kinds = [LINK_KIND.get(x, 'OTHER:' + x) for x in alts if x]
+        if 'الصدارة' in why:
+            kinds = ['RESUMPTION']
+        ev = f"{a_.id}#boundary@{bnd.get('location')}" if bnd else None
+        links.append(dict(link_id=f'{a_.id}→{b_.id}', src=a_.id, dst=b_.id, candidates=kinds or None, evidence_id=ev,
+                          evidence=why or None, status=('PROVEN' if len(kinds) == 1 and bnd.get('J') == 'proven' else
+                                                         'CANDIDATE' if kinds else 'NOT_ESTABLISHED'),
+                          semantic=dict.fromkeys(SEMANTIC_LINKS[:-1], 'NOT_EVALUATED (قواعد الأدوات PC.* غير منفّذة)')))
+    # الإحالة: الضمير الغائب المستتر في إطار الفعل
+    rec_by_verb = {r['heads'].get('verb'): r for r in records if r['type'] == 'VERB_FRAME'}
+    js_of = {}
+    for J in Js:
+        for (s_, v_, w_) in J.O.get('location') or []:
+            js_of[(s_, v_, w_)] = J.id
+    for u, r in rec_by_verb.items():
+        sj = (r.get('frame') or {}).get('subject') or {}
+        imps = [sj.get('implicit_subject')] + [f_.get('implicit_subject') for f_ in sj.get('subject_faces') or []]
+        for im in [x for x in imps if x and x.get('person') == 3]:
+            loc = (r.get('positions') or {}).get('verb') or []
+            refs.append(dict(ref_id=im['implicit_id'], pronoun='مستتر', owner=u, face=im['syntactic_face_id'],
+                             signature=dict(person=im['person'], number=im['number'], gender=im['gender']),
+                             status='DEFERRED', reason='تعيين المرجع غير منفَّذ: المرشّحون الأسماء السابقة الموافقة في العدد والجنس',
+                             location=loc[0] if loc else None))
+    for k in links:
+        obls.append(dict(kind='LINK', id=k['link_id'], required=True, status='MET' if k['status'] == 'PROVEN' else
+                         ('CANDIDATE' if k['status'] == 'CANDIDATE' else 'OPEN'), reason=k['evidence'] or 'لا دليل حدٍّ بين الجملتين'))
+    for c in comps:
+        obls.append(dict(kind='COMPONENT_LOCAL', id=c['sentence'], required=True,
+                         status='MET' if c['local'] in ('CLOSED_IN_FACE', 'CLOSED_WITH_SHARED_STRUCTURE') else 'DEFERRED',
+                         reason=f"حكم الإسناد المحلي: {c['local']}"))
+    for x in refs:
+        obls.append(dict(kind='REFERENCE', id=x['ref_id'], required=True, status='DEFERRED', reason=x['reason']))
+    # الحدّ: شاهد المصدر (من المصحف المعتمد) غير الحدّ اللغوي
+    locs = [l for J in Js for l in J.O.get('location') or []]
+    first, last = (min(locs), max(locs)) if locs else (None, None)
+    src_start = bool(first) and first[1] == 1 and first[2] == 0
+    src_end = bool(last) and _is_sura_end(last[0], last[1]) and \
+        all(not (l[0] == last[0] and l[1] == last[1] and l[2] > last[2]) for l in locs)
+    boundary = dict(source_start=('SOURCE:sura_start' if src_start else None), source_end=('SOURCE:sura_end' if src_end else None),
+                    linguistic='NOT_PROVEN', reason='قاعدة الحدّ اللغوي للفقرة غير منفّذة؛ وحدّ المصدر شاهدٌ لا يثبت وحده الحدّ')
+    obls.append(dict(kind='BOUNDARY', id='paragraph#boundary', required=True, status='DEFERRED', reason=boundary['reason']))
+    st, reasons = paragraph_status(obls)
+    return dict(paragraph_id=f"P:{first}..{last}", components=comps, links=links, references=refs, obligations=obls,
+                boundary=boundary, status='PARAGRAPH_CANDIDATE_' + st, reasons=reasons,
+                contract='SARF_MAJOR_COMPLETION_TO_PARAGRAPH_03 §٢٠ (عقدٌ مقترح ينتظر اعتماد المالك)')
+
+
+def check_paragraph(pc, LT):
+    """فاحصٌ مستقل للفقرة: كل رابطٍ يشير إلى حدّ جملةٍ موجود، ومرشّحوه مشتقّون من دليله، ولا رابط «مثبت» بلا دليلٍ وحيد؛
+    ولا حدّ مصدرٍ بلا موضعٍ يوافقه → قائمة الأخطاء"""
+    err = []
+    Js = {J.id: J for SP in LT for D in SP.A + SP.O.get('pending', []) for J in D.A + D.O.get('pending', [])}
+    for k in pc['links']:
+        J = Js.get(k['src'])
+        if J is None or k['dst'] not in Js:
+            err.append(f"{k['link_id']}: طرفٌ غير موجود")
+            continue
+        bnd = J.O.get('boundary') or {}
+        why = str(bnd.get('J_why') or '')
+        if k['status'] == 'PROVEN' and not (bnd.get('J') == 'proven' and k['candidates'] and len(k['candidates']) == 1):
+            err.append(f"{k['link_id']}: رابطٌ «مثبت» بلا دليل حدٍّ مثبتٍ وحيد الوجه")
+        if k['evidence'] and k['evidence'] != why:
+            err.append(f"{k['link_id']}: دليلٌ لا يطابق حدّ الجملة")
+        if k['status'] != 'NOT_ESTABLISHED' and not k['evidence']:
+            err.append(f"{k['link_id']}: رابطٌ بلا دليل")
+    locs = [l for J in Js.values() for l in J.O.get('location') or []]
+    if pc['boundary'].get('source_end') and not (locs and _is_sura_end(max(locs)[0], max(locs)[1])):
+        err.append('حدّ مصدرٍ «آخر السورة» بلا موضعٍ يوافقه')
+    return err

@@ -279,15 +279,18 @@ check('L04 ن٥ رابطٌ مرخَّص بين الجمل يعبر الحدّ ل
       cl2['verdict_by_level']['LOCAL_PREDICATION'] == 'CLOSED_IN_FACE' and cl2['boundary']['independence_status'] == 'DISPROVEN' and
       cl2['boundary']['levels']['SENTENCE'] != 'PROVEN' and cl2['verdict_by_level']['SENTENCE'] == 'DEFERRED_BOUNDARY',
       (cl2['boundary']['independence_status'], cl2['verdict_by_level']))
-# إفساد المستوى: حدٌّ يُدّعى آخر السورة (مستوى الوحدة الخطابية) وهو ليس كذلك — شهادة الجملة تتبع المستوى المدّعى، فالفحص يكشف الادّعاء
+# إفساد المستوى (مراجعة 046/§١٨ من التكليف 03): ادّعاء «آخر السورة» في حقل السبب لا يرفع الحدّ ما لم يوافقه موضعٌ في المصدر
 J3m = copy.deepcopy(J3[0])
 J3m.O['boundary'] = dict(J3m.O['boundary'], J_why='آخر السورة', J='proven')
 cl3 = closure_certificate(J3m, o3j['records'])
-check('L05 ن٥ مستوى الحدّ يغيّر الشهادة التي تتطلب مستوى أعلى: ادّعاء «آخر السورة» يرفع مستوى الحدّ إلى الجملة والوحدة الخطابية، '
-      'وحذفه يُنزلها؛ فالحكم يتبع المستوى لا وجود الحقول',
-      cl3['boundary']['levels']['SENTENCE'] == 'PROVEN' and cl3['verdict_by_level']['SENTENCE'] == 'CLOSED_IN_FACE' and
-      cl0['boundary']['levels']['SENTENCE'] != 'PROVEN' and cl0['verdict_by_level']['SENTENCE'] == 'DEFERRED_BOUNDARY',
-      (cl3['verdict_by_level'], cl0['verdict_by_level']))
+o4j, J4 = run_j(112, 4)
+cl4 = closure_certificate(J4[-1], o4j['records'])
+check('L05 ادّعاء «آخر السورة» المصطنع (112:3 ليست آخر السورة) يُرفض من المصدر ولا يرفع مستوى الحدّ؛ وآخر السورة الحقيقي (112:4) '
+      'يُقبل من المصحف المعتمد في مستوى الجملة والوحدة الخطابية — فالحكم يتبع موضع المصدر لا العبارة',
+      cl3['boundary'].get('sura_end_claim_rejected') and cl3['boundary']['levels']['SENTENCE'] != 'PROVEN' and
+      cl3['verdict_by_level']['SENTENCE'] == 'DEFERRED_BOUNDARY' and cl4['boundary']['rule_id'] == 'SOURCE:sura_end' and
+      cl4['boundary']['levels']['SENTENCE'] == 'PROVEN' and cl4['boundary']['levels']['DISCOURSE_UNIT'] == 'PROVEN',
+      (cl3['boundary'].get('sura_end_claim_rejected'), cl3['boundary']['levels'], cl4['boundary']['levels'], cl4['boundary'].get('rule_id')))
 
 # هوية الوجه
 subj_met = [o_ for c in C for o_ in c['obligations'] if o_['requirement_kind'].startswith(('SUBJECT', 'AGENT', 'NASIKH')) and o_['met']

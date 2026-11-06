@@ -1742,7 +1742,10 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
             elif not ov and scan.get('stop') in ('حدّ الإطار', 'فعل', 'عاطف') and not scan.get('unresolved'):
                 # S01.h (مقترحة): لا اسم ظاهر في إطاره، والبحث بلغ حدّ الإطار أو فعلاً آخر أو عاطفاً، ولم يمرّ بوحدةٍ صنفها غير محسوم:
                 # فالفاعل ضميرٌ مستتر في كل الأوجه (والاسم المتقدّم إن وُجد مبتدأٌ يعود إليه الضمير)؛ والمرجع غير معيَّن
-                subj = dict(kind='ضمير مستتر جوازاً (غير مكتوب)', role=srole, status=LICENSED,
+                fidh = f'{v.uid}#T={tf.get("v")}|V={vf.get("v") or "—"}|S={sp.get("person")}{sp.get("number")}{sp.get("gender")}'
+                subj = dict(kind='ضمير مستتر جوازاً (غير مكتوب)', role=srole, status=LICENSED, rule='S01.h', implicit=True, face_id=fidh,
+                            implicit_subject=implicit_subject(v.uid, fidh, sp, srole, 'S01.h',
+                                                              [f'{v.uid}#signature', f'{v.uid}#search_stop:{scan.get("stop")}']),
                             why=f'S01.h (مقترحة): لا اسم ظاهر بعد «{v.text}» في إطاره، والبحث توقّف عند {scan["stop"]} لا عند عامل، ولم يمرّ '
                                 f'بوحدةٍ صنفها غير محسوم: فالفاعل ضميرٌ مستتر في كل الأوجه، ومرجعه غير معيَّن ({_pron_ar(sp)})')
             else:
