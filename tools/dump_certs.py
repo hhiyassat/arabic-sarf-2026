@@ -90,8 +90,10 @@ def cmp(a, b, out):
                     trans[f'verdict:{lv}:{x}→{y}'] += 1
                     if len(ex[f'verdict:{lv}:{x}→{y}']) < 12:
                         ex[f'verdict:{lv}:{x}→{y}'].append(f'{s}:{k}')
-        oa = {o['key']: o for x in A[s]['sentences'] for o in x['obligations']}
-        ob = {o['key']: o for x in B[s]['sentences'] for o in x['obligations']}
+        # المالك جملةٌ (L…) يُستبدل به مدى الجملة: ترقيم الجمل يتغيّر بدمج حدٍّ مؤجَّل، والمدى هويةٌ مستقرة
+        okey = lambda x, o: o['key'] if o['key'].startswith('Q') else x['key'] + '|' + o['key'].split('|', 1)[1]
+        oa = {okey(x, o): o for x in A[s]['sentences'] for o in x['obligations']}
+        ob = {okey(x, o): o for x in B[s]['sentences'] for o in x['obligations']}
         for k in set(oa) | set(ob):
             x, y = (oa.get(k) or {}).get('status'), (ob.get(k) or {}).get('status')
             if x != y:

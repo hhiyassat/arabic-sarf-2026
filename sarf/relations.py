@@ -932,10 +932,12 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
 
     def frame_end(i):
         """أول وحدةٍ بعد i تبدأ إطاراً جديداً: كلمةٌ أولها عاطف، أو ما له الصدارة؛ أو آخر الآية (حدّ مصدر لا حدّ تركيب)"""
-        from .algebra import clause_start
+        from .algebra import clause_start, idha_reading
+        # «إذا» الفجائية تبدأ جملتها الاسمية (SARF_COMPREHENSIVE_REPAIR_04 §٧): لا شرط بها، لكنها حدّ إطارٍ كالشرطية
+        fuj = {f_['word_index'] for f_ in a['operators'] if (idha_reading(a, f_) or {}).get('decision') == 'FUJAIYYA'}
         for j in range(i + 1, len(toks)):
             t = toks[j]
-            if t.ui == 0 and (t.conj or clause_start(a, t.wi)):
+            if t.ui == 0 and (t.conj or clause_start(a, t.wi) or t.wi in fuj):
                 return j
         return len(toks)
 
