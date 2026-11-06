@@ -2699,26 +2699,41 @@ def _frame_faces(fr):
     tenses = cand.get('tense_live') or [cand.get('tense')]
     vv = f_.get('voice') or (None, None, None)
     voices = list(vv[2]) if isinstance(vv, (list, tuple)) and len(vv) > 2 and vv[2] else [cand.get('voice') or (vv[0] if vv else None)]
+    # لا حاصل ضرب (مراجعة 046): إن كان للإطار مرشّحاتٌ كاملة حيّة فأوجهه أزواجها وحدها؛ وإلا فالزمن × البناء بلا الممتنع
+    # (الأمر لا يُبنى للمجهول)
+    live = [c_ for c_ in (f_.get('candidates') or []) if c_.get('status') != 'REJECTED' and (c_.get('tense') or c_.get('voice'))]
+    pairs = [(c_.get('tense'), c_.get('voice'), f"{unit}#{c_.get('id')}") for c_ in live] if live else \
+        [(t, v, cid) for t in tenses for v in voices if not (t == 'أمر' and v == 'مجهول')]
     out = []
-    for t in tenses:
-        for v in voices:
-            out.append(dict(face_id=f'FACE:{unit}|T={t}|V={v or "—"}', label=f'{t or "—"}، {v or "بلا بناء (ناسخ)"}',
-                            tense=t, voice=v, morph_candidate_id=cid))
+    for t, v, mc in pairs:
+        out.append(dict(face_id=f'FACE:{unit}|T={t}|V={v or "—"}', label=f'{t or "—"}، {v or "بلا بناء (ناسخ)"}',
+                        tense=t, voice=v, morph_candidate_id=mc, unit=unit))
     return out
 
 
 def _rel_face_id(r):
     """معرّف وجه العلاقة: الوجه الذي استوفى شروطه بين أوجه السجل (بترتيبه)، أو وجه السجل الوحيد"""
     fs = r.get('faces') or []
-    k = next((i for i, f in enumerate(fs) if f.get('status') == 'CONDITIONS_MET'), 0)
-    return f"FACE:{r['relation_id']}#face{k}"
+    if not fs:
+        return f"FACE:{r['relation_id']}#single"
+    k = next((i for i, f in enumerate(fs) if f.get('status') == 'CONDITIONS_MET'), None)
+    # لا وجه استوفى شروطه: لا يُعاد الوجه الأول افتراضاً (مراجعة 046)
+    return f"FACE:{r['relation_id']}#face{k}" if k is not None else None
 
 
 def _face_cover(faces, rels):
     """خريطة الاشتراك: لكل وجهٍ العلاقات المستوفية التي يقع وجهها فيه (البناء الذي يقتضيه دور المسند إليه)"""
-    return [dict(face_id=f['face_id'], label=f['label'], relations=[r_['relation'] for r_ in rels
-                                                                   if f['voice'] in _ROLE_VOICES.get(r_['role'], (f['voice'],))])
-            for f in faces]
+    # العلاقة تغطّي الوجه إن كانت للفعل نفسه، ومرخَّصة، ووجهها المسجَّل (إن سُجّل) هو هذا الوجه، وبناؤها يوافق دورها؛
+    # فلا يكفي توافق وصف الدور والبناء (مراجعة 046)
+    def ok(f, r_):
+        if r_.get('verb') and f.get('unit') and r_['verb'] != f['unit']:
+            return False
+        if r_.get('status') not in (None, 'LICENSED'):
+            return False
+        if r_.get('faces') and f['face_id'] not in r_['faces'] and f.get('morph_candidate_id') not in r_['faces']:
+            return False
+        return f['voice'] in _ROLE_VOICES.get(r_['role'], ())
+    return [dict(face_id=f['face_id'], label=f['label'], relations=[r_['relation'] for r_ in rels if ok(f, r_)]) for f in faces]
 
 
 def closure_certificate(J, records, upstream=None):
@@ -2820,16 +2835,41 @@ def closure_certificate(J, records, upstream=None):
                 rec['satisfied_by'] = [_legacy_ev(J, n_, o)] if o.met else None
                 rec['residual_reason'] = '' if o.met else (o.reason or 'لا إطار فعلٍ في 14أ')
             elif rec['requirement_kind'] == 'NASIKH_ISM_OR_SUBJECT':
-                rec.update(status='SELECTION', face_label='ناقص | تامّ', face_map=[dict(face_id=f'FACE:{fr["heads"].get("verb")}|USE={u_}', label=u_,
-                                                                                       relations=[]) for u_ in ('ناقص', 'تامّ')],
+                # تفكيك الحكم (مراجعة 046): (١) طرف الإسناد المشترك مثبتٌ بدليله؛ (٢) وظيفته بحسب الاستعمال؛ (٣) متطلّبات كل استعمال
+                # (الخبر في الناقص)؛ (٤) اختيار الاستعمال مؤجَّل. ولا يُختار ولا تُغلق الجملة
+                from .relations import validate_implicit
+                vu_ = fr['heads'].get('verb')
+                shared_ok = sj.get('status') == 'LICENSED' and sj.get('shared_across') and \
+                    (not sj.get('implicit') or validate_implicit(sj.get('implicit_subject'), vu_, sj.get('face_id'))[0])
+                kh_ = next((x for x in ((fr.get('frame') or {}).get('open') or []) if 'خبرٌ مرشّح' in x or 'لا خبرَ' in x), None)
+                use_map = [dict(face_id=f'FACE:{vu_}|USE=ناقص', label='ناقص: اسم الناسخ وخبره',
+                                relations=[fr['relation_id'] + '#subject@USE=ناقص'] if shared_ok else [], function='اسم الناسخ',
+                                requirements=[dict(kind='KHABAR', status='CANDIDATE' if kh_ and 'خبرٌ مرشّح' in kh_ else 'OPEN', evidence=kh_)]),
+                           dict(face_id=f'FACE:{vu_}|USE=تامّ', label='تامّ: الفاعل',
+                                relations=[fr['relation_id'] + '#subject@USE=تامّ'] if shared_ok else [], function='فاعل', requirements=[])]
+                rec.update(shared_subject=dict(status='PROVEN' if shared_ok else 'NOT_PROVEN', kind=sj.get('kind'), rule=sj.get('rule'),
+                                               evidence_id=(fr['relation_id'] + '#subject_shared') if shared_ok else None,
+                                               implicit_subject=sj.get('implicit_subject')),
+                           usage_selection='DEFERRED')
+                rec.update(status='SELECTION', face_label='ناقص | تامّ', face_map=use_map,
                            morph_candidate_id=((fr.get('frame') or {}).get('candidate') or {}).get('id'), residual_reason='«' + fr['texts']['verb'] + '» من صيغ «كان» غير محسوم الاستعمال: '
-                           'المتطلَّب اسم الناسخ وخبره في وجه الناقص، والفاعل في وجه التامّ؛ فلا يُسمّى طرف إسناده فاعلاً مستوفى')
+                           + ('طرف الإسناد المشترك مثبتٌ في الوجهين (' + str(sj.get('kind')) + ')، ووظيفته اسم الناسخ في الناقص والفاعل في التامّ؛ '
+                              if shared_ok else '') +
+                           'متطلّب الناقص الخبر (' + ('مرشّح' if kh_ and 'خبرٌ مرشّح' in kh_ else 'غير موجود') + ')؛ واختيار الاستعمال مؤجَّل، '
+                           'فلا يُسمّى طرف إسناده فاعلاً مستوفى')
             elif sj.get('subject_faces') and not lic:
                 # S01.f: أوجه الصيغة بهوياتها (شخصٌ وعددٌ وجنس من المرشّح الكامل)، ولكلٍّ طرف إسناده؛ فلا يُستوفى إلا في كل الأوجه
+                from .relations import verify_subject_face
                 sfx = sj['subject_faces']
+                tense_ = ((fr.get('frame') or {}).get('candidate') or {}).get('tense')
+                ver = [verify_subject_face(x, tense_, fr['heads'].get('verb')) for x in sfx]
+                # الوجه لا يُغطّى بحالته المكتوبة: يُغطّى بعلاقةٍ إن اجتاز فاحص الوجه (القاعدة ومقدّماتها، والطرف، والمستتر، والعائق)
                 fmap = [dict(face_id=x['face_id'], label=f"{x['kind']}" + (f" «{x.get('unit_text')}»" if x.get('unit_text') else ''),
-                             relations=[fr['relation_id'] + f"#subject@{x['face_id']}"] if x['status'] == 'LICENSED' else [],
-                             rule=x.get('rule'), implicit=x.get('implicit')) for x in sfx]
+                             relations=[fr['relation_id'] + f"#subject@{x['face_id']}"] if ok_ else [],
+                             rule=x.get('rule'), implicit=x.get('implicit'),
+                             evidence_check=None if ok_ else (why_ if x['status'] == 'LICENSED' else None))
+                        for x, (ok_, why_) in zip(sfx, ver)]
+                bad_ = [f"{x['face_id']}: {x['evidence_check']}" for x in fmap if x.get('evidence_check')]
                 okf = all(x['relations'] for x in fmap)
                 rec.update(face_map=fmap, face_id='SHARED:' + '+'.join(x['face_id'] for x in fmap) if len(fmap) > 1 else fmap[0]['face_id'],
                            face_label='؛ '.join(x['label'] for x in fmap),
@@ -2841,28 +2881,43 @@ def closure_certificate(J, records, upstream=None):
                                residual_reason='أوجه الصيغة غير محسومة، وطرف الإسناد مرخَّصٌ في كلٍّ منها بهويته؛ والاختيار مؤجَّل')
                 else:
                     miss = [x['face_id'] for x in fmap if not x['relations']]
+                    if bad_:
+                        # وجهٌ يُدّعى مرخَّصاً ودليله لا يقوم: يُكشف ولا يُستوفى به
+                        rec['evidence_invalid'] = bad_
                     rec.update(status='CONFLICT' if o.met else 'SELECTION', candidates=[dict(relation=x['face_id'], status='LICENSED' if x['relations']
                                                                                              else 'DEFERRED', rule=x['rule']) for x in fmap],
-                               residual_reason=('FACE_PARTIAL: ' if len(miss) < len(fmap) else '') + (sj.get('why') or '') +
+                               residual_reason=('FACE_EVIDENCE_INVALID: ' + '؛ '.join(bad_) + '؛ ' if bad_ else '') +
+                               ('FACE_PARTIAL: ' if len(miss) < len(fmap) else '') + (sj.get('why') or '') +
                                '؛ أوجهٌ بلا طرف إسنادٍ مرخَّص: ' + '، '.join(miss))
             elif sj.get('status') == 'LICENSED' or lic:
                 rid = lic[0]['relation_id'] if lic else fr['relation_id']
                 # الإطار المؤجَّل (زمنٌ مرشّح) لا يُعرض مستوفياً بإطلاق: المستوفي بنيته الفرعية (الفاعل المرخَّص فيه)، مشتركةً في أوجه الإطار
                 frame_def = not lic and fr['status'] != 'LICENSED'
                 faces = _frame_faces(fr)
-                rels = ([dict(relation=r['relation_id'], role=r.get('role_name') or role) for r in lic] if lic else
-                        [dict(relation=fr['relation_id'], role=sj.get('role') or role)])
+                rels = ([dict(relation=r['relation_id'], role=r.get('role_name') or role, verb=r['heads'].get('verb'), status=r['status'],
+                              faces=r.get('licensed_in_faces')) for r in lic] if lic else
+                        [dict(relation=fr['relation_id'], role=sj.get('role') or role, verb=fr['heads'].get('verb'), status=sj.get('status'))])
                 fmap = _face_cover(faces, rels)
                 covered = [x for x in fmap if x['relations']]
                 rec.update(morph_candidate_id=(faces[0]['morph_candidate_id'] if faces else None), face_map=fmap,
                            face_id=(fmap[0]['face_id'] if len(fmap) == 1 else 'SHARED:' + '+'.join(x['face_id'] for x in fmap)),
                            face_label=('؛ '.join(x['label'] for x in fmap)))
+                if not lic and sj.get('implicit'):
+                    # المستتر المرخَّص في الفرع الرئيس يُفحص سجلّه (مراجعة 046): لا مجال مصدر، ومالكٌ ووجهٌ ودليل؛ وإلا فلا استيفاء
+                    from .relations import validate_implicit
+                    okI, whyI = validate_implicit(sj.get('implicit_subject'), fr['heads'].get('verb'), sj.get('face_id'))
+                    if not okI:
+                        for x in fmap:
+                            x['relations'] = []
+                        covered = []
+                        rec['evidence_invalid'] = [f'المستتر: {whyI}']
                 if len(covered) < len(fmap):
                     # وجهٌ بلا علاقةٍ يقع وجهها فيه: العلاقة أُنتجت في وجهٍ غير وجه الالتزام (خلط أوجه)، فلا استيفاء
                     miss = [x['label'] for x in fmap if not x['relations']]
-                    rec.update(status='CONFLICT' if not covered else 'SELECTION', candidates=[dict(relation=x['relation'], status='LICENSED',
+                    rec.update(status='CONFLICT' if not covered and not rec.get('evidence_invalid') else 'SELECTION', candidates=[dict(relation=x['relation'], status='LICENSED',
                                                                                                    rule='FACE', role=x['role']) for x in rels],
-                               residual_reason=('FACE_MISMATCH' if not covered else 'FACE_PARTIAL') + ': العلاقة '
+                               residual_reason=('FACE_EVIDENCE_INVALID: ' + '؛ '.join(rec['evidence_invalid']) + '؛ ' if rec.get('evidence_invalid') else '') +
+                               ('FACE_MISMATCH' if not covered else 'FACE_PARTIAL') + ': العلاقة '
                                + '، '.join(f"{x['relation']} (دورها «{x['role']}»)" for x in rels) + ' لا تقع في الوجه: ' + '، '.join(miss))
                 else:
                     faced = rec['requirement_kind'] == 'SUBJECT_OR_PASSIVE_AGENT' or frame_def or len(fmap) > 1

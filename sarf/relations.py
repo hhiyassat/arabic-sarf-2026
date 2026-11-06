@@ -99,13 +99,71 @@ def subject_pronoun_written(sig, tense):
     return None, None
 
 
-def tense_safe_for_isnad(v, tf):
-    """مانع S01.p/S01.f: مضارع تَفَعَّلَ وتَفَاعَلَ بحذف إحدى التاءين يُكتب كماضيهما (تَشَٰبَهَ، تَوَلَّوۡا)؛ فما بدأ بتاءٍ مفتوحة
-    على هذين الوزنين لا يُبنى عليه ترخيص الإسناد بالصيغة وإن أُثبت زمنه مضارعاً → (آمن، السبب)"""
+def tense_safe_for_isnad(v, tf, governed=()):
+    """مانع S01.p/S01.f: مضارع تَفَعَّلَ وتَفَاعَلَ بحذف إحدى التاءين يُكتب كماضيهما (تَشَٰبَهَ، تَوَلَّوۡا).
+    الالتباس يُثبت في المكتوب نفسه (مراجعة 046): تاءٌ واحدة في أوله (لا «تَتَ…»)، ولا عاملَ مقبولٌ فيه يحسم المضارعة (لَن تَتَعَلَّمَ
+    محفوظةُ التاءين، و«لَن» دليلٌ مستقل) → (آمن، السبب)"""
     P = ((getattr(v, 'G', None) and v.G.Theta.get('P')) or '')
-    if tf.get('v') == 'مضارع' and P in ('V', 'VI') and v.text[:1] == 'ت':
+    lt = [L for L, _m in letters(v.text)]
+    single_ta = lt[:1] == ['ت'] and lt[1:2] != ['ت']
+    by_operator = getattr(v, 'k', None) in (governed or ())
+    if tf.get('v') == 'مضارع' and P in ('V', 'VI') and single_ta and not by_operator:
         return False, (f'«{v.text}» على {P} أوله تاء: يلتبس مضارعه المحذوف إحدى تاءيه بالماضي كتابةً، '
                        'فلا يُرخَّص طرف الإسناد بالصيغة حتى يُحسم الزمن (TENSE_V_VI_AMBIGUOUS)')
+    return True, None
+
+
+IMPLICIT_KEYS = ('implicit_id', 'implicit', 'source_span', 'owner_verb_id', 'syntactic_face_id', 'person', 'number', 'gender', 'role',
+                 'licensing_rule_id', 'evidence_ids', 'reference_status')
+
+
+def implicit_subject(owner, face_id, sig, role, rule, evidence):
+    """المستتر وحدةٌ بنيوية غير مكتوبة بهويتها (مراجعة 046): مرتبطةٌ بالفعل والوجه، بخصائصها ودليل ترخيصها وحالة مرجعها، ولا مجال لها"""
+    sig = sig or {}
+    return dict(implicit_id=f'{owner}#IMPLICIT_SUBJECT@{face_id}', implicit=True, source_span=None, owner_verb_id=owner,
+                syntactic_face_id=face_id, person=sig.get('person'), number=sig.get('number'), gender=sig.get('gender'), role=role,
+                licensing_rule_id=rule, evidence_ids=[e for e in evidence if e], reference_status='UNRESOLVED')
+
+
+def validate_implicit(x, owner=None, face_id=None):
+    """→ (سليم، السبب): الحقول كلها، ولا مجال مصدر، ومالكٌ ووجهٌ مطابقان، وقاعدةٌ ودليل"""
+    if not isinstance(x, dict):
+        return False, 'لا سجلّ للمستتر'
+    miss = [k for k in IMPLICIT_KEYS if k not in x]
+    if miss:
+        return False, 'حقولٌ ناقصة: ' + '، '.join(miss)
+    if x['source_span'] is not None or not x['implicit']:
+        return False, 'للمستتر مجالٌ مصدري أو وُسم مكتوباً'
+    if owner and x['owner_verb_id'] != owner or face_id and x['syntactic_face_id'] != face_id:
+        return False, 'المستتر لفعلٍ آخر أو لوجهٍ آخر'
+    if not x['licensing_rule_id'] or not x['evidence_ids']:
+        return False, 'بلا قاعدة ترخيصٍ أو دليل'
+    return True, None
+
+
+def verify_subject_face(x, tense, owner=None):
+    """فاحص الوجه (مراجعة 046): الوجه لا يُعدّ مستوفى بحالته المكتوبة؛ يُتحقّق من قاعدته ومقدّماتها: نوع الطرف يوافق حكم الصيغة
+    (S01.p)، والظاهر وحدةٌ معيَّنة، والمستتر سجلٌّ سليم، ولا عائقٌ قائم → (سليم، السبب)"""
+    if x.get('status') != LICENSED:
+        return False, 'الوجه غير مرخَّص'
+    if x.get('blocked_by'):
+        return False, f"عائق الوجه قائم ({x['blocked_by']})"
+    kw, _ = subject_pronoun_written(x.get('signature'), tense)
+    kind = x.get('kind') or ''
+    if kind == 'ضمير متصل مكتوب':
+        good = kw == 'WRITTEN'
+    elif 'وجوباً' in kind:
+        good = kw == 'HIDDEN_OBLIGATORY'
+    elif 'جوازاً' in kind:
+        good = kw == 'HIDDEN_OR_OVERT' and x.get('rule') == 'S01.h'
+    elif kind == 'اسم ظاهر':
+        good = kw == 'HIDDEN_OR_OVERT' and bool(x.get('unit'))
+    else:
+        good = False
+    if not good:
+        return False, f'نوع الطرف «{kind}» لا يوافق حكم الصيغة ({kw}) أو مقدّمته ناقصة'
+    if 'مستتر' in kind:
+        return validate_implicit(x.get('implicit_subject'), owner, x.get('face_id'))
     return True, None
 
 
@@ -1631,8 +1689,12 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
             kw_, sanad_ = subject_pronoun_written(sp, tf.get('v')) if sf.get('st') == 'مثبت' and tf.get('st') == 'مثبت' else (None, None)
             if kw_ in ('WRITTEN', 'HIDDEN_OBLIGATORY'):
                 # المسند إليه ثابتٌ بالصيغة في الوجهين (اسم الناسخ في الناقص، والفاعل في التامّ): بنيةٌ مشتركة مثبتة؛ والاستعمال مؤجَّل
+                fidk = f'{v.uid}|USE=ناقص+تامّ'
                 subj = dict(kind='ضمير متصل مكتوب' if kw_ == 'WRITTEN' else 'ضمير مستتر وجوباً (غير مكتوب)', role='اسم الناسخ أو فاعل التامّ',
                             status=LICENSED, rule='S01.p', sanad=sanad_, implicit=kw_ != 'WRITTEN', shared_across=['ناقص', 'تامّ'],
+                            face_id=fidk, signature=sp,
+                            implicit_subject=implicit_subject(v.uid, fidk, sp, 'اسم الناسخ أو فاعل التامّ', 'S01.p',
+                                                              [f'{v.uid}#signature', f'{v.uid}#tense']) if kw_ != 'WRITTEN' else None,
                             why=f'S01.p: «{v.text}» ({_pron_ar(sp)}): المسند إليه ' +
                                 ('الضمير المتصل المكتوب' if kw_ == 'WRITTEN' else 'ضميرٌ مستتر وجوباً') +
                                 ' في الوجهين، اسمُ الناسخ إن كان ناقصاً وفاعلٌ إن كان تامّاً؛ والاستعمال غير محسوم')
@@ -1645,12 +1707,15 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
             kc = nk is not None and (nk.case in ('نصب', 'جر أو نصب', 'نصب أو جر'))
             opn.append('الاستعمال (ناسخ أو تامّ) غير محسوم: ' + (f'«{nk.text}» ({nk.loc}) منصوبٌ أو محتمل النصب كتابةً، خبرٌ مرشّح إن كان ناقصاً'
                                                               if kc else 'لا خبرَ مرشّحٌ منصوبٌ بعده في الإطار'))
-        elif sf.get('st') == 'مثبت' and tf.get('st') == 'مثبت' and tense_safe_for_isnad(v, tf)[0] and \
+        elif sf.get('st') == 'مثبت' and tf.get('st') == 'مثبت' and tense_safe_for_isnad(v, tf, governed)[0] and \
                 subject_pronoun_written(sp, tf.get('v'))[0] in ('WRITTEN', 'HIDDEN_OBLIGATORY'):
             # S01.p: الصيغة تثبت طرف الإسناد في وجهها قبل البحث عن ظاهر (الترخيص المبكر)؛ والزمن مثبتٌ شرطاً، فلا يُستدلّ بالسابقة وحدها
             kw_, sanad_ = subject_pronoun_written(sp, tf.get('v'))
+            fid_ = f'{v.uid}#T={tf.get("v")}|V={vf.get("v") or "—"}|S={sp.get("person")}{sp.get("number")}{sp.get("gender")}'
             subj = dict(kind='ضمير متصل مكتوب' if kw_ == 'WRITTEN' else 'ضمير مستتر وجوباً (غير مكتوب)', role=srole, status=LICENSED,
-                        rule='S01.p', sanad=sanad_, implicit=kw_ != 'WRITTEN',
+                        rule='S01.p', sanad=sanad_, implicit=kw_ != 'WRITTEN', face_id=fid_,
+                        implicit_subject=implicit_subject(v.uid, fid_, sp, srole, 'S01.p', [f'{v.uid}#signature', f'{v.uid}#tense'])
+                        if kw_ != 'WRITTEN' else None,
                         why=(f'ضمير الصيغة المكتوب ({_pron_ar(sp)}): {sf.get("ev")}' if kw_ == 'WRITTEN' else
                              f'S01.p: {_pron_ar(sp)} في {tf.get("v")}: الفاعل مستترٌ وجوباً، فلا يكون اسمٌ ظاهرٌ بعده فاعلَه ({sf.get("ev")})'))
         elif sf.get('st') == 'مثبت' and sp.get('person') == 3 and sp.get('number') == 'singular' and not cands:
@@ -1726,11 +1791,13 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                         alts.remove(x)
                 for x in alts:
                     fid = f'{v.uid}#T={tf.get("v")}|V={vf.get("v") or "—"}|S={x.get("person")}{x.get("number")}{x.get("gender")}'
-                    safe_, unsafe_why = tense_safe_for_isnad(v, tf)
+                    safe_, unsafe_why = tense_safe_for_isnad(v, tf, governed)
                     kw_, sanad_ = subject_pronoun_written(x, tf.get('v')) if tf.get('st') == 'مثبت' and safe_ else (None, None)
                     if kw_ in ('WRITTEN', 'HIDDEN_OBLIGATORY'):
                         faces_.append(dict(face_id=fid, signature=x, kind='ضمير متصل مكتوب' if kw_ == 'WRITTEN' else 'ضمير مستتر وجوباً (غير مكتوب)',
-                                           status=LICENSED, rule='S01.p', implicit=kw_ != 'WRITTEN', unit=None, sanad=sanad_))
+                                           status=LICENSED, rule='S01.p', implicit=kw_ != 'WRITTEN', unit=None, sanad=sanad_,
+                                           implicit_subject=implicit_subject(v.uid, fid, x, srole, 'S01.p', [f'{v.uid}#signature', f'{v.uid}#tense'])
+                                           if kw_ != 'WRITTEN' else None))
                     elif kw_ == 'HIDDEN_OR_OVERT' and len(raf_) == 1 and ov_ and ov_[0] is raf_[0] and not unres_ and \
                             raf_[0].k not in bound and raf_[0].k not in licensed_subjects:
                         faces_.append(dict(face_id=fid, signature=x, kind='اسم ظاهر', status=LICENSED, rule='S01.f', unit=raf_[0].uid,
@@ -1738,7 +1805,9 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                                            why=f'«{raf_[0].text}» المرشّح الاسمي الأول بعده مرفوعٌ كتابةً، ولا منافس مرفوعٌ غيره'))
                     elif kw_ == 'HIDDEN_OR_OVERT' and not ov_ and scan.get('stop') in ('حدّ الإطار', 'فعل', 'عاطف') and not scan.get('unresolved'):
                         faces_.append(dict(face_id=fid, signature=x, kind='ضمير مستتر جوازاً (غير مكتوب)', status=LICENSED, rule='S01.h',
-                                           implicit=True, unit=None))
+                                           implicit=True, unit=None,
+                                           implicit_subject=implicit_subject(v.uid, fid, x, srole, 'S01.h', [f'{v.uid}#signature',
+                                                                                                         f'{v.uid}#search_stop:{scan.get("stop")}'])))
                     else:
                         faces_.append(dict(face_id=fid, signature=x, kind='غير معيَّن', status=DEFERRED, rule='S01.f', unit=None,
                                            blocked_by=('TENSE_V_VI_AMBIGUOUS' if not safe_ else

@@ -72,11 +72,30 @@ check('W07 «يَكۡتُبُ الرِّجَالُ»: الفعل مفردٌ وا
 s = subj('الرِّجَالُ يَكْتُبُونَ')
 check('W08 «الرِّجَالُ يَكۡتُبُونَ»: الفاعل واو الجماعة المكتوبة، لا «الرجال» (بنيةٌ أخرى: مبتدأٌ وخبرٌ جملة)',
       s['kind'] == 'ضمير متصل مكتوب' and not s.get('unit'), s)
-for w, t_ in (('أَكْرَمَ زَيْدٌ عَمْرًا', None), ('تَعَلَّمَ زَيْدٌ', 'ماضٍ'), ('نَظَرَ زَيْدٌ', None)):
+# مراجعة 046: «عدم التحليل الخاطئ» منفصلٌ عن «إثبات التحليل الصحيح»؛ وما لم يُثبت يُطبع فجوةً (GAP) ولا يُعدّ نجاحاً
+GAPS = []
+for w in ('أَكْرَمَ زَيْدٌ عَمْرًا', 'تَعَلَّمَ زَيْدٌ', 'نَظَرَ زَيْدٌ'):
     o, f = frame(w)
     c_ = ((f or {}).get('frame') or {}).get('candidate') or {}
-    check(f'W09 مانع التعميم: «{w.split()[0]}» ليس مضارعاً بحرفه الأول (الزمن {c_.get("tense")})',
-          c_.get('tense') != 'مضارع' and (t_ is None or c_.get('tense') == t_), c_)
+    check(f'W09 لا تحليل خاطئ: «{w.split()[0]}» لا يُعدّ مضارعاً بحرفه الأول', c_.get('tense') != 'مضارع', c_)
+    if c_.get('tense') == 'ماضٍ':
+        check(f'W09+ إثبات التحليل الصحيح: «{w.split()[0]}» ماضٍ بإطار فعلٍ وفاعلٍ ظاهر', f['frame']['subject'].get('kind') == 'اسم ظاهر', f['frame']['subject'])
+    else:
+        GAPS.append(f'W09+ «{w.split()[0]}»: لا إطار فعل (لم يثبت بالكتابة أنه فعل) — الماضي الصحيح غير مثبت')
+o, f = frame('لَيَكْتُبَنَّ زَيْدٌ')
+check('W11 نون التوكيد: «لَيَكۡتُبَنَّ زَيۡدٌ» مضارعٌ مبني، وفاعله ظاهرٌ مرخَّص', f and f['frame']['candidate']['tense'] == 'مضارع' and
+      f['frame']['subject']['kind'] == 'اسم ظاهر' and f['frame']['subject']['status'] == 'LICENSED', f and f['frame']['subject'])
+o, f = frame('يُكْتَبُ الدَّرْسُ')
+check('W12 المجهول: «يُكۡتَبُ الدَّرۡسُ» نائب فاعلٍ ظاهر، لا فاعل', f and f['frame']['candidate']['voice'] == 'مجهول' and
+      f['frame']['subject']['role'] == 'نائب فاعل' and f['frame']['subject']['status'] == 'LICENSED', f and f['frame']['subject'])
+o, f = frame('لَنْ تَتَعَلَّمَ')
+check('W13 «لَنۡ تَتَعَلَّمَ» محفوظة التاءين: لا مانع التباس، وطرف الإسناد مرخَّصٌ في كل وجه (المخاطب وجوباً، والغائبة جوازاً)',
+      f and f['frame']['subject']['status'] == 'LICENSED' and all(x['status'] == 'LICENSED' for x in f['frame']['subject']['subject_faces']),
+      f and f['frame']['subject'])
+for w in ('تَجْرِي الْأَنْهَارُ', 'كُتِبَ الدَّرْسُ', 'أَكْتُبُ الدَّرْسَ', 'تَكْتُبُ هِنْدٌ الدَّرْسَ', 'أُكْرَمُ', 'تَكْتُبْنَ'):
+    o, f = frame(w)
+    if not f:
+        GAPS.append(f'«{w}»: لا إطار فعل (إثبات الفعل بلا عاملٍ في السياق غير منفّذ)')
 o = analyze_text('يَدٌ')
 check('W10 «يَدٌ»: الياء ليست حرف مضارعة، ولا إطار فعل', not [r for r in o['records'] if r['type'] == 'VERB_FRAME'])
 
@@ -132,8 +151,34 @@ fz['frame']['subject']['status'] = 'LICENSED'
 JZ = next(J for J in o2['Js'] if any(x.name == 'فاعل «تَضِلَّ»' for x in J.Omega))
 obz0 = next(x for x in closure_certificate(JZ, o2['records'])['obligations'] if x['name'] == 'فاعل «تَضِلَّ»')
 obz1 = next(x for x in closure_certificate(JZ, recs)['obligations'] if x['name'] == 'فاعل «تَضِلَّ»')
-check('X04 إفساد سجلّ الوجه: ادّعاء وجه الغائبة مرخَّصاً يغيّر الشهادة (MET_IN_ALL_FACES)، وبدونه لا استيفاء — فالحكم تابعٌ لسجلّ الوجه '
-      'بهويته، لا لعبارةٍ عامة', not obz0['met'] and obz1['status'] == 'MET_IN_ALL_FACES', (obz0['status'], obz1['status']))
+check('X04 إفساد سجلّ الوجه (مراجعة 046): وجه الغائبة يُدّعى مرخَّصاً وسبب تأجيله قائم (صنف «إحدى»، والنوع «غير معيَّن») — '
+      'الفاحص يكشفه (FACE_EVIDENCE_INVALID) ولا يُستوفى الالتزام', not obz0['met'] and not obz1['met'] and obz1.get('evidence_invalid')
+      and 'FACE_EVIDENCE_INVALID' in obz1['residual_reason'], (obz1['status'], obz1.get('evidence_invalid')))
+# ضابطٌ موجب: الوجه نفسه بدليلٍ تامّ (مستترٌ جوازاً بقاعدة S01.h وسجلّ مستترٍ سليم وبلا عائق) يُقبل
+from sarf.relations import implicit_subject
+recs2 = copy.deepcopy(o2['records'])
+fz2 = next(r for r in recs2 if r['type'] == 'VERB_FRAME' and r['texts'].get('verb') == 'تَضِلَّ')
+f3 = next(x for x in fz2['frame']['subject']['subject_faces'] if x['signature']['person'] == 3)
+f3.update(status='LICENSED', kind='ضمير مستتر جوازاً (غير مكتوب)', rule='S01.h', blocked_by=None,
+          implicit_subject=implicit_subject(fz2['heads']['verb'], f3['face_id'], f3['signature'], 'فاعل', 'S01.h', ['TEST#evidence']))
+obz2 = next(x for x in closure_certificate(JZ, recs2)['obligations'] if x['name'] == 'فاعل «تَضِلَّ»')
+check('X04b ضابطٌ موجب: الوجه بدليلٍ تامّ (قاعدة S01.h، ومستترٌ سليم الهوية، ولا عائق) يُغطّى — فالفاحص يفرّق الدليل من الادّعاء',
+      obz2['status'] == 'MET_IN_ALL_FACES' and not obz2.get('evidence_invalid'), (obz2['status'], obz2.get('evidence_invalid')))
+# المستتر: هويةٌ كاملة، وإفساده بمجالٍ مصدري يُكشف
+o_n = analyze_text('نَكْتُبُ الدَّرْسَ')
+sjn = next(r for r in o_n['records'] if r['type'] == 'VERB_FRAME')['frame']['subject']
+from sarf.relations import validate_implicit, IMPLICIT_KEYS
+check('X01b المستتر سجلٌّ كامل الهوية: مالكه الفعل، ووجهه، وخصائصه، وقاعدته ودليله، ومرجعه غير معيَّن، ولا مجال مصدر',
+      validate_implicit(sjn['implicit_subject'], next(r for r in o_n['records'] if r['type'] == 'VERB_FRAME')['heads']['verb'], sjn['face_id'])[0]
+      and all(k in sjn['implicit_subject'] for k in IMPLICIT_KEYS) and sjn['implicit_subject']['reference_status'] == 'UNRESOLVED', sjn.get('implicit_subject'))
+rn = copy.deepcopy(o_n['records'])
+fn = next(r for r in rn if r['type'] == 'VERB_FRAME')
+fn['frame']['subject']['implicit_subject']['source_span'] = [0, 3]
+Jn = o_n['Js'][0]
+okn0 = [x for x in closure_certificate(Jn, o_n['records'])['obligations'] if x['requirement_kind'] == 'SUBJECT']
+okn1 = [x for x in closure_certificate(Jn, rn)['obligations'] if x['requirement_kind'] == 'SUBJECT']
+check('X01c إفساد: مجالٌ مصدري مصطنع للمستتر في «نَكۡتُبُ» يُكشف، فيسقط الاستيفاء (وبدونه مستوفى)',
+      okn0 and okn0[0]['met'] and okn1 and not okn1[0]['met'] and okn1[0].get('evidence_invalid'), (okn0[0]['status'], okn1[0]['status']))
 # ٥ توليد وجهٍ غير موجود من حاصل الضرب: أوجه «تَضِلَّ» اثنان (مخاطب مذكر، غائبة) لا أربعة
 check('X05 لا حاصل ضرب: أوجه «تَضِلَّ» اثنان من بدائل الصيغة نفسها، لا (مخاطب/غائب × مذكر/مؤنث)',
       len(FR['تَضِلَّ']['frame']['subject']['subject_faces']) == 2)
@@ -152,5 +197,41 @@ check('B02 «تَشَٰبَهَ» (2:70): تَفَاعَلَ أوله تاء ي�
 s = qframe('4:149', 'تَعْفُوا')
 check('B03 مقابلة B01: «تَعۡفُوا» جذره «عفو» ناقصٌ واوي، فوجه المفرد باقٍ ولا يُمنع', any(x['signature']['number'] == 'singular' for x in s['subject_faces']), s)
 
+# ---------- مراجعة 046: الحرّاس العامة ----------
+from sarf.relations import tense_safe_for_isnad
+class _V:
+    def __init__(s_, text, P, k='K'):
+        s_.text = text; s_.k = k
+        class G: pass
+        s_.G = G(); s_.G.Theta = dict(P=P)
+check('G01 مانع الالتباس مضيَّق: «لَنۡ تَتَعَلَّمَ» محفوظة التاءين آمنة، و«تَعَلَّمَ» مضارعاً بلا عاملٍ وبتاءٍ واحدة ملتبسة، '
+      'و«تَعَلَّمَ» بعاملٍ مقبول آمنة', tense_safe_for_isnad(_V('تَتَعَلَّمَ', 'V'), dict(v='مضارع'))[0] and
+      not tense_safe_for_isnad(_V('تَعَلَّمَ', 'V'), dict(v='مضارع'))[0] and tense_safe_for_isnad(_V('تَعَلَّمَ', 'V'), dict(v='مضارع'), governed={'K'})[0])
+from sarf.algebra import _frame_faces, _face_cover, _rel_face_id
+ff = _frame_faces(dict(heads=dict(verb='U'), frame=dict(candidate=dict(id='U#c', tense_live=['ماضٍ', 'أمر']), voice=(None, 'مؤجَّل', ['معلوم', 'مجهول']))))
+check('G02 _frame_faces بلا حاصل ضربٍ ممتنع: لا «أمر مبني للمجهول»', ('أمر', 'مجهول') not in [(f['tense'], f['voice']) for f in ff] and len(ff) == 3, ff)
+ff2 = _frame_faces(dict(heads=dict(verb='U'), frame=dict(candidate=dict(id='U#c'), candidates=[dict(id='c1', status='DEFERRED', tense='ماضٍ', voice='مجهول'),
+                                                                                             dict(id='c2', status='REJECTED', tense='أمر', voice='معلوم')])))
+check('G03 _frame_faces من المرشّحات الكاملة الحيّة وحدها، بهوية مرشّحها (دُعُوا: الماضي المجهول؛ والأمر الممنوع لا وجه له)',
+      [(f['tense'], f['voice'], f['morph_candidate_id']) for f in ff2] == [('ماضٍ', 'مجهول', 'U#c1')], ff2)
+fm = _face_cover([dict(face_id='F1', label='', voice='معلوم', unit='U', morph_candidate_id='U#c')],
+                 [dict(relation='R_other', role='فاعل', verb='OTHER'), dict(relation='R_face', role='فاعل', verb='U', faces=['F2']),
+                  dict(relation='R_def', role='فاعل', verb='U', status='DEFERRED'), dict(relation='R_ok', role='فاعل', verb='U', status='LICENSED')])
+check('G04 _face_cover لا يقبل علاقةً لفعلٍ آخر، ولا لوجهٍ آخر، ولا مؤجَّلة، ولو وافق وصف الدور والبناء', fm[0]['relations'] == ['R_ok'], fm)
+check('G05 _rel_face_id لا يعيد الوجه الأول افتراضاً حين لا وجه استوفى شروطه',
+      _rel_face_id(dict(relation_id='R', faces=[dict(status='HYPOTHESIS_UNCHECKED')])) is None and
+      _rel_face_id(dict(relation_id='R', faces=[dict(status='X'), dict(status='CONDITIONS_MET')])) == 'FACE:R#face1')
+# «يكونا» في الشهادة: التفكيك
+ok_ = next(x for c in o_c for x in c['obligations'] if x['name'] == 'فاعل «يَكُونَا»') if (o_c := analyze_text(
+    next(x for a, b, x in quran_source.rows() if (a, b) == (2, 282)), '2:282')['certs']) else None
+um = {x['face_id'].split('USE=')[1]: x for x in ok_['face_map']}
+check('K01 «يَكُونَا» في الشهادة مفكَّك: طرف الإسناد المشترك مثبتٌ بدليله، ووظيفته اسم الناسخ في الناقص والفاعل في التامّ، '
+      'ومتطلّب الناقص الخبر (مرشّح «رجلين»)، والاختيار مؤجَّل — ولا استيفاء ولا إغلاق',
+      ok_['shared_subject']['status'] == 'PROVEN' and ok_['usage_selection'] == 'DEFERRED' and um['ناقص']['relations'] and um['تامّ']['relations']
+      and um['ناقص']['function'] == 'اسم الناسخ' and um['تامّ']['function'] == 'فاعل' and um['ناقص']['requirements'][0]['status'] == 'CANDIDATE'
+      and ok_['status'] == 'SELECTION' and not ok_['met'], ok_)
+
+for g_ in GAPS:
+    print('GAP ' + g_)
 print('ALL OK' if not FAIL else f'FAILED {len(FAIL)}: {FAIL}')
 sys.exit(1 if FAIL else 0)
