@@ -2824,6 +2824,27 @@ def closure_certificate(J, records, upstream=None):
                                                                                        relations=[]) for u_ in ('ناقص', 'تامّ')],
                            morph_candidate_id=((fr.get('frame') or {}).get('candidate') or {}).get('id'), residual_reason='«' + fr['texts']['verb'] + '» من صيغ «كان» غير محسوم الاستعمال: '
                            'المتطلَّب اسم الناسخ وخبره في وجه الناقص، والفاعل في وجه التامّ؛ فلا يُسمّى طرف إسناده فاعلاً مستوفى')
+            elif sj.get('subject_faces') and not lic:
+                # S01.f: أوجه الصيغة بهوياتها (شخصٌ وعددٌ وجنس من المرشّح الكامل)، ولكلٍّ طرف إسناده؛ فلا يُستوفى إلا في كل الأوجه
+                sfx = sj['subject_faces']
+                fmap = [dict(face_id=x['face_id'], label=f"{x['kind']}" + (f" «{x.get('unit_text')}»" if x.get('unit_text') else ''),
+                             relations=[fr['relation_id'] + f"#subject@{x['face_id']}"] if x['status'] == 'LICENSED' else [],
+                             rule=x.get('rule'), implicit=x.get('implicit')) for x in sfx]
+                okf = all(x['relations'] for x in fmap)
+                rec.update(face_map=fmap, face_id='SHARED:' + '+'.join(x['face_id'] for x in fmap) if len(fmap) > 1 else fmap[0]['face_id'],
+                           face_label='؛ '.join(x['label'] for x in fmap),
+                           morph_candidate_id=((fr.get('frame') or {}).get('candidate') or {}).get('id'))
+                if okf:
+                    rec.update(status='MET_IN_ALL_FACES', discharge_relation_id=fr['relation_id'],
+                               discharge_evidence_id=fr['relation_id'] + '#subject_faces',
+                               satisfied_by=[dict(relation=x['relations'][0], status='LICENSED_IN_FACE', rule=x['rule']) for x in fmap],
+                               residual_reason='أوجه الصيغة غير محسومة، وطرف الإسناد مرخَّصٌ في كلٍّ منها بهويته؛ والاختيار مؤجَّل')
+                else:
+                    miss = [x['face_id'] for x in fmap if not x['relations']]
+                    rec.update(status='CONFLICT' if o.met else 'SELECTION', candidates=[dict(relation=x['face_id'], status='LICENSED' if x['relations']
+                                                                                             else 'DEFERRED', rule=x['rule']) for x in fmap],
+                               residual_reason=('FACE_PARTIAL: ' if len(miss) < len(fmap) else '') + (sj.get('why') or '') +
+                               '؛ أوجهٌ بلا طرف إسنادٍ مرخَّص: ' + '، '.join(miss))
             elif sj.get('status') == 'LICENSED' or lic:
                 rid = lic[0]['relation_id'] if lic else fr['relation_id']
                 # الإطار المؤجَّل (زمنٌ مرشّح) لا يُعرض مستوفياً بإطلاق: المستوفي بنيته الفرعية (الفاعل المرخَّص فيه)، مشتركةً في أوجه الإطار

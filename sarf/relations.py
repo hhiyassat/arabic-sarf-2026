@@ -67,6 +67,38 @@ def _pron_ar(d):
                      for k, m in (('person', P), ('number', N), ('gender', G)))
 
 
+def subject_pronoun_written(sig, tense):
+    """S01.p: هل ضمير الرفع في هذه الصيغة مكتوبٌ متصل، أم مستتر؟ → ('WRITTEN'|'HIDDEN_OBLIGATORY'|'HIDDEN_OR_OVERT'، السند)
+    المضارع: المكتوب ألف الاثنين وواو الجماعة وياء المخاطبة ونون النسوة وحدها؛ وحرف المضارعة ليس ضميراً. فالمتكلم (أَفعل، نَفعل)
+    والمخاطب المفرد المذكر (تَفعل) مستترٌ وجوباً، والغائب المفرد (يَفعل، تَفعل للغائبة) ظاهرٌ أو مستترٌ جوازاً.
+    الأمر: المفرد المذكر مستترٌ وجوباً، وما سواه مكتوب. الماضي: الغائب المفرد (فَعَلَ، فَعَلَتْ) ظاهرٌ أو مستتر، وما سواه مكتوب (تُ، نا…).
+    السند: الألفية «ومن ضمير الرفع ما يستتر * كافعلْ أوافقْ نغتبطْ إذ تشكرُ» وشرح ابن عقيل عليه (المستتر وجوباً في الأمر للواحد،
+    والمضارع المبدوء بالهمزة والنون وتاء الخطاب للواحد)؛ وباب الفاعل في شرح قطر الندى."""
+    if not isinstance(sig, dict):
+        return None, None
+    p_, n_, g_ = sig.get('person'), sig.get('number'), sig.get('gender')
+    SANAD = 'الألفية وشرح ابن عقيل: «ومن ضمير الرفع ما يستتر كافعلْ أوافقْ نغتبطْ إذ تشكرُ»'
+    if tense == 'مضارع':
+        if p_ == 1:
+            return 'HIDDEN_OBLIGATORY', SANAD + ' — حرف المضارعة (أ، ن) ليس ضميراً'
+        if p_ == 2 and n_ == 'singular' and g_ == 'masc':
+            return 'HIDDEN_OBLIGATORY', SANAD + ' — تاء الخطاب للواحد'
+        if p_ == 3 and n_ == 'singular':
+            return 'HIDDEN_OR_OVERT', 'الغائب المفرد: فاعله ظاهرٌ بعده أو مستترٌ جوازاً (باب الفاعل)'
+        if n_ in ('dual', 'plural') or (p_ == 2 and g_ == 'fem'):
+            return 'WRITTEN', 'ألف الاثنين أو واو الجماعة أو ياء المخاطبة أو نون النسوة: ضميرٌ متصل مكتوب'
+        return None, None
+    if tense == 'أمر':
+        if n_ == 'singular' and g_ == 'masc':
+            return 'HIDDEN_OBLIGATORY', SANAD + ' — الأمر للواحد'
+        return ('WRITTEN', 'ضمير الأمر المتصل المكتوب (ياء المخاطبة، ألف الاثنين، واو الجماعة، نون النسوة)') if n_ else (None, None)
+    if tense == 'ماضٍ':
+        if p_ == 3 and n_ == 'singular':
+            return 'HIDDEN_OR_OVERT', 'الغائب المفرد في الماضي: فاعله ظاهرٌ أو مستترٌ جوازاً'
+        return ('WRITTEN', 'ضمير الرفع المتصل المكتوب في الماضي (تُ، تَ، تِ، نَا، تُمْ، وا، ا، نَ…)') if p_ else (None, None)
+    return None, None
+
+
 def _join_ar(x):
     """قائمة قيمٍ نصية بفاصلةٍ عربية بدل تمثيل بايثون."""
     return '، '.join(str(i) for i in x) if isinstance(x, (list, tuple)) else str(x)
@@ -1586,21 +1618,31 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                                 (f'، والخبر «{v01["texts"].get("khabar")}»' if has_k else '، والخبر غير مربوط'),
                             v01=v01['relation_id'])
         elif vb:
-            subj = dict(kind='ضمير الصيغة أو اسمٌ ظاهر', role='اسم الناسخ أو فاعل التامّ', status=DEFERRED,
-                        why=f'«{v.text}» من صيغ «{vb}» ولم يُقبل ناسخاً في المرحلة ١١: ضميره اسم الناسخ إن كان ناقصاً، وفاعلٌ إن كان تامّاً؛ '
-                            'فلا يُسمّى فاعلاً قبل حسم الاستعمال')
+            kw_, sanad_ = subject_pronoun_written(sp, tf.get('v')) if sf.get('st') == 'مثبت' and tf.get('st') == 'مثبت' else (None, None)
+            if kw_ in ('WRITTEN', 'HIDDEN_OBLIGATORY'):
+                # المسند إليه ثابتٌ بالصيغة في الوجهين (اسم الناسخ في الناقص، والفاعل في التامّ): بنيةٌ مشتركة مثبتة؛ والاستعمال مؤجَّل
+                subj = dict(kind='ضمير متصل مكتوب' if kw_ == 'WRITTEN' else 'ضمير مستتر وجوباً (غير مكتوب)', role='اسم الناسخ أو فاعل التامّ',
+                            status=LICENSED, rule='S01.p', sanad=sanad_, implicit=kw_ != 'WRITTEN', shared_across=['ناقص', 'تامّ'],
+                            why=f'S01.p: «{v.text}» ({_pron_ar(sp)}): المسند إليه ' +
+                                ('الضمير المتصل المكتوب' if kw_ == 'WRITTEN' else 'ضميرٌ مستتر وجوباً') +
+                                ' في الوجهين، اسمُ الناسخ إن كان ناقصاً وفاعلٌ إن كان تامّاً؛ والاستعمال غير محسوم')
+            else:
+                subj = dict(kind='ضمير الصيغة أو اسمٌ ظاهر', role='اسم الناسخ أو فاعل التامّ', status=DEFERRED,
+                            why=f'«{v.text}» من صيغ «{vb}» ولم يُقبل ناسخاً في المرحلة ١١: ضميره اسم الناسخ إن كان ناقصاً، وفاعلٌ إن كان تامّاً؛ '
+                                'فلا يُسمّى فاعلاً قبل حسم الاستعمال')
             nk = next((toks[j_] for j_ in range(i + 1, fe_) if toks[j_].wi != v.wi and word_start(toks[j_]) and not toks[j_].conj
                        and (toks[j_].nounish() or toks[j_].shape_only)), None)
             kc = nk is not None and (nk.case in ('نصب', 'جر أو نصب', 'نصب أو جر'))
             opn.append('الاستعمال (ناسخ أو تامّ) غير محسوم: ' + (f'«{nk.text}» ({nk.loc}) منصوبٌ أو محتمل النصب كتابةً، خبرٌ مرشّح إن كان ناقصاً'
                                                               if kc else 'لا خبرَ مرشّحٌ منصوبٌ بعده في الإطار'))
-        elif sf.get('st') == 'مثبت' and (sp.get('number') in ('plural', 'dual') or sp.get('person') in (1, 2) and
-                                        not (tf.get('v') == 'مضارع' and sp.get('number') == 'singular')):
-            subj = dict(kind='ضمير متصل مكتوب', role=srole, status=LICENSED,
-                        why=f'ضمير الصيغة المكتوب ({_pron_ar(sp)}): {sf.get("ev")}')
-        elif sf.get('st') == 'مثبت' and sp.get('person') in (1, 2) and sp.get('number') == 'singular' and tf.get('v') in ('مضارع', 'أمر'):
-            subj = dict(kind='ضمير مستتر وجوباً (غير مكتوب)', role=srole, status=LICENSED,
-                        why=f'المتكلم أو المخاطب المفرد في {tf.get("v")}: لا يكون فاعله اسماً ظاهراً ({sf.get("ev")})')
+        elif sf.get('st') == 'مثبت' and tf.get('st') == 'مثبت' and \
+                subject_pronoun_written(sp, tf.get('v'))[0] in ('WRITTEN', 'HIDDEN_OBLIGATORY'):
+            # S01.p: الصيغة تثبت طرف الإسناد في وجهها قبل البحث عن ظاهر (الترخيص المبكر)؛ والزمن مثبتٌ شرطاً، فلا يُستدلّ بالسابقة وحدها
+            kw_, sanad_ = subject_pronoun_written(sp, tf.get('v'))
+            subj = dict(kind='ضمير متصل مكتوب' if kw_ == 'WRITTEN' else 'ضمير مستتر وجوباً (غير مكتوب)', role=srole, status=LICENSED,
+                        rule='S01.p', sanad=sanad_, implicit=kw_ != 'WRITTEN',
+                        why=(f'ضمير الصيغة المكتوب ({_pron_ar(sp)}): {sf.get("ev")}' if kw_ == 'WRITTEN' else
+                             f'S01.p: {_pron_ar(sp)} في {tf.get("v")}: الفاعل مستترٌ وجوباً، فلا يكون اسمٌ ظاهرٌ بعده فاعلَه ({sf.get("ev")})'))
         elif sf.get('st') == 'مثبت' and sp.get('person') == 3 and sp.get('number') == 'singular' and not cands:
             ov = overt_after(i)
             raf = [u for u in ov if u.nominative()[0] is True and (u.nounish() or u.divine)]   # الرفع من مصدر العلامة الواحد
@@ -1657,9 +1699,39 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                             why=f'الفاعل الضمير المتصل المكتوب في كل أوجه الصيغة ({" / ".join(_pron_ar(x) for x in alts)})، '
                                 f'والمختلف بينها الشخص وحده، فهو مؤجَّل: {sf.get("ev")}')
             else:
-                subj = dict(kind='غير معيَّن', role=srole, status=DEFERRED,
-                            why=f'ضمير الصيغة غير مثبت ({sf.get("st")}): {sf.get("ev")}' +
-                                ('؛ والأوجه: ' + '؛ '.join(_face(x) for x in alts) + '؛ ولا يُختار وجهٌ بلا دليل' if alts else ''),
+                # S01.f: لكل وجهٍ من أوجه الصيغة طرفُ إسناده بقاعدته (S01.p)، بهوية وجهٍ آلية من المرشّح الكامل؛ ولا يُختار وجه.
+                # الظاهر يُرخَّص في وجه الغائب المفرد وحده، ولا يُعدّ فاعلاً في وجهٍ فاعلُه مستترٌ وجوباً أو مكتوب
+                raf_ = [u for u in ov_ if u.nominative()[0] is True and (u.nounish() or u.divine)]
+                unres_ = [u for u in scan.get('unresolved') or [] if 'رفع' in (_written_mark(u)[1] or ())]
+                faces_ = []
+                for x in alts:
+                    fid = f'{v.uid}#T={tf.get("v")}|V={vf.get("v") or "—"}|S={x.get("person")}{x.get("number")}{x.get("gender")}'
+                    kw_, sanad_ = subject_pronoun_written(x, tf.get('v')) if tf.get('st') == 'مثبت' else (None, None)
+                    if kw_ in ('WRITTEN', 'HIDDEN_OBLIGATORY'):
+                        faces_.append(dict(face_id=fid, signature=x, kind='ضمير متصل مكتوب' if kw_ == 'WRITTEN' else 'ضمير مستتر وجوباً (غير مكتوب)',
+                                           status=LICENSED, rule='S01.p', implicit=kw_ != 'WRITTEN', unit=None, sanad=sanad_))
+                    elif kw_ == 'HIDDEN_OR_OVERT' and len(raf_) == 1 and ov_ and ov_[0] is raf_[0] and not unres_ and \
+                            raf_[0].k not in bound and raf_[0].k not in licensed_subjects:
+                        faces_.append(dict(face_id=fid, signature=x, kind='اسم ظاهر', status=LICENSED, rule='S01.f', unit=raf_[0].uid,
+                                           unit_text=raf_[0].text, implicit=False,
+                                           why=f'«{raf_[0].text}» المرشّح الاسمي الأول بعده مرفوعٌ كتابةً، ولا منافس مرفوعٌ غيره'))
+                    elif kw_ == 'HIDDEN_OR_OVERT' and not ov_ and scan.get('stop') in ('حدّ الإطار', 'فعل', 'عاطف') and not scan.get('unresolved'):
+                        faces_.append(dict(face_id=fid, signature=x, kind='ضمير مستتر جوازاً (غير مكتوب)', status=LICENSED, rule='S01.h',
+                                           implicit=True, unit=None))
+                    else:
+                        faces_.append(dict(face_id=fid, signature=x, kind='غير معيَّن', status=DEFERRED, rule='S01.f', unit=None,
+                                           blocked_by=('NOUN_CLASS_UNRESOLVED' if scan.get('unresolved') else 'TENSE_NOT_PROVEN' if tf.get('st') != 'مثبت'
+                                                       else 'COMPETING_OVERT' if len(raf_) > 1 or unres_ else 'SEARCH_BOUNDARY'),
+                                           why=_face(x) + ('' if tf.get('st') == 'مثبت' else '؛ والزمن غير مثبت') +
+                                               ('؛ أعاقه تحليل الاسم لا قاعدة المضارعة: صنف ' + '، '.join(f'«{u.text}»' for u in scan.get('unresolved'))
+                                                + ' غير محسوم' if scan.get('unresolved') else '')))
+                all_ok = faces_ and all(f_['status'] == LICENSED for f_ in faces_)
+                subj = dict(kind='في كل أوجه الصيغة' if all_ok else 'غير معيَّن', role=srole, status=LICENSED if all_ok else DEFERRED,
+                            rule='S01.f', subject_faces=faces_, selection='DEFERRED',
+                            why=(f'ضمير الصيغة غير مثبت ({sf.get("st")}): {sf.get("ev")}؛ ' +
+                                 ('وطرف الإسناد مرخَّصٌ في كل وجه: ' if all_ok else 'والأوجه: ') +
+                                 '؛ '.join(f"{_pron_ar(f_['signature'])}: {f_['kind']}" + (f" «{f_.get('unit_text')}»" if f_.get('unit_text') else '') +
+                                           f" ({f_['status']})" for f_ in faces_) + '؛ ولا يُختار وجهٌ بلا دليل'),
                             candidates=[u.uid for u in ov_])
         objs = [r_ for r_ in R if r_['type'] == 'OBJECT' and r_['heads'].get('verb') == v.uid]
         obj2 = None

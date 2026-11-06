@@ -259,9 +259,11 @@ check('X29 المرحلة ١١ في «لا يأبَ»: المشاهَد «جزم
 # ١٤ توزيع الأدوار مع النواسخ، والعائد
 u58, _ = at(o, '2:282:58', 'يَكُونَا')
 f58 = rec(o, 'VERB_FRAME', verb=u58)['frame']
-check('X30 «يكونا» من صيغ «كان» (VERBAL) ولم يُقبل ناسخاً: ضميره «اسم الناسخ أو فاعل التامّ» مؤجَّل، لا «فاعل» مرخَّص',
-      f58['subject']['status'] == 'DEFERRED' and f58['subject']['role'] == 'اسم الناسخ أو فاعل التامّ' and 'VERBAL' in f58['usage'],
-      f58['subject'])
+check('X30 «يكونا» من صيغ «كان» (VERBAL) ولم يُقبل ناسخاً: ضميره «اسم الناسخ أو فاعل التامّ» لا «فاعل» — والمسند إليه ألف الاثنين '
+      'المكتوبة في الوجهين، بنيةٌ مشتركة مرخَّصة، والاستعمال باقٍ مؤجَّلاً (عُدّل لعقد SARF_MUDARI_AGREEMENT_AND_ISNAD_01)',
+      f58['subject']['status'] == 'LICENSED' and f58['subject']['role'] == 'اسم الناسخ أو فاعل التامّ' and
+      f58['subject'].get('shared_across') == ['ناقص', 'تامّ'] and 'VERBAL' in f58['usage'] and
+      any('غير محسوم' in x for x in (f58.get('open') or [])), f58['subject'])
 f36b = rec(o, 'VERB_FRAME', verb=u36)
 check('X31 «كان» الناسخ المقبول: الإطار متّسق (البناء للمجهول لا ينطبق عليه)، وإسناده «اسم الناسخ (V01)»',
       f36b['status'] == 'LICENSED' and f36b['frame']['subject']['kind'] == 'اسم الناسخ (V01)', (f36b['status'], f36b['frame']['subject']))
