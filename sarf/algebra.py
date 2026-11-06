@@ -3207,8 +3207,10 @@ def closure_certificate(J, records, upstream=None):
         b_obl = level != 'LOCAL_PREDICATION' and b_rule != 'SOURCE:sura_end' and any(o['status'] == 'BOUNDARY' for o in req)
         if any(o['status'] == 'OPEN' for o in req) or any(x['kind'] == 'REQUIRED' for x in residuals):
             return 'OPEN_REQUIRED_OBLIGATION'
-        if J.O.get('deferred_boundaries'):
-            return 'DEFERRED_BOUNDARY'          # تجميعٌ داخلي غير محسوم: لا يُغلق المدى في أي مستوى
+        if J.O.get('deferred_boundaries') and level != 'LOCAL_PREDICATION':
+            # تجميعٌ داخلي غير محسوم (§١٥): هوية الجملة نفسها غير ثابتة، فلا إغلاق في مستوى الجملة والوحدة الخطابية؛ أما الإسناد
+            # المحلي فالتزاماته واحدة في التجميعين (القسمة توزّعها ولا تغيّرها)، فيبقى حكمه
+            return 'DEFERRED_BOUNDARY'
         if boundary_levels[level] != 'PROVEN' or b_obl or any(x['kind'] == 'BOUNDARY' for x in residuals):
             return 'DEFERRED_BOUNDARY'
         if any(o['status'] == 'COVERAGE' for o in req) or any(x['kind'] == 'COVERAGE' for x in residuals):
