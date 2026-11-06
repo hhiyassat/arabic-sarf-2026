@@ -117,18 +117,23 @@ if (r_.get('frame') or {}).get('subject'):
     r_['frame']['subject']['status'] = 'DEFERRED'          # البنية المستوفية نفسها (فاعل الإطار)، لا رأس السجل وحده
 c1 = closure_certificate(J112, m)
 check('M23 إفساد: تنزيل العلاقة المستوفية في جملةٍ مغلقة («لَمۡ يَلِدۡ») يُسقط الإغلاق',
-      c0['verdict'] == 'CLOSED_IN_FACE' and c1['verdict'] not in ('CLOSED_IN_FACE', 'CLOSED_WITH_SHARED_STRUCTURE'), (c0['verdict'], c1['verdict']))
+      c0['verdict_by_level']['LOCAL_PREDICATION'] == 'CLOSED_IN_FACE' and
+      c1['verdict_by_level']['LOCAL_PREDICATION'] not in ('CLOSED_IN_FACE', 'CLOSED_WITH_SHARED_STRUCTURE'),
+      (c0['verdict_by_level'], c1['verdict_by_level']))
 
 # أمثلة موجبة ومقابلة خارج آية الدين (كل آيةٍ وحدها)
 _, C3 = run(112, 3)
-check('G12 موجبة خارج آية الدين: «لَمۡ يَلِدۡ» (112:3) مغلقة في وجهها — الفاعل مستترٌ مرخَّص (S01.h) والحدّ مثبت',
-      C3[0]['verdict'] == 'CLOSED_IN_FACE', [c['verdict'] for c in C3])
+check('G12 موجبة خارج آية الدين: «لَمۡ يَلِدۡ» (112:3) مغلقةٌ في وجهها في مستوى الإسناد المحلي — الفاعل مستترٌ مرخَّص (S01.h) وحدّ الإسناد '
+      'المحلي ثابت؛ ولا تُغلق في مستوى الجملة: بعدها عطفٌ محتمل فالاستقلال غير مشهود به (مراجعة 040 ن٤)',
+      C3[0]['verdict_by_level']['LOCAL_PREDICATION'] == 'CLOSED_IN_FACE' and C3[0]['verdict_level'] == 'SENTENCE' and
+      C3[0]['verdict'] == C3[0]['verdict_by_level']['SENTENCE'] == 'DEFERRED_BOUNDARY' and
+      C3[0]['boundary']['independence_status'] == 'NOT_WITNESSED', [c['verdict_by_level'] for c in C3])
 _, C1 = run(108, 1)
 check('G13 مقابلة: «إِنَّآ أَعۡطَيۡنَٰكَ ٱلۡكَوۡثَرَ» (108:1) لا تُغلق: النواة نقص تغطيةٍ مسمّى (الفعل لم يُعرف)، وحدّ الآية غير مفحوص',
       C1[0]['verdict'] not in ('CLOSED_IN_FACE', 'CLOSED_WITH_SHARED_STRUCTURE') and
       any(ob['requirement_kind'] == 'NUCLEUS' and ob['status'] == 'COVERAGE' for ob in C1[0]['obligations']), [c['verdict'] for c in C1])
 check('G14 متعدّدة الأوجه: في 2:282 أحكامٌ مختلفة (اختيارٌ مؤجَّل، ونقص تغطية، وحدٌّ مؤجَّل)، والمحرّك لا يحكم بحكمٍ واحد للجميع',
-      {'DEFERRED_ANALYSIS_SELECTION', 'INCOMPLETE_RULE_COVERAGE', 'DEFERRED_BOUNDARY'} <= {c['verdict'] for c in C})
+      {'DEFERRED_ANALYSIS_SELECTION', 'INCOMPLETE_RULE_COVERAGE', 'DEFERRED_BOUNDARY'} <= {c['verdict_by_level']['LOCAL_PREDICATION'] for c in C})
 
 # ---------- ٤ المصدر المؤوَّل بنيةً ----------
 ms = {(r['texts']['harf'], r['texts']['verb']): r for r in o['records'] if r['type'] == 'MASDAR'}
@@ -178,9 +183,10 @@ check('G24 «لَا يُقۡبَلُ مِنۡهَا شَفَٰعَةٌ» (2:48):
 cv = {c['sentence']: c for c in C}
 c13 = cv['L2.d13.J']
 check('R01 «وَإِنْ تَفْعَلُوا فَإِنَّهُ فُسُوقٌ بِكُمْ»: تعلّق «بكم» بحثه غير مكتمل (A01)، فلا «مغلقة بالبنية المشتركة» بل نقص تغطية',
-      c13['verdict'] == 'INCOMPLETE_RULE_COVERAGE' and any(x['rule'] == 'A01' and x['kind'] == 'COVERAGE' for x in c13['residuals']), c13['verdict'])
+      c13['verdict_by_level']['LOCAL_PREDICATION'] == 'INCOMPLETE_RULE_COVERAGE' and any(x['rule'] == 'A01' and x['kind'] == 'COVERAGE' for x in c13['residuals']), c13['verdict'])
 check('R01b لا إغلاق (في وجهٍ ولا بالبنية المشتركة) مع باقٍ بحثه غير مكتمل في أي جملةٍ من 2:282',
-      all(not (c['verdict'] in ('CLOSED_IN_FACE', 'CLOSED_WITH_SHARED_STRUCTURE') and any(x['kind'] == 'COVERAGE' for x in c['residuals'])) for c in C))
+      all(not (v_ in ('CLOSED_IN_FACE', 'CLOSED_WITH_SHARED_STRUCTURE') and any(x['kind'] == 'COVERAGE' for x in c['residuals']))
+          for c in C for v_ in c['verdict_by_level'].values()))
 pl6 = next(o_ for o_ in cv['L2.d6.J']['obligations'] if o_['requirement_kind'] == 'PLACEMENT')
 check('R02 «فَلْيُمْلِلْ وَلِيُّهُ»: «وليّ» و«هُ» طرفان في S01 وI01 المرخَّصتين، فلا يُعدّان بلا موضع؛ والباقي «هُوَ» وحده (في S01 المؤجَّل)',
       'Q2:282.w49.u0' not in pl6['residual_reason'] and 'Q2:282.w49.u1' not in pl6['residual_reason'] and 'Q2:282.w47.u0' in pl6['residual_reason'],
@@ -207,10 +213,11 @@ check('R06 ن١ «أَلَّا تَرۡتَابُوا»: مرخَّصٌ في و�
       any('المفسّرة' in x for x in a_['search_scope']['outside_coverage']) and
       any(x['rule'] == 'M02' and x['kind'] == 'COVERAGE' for x in cv['L2.d10.J']['residuals']) and
       cv['L2.d10.J']['verdict'] not in ('CLOSED_IN_FACE', 'CLOSED_WITH_SHARED_STRUCTURE'))
-pb = [c['boundary'] for c in C if c['boundary']['proven']]
-check('R07 ن٢ كل حدٍّ مثبت يحمل القاعدة ومعرّف الدليل والمستوى وثباته في البدائل؛ والاستقلال لا يُدّعى مع عطفٍ محتمل',
+pb = [c['boundary'] for c in C if c['boundary']['levels']['LOCAL_PREDICATION'] == 'PROVEN']
+check('R07 ن٢ كل حدٍّ محلي مثبت يحمل القاعدة ومعرّف الدليل والمستوى وثباته المفحوص؛ والاستقلال لا يُدّعى مع عطفٍ محتمل',
       pb and all(b_.get('rule_id') and b_.get('evidence_id') and b_.get('level') and b_.get('stable_across_alternatives') and b_.get('independence')
-                 for b_ in pb) and all(not b_['independence'].startswith('مثبت') for b_ in pb if 'عطف' in (b_.get('linguistic_evidence') or '')),
+                 and b_['stability']['status'] == 'PROVEN' and b_['stability']['checked_relations'] > 0 for b_ in pb) and
+      all(b_['independence_status'] != 'PROVEN' for b_ in pb if 'عطف' in (b_.get('linguistic_evidence') or '')),
       [b_ for b_ in pb if not b_.get('rule_id')][:1])
 pl8 = next(o_ for o_ in cv['L2.d8.J']['obligations'] if o_['requirement_kind'] == 'PLACEMENT')
 import re as _re
@@ -224,6 +231,92 @@ check('R09 ن٤ ملخّص غير المستوفى مولَّدٌ من الحا�
 check('R10 ن٧ مقياس الموضع مسمّى: تغطية أدوارٍ محلية، لا اتصالٌ بالبنية الأعلى ولا اكتمال الجملة وحدّها',
       all('تغطية الأدوار المحلية' in o_['measure'] and 'البنية الأعلى' in o_['measure'] for c in C for o_ in c['obligations']
           if o_['requirement_kind'] == 'PLACEMENT'))
+
+# ---------- مراجعة 040: مستوى الشهادة، ومضمون الحدّ لا وجود حقوله، وهوية الوجه ----------
+from sarf.algebra import CLOSURE_LEVELS, _locs
+
+
+def run_j(s, v):
+    a = analyze(CAT, verse_text(s, v), 'auto')
+    S_, U_ = sentence_geo(a, f'Q{s}:{v}', Trace())
+    C_, R_ = [], []
+    LT_, _, _ = linguistic_layer([(s, v, a, U_, S_)], Trace(), 'test', cond_out=C_, rel_out=R_)
+    o_ = verse_relations(a, U_, unit_features(a, U_), f'{s}:{v}', legacy_cond=C_, legacy_rel=R_)
+    return o_, [J for SP in LT_ for D in SP.A + SP.O.get('pending', []) for J in D.A + D.O.get('pending', [])]
+
+
+check('L01 ن٤ لكل شهادةٍ حكمٌ في كل مستوى (الإسناد المحلي، والجملة، والوحدة الخطابية)، والحكم الرئيس موسومٌ بمستواه ومطابقٌ لحكم ذلك المستوى؛ '
+      'ولا حكمٌ أعلى أقوى من الأدنى', all(set(c['verdict_by_level']) == set(CLOSURE_LEVELS) and c['verdict'] == c['verdict_by_level'][c['verdict_level']]
+                                          and set(c['boundary']['levels']) == set(CLOSURE_LEVELS) and
+                                          not (c['boundary']['levels']['SENTENCE'] == 'PROVEN' and c['boundary']['levels']['LOCAL_PREDICATION'] != 'PROVEN')
+                                          for c in C + C3))
+CLOSED_ = ('CLOSED_IN_FACE', 'CLOSED_WITH_SHARED_STRUCTURE')
+check('L02 ن٤ لا ينتقل حكمٌ محلي إلى الجملة: كل جملةٍ مغلقةٍ في مستوى الجملة حدُّها مثبتٌ في ذلك المستوى (استقلالٌ مشهود)، ولا تُغلق الجملة '
+      'وحدّها محليٌّ وحده', all(c['boundary']['levels'][lv] == 'PROVEN' and (lv == 'LOCAL_PREDICATION' or c['boundary']['independence_status'] == 'PROVEN')
+                                for c in C + C3 for lv in CLOSURE_LEVELS if c['verdict_by_level'][lv] in CLOSED_))
+o3j, J3 = run_j(112, 3)
+cl0 = closure_certificate(J3[0], o3j['records'])
+# إفساد المضمون: علاقة عملٍ مرخَّصة يمتدّ عضوها وراء الحدّ (مفعولٌ في الآية التالية)، والحقول كلها باقيةٌ ممتلئة
+mx = copy.deepcopy(o3j['records'])
+fake = copy.deepcopy(next(r for r in mx if r['type'] == 'VERB_FRAME'))
+fake.update(type='OBJECT', relation_id='MUT:OBJECT:cross', rule_id='MUT', status='LICENSED')
+fake['heads'] = dict(verb=fake['heads']['verb'], object='Q112:4.w2.u0')
+fake['members'] = dict(verb=[fake['heads']['verb']], object=['Q112:4.w2.u0'])
+fake['positions'] = dict(verb=sorted(_locs(fake))[:1], object=['112:4:2'])
+mx.append(fake)
+cl1 = closure_certificate(J3[0], mx)
+check('L03 ن٥ إفساد مضمون الحدّ: علاقة عملٍ مرخَّصة تعبر الحدّ تُسقط ثباته والإغلاق المحلي، مع بقاء القاعدة ومعرّف الدليل والمستوى ممتلئة',
+      cl0['verdict_by_level']['LOCAL_PREDICATION'] == 'CLOSED_IN_FACE' and cl1['boundary']['rule_id'] and cl1['boundary']['evidence_id'] and
+      cl1['boundary']['level'] and cl1['boundary']['stability']['status'] == 'NOT_PROVEN' and
+      'MUT:OBJECT:cross' in cl1['boundary']['stability']['crossing_local'] and
+      cl1['verdict_by_level']['LOCAL_PREDICATION'] == 'DEFERRED_BOUNDARY', (cl1['boundary']['stability'], cl1['verdict_by_level']))
+my = copy.deepcopy(o3j['records'])
+link = copy.deepcopy(fake)
+link.update(type='CONDITION', relation_id='MUT:CONDITION:link', status='LICENSED')
+my.append(link)
+cl2 = closure_certificate(J3[0], my)
+check('L04 ن٥ رابطٌ مرخَّص بين الجمل يعبر الحدّ لا يمدّ الإسناد المحلي (يبقى مغلقاً محلياً) لكنه ينفي الاستقلال: فلا يثبت حدّ الجملة',
+      cl2['verdict_by_level']['LOCAL_PREDICATION'] == 'CLOSED_IN_FACE' and cl2['boundary']['independence_status'] == 'DISPROVEN' and
+      cl2['boundary']['levels']['SENTENCE'] != 'PROVEN' and cl2['verdict_by_level']['SENTENCE'] == 'DEFERRED_BOUNDARY',
+      (cl2['boundary']['independence_status'], cl2['verdict_by_level']))
+# إفساد المستوى: حدٌّ يُدّعى آخر السورة (مستوى الوحدة الخطابية) وهو ليس كذلك — شهادة الجملة تتبع المستوى المدّعى، فالفحص يكشف الادّعاء
+J3m = copy.deepcopy(J3[0])
+J3m.O['boundary'] = dict(J3m.O['boundary'], J_why='آخر السورة', J='proven')
+cl3 = closure_certificate(J3m, o3j['records'])
+check('L05 ن٥ مستوى الحدّ يغيّر الشهادة التي تتطلب مستوى أعلى: ادّعاء «آخر السورة» يرفع مستوى الحدّ إلى الجملة والوحدة الخطابية، '
+      'وحذفه يُنزلها؛ فالحكم يتبع المستوى لا وجود الحقول',
+      cl3['boundary']['levels']['SENTENCE'] == 'PROVEN' and cl3['verdict_by_level']['SENTENCE'] == 'CLOSED_IN_FACE' and
+      cl0['boundary']['levels']['SENTENCE'] != 'PROVEN' and cl0['verdict_by_level']['SENTENCE'] == 'DEFERRED_BOUNDARY',
+      (cl3['verdict_by_level'], cl0['verdict_by_level']))
+
+# هوية الوجه
+subj_met = [o_ for c in C for o_ in c['obligations'] if o_['requirement_kind'].startswith(('SUBJECT', 'AGENT', 'NASIKH')) and o_['met']
+            and o_.get('discharge_relation_id')]
+check('F01 ن٦ كل فاعلٍ مستوفى بعلاقةٍ في 14أ يحمل معرّف وجهٍ آلياً منفصلاً عن وصفه، ومعرّف المرشّح الصرفي، وخريطة اشتراكٍ كل وجهٍ فيها مستوفى',
+      subj_met and all(str(o_['face_id']).startswith(('FACE:', 'SHARED:')) and o_['face_label'] and o_['morph_candidate_id'] and
+                       '#' in o_['morph_candidate_id'] and o_['face_map'] and all(x['relations'] for x in o_['face_map']) for o_ in subj_met),
+      [(o_['name'], o_['face_id'], o_['morph_candidate_id']) for o_ in subj_met if not str(o_['face_id']).startswith(('FACE:', 'SHARED:'))][:3])
+ob_d = next(o_ for c in C for o_ in c['obligations'] if 'يُضَارَّ' in o_['name'] and o_['requirement_kind'] == 'SUBJECT_OR_PASSIVE_AGENT')
+check('F02 ن٦ «لَا يُضَآرَّ كَاتِبٞ»: البناء مؤجَّل، فالاستيفاء في كل الأوجه بخريطةٍ صريحة: وجه المعلوم ووجه المجهول، ولكلٍّ علاقته',
+      ob_d['status'] == 'MET_IN_ALL_FACES' and ob_d['face_id'].startswith('SHARED:') and
+      sorted(x['face_id'].split('|V=')[1] for x in ob_d['face_map']) == ['مجهول', 'معلوم'] and all(x['relations'] for x in ob_d['face_map']), ob_d)
+o2j, J2 = run_j(2, 282)
+JA = next(J for J in J2 if any(o_.name == 'فاعل «يُمْلِلْ»' for o_ in J.Omega))
+ca0 = closure_certificate(JA, o2j['records'])
+oa0 = next(o_ for o_ in ca0['obligations'] if o_['name'] == 'فاعل «يُمْلِلْ»')
+mz = copy.deepcopy(o2j['records'])
+next(r for r in mz if r['type'] == 'SUBJECT' and r['texts'].get('verb') == 'يُمْلِلْ')['role_name'] = 'نائب فاعل'
+oa1 = next(o_ for o_ in closure_certificate(JA, mz)['obligations'] if o_['obligation_id'] == oa0['obligation_id'])
+check('F03 ن٦ إفساد الوجه: علاقة فاعل «فَلْيُمْلِلْ وَلِيُّهُ» المرخَّصة يُغيَّر دورها إلى «نائب فاعل» والإطار معلوم — لا تستوفي الالتزام (خلط أوجه)، بمعرّفٍ لا بوصف',
+      oa0['status'] == 'MET' and oa1['status'] == 'CONFLICT' and not oa1['met'] and oa1['residual_reason'].startswith('FACE_MISMATCH'),
+      (oa0['status'], oa1['status'], oa1['residual_reason'][:80]))
+mw = copy.deepcopy(o2j['records'])
+fa = next(r for r in mw if r['type'] == 'VERB_FRAME' and r['heads']['verb'] == oa0['owner'])
+fa['frame']['voice'] = ('مجهول', 'مثبت', None)
+fa['frame']['candidate']['voice'] = 'مجهول'
+oa2 = next(o_ for o_ in closure_certificate(JA, mw)['obligations'] if o_['obligation_id'] == oa0['obligation_id'])
+check('F04 ن٦ إفساد المرشّح: تحويل بناء إطار «يُمْلِلْ» إلى المجهول مع فاعلٍ معلوم الدور — الوجه بلا علاقةٍ تقع فيه، فلا استيفاء',
+      oa2['status'] == 'CONFLICT' and 'V=مجهول' in oa2['face_id'], (oa2['status'], oa2['face_id']))
 
 print('ALL OK' if not FAIL else f'FAILED {len(FAIL)}: {FAIL}')
 sys.exit(1 if FAIL else 0)

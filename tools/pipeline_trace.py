@@ -504,16 +504,26 @@ for SP in LT:
             def ob_line(o_):
                 src_ = '، '.join(((x['relation'] or x.get('id') or x.get('evidence') or '') + (f" ({x['status']})" if x.get('status') else '') +
                                   (f" ← {x['unit']}" if x.get('unit') else '')) for x in (o_['satisfied_by'] or []))
+                fm_ = '، '.join(f"{x['face_id']} ({x['label']}) ← {'، '.join(x['relations']) or 'لا علاقة'}" for x in (o_.get('face_map') or []))
                 return (f"{o_['obligation_id']} {o_['name']} [{o_['requirement_kind']}، {'لازم' if o_['required'] else 'جائز'}، "
                         f"{o_['status']}: {o_['status_ar']}]" + (f" ← {src_}" if src_ else '') +
+                        (f"؛ الوجه: {o_['face_id']}" if o_.get('face_id') else '') +
+                        (f"؛ المرشّح الصرفي: {o_['morph_candidate_id']}" if o_.get('morph_candidate_id') else '') +
+                        (f"؛ خريطة الأوجه: {fm_}" if fm_ else '') +
                         (f"؛ الدليل: {o_['discharge_evidence_id']}" if o_.get('discharge_evidence_id') else '') +
                         (f"؛ الباقي: {o_['residual_reason']}" if o_['residual_reason'] else '') +
                         (f"؛ القياس: {o_['measure']}" if o_.get('measure') else ''))
             bd_ = cert_['boundary']
+            from sarf.algebra import CLOSURE_LEVELS, CLOSURE_LEVEL_AR, CLOSURE_AR as CA_
+            lv_ = '؛ '.join(f"{CLOSURE_LEVEL_AR[lv]}: {CA_[cert_['verdict_by_level'][lv]]} (الحدّ {bd_['levels'][lv]})" for lv in CLOSURE_LEVELS)
+            st_ = bd_.get('stability') or {}
             bline_ = (f"الحدّ اللغوي: {bd_['linguistic_status']}" +
+                      (f"؛ رمز المستوى: {bd_['level_code']}" if bd_.get('level_code') else '') +
+                      (f"؛ فحص الثبات: {st_['status']} ({st_['checked_relations']} علاقةً تمسّ المدى، العابر المحلي: "
+                       f"{'، '.join(st_['crossing_local']) or 'لا شيء'}، والعابر بين الجمل: {'، '.join(st_['crossing_link']) or 'لا شيء'})" if st_ else '') +
                       (f"؛ القاعدة: {bd_['rule_id']}؛ معرّف الدليل: {bd_['evidence_id']}؛ الدليل: {bd_['linguistic_evidence']}" if bd_.get('rule_id') else '') +
                       (f"؛ الثبات في البدائل: {bd_['stable_across_alternatives']}" if bd_.get('stable_across_alternatives') else '') +
-                      f"؛ الاستقلال في المستوى الأعلى: {bd_['independence']}" +
+                      f"؛ الاستقلال في المستوى الأعلى: {bd_['independence_status']} — {bd_['independence']}" +
                       (f"؛ حدّ المصدر: {bd_['source']}" if bd_.get('source') else ''))
             det_ = ('<details><summary>السجلّ الكامل للشهادة</summary>' +
                     '<br>'.join(h(ob_line(o_)) for o_ in cert_['obligations']) +
@@ -522,7 +532,7 @@ for SP in LT:
                      if cert_['residuals'] else '') +
                     ('<br>' + '<br>'.join(h(f"وجهٌ ممنوع {x['rule']} ({x['relation']}): {x['barrier']}") for x in cert_['rejected_faces'])
                      if cert_['rejected_faces'] else '') + '</details>')
-            scope_ = (f"الشهادة الموحَّدة: {cert_['verdict_ar']}؛ " +
+            scope_ = (f"الشهادة الموحَّدة في مستوى {cert_['verdict_level_ar']}: {cert_['verdict_ar']}؛ وبالمستويات: {lv_}؛ " +
                       (f'وفي 14أ داخل مداها {len(un_)} باقياً مصنَّفاً (' +
                        '، '.join(f'{k_}×{c_}' for k_, c_ in sorted(__import__('collections').Counter(un_).items())) + ')'
                        if un_ else 'ولا باقٍ في 14أ داخل مداها') + '؛ ' + bline_)
@@ -535,7 +545,8 @@ for SP in LT:
             un_req_ = 'الشهادة: ' + ('<br>'.join(h(f"{o_['name']} [{'لازم' if o_['required'] else 'جائز'}، {o_['status']}: {o_['status_ar']}]")
                                                   for o_ in nm_) or 'كل الالتزامات مستوفاة أو جائزةٌ غائبة')
             rows_j.append([esc(J.id), f'{frm} – {to}', f"<span class='ar'>{h(' '.join(words))}</span>",
-                           ('مغلقة (الطبقة القديمة)' if J.closed else 'مفتوحة') + f"<br><b>{h(cert_['verdict_ar'])}</b><br><sub>{h(scope_)}</sub>" + det_,
+                           ('مغلقة (الطبقة القديمة)' if J.closed else 'مفتوحة') + f"<br><b>{h(cert_['verdict_level_ar'])}: {h(cert_['verdict_ar'])}</b><br>"
+                           f"{h(CLOSURE_LEVEL_AR['LOCAL_PREDICATION'])}: {h(CA_[cert_['verdict_by_level']['LOCAL_PREDICATION']])}<br><sub>{h(scope_)}</sub>" + det_,
                            esc(bnd.get('F') or '—') + '<br><sub>الطبقة القديمة</sub>', bonds,
                            f"{h(pl_.split('<br><sub>')[0])}" + ('<br><sub>' + pl_.split('<br><sub>')[1] if '<br><sub>' in pl_ else '') +
                            f"<br><sub>الطبقة القديمة: {len(J.O.get('unplaced') or [])}</sub>",
@@ -549,12 +560,12 @@ for SP in LT:
                 f"<br><b>الحكم الموحَّد لجملها: {h(CLOSURE_AR[worst_])}</b><br><sub>{h('، '.join(f'{k_}×{c_}' for k_, c_ in sorted(__import__('collections').Counter(vs_).items())))}</sub>"
             rows_d[d_idx][3] = dv_
             tl_d[d_idx] = f"{D.id}: {len(Js)} جملة، {'مغلقة' if D.closed else 'مؤجَّلة'} [الموحَّد: {worst_}]"
-            tl_j.append(f"{J.id:<14} {frm}–{to}  القديم: {'مغلقة' if J.closed else 'مفتوحة'} | الموحَّد: [{cert_['verdict']}] ({'باقٍ في 14أ: ' + str(len(un_)) if un_ else 'لا باقٍ في 14أ'})  روابط {len(J.O.get('bound') or [])}  "
+            tl_j.append(f"{J.id:<14} {frm}–{to}  القديم: {'مغلقة' if J.closed else 'مفتوحة'} | الموحَّد [{cert_['verdict_level']}]: [{cert_['verdict']}]، المحلي: [{cert_['verdict_by_level']['LOCAL_PREDICATION']}] ({'باقٍ في 14أ: ' + str(len(un_)) if un_ else 'لا باقٍ في 14أ'})  روابط {len(J.O.get('bound') or [])}  "
                         f"موضع: {pl_ob['status'] if pl_ob else '—'}  {' '.join(words)[:70]}")
-section(14, 'الجملة', '(الجملة تُبنى في الطبقة القديمة قبل علاقات 14أ؛ ثم تمرّ شهادة الإغلاق الموحَّدة v2 (sarf.algebra.closure_certificate) بعدهما: لكل التزامٍ سجلٌّ بمعرّفه ونوعه ووجهه وحالته، ولا يُستوفى إلا بعلاقةٍ من نوعه للوحدة والوجه نفسيهما (فلا يُختزل «فاعل أو نائب فاعل» في «فاعل»، ولا يُلغي جدول الإسناد القديم تأجيلاً صريحاً في 14أ)؛ وما في 14أ داخل المدى مؤجَّلاً ليس التزاماً لازماً تلقائياً، بل يُصنَّف اختياراً أو حدّاً أو نقص تغطية؛ والحكم واحدٌ من سبعة: مغلقة في وجهها، مغلقة بالبنية المشتركة، التزامٌ لازمٌ غير مستوفى، حدٌّ مؤجَّل، اختيارٌ مؤجَّل، نقص تغطية، والوجه الممنوع يُعرض بمانعه) جهتان مختلفتان: «التمام» (F) أن في المدى نواةً ولا التزامَ نحويٍّ لازمٍ مفتوحاً (معمول، خبر، فاعل)؛ و«الإغلاق» أن تُستوفى '
+section(14, 'الجملة', '(الجملة تُبنى في الطبقة القديمة قبل علاقات 14أ؛ ثم تمرّ شهادة الإغلاق الموحَّدة v2 (sarf.algebra.closure_certificate) بعدهما: لكل التزامٍ سجلٌّ بمعرّفه ونوعه ووجهه وحالته، ولا يُستوفى إلا بعلاقةٍ من نوعه للوحدة والوجه نفسيهما (فلا يُختزل «فاعل أو نائب فاعل» في «فاعل»، ولا يُلغي جدول الإسناد القديم تأجيلاً صريحاً في 14أ)؛ وما في 14أ داخل المدى مؤجَّلاً ليس التزاماً لازماً تلقائياً، بل يُصنَّف اختياراً أو حدّاً أو نقص تغطية؛ والحكم واحدٌ من سبعة: مغلقة في وجهها، مغلقة بالبنية المشتركة، التزامٌ لازمٌ غير مستوفى، حدٌّ مؤجَّل، اختيارٌ مؤجَّل، نقص تغطية، والوجه الممنوع يُعرض بمانعه؛ والحكم يحمل مستواه: الإسناد المحلي (حدّه حدُّ الإسناد المحلي مفحوصاً بالعلاقات العابرة)، والجملة (يزيد الاستقلال المشهود به)، والوحدة الخطابية (دليل الاستقلال الخطابي، ولا يوجد إلا آخر السورة)، والحكم الرئيس في مستوى الجملة؛ ولكل التزامٍ معرّف وجهٍ آلي ووصفه ومعرّف المرشّح الصرفي وخريطة الاشتراك) جهتان مختلفتان: «التمام» (F) أن في المدى نواةً ولا التزامَ نحويٍّ لازمٍ مفتوحاً (معمول، خبر، فاعل)؛ و«الإغلاق» أن تُستوفى '
         'الالتزامات كلها: إغلاق كل وحدة، وموضع كل كلمة، وحسم كل علاقة. فالجملة قد تكون تامّةً في التحليل مفتوحةً غير مغلقة. والآية لا تُغلق الجملة. '
         'والروابط معروضةٌ بأطرافها، والالتزامات المفتوحة كاملةً بلا اختصار',
-        rows_j, ['الجملة', 'من – إلى', 'النص', 'الإغلاق (القديم ثم الموحَّد)', 'التمام (F) — الطبقة القديمة', 'الروابط — الطبقة القديمة',
+        rows_j, ['الجملة', 'من – إلى', 'النص', 'الإغلاق (القديم ثم الموحَّد بمستواه)', 'التمام (F) — الطبقة القديمة', 'الروابط — الطبقة القديمة',
                  'موضع الكلمات (تغطية الأدوار المحلية) — الشهادة (والقديم تحته)',
                  'غير مستوفى (لازمٌ وجائز) — الشهادة (والقديم تحته)'], tl_j)
 # ١٤أ العلاقات المحلية (عقد النواة الاسمية والتعلّق، sarf.relations) بأدلتها؛ و١٤ب محاور الصنف المستقلة

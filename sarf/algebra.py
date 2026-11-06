@@ -2671,6 +2671,11 @@ def _legacy_ev_id(J, n_, o):
     return f'LEGACY:{J.id}/O{n_}:' + ('+'.join(o.units or []) or J.id)
 
 
+CLOSURE_LEVELS = ('LOCAL_PREDICATION', 'SENTENCE', 'DISCOURSE_UNIT')
+CLOSURE_LEVEL_AR = {'LOCAL_PREDICATION': 'الإسناد المحلي', 'SENTENCE': 'الجملة', 'DISCOURSE_UNIT': 'الوحدة الخطابية'}
+# علاقاتٌ تربط جملةً بجملة: عبورها الحدّ لا يمدّ الإسناد المحلي، لكنه ينفي الاستقلال أو يعلّقه
+INTER_CLAUSE_TYPES = ('CONDITION', 'SILAH', 'CONTAINER_RELATIVE', 'RESUMPTIVE')
+
 UNMET_STATUSES = ('OPEN', 'CONFLICT', 'SELECTION', 'COVERAGE', 'BOUNDARY')
 
 
@@ -2678,6 +2683,42 @@ def certificate_unmet(cert):
     """ملخّص ما لم يُستوفَ، مولَّدٌ من رموز حالات الالتزامات نفسها (مراجعة 038 ن٤)، لازمها وجائزها، بلا مطابقة عبارة."""
     return [dict(obligation_id=o['obligation_id'], name=o['name'], required=o['required'], status=o['status'],
                  status_ar=o['status_ar']) for o in cert['obligations'] if o['status'] in UNMET_STATUSES]
+
+
+# هوية الوجه آلياً (مراجعة 040 ن٦): معرّف الوجه، ووصفه المقروء، ومعرّف المرشّح الصرفي، وخريطة الاشتراك — منفصلة
+_ROLE_VOICES = {'فاعل': ('معلوم',), 'نائب فاعل': ('مجهول',), 'فاعل أو نائب فاعل': ('معلوم', 'مجهول'), 'اسم الناسخ': (None,),
+                'اسم الناسخ أو فاعل التامّ': (None, 'معلوم')}
+
+
+def _frame_faces(fr):
+    """أوجه إطار الفعل: كل زمنٍ قائم في كل بناءٍ قائم، بمعرّفٍ آلي مشتقّ من المرشّح الصرفي المختار"""
+    f_ = (fr or {}).get('frame') or {}
+    cand = f_.get('candidate') or {}
+    cid = cand.get('id')
+    unit = (fr or {}).get('heads', {}).get('verb')
+    tenses = cand.get('tense_live') or [cand.get('tense')]
+    vv = f_.get('voice') or (None, None, None)
+    voices = list(vv[2]) if isinstance(vv, (list, tuple)) and len(vv) > 2 and vv[2] else [cand.get('voice') or (vv[0] if vv else None)]
+    out = []
+    for t in tenses:
+        for v in voices:
+            out.append(dict(face_id=f'FACE:{unit}|T={t}|V={v or "—"}', label=f'{t or "—"}، {v or "بلا بناء (ناسخ)"}',
+                            tense=t, voice=v, morph_candidate_id=cid))
+    return out
+
+
+def _rel_face_id(r):
+    """معرّف وجه العلاقة: الوجه الذي استوفى شروطه بين أوجه السجل (بترتيبه)، أو وجه السجل الوحيد"""
+    fs = r.get('faces') or []
+    k = next((i for i, f in enumerate(fs) if f.get('status') == 'CONDITIONS_MET'), 0)
+    return f"FACE:{r['relation_id']}#face{k}"
+
+
+def _face_cover(faces, rels):
+    """خريطة الاشتراك: لكل وجهٍ العلاقات المستوفية التي يقع وجهها فيه (البناء الذي يقتضيه دور المسند إليه)"""
+    return [dict(face_id=f['face_id'], label=f['label'], relations=[r_['relation'] for r_ in rels
+                                                                   if f['voice'] in _ROLE_VOICES.get(r_['role'], (f['voice'],))])
+            for f in faces]
 
 
 def closure_certificate(J, records):
@@ -2696,7 +2737,6 @@ def closure_certificate(J, records):
     # حدّ المصدر (موضعٌ في المدخل: آخر آية، أو آخر المدخل) غير الحدّ اللغوي (استقلال الجملة لفظاً ودليله)؛ والحدّ اللغوي لا يثبت
     # والتزام «استقلال الحدّ لفظاً» غير مستوفى
     indep_open = any(o.name == 'استقلال الحدّ لفظاً' and not o.met for o in J.Omega)
-    boundary_proven = (bool(J.closed) or bnd.get('J') == 'proven') and not indep_open
     source_boundary = bnd.get('J_why') if str(bnd.get('J_why') or '').startswith(('آخر السورة', 'نهاية المدخل')) else \
         ('نهاية الآية' if bnd.get('ayah_end') else None)
     # دليل الحدّ بقاعدته ومعرّفه ومستواه (مراجعة 038): حدّ الطبقة القديمة نهايةُ إسنادٍ محلي، والاستقلال في المستوى الأعلى غير مشهود به
@@ -2714,11 +2754,54 @@ def closure_certificate(J, records):
                     else 'مشهود به: نهاية النص' if b_rule == 'SOURCE:sura_end' else 'غير مشهود به')
     stable_b = ('نهاية الإسناد المحلي واحدةٌ في البدائل كلها (' + '، '.join(alts_b) + '): الرابط وما بعده خارج إسناد هذه الجملة في كلٍّ منها'
                 if alts_b else None)
+    # مستويات الحدّ آلياً (مراجعة 040 ن٤): لكل مستوى شرطه، ولا ينتقل حكمٌ محلي إلى الجملة أو الوحدة الخطابية
+    #  LOCAL_PREDICATION: حدّ الإسناد المحلي (حدّ الطبقة القديمة أو آخر السورة)، وثباته مفحوصٌ بالعلاقات العابرة لا بنصّ البدائل
+    #  SENTENCE: ما سبق، واستقلالٌ مشهودٌ به (آخر السورة، أو استئنافٌ وحده بعده) ولا رابطٌ بين الجمل يعبر المدى، والتزام الاستقلال القديم مستوفى
+    #  DISCOURSE_UNIT: دليل الاستقلال الخطابي، ولا يوجد إلا آخر السورة (قواعد الفقرة غير منفّذة)
+    local_src = (bool(J.closed) or bnd.get('J') == 'proven') and bool(b_rule)
+    touch = [r for r in records if r['status'] != 'REJECTED' and _locs(r) & span]
+    cross = [r for r in touch if _locs(r) - span]
+    cross_local = [r for r in cross if r['type'] not in INTER_CLAUSE_TYPES]
+    cross_link = [r for r in cross if r['type'] in INTER_CLAUSE_TYPES]
+    stability = dict(status=('PROVEN' if local_src and not cross_local else 'NOT_PROVEN' if local_src else 'NO_LOCAL_BOUNDARY'),
+                     checked_relations=len(touch), crossing_local=[r['relation_id'] for r in cross_local],
+                     crossing_local_status=[r['status'] for r in cross_local],
+                     crossing_link=[r['relation_id'] for r in cross_link], crossing_link_status=[r['status'] for r in cross_link])
+    if stability['status'] == 'PROVEN':
+        stable_b = (f"فُحصت {len(touch)} علاقةً تمسّ المدى: لا علاقة عملٍ أو إسنادٍ أو تعلّقٍ تعبر الحدّ، مرخَّصةً أو مؤجَّلة؛ "
+                    f"فنهاية الإسناد المحلي واحدةٌ في كل وجهٍ مبنيّ" + ('، وفي البدائل بعده (' + '، '.join(alts_b) + ')' if alts_b else '') +
+                    ('؛ والعابر رابطٌ بين جمل: ' + '، '.join(stability['crossing_link']) if cross_link else ''))
+    elif stability['status'] == 'NOT_PROVEN':
+        stable_b = ('غير مثبت: علاقةٌ تعبر الحدّ — ' + '، '.join(f"{r['relation_id']} ({r['status']})" for r in cross_local))
+    else:
+        stable_b = None
+    if b_rule == 'SOURCE:sura_end':
+        indep_status = 'PROVEN'
+    elif not local_src:
+        indep_status = 'NO_LOCAL_BOUNDARY'
+    elif any(r['status'] == 'LICENSED' for r in cross_link):
+        indep_status = 'DISPROVEN'
+    elif indep_open or cross_link or 'الصدارة' in why_b or not alts_b or set(alts_b) - {'استئناف'}:
+        indep_status = 'NOT_WITNESSED'
+    else:
+        indep_status = 'PROVEN'
+    if indep_status == 'PROVEN' and b_rule != 'SOURCE:sura_end':
+        independence = 'مشهود به: لا يبقى بعده إلا الاستئناف، ولا رابط بين الجمل يعبر المدى'
+    elif indep_status == 'DISPROVEN':
+        independence = 'منفيّ: رابطٌ مرخَّص بين الجمل يعبر المدى — ' + '، '.join(r['relation_id'] for r in cross_link if r['status'] == 'LICENSED')
+    elif cross_link and indep_status == 'NOT_WITNESSED':
+        independence += '؛ ورابطٌ مؤجَّل بين الجمل يعبر المدى: ' + '، '.join(stability['crossing_link'])
+    loc_ok = stability['status'] == 'PROVEN'
+    boundary_levels = dict(
+        LOCAL_PREDICATION='PROVEN' if loc_ok else 'NOT_PROVEN',
+        # آخر السورة: الاستقلال مشهودٌ بنهاية النص، فلا يُبقيه التزام «استقلال الحدّ لفظاً» القديم (لا لفظ بعده في السورة)
+        SENTENCE='PROVEN' if loc_ok and indep_status == 'PROVEN' and (not indep_open or b_rule == 'SOURCE:sura_end') else 'NOT_PROVEN',
+        DISCOURSE_UNIT='PROVEN' if loc_ok and b_rule == 'SOURCE:sura_end' else 'NOT_IMPLEMENTED')
     obls = []
     for n_, o in enumerate(J.Omega):
         base = o.name.split(' «')[0]
         kind = _KIND.get(base, base)
-        rec = dict(obligation_id=f'{J.id}/O{n_}', owner=(o.units or [J.id])[0] if o.units else J.id, name=o.name, face_id='—',
+        rec = dict(obligation_id=f'{J.id}/O{n_}', owner=(o.units or [J.id])[0] if o.units else J.id, name=o.name, face_id=None, face_label='—', morph_candidate_id=None, face_map=None,
                    requirement_kind=kind, requirement_evidence=(o.ev.cause if o.ev is not None else 'المرحلة ١٤: ' + (o.reason or o.name)),
                    required=bool(o.required), legacy_met=bool(o.met), status=None, discharge_relation_id=None, discharge_evidence_id=None,
                    residual_reason='', satisfied_by=None, candidates=None)
@@ -2732,28 +2815,48 @@ def closure_certificate(J, records):
                                        'اسم الناسخ': 'NASIKH_ISM', 'اسم الناسخ أو فاعل التامّ': 'NASIKH_ISM_OR_SUBJECT'}.get(role, 'SUBJECT')
             if fr is None:
                 rec['status'] = 'MET' if o.met else 'OPEN'
-                rec['face_id'] = 'الطبقة القديمة'
+                rec['face_label'] = 'الطبقة القديمة: لا وجه في 14أ'
                 rec['discharge_evidence_id'] = _legacy_ev_id(J, n_, o) if o.met else None
                 rec['satisfied_by'] = [_legacy_ev(J, n_, o)] if o.met else None
                 rec['residual_reason'] = '' if o.met else (o.reason or 'لا إطار فعلٍ في 14أ')
             elif rec['requirement_kind'] == 'NASIKH_ISM_OR_SUBJECT':
-                rec.update(status='SELECTION', face_id='ناقص | تامّ', residual_reason='«' + fr['texts']['verb'] + '» من صيغ «كان» غير محسوم الاستعمال: '
+                rec.update(status='SELECTION', face_label='ناقص | تامّ', face_map=[dict(face_id=f'FACE:{fr["heads"].get("verb")}|USE={u_}', label=u_,
+                                                                                       relations=[]) for u_ in ('ناقص', 'تامّ')],
+                           morph_candidate_id=((fr.get('frame') or {}).get('candidate') or {}).get('id'), residual_reason='«' + fr['texts']['verb'] + '» من صيغ «كان» غير محسوم الاستعمال: '
                            'المتطلَّب اسم الناسخ وخبره في وجه الناقص، والفاعل في وجه التامّ؛ فلا يُسمّى طرف إسناده فاعلاً مستوفى')
             elif sj.get('status') == 'LICENSED' or lic:
                 rid = lic[0]['relation_id'] if lic else fr['relation_id']
                 # الإطار المؤجَّل (زمنٌ مرشّح) لا يُعرض مستوفياً بإطلاق: المستوفي بنيته الفرعية (الفاعل المرخَّص فيه)، مشتركةً في أوجه الإطار
                 frame_def = not lic and fr['status'] != 'LICENSED'
-                faced = rec['requirement_kind'] == 'SUBJECT_OR_PASSIVE_AGENT' or frame_def
-                rec.update(status='MET_IN_ALL_FACES' if faced else 'MET',
-                           face_id=('أوجه الإطار' if frame_def else 'معلوم | مجهول') if faced else (role or 'فاعل'),
-                           discharge_relation_id=rid, discharge_evidence_id=f'{rid}#subject:{sj.get("kind") or "ظاهر"}',
-                           residual_reason=('الإطار مؤجَّل (' + fr['reason'] + ')، والفاعل المرخَّص فيه مشتركٌ في أوجهه' if frame_def else
-                                            'الدور «فاعل أو نائب فاعل»: البناء مؤجَّل، والمسند إليه مستوفى في الوجهين') if faced else '',
-                           satisfied_by=[dict(relation=rid, status='LICENSED' if not frame_def else 'SUBSTRUCTURE_LICENSED',
-                                              rule=(lic[0]['rule_id'] if lic else 'F01'))])
+                faces = _frame_faces(fr)
+                rels = ([dict(relation=r['relation_id'], role=r.get('role_name') or role) for r in lic] if lic else
+                        [dict(relation=fr['relation_id'], role=sj.get('role') or role)])
+                fmap = _face_cover(faces, rels)
+                covered = [x for x in fmap if x['relations']]
+                rec.update(morph_candidate_id=(faces[0]['morph_candidate_id'] if faces else None), face_map=fmap,
+                           face_id=(fmap[0]['face_id'] if len(fmap) == 1 else 'SHARED:' + '+'.join(x['face_id'] for x in fmap)),
+                           face_label=('؛ '.join(x['label'] for x in fmap)))
+                if len(covered) < len(fmap):
+                    # وجهٌ بلا علاقةٍ يقع وجهها فيه: العلاقة أُنتجت في وجهٍ غير وجه الالتزام (خلط أوجه)، فلا استيفاء
+                    miss = [x['label'] for x in fmap if not x['relations']]
+                    rec.update(status='CONFLICT' if not covered else 'SELECTION', candidates=[dict(relation=x['relation'], status='LICENSED',
+                                                                                                   rule='FACE', role=x['role']) for x in rels],
+                               residual_reason=('FACE_MISMATCH' if not covered else 'FACE_PARTIAL') + ': العلاقة '
+                               + '، '.join(f"{x['relation']} (دورها «{x['role']}»)" for x in rels) + ' لا تقع في الوجه: ' + '، '.join(miss))
+                else:
+                    faced = rec['requirement_kind'] == 'SUBJECT_OR_PASSIVE_AGENT' or frame_def or len(fmap) > 1
+                    rec.update(status='MET_IN_ALL_FACES' if faced else 'MET',
+                               discharge_relation_id=rid, discharge_evidence_id=f'{rid}#subject:{sj.get("kind") or "ظاهر"}',
+                               residual_reason=('الإطار مؤجَّل (' + fr['reason'] + ')، والفاعل المرخَّص فيه مشتركٌ في أوجهه' if frame_def else
+                                                'الدور «فاعل أو نائب فاعل»: البناء مؤجَّل، والمسند إليه مستوفى في الوجهين') if faced else '',
+                               satisfied_by=[dict(relation=rid, status='LICENSED' if not frame_def else 'SUBSTRUCTURE_LICENSED',
+                                                  rule=(lic[0]['rule_id'] if lic else 'F01'))])
             elif sj:
                 cands = sj.get('candidates') or []
-                rec.update(status='CONFLICT' if o.met else 'SELECTION', face_id='أوجه الفاعل',
+                fm_ = _face_cover(_frame_faces(fr), [])
+                rec.update(status='CONFLICT' if o.met else 'SELECTION', face_label='أوجه الفاعل: ' + '؛ '.join(x['label'] for x in fm_), face_map=fm_,
+                           face_id=(fm_[0]['face_id'] if len(fm_) == 1 else 'SHARED:' + '+'.join(x['face_id'] for x in fm_)) if fm_ else None,
+                           morph_candidate_id=((fr.get('frame') or {}).get('candidate') or {}).get('id'),
                            residual_reason=('الطبقة القديمة تستوفيه («' + rec['requirement_evidence'] + '»)، و14أ تؤجّله: ' if o.met else '') +
                            (sj.get('why') or ''), candidates=[dict(relation=r['relation_id'], status=r['status'], rule=r['rule_id']) for r in subs] or None)
                 rec['candidates_units'] = cands
@@ -2772,7 +2875,8 @@ def closure_certificate(J, records):
             inner = [r for r in lic if (r.get('function') or {}).get('status') == 'DEFERRED' or r.get('selection') == 'DEFERRED']
             if lic:
                 rec.update(status='MET', discharge_relation_id=lic[0]['relation_id'], discharge_evidence_id=lic[0]['relation_id'] + '#premises',
-                           face_id=lic[0].get('face') or 'الوجه المرخَّص',
+                           face_id=_rel_face_id(lic[0]), face_label=lic[0].get('face') or f"وجه {lic[0]['rule_id']} المرخَّص",
+                           morph_candidate_id=((((frames.get((o.units or [None])[0]) or {}).get('frame') or {}).get('candidate') or {}).get('id')),
                            satisfied_by=[dict(relation=r['relation_id'], status='LICENSED', rule=r['rule_id']) for r in lic],
                            residual_reason='؛ '.join(f'{r["rule_id"]}: ' + ((r.get('function') or {}).get('text') or r.get('face_note') or '')
                                                     for r in inner))
@@ -2785,7 +2889,7 @@ def closure_certificate(J, records):
                 rec.update(status='CONFLICT', residual_reason=f'الطبقة القديمة تستوفيه («{rec["requirement_evidence"]}»)، و14أ لا تسجّل مفعولاً: '
                                                               f'{oq.get("kind")} — {str(oq.get("note"))}')
             elif o.met:
-                rec.update(status='MET', face_id='الطبقة القديمة', discharge_evidence_id=_legacy_ev_id(J, n_, o),
+                rec.update(status='MET', face_label='الطبقة القديمة: لا وجه في 14أ', discharge_evidence_id=_legacy_ev_id(J, n_, o),
                            satisfied_by=[_legacy_ev(J, n_, o)])
             else:
                 rec.update(status='OPEN' if o.required else 'OPTIONAL_ABSENT', residual_reason=o.reason or '')
@@ -2814,7 +2918,13 @@ def closure_certificate(J, records):
         elif kind in ('RELATION_SELECTION', 'NUCLEI_LINKING'):
             rec.update(status='MET' if o.met else 'SELECTION', residual_reason='' if o.met else (o.reason or ''))
         elif kind == 'BOUNDARY_INDEPENDENCE':
-            rec.update(status='MET' if o.met else 'BOUNDARY', residual_reason='' if o.met else (o.reason or ''))
+            if not o.met and b_rule == 'SOURCE:sura_end':
+                # آخر السورة في المصحف المعتمد: لا لفظ بعده في السورة، فالاستقلال مستوفى بدليل المصدر المسمّى
+                rec.update(status='MET', discharge_evidence_id=f"{J.id}#boundary@{bnd.get('location')}:SOURCE:sura_end",
+                           satisfied_by=[dict(relation=None, status='SOURCE', rule='SOURCE:sura_end',
+                                              evidence='آخر آيات السورة في المصحف المعتمد')])
+            else:
+                rec.update(status='MET' if o.met else 'BOUNDARY', residual_reason='' if o.met else (o.reason or ''))
         else:
             rec.update(status='MET' if o.met else ('OPEN' if o.required else 'OPTIONAL_ABSENT'), residual_reason=o.reason or '')
         if rec['status'] == 'MET' and rec['satisfied_by'] is None:
@@ -2861,29 +2971,39 @@ def closure_certificate(J, records):
             residuals.append(dict(relation=r['relation_id'], type=r['type'], rule=r['rule_id'], status='OPEN_OBLIGATION',
                                   kind='SELECTION' if sel_ else 'REQUIRED', why='؛ '.join(op_), outside=[]))
     req = [o for o in obls if o['required']]
-    # تعارض الطبقتين (القديمة تستوفي و14أ تؤجّل) تأجيلٌ لا فتحٌ مثبت: يدخل حكم الاختيار المؤجَّل، ولا يُعدّ مستوفى
-    if any(o['status'] == 'OPEN' for o in req) or any(x['kind'] == 'REQUIRED' for x in residuals):
-        verdict = 'OPEN_REQUIRED_OBLIGATION'
-    elif not boundary_proven or any(o['status'] == 'BOUNDARY' for o in req) or any(x['kind'] == 'BOUNDARY' for x in residuals):
-        verdict = 'DEFERRED_BOUNDARY'
-    elif any(o['status'] == 'COVERAGE' for o in req) or any(x['kind'] == 'COVERAGE' for x in residuals):
-        verdict = 'INCOMPLETE_RULE_COVERAGE'
-    elif any(o['status'] in ('SELECTION', 'CONFLICT') for o in req):
-        verdict = 'DEFERRED_ANALYSIS_SELECTION'
-    elif any(o['status'] == 'MET_IN_ALL_FACES' for o in req) or residuals:
-        verdict = 'CLOSED_WITH_SHARED_STRUCTURE'
-    else:
-        verdict = 'CLOSED_IN_FACE'
+
+    def _verdict(level):
+        # تعارض الطبقتين (القديمة تستوفي و14أ تؤجّل) تأجيلٌ لا فتحٌ مثبت؛ والتزام الاستقلال القديم (BOUNDARY) شرطٌ فوق المحلي وحده
+        b_obl = level != 'LOCAL_PREDICATION' and b_rule != 'SOURCE:sura_end' and any(o['status'] == 'BOUNDARY' for o in req)
+        if any(o['status'] == 'OPEN' for o in req) or any(x['kind'] == 'REQUIRED' for x in residuals):
+            return 'OPEN_REQUIRED_OBLIGATION'
+        if boundary_levels[level] != 'PROVEN' or b_obl or any(x['kind'] == 'BOUNDARY' for x in residuals):
+            return 'DEFERRED_BOUNDARY'
+        if any(o['status'] == 'COVERAGE' for o in req) or any(x['kind'] == 'COVERAGE' for x in residuals):
+            return 'INCOMPLETE_RULE_COVERAGE'
+        if any(o['status'] in ('SELECTION', 'CONFLICT') for o in req):
+            return 'DEFERRED_ANALYSIS_SELECTION'
+        if any(o['status'] == 'MET_IN_ALL_FACES' for o in req) or residuals:
+            return 'CLOSED_WITH_SHARED_STRUCTURE'
+        return 'CLOSED_IN_FACE'
+    verdict_by_level = {lv: _verdict(lv) for lv in CLOSURE_LEVELS}
+    verdict_level = 'SENTENCE'                    # الشهادة شهادة جملة: حكمها الرئيس في مستوى الجملة، والمحلي والخطابي معه موسومان
+    verdict = verdict_by_level[verdict_level]
+    boundary_proven = boundary_levels[verdict_level] == 'PROVEN'
     return dict(sentence=J.id, span=sorted(span, key=lambda x: tuple(int(p) for p in x.split(':'))), legacy_closed=bool(J.closed),
-                legacy_F=bnd.get('F'), boundary=dict(proven=boundary_proven, rule_id=b_rule if boundary_proven else None,
-                                                     evidence_id=(f"{J.id}#boundary@{bnd.get('location')}" if boundary_proven and b_rule else None),
-                                                     level=b_level if boundary_proven else None, independence=independence,
-                                                     stable_across_alternatives=stable_b if boundary_proven else None,
-                                                     linguistic_evidence=None if not boundary_proven else
-                                                     (bnd.get('J_why') or bnd.get('category')),
-                                                     linguistic_status=f'مثبت: {b_level}' if boundary_proven else
-                                                     ('غير مثبت: استقلال الحدّ لفظاً غير مفحوص' if indep_open else 'غير مثبت'),
+                legacy_F=bnd.get('F'), boundary=dict(proven=boundary_proven, proven_level=verdict_level, levels=boundary_levels,
+                                                     rule_id=b_rule if local_src else None,
+                                                     evidence_id=(f"{J.id}#boundary@{bnd.get('location')}" if local_src else None),
+                                                     level=b_level if local_src else None, level_code=(
+                                                         'SURA_END' if b_rule == 'SOURCE:sura_end' else 'LOCAL_PREDICATION_END' if local_src else None),
+                                                     independence=independence, independence_status=indep_status,
+                                                     stability=stability, stable_across_alternatives=stable_b,
+                                                     linguistic_evidence=(bnd.get('J_why') or bnd.get('category')) if local_src else None,
+                                                     linguistic_status=(f'مثبت في مستوى الجملة: {b_level}' if boundary_proven else
+                                                                        f'مثبت محلياً وحده: {b_level}' if boundary_levels['LOCAL_PREDICATION'] == 'PROVEN'
+                                                                        else 'غير مثبت: ' + (stable_b or 'لا حدّ إسنادٍ محلي')),
                                                      source=source_boundary,
-                                                     evidence=(bnd.get('J_why') or bnd.get('category')) if boundary_proven else None),
+                                                     evidence=(bnd.get('J_why') or bnd.get('category')) if local_src else None),
                 obligations=obls, residuals=residuals, relation_open=residuals, rejected_faces=rejected,
-                verdict=verdict, verdict_ar=CLOSURE_AR[verdict])
+                verdict=verdict, verdict_ar=CLOSURE_AR[verdict], verdict_level=verdict_level,
+                verdict_level_ar=CLOSURE_LEVEL_AR[verdict_level], verdict_by_level=verdict_by_level)
