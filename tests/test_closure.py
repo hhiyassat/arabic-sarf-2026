@@ -132,8 +132,9 @@ check('G14 متعدّدة الأوجه: في 2:282 أحكامٌ مختلفة (ا
 
 # ---------- ٤ المصدر المؤوَّل بنيةً ----------
 ms = {(r['texts']['harf'], r['texts']['verb']): r for r in o['records'] if r['type'] == 'MASDAR'}
-check('G15 «أَلَّا» (MERGED) مع «حذف النون» (نصبٌ أو جزم): «أَلَّا تَرۡتَابُوا» و«أَلَّا تَكۡتُبُوهَا» مؤجَّلان بوجهي المصدرية والتفسير',
-      ms[('أَلَّا', 'تَرْتَابُوا')]['status'] == 'DEFERRED' and ms[('أَلَّا', 'تَكْتُبُو')]['status'] == 'DEFERRED' and
+check('G15 «أَلَّا» (MERGED) مع «حذف النون»: وجه المصدرية مرخَّصٌ في وجهه (استوفى شروطه)، واختياره مؤجَّل لأن وجه المفسّرة فرضيةٌ غير مفحوصة '
+      '(مراجعة 038 ن١: الترخيص غير الاختيار)', all(ms[k_]['status'] == 'LICENSED' and ms[k_]['selection'] == 'DEFERRED'
+                                                  for k_ in (('أَلَّا', 'تَرْتَابُوا'), ('أَلَّا', 'تَكْتُبُو'))) and
       any('المفسّرة' in x for x in ms[('أَلَّا', 'تَرْتَابُوا')]['alternatives']))
 o64, _ = run(3, 64)
 m64 = [r for r in o64['records'] if r['type'] == 'MASDAR' and r['texts']['harf'] == 'أَلَّا']
@@ -198,6 +199,31 @@ a_ = ms[('أَلَّا', 'تَرْتَابُوا')]
 check('R05 «أَلَّا» مع حذف النون: المقدّمة «حذف النون متحقّق ولا يحسم النصب أو الجزم» (لا «النصب مكتوب»)، ووجه المصدرية استوفى شروطه، '
       'ووجه المفسّرة فرضيةٌ غير مفحوصة لا وجهٌ مكافئ', 'لا يحسم' in a_['premises'][1] and 'النصب مكتوب' not in a_['premises'][1] and
       [f_['status'] for f_ in a_['faces']] == ['CONDITIONS_MET', 'HYPOTHESIS_UNCHECKED'])
+
+# ---------- مراجعة 038 ----------
+from sarf.algebra import certificate_unmet
+check('R06 ن١ «أَلَّا تَرۡتَابُوا»: مرخَّصٌ في وجهه، والاختيار مؤجَّل، والشرط الناقص مسمّى (فحص المفسّرة)؛ والشهادة تعدّه نقص تغطية لا إغلاقاً',
+      a_['status'] == 'LICENSED' and a_['selection'] == 'DEFERRED' and a_['search_status'] == 'SEARCH_INCOMPLETE' and
+      any('المفسّرة' in x for x in a_['search_scope']['outside_coverage']) and
+      any(x['rule'] == 'M02' and x['kind'] == 'COVERAGE' for x in cv['L2.d10.J']['residuals']) and
+      cv['L2.d10.J']['verdict'] not in ('CLOSED_IN_FACE', 'CLOSED_WITH_SHARED_STRUCTURE'))
+pb = [c['boundary'] for c in C if c['boundary']['proven']]
+check('R07 ن٢ كل حدٍّ مثبت يحمل القاعدة ومعرّف الدليل والمستوى وثباته في البدائل؛ والاستقلال لا يُدّعى مع عطفٍ محتمل',
+      pb and all(b_.get('rule_id') and b_.get('evidence_id') and b_.get('level') and b_.get('stable_across_alternatives') and b_.get('independence')
+                 for b_ in pb) and all(not b_['independence'].startswith('مثبت') for b_ in pb if 'عطف' in (b_.get('linguistic_evidence') or '')),
+      [b_ for b_ in pb if not b_.get('rule_id')][:1])
+pl8 = next(o_ for o_ in cv['L2.d8.J']['obligations'] if o_['requirement_kind'] == 'PLACEMENT')
+import re as _re
+ids8 = _re.findall(r'Q2:282\.w\d+\.u\d+', pl8['residual_reason'].split('؛')[0])
+check('R08 ن٣ لا بتر في السجل: باقي الموضع في L2.d8 يعدّد 8 من 8 بهوياتها كاملة، ولا هويةٌ مقطوعة',
+      pl8['residual_reason'].startswith('8 ') and len(ids8) == 8 and '…' not in pl8['residual_reason'], ids8)
+un5 = certificate_unmet(cv['L2.d5.J'])
+check('R09 ن٤ ملخّص غير المستوفى مولَّدٌ من الحالة الآلية: يشمل تعارض مفعول «يبخس» الجائز، ويطابق عدّ الحالات غير المستوفاة',
+      any(u['status'] == 'CONFLICT' and not u['required'] and 'يَبْخَسْ' in u['name'] for u in un5) and
+      all(len(certificate_unmet(c)) == sum(o_['status'] in ('OPEN', 'CONFLICT', 'SELECTION', 'COVERAGE', 'BOUNDARY') for o_ in c['obligations']) for c in C))
+check('R10 ن٧ مقياس الموضع مسمّى: تغطية أدوارٍ محلية، لا اتصالٌ بالبنية الأعلى ولا اكتمال الجملة وحدّها',
+      all('تغطية الأدوار المحلية' in o_['measure'] and 'البنية الأعلى' in o_['measure'] for c in C for o_ in c['obligations']
+          if o_['requirement_kind'] == 'PLACEMENT'))
 
 print('ALL OK' if not FAIL else f'FAILED {len(FAIL)}: {FAIL}')
 sys.exit(1 if FAIL else 0)

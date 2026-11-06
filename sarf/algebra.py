@@ -2663,12 +2663,21 @@ def _legacy_ev(J, n_, o):
     ev = o.ev
     return dict(relation=None, status='LEGACY', rule='المرحلة ١٤', id=_legacy_ev_id(J, n_, o), units=list(o.units or []),
                 evidence=(ev.cause if ev is not None else 'استيفاءٌ في الطبقة القديمة'),
-                conditions=[str(c_)[:120] for c_ in (ev.conditions if ev is not None else [])][:4],
+                conditions=[str(c_) for c_ in (ev.conditions if ev is not None else [])],
                 rank='الطبقة القديمة: دليلٌ غير مصالَح مع 14أ (لا علاقة فيها لهذا الالتزام)')
 
 
 def _legacy_ev_id(J, n_, o):
-    return f'LEGACY:{J.id}/O{n_}:' + '+'.join(o.units or []) + ':' + ((o.ev.cause if o.ev is not None else o.name)[:40])
+    return f'LEGACY:{J.id}/O{n_}:' + ('+'.join(o.units or []) or J.id)
+
+
+UNMET_STATUSES = ('OPEN', 'CONFLICT', 'SELECTION', 'COVERAGE', 'BOUNDARY')
+
+
+def certificate_unmet(cert):
+    """ملخّص ما لم يُستوفَ، مولَّدٌ من رموز حالات الالتزامات نفسها (مراجعة 038 ن٤)، لازمها وجائزها، بلا مطابقة عبارة."""
+    return [dict(obligation_id=o['obligation_id'], name=o['name'], required=o['required'], status=o['status'],
+                 status_ar=o['status_ar']) for o in cert['obligations'] if o['status'] in UNMET_STATUSES]
 
 
 def closure_certificate(J, records):
@@ -2690,6 +2699,21 @@ def closure_certificate(J, records):
     boundary_proven = (bool(J.closed) or bnd.get('J') == 'proven') and not indep_open
     source_boundary = bnd.get('J_why') if str(bnd.get('J_why') or '').startswith(('آخر السورة', 'نهاية المدخل')) else \
         ('نهاية الآية' if bnd.get('ayah_end') else None)
+    # دليل الحدّ بقاعدته ومعرّفه ومستواه (مراجعة 038): حدّ الطبقة القديمة نهايةُ إسنادٍ محلي، والاستقلال في المستوى الأعلى غير مشهود به
+    # إذا كان ما بعده عطفاً أو حالاً أو ما له الصدارة؛ ونهاية الإسناد المحلي ثابتةٌ في البدائل كلها لأن ما بعد الرابط خارج إسناد الجملة
+    # في كلٍّ منها، والاستقلال يختلف بينها
+    why_b = str(bnd.get('J_why') or '')
+    alts_b = [x.strip() for x in why_b.split('وما بعدها ', 1)[1].split('،') if x.strip()] if 'وما بعدها ' in why_b else []
+    alts_b = [a_.replace('أو ', '').strip() for a_ in alts_b]
+    b_rule = 'LEGACY:sentence_boundary (sarf.algebra.sentence_boundary)' if bnd.get('J') == 'proven' and not source_boundary else \
+        ('SOURCE:sura_end' if str(source_boundary or '').startswith('آخر السورة') else None)
+    b_level = ('نهاية السورة (حدُّ مصدرٍ يوافق حدّ النص)' if b_rule == 'SOURCE:sura_end' else
+               'نهاية إسنادٍ محلي' if b_rule else None)
+    independence = ('غير مشهود به: بعده ' + '، '.join(alts_b) + '؛ والعطف والحال يصلان ما بعدها بها، والاستئناف وحده يقطع'
+                    if alts_b else 'غير مشهود به: بعده ما له الصدارة، وقد يبقى تعلّقٌ معنوي' if b_rule and 'الصدارة' in why_b
+                    else 'مشهود به: نهاية النص' if b_rule == 'SOURCE:sura_end' else 'غير مشهود به')
+    stable_b = ('نهاية الإسناد المحلي واحدةٌ في البدائل كلها (' + '، '.join(alts_b) + '): الرابط وما بعده خارج إسناد هذه الجملة في كلٍّ منها'
+                if alts_b else None)
     obls = []
     for n_, o in enumerate(J.Omega):
         base = o.name.split(' «')[0]
@@ -2723,15 +2747,15 @@ def closure_certificate(J, records):
                 rec.update(status='MET_IN_ALL_FACES' if faced else 'MET',
                            face_id=('أوجه الإطار' if frame_def else 'معلوم | مجهول') if faced else (role or 'فاعل'),
                            discharge_relation_id=rid, discharge_evidence_id=f'{rid}#subject:{sj.get("kind") or "ظاهر"}',
-                           residual_reason=('الإطار مؤجَّل (' + fr['reason'][:80] + ')، والفاعل المرخَّص فيه مشتركٌ في أوجهه' if frame_def else
+                           residual_reason=('الإطار مؤجَّل (' + fr['reason'] + ')، والفاعل المرخَّص فيه مشتركٌ في أوجهه' if frame_def else
                                             'الدور «فاعل أو نائب فاعل»: البناء مؤجَّل، والمسند إليه مستوفى في الوجهين') if faced else '',
                            satisfied_by=[dict(relation=rid, status='LICENSED' if not frame_def else 'SUBSTRUCTURE_LICENSED',
                                               rule=(lic[0]['rule_id'] if lic else 'F01'))])
             elif sj:
                 cands = sj.get('candidates') or []
                 rec.update(status='CONFLICT' if o.met else 'SELECTION', face_id='أوجه الفاعل',
-                           residual_reason=('الطبقة القديمة تستوفيه («' + rec['requirement_evidence'][:60] + '»)، و14أ تؤجّله: ' if o.met else '') +
-                           (sj.get('why') or '')[:220], candidates=[dict(relation=r['relation_id'], status=r['status'], rule=r['rule_id']) for r in subs] or None)
+                           residual_reason=('الطبقة القديمة تستوفيه («' + rec['requirement_evidence'] + '»)، و14أ تؤجّله: ' if o.met else '') +
+                           (sj.get('why') or ''), candidates=[dict(relation=r['relation_id'], status=r['status'], rule=r['rule_id']) for r in subs] or None)
                 rec['candidates_units'] = cands
         elif kind in ('OBJECT', 'KHABAR', 'GOVERNED', 'NUCLEUS'):
             sat = []
@@ -2750,16 +2774,16 @@ def closure_certificate(J, records):
                 rec.update(status='MET', discharge_relation_id=lic[0]['relation_id'], discharge_evidence_id=lic[0]['relation_id'] + '#premises',
                            face_id=lic[0].get('face') or 'الوجه المرخَّص',
                            satisfied_by=[dict(relation=r['relation_id'], status='LICENSED', rule=r['rule_id']) for r in lic],
-                           residual_reason='؛ '.join(f'{r["rule_id"]}: ' + ((r.get('function') or {}).get('text') or r.get('face_note') or '')[:120]
+                           residual_reason='؛ '.join(f'{r["rule_id"]}: ' + ((r.get('function') or {}).get('text') or r.get('face_note') or '')
                                                     for r in inner))
             elif sat:
                 rec.update(status='CONFLICT' if o.met else ('SELECTION' if o.required else 'OPTIONAL_ABSENT'),
                            candidates=[dict(relation=r['relation_id'], status=r['status'], rule=r['rule_id']) for r in sat],
-                           residual_reason=sat[0]['reason'][:200])
+                           residual_reason=sat[0]['reason'])
             elif o.met and kind == 'OBJECT' and (((frames.get((o.units or [None])[0]) or {}).get('frame') or {}).get('object_requirement') or {}).get('kind'):
                 oq = frames[(o.units or [None])[0]]['frame']['object_requirement']
                 rec.update(status='CONFLICT', residual_reason=f'الطبقة القديمة تستوفيه («{rec["requirement_evidence"]}»)، و14أ لا تسجّل مفعولاً: '
-                                                              f'{oq.get("kind")} — {str(oq.get("note"))[:160]}')
+                                                              f'{oq.get("kind")} — {str(oq.get("note"))}')
             elif o.met:
                 rec.update(status='MET', face_id='الطبقة القديمة', discharge_evidence_id=_legacy_ev_id(J, n_, o),
                            satisfied_by=[_legacy_ev(J, n_, o)])
@@ -2776,10 +2800,10 @@ def closure_certificate(J, records):
             # بلا موضعٍ مرخَّص: عضوٌ في علاقةٍ مؤجَّلة ← اختيار؛ ولا علاقة له أصلاً (لا قاعدة أنتجت له سجلاً) ← نقص تغطية، لا التزامٌ مثبت الفتح
             rec.update(status='MET' if not left else ('SELECTION' if len(sel_left) == len(left) else 'COVERAGE'),
                        residual_reason='' if not left else
-                       f'{len(left)} وقوعاً بلا موضعٍ مرخَّص في الطبقتين: ' + '، '.join(left[:6]) +
-                       ('؛ منها في علاقةٍ مؤجَّلة: ' + '، '.join(sel_left[:6]) if sel_left else '') +
-                       ('؛ ولا قاعدة أنتجت سجلاً لـ' + '، '.join([u for u in left if u not in pend_m][:6]) if len(sel_left) < len(left) else ''),
-                       discharge_evidence_id=('14أ: ' + '، '.join(sorted({by_member[u][0] for u in unp if u in by_member}))[:300]) if unp else None)
+                       f'{len(left)} وقوعاً بلا موضعٍ مرخَّص في الطبقتين: ' + '، '.join(left) +
+                       ('؛ منها في علاقةٍ مؤجَّلة: ' + '، '.join(sel_left) if sel_left else '') +
+                       ('؛ ولا قاعدة أنتجت سجلاً لـ' + '، '.join([u for u in left if u not in pend_m]) if len(sel_left) < len(left) else ''),
+                       discharge_evidence_id=('14أ: ' + '، '.join(sorted({by_member[u][0] for u in unp if u in by_member}))) if unp else None)
             if unp and not left:
                 # كل وقوعٍ بالعلاقة المرخَّصة التي تجعله طرفاً، بهويته
                 rec['satisfied_by'] = [dict(relation=by_member[u][0], status='LICENSED', rule='14أ', unit=u) for u in unp]
@@ -2798,19 +2822,23 @@ def closure_certificate(J, records):
             rec['discharge_evidence_id'] = rec['discharge_evidence_id'] or _legacy_ev_id(J, n_, o)
         if rec['status'] == 'OPEN' and any(g_ in rec['residual_reason'] for g_ in _RULE_GAP):
             rec['status'] = 'COVERAGE'
+        if kind == 'PLACEMENT':
+            rec['measure'] = ('تغطية الأدوار المحلية: لكل وقوعٍ دورٌ في علاقةٍ مرخَّصة؛ ولا يشهد هذا باتصال الوحدة بالبنية الأعلى '
+                              'ولا باكتمال الجملة وحدّها')
         rec['met'] = rec['status'] in ('MET', 'MET_IN_ALL_FACES')
         rec['source'] = '14أ' if rec['met'] and rec.get('discharge_relation_id') else ('الطبقة القديمة' if rec['met'] else None)
         rec['note'] = rec['residual_reason']
-        rec['status_ar'] = OBL_STATUS_AR.get(rec['status'], rec['status'])
+        rec['status_ar'] = ('دورٌ محلي مرخَّص لكل وقوع' if kind == 'PLACEMENT' and rec['status'] == 'MET' else
+                            OBL_STATUS_AR.get(rec['status'], rec['status']))
         obls.append(rec)
     residuals, rejected = [], []
     for r in inside:
         if r['status'] == 'REJECTED':
-            rejected.append(dict(relation=r['relation_id'], rule=r['rule_id'], barrier=r['reason'][:200], status='REJECTED_FACE_WITH_PROVEN_BARRIER'))
+            rejected.append(dict(relation=r['relation_id'], rule=r['rule_id'], barrier=r['reason'], status='REJECTED_FACE_WITH_PROVEN_BARRIER'))
             continue
         for c_ in ((r.get('frame') or {}).get('candidates') or []):
             if c_.get('status') == 'REJECTED':
-                rejected.append(dict(relation=r['relation_id'], rule=c_.get('id'), barrier=(c_.get('reason') or '')[:200],
+                rejected.append(dict(relation=r['relation_id'], rule=c_.get('id'), barrier=(c_.get('reason') or ''),
                                      status='REJECTED_FACE_WITH_PROVEN_BARRIER'))
         alt_locs = {x.get('host_position') for x in r.get('alternatives') or [] if isinstance(x, dict) and x.get('host_position')}
         outside = sorted(l_ for l_ in alt_locs if l_ not in span)
@@ -2818,20 +2846,20 @@ def closure_certificate(J, records):
             # البحث غير المكتمل لا يُثبت أن الأوجه كلها بُنيت: نقص تغطية، لا اختيارٌ بين أوجهٍ معلومة (مراجعة 036)
             k = 'BOUNDARY' if outside else ('COVERAGE' if r.get('search_status') == 'SEARCH_INCOMPLETE' else 'SELECTION')
             residuals.append(dict(relation=r['relation_id'], type=r['type'], rule=r['rule_id'], status='DEFERRED', kind=k,
-                                  why=r['reason'][:200], outside=outside))
+                                  why=r['reason'], outside=outside))
         elif r.get('selection') == 'DEFERRED':
             residuals.append(dict(relation=r['relation_id'], type=r['type'], rule=r['rule_id'], status='SELECTION_DEFERRED',
                                   kind='COVERAGE' if r.get('search_status') == 'SEARCH_INCOMPLETE' else 'SELECTION',
-                                  why=(r.get('face_note') or r['reason'])[:200], outside=outside))
+                                  why=(r.get('face_note') or r['reason']), outside=outside))
         elif (r.get('function') or {}).get('status') == 'DEFERRED':
             residuals.append(dict(relation=r['relation_id'], type=r['type'], rule=r['rule_id'], status='FUNCTION_DEFERRED', kind='SELECTION',
-                                  why=r['function']['text'][:200], outside=[]))
+                                  why=r['function']['text'], outside=[]))
         elif r['type'] == 'VERB_FRAME' and (r.get('frame') or {}).get('open'):
             # «الاستعمال (ناسخ أو تامّ) غير محسوم» اختيارٌ بين أوجه؛ وما سواه (خبرٌ غير مرخَّص، ولا سجلّ V01) متطلَّبٌ لازمٌ غير مستوفى
             op_ = r['frame']['open']
             sel_ = all('غير محسوم' in x for x in op_)
             residuals.append(dict(relation=r['relation_id'], type=r['type'], rule=r['rule_id'], status='OPEN_OBLIGATION',
-                                  kind='SELECTION' if sel_ else 'REQUIRED', why='؛ '.join(op_)[:200], outside=[]))
+                                  kind='SELECTION' if sel_ else 'REQUIRED', why='؛ '.join(op_), outside=[]))
     req = [o for o in obls if o['required']]
     # تعارض الطبقتين (القديمة تستوفي و14أ تؤجّل) تأجيلٌ لا فتحٌ مثبت: يدخل حكم الاختيار المؤجَّل، ولا يُعدّ مستوفى
     if any(o['status'] == 'OPEN' for o in req) or any(x['kind'] == 'REQUIRED' for x in residuals):
@@ -2847,9 +2875,13 @@ def closure_certificate(J, records):
     else:
         verdict = 'CLOSED_IN_FACE'
     return dict(sentence=J.id, span=sorted(span, key=lambda x: tuple(int(p) for p in x.split(':'))), legacy_closed=bool(J.closed),
-                legacy_F=bnd.get('F'), boundary=dict(proven=boundary_proven, linguistic_evidence=None if not boundary_proven else
+                legacy_F=bnd.get('F'), boundary=dict(proven=boundary_proven, rule_id=b_rule if boundary_proven else None,
+                                                     evidence_id=(f"{J.id}#boundary@{bnd.get('location')}" if boundary_proven and b_rule else None),
+                                                     level=b_level if boundary_proven else None, independence=independence,
+                                                     stable_across_alternatives=stable_b if boundary_proven else None,
+                                                     linguistic_evidence=None if not boundary_proven else
                                                      (bnd.get('J_why') or bnd.get('category')),
-                                                     linguistic_status='مثبت' if boundary_proven else
+                                                     linguistic_status=f'مثبت: {b_level}' if boundary_proven else
                                                      ('غير مثبت: استقلال الحدّ لفظاً غير مفحوص' if indep_open else 'غير مثبت'),
                                                      source=source_boundary,
                                                      evidence=(bnd.get('J_why') or bnd.get('category')) if boundary_proven else None),

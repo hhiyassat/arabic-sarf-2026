@@ -500,33 +500,46 @@ for SP in LT:
             cert_ = closure_certificate(J, recs_)
             CERTS.append(cert_)
             un_ = [f"{x['rule']} {x['status']} ({x['kind']})" for x in cert_['residuals']]
-            sat_ = [f"{o_['obligation_id'].split('/')[-1]} {o_['name']} [{o_['requirement_kind']}، {o_['status_ar']}] ← " +
-                    '، '.join((x['relation'] or x.get('evidence') or '') + (f" ({x['status']})" if x['relation'] else '') for x in o_['satisfied_by']) +
-                    (f" — باقٍ: {o_['residual_reason']}" if o_['residual_reason'] else '')
-                    for o_ in cert_['obligations'] if o_['met'] and o_['satisfied_by']]
-            conf_ = [f"{o_['obligation_id'].split('/')[-1]} {o_['name']} [{o_['requirement_kind']}، {o_['status_ar']}]: {o_['residual_reason']}"
-                     for o_ in cert_['obligations'] if not o_['met'] and o_['status'] != 'OPTIONAL_ABSENT']
+            # الشهادة كاملةً بلا بتر (مراجعة 038): الملخّص من رموز حالات الالتزامات نفسها، والسجلّ الكامل في عنصرٍ قابلٍ للطيّ
+            def ob_line(o_):
+                src_ = '، '.join(((x['relation'] or x.get('id') or x.get('evidence') or '') + (f" ({x['status']})" if x.get('status') else '') +
+                                  (f" ← {x['unit']}" if x.get('unit') else '')) for x in (o_['satisfied_by'] or []))
+                return (f"{o_['obligation_id']} {o_['name']} [{o_['requirement_kind']}، {'لازم' if o_['required'] else 'جائز'}، "
+                        f"{o_['status']}: {o_['status_ar']}]" + (f" ← {src_}" if src_ else '') +
+                        (f"؛ الدليل: {o_['discharge_evidence_id']}" if o_.get('discharge_evidence_id') else '') +
+                        (f"؛ الباقي: {o_['residual_reason']}" if o_['residual_reason'] else '') +
+                        (f"؛ القياس: {o_['measure']}" if o_.get('measure') else ''))
+            bd_ = cert_['boundary']
+            bline_ = (f"الحدّ اللغوي: {bd_['linguistic_status']}" +
+                      (f"؛ القاعدة: {bd_['rule_id']}؛ معرّف الدليل: {bd_['evidence_id']}؛ الدليل: {bd_['linguistic_evidence']}" if bd_.get('rule_id') else '') +
+                      (f"؛ الثبات في البدائل: {bd_['stable_across_alternatives']}" if bd_.get('stable_across_alternatives') else '') +
+                      f"؛ الاستقلال في المستوى الأعلى: {bd_['independence']}" +
+                      (f"؛ حدّ المصدر: {bd_['source']}" if bd_.get('source') else ''))
+            det_ = ('<details><summary>السجلّ الكامل للشهادة</summary>' +
+                    '<br>'.join(h(ob_line(o_)) for o_ in cert_['obligations']) +
+                    ('<br>' + '<br>'.join(h(f"باقٍ في 14أ [{x['kind']}، {x['status']}] {x['relation']}: {x['why']}" +
+                                            (f"؛ خارج المدى: {'، '.join(x['outside'])}" if x.get('outside') else '')) for x in cert_['residuals'])
+                     if cert_['residuals'] else '') +
+                    ('<br>' + '<br>'.join(h(f"وجهٌ ممنوع {x['rule']} ({x['relation']}): {x['barrier']}") for x in cert_['rejected_faces'])
+                     if cert_['rejected_faces'] else '') + '</details>')
             scope_ = (f"الشهادة الموحَّدة: {cert_['verdict_ar']}؛ " +
                       (f'وفي 14أ داخل مداها {len(un_)} باقياً مصنَّفاً (' +
                        '، '.join(f'{k_}×{c_}' for k_, c_ in sorted(__import__('collections').Counter(un_).items())) + ')'
-                       if un_ else 'ولا علاقة في 14أ داخل مداها مؤجَّلةٌ أو بالتزامٍ مفتوح أو باختيارٍ مؤجَّل') +
-                      f"؛ والحدّ اللغوي: {cert_['boundary']['linguistic_status']}" +
-                      (f" ({cert_['boundary']['linguistic_evidence']})" if cert_['boundary']['linguistic_evidence'] else '') +
-                      (f"؛ وحدّ المصدر: {cert_['boundary']['source']}" if cert_['boundary']['source'] else '') +
-                      (('؛ ومستوفى: ' + ' | '.join(sat_)) if sat_ else '') +
-                      (('؛ وغير مستوفى: ' + ' | '.join(conf_)) if conf_ else '') +
-                      (('؛ ووجوهٌ ممنوعة بمانعٍ مثبت: ' + ' | '.join(f"{x['rule']}: {x['barrier'][:80]}" for x in cert_['rejected_faces'])) if cert_['rejected_faces'] else ''))
+                       if un_ else 'ولا باقٍ في 14أ داخل مداها') + '؛ ' + bline_)
             bonds = '<br>'.join(h(f'{b[0]}: {b[1]} → {b[2]}') for b in (J.O.get('bound') or [])) or '—'
             pl_ob = next((o_ for o_ in cert_['obligations'] if o_['requirement_kind'] == 'PLACEMENT'), None)
-            pl_ = ('الشهادة: ' + pl_ob['status_ar'] + (f" — {pl_ob['residual_reason'][:160]}" if pl_ob['residual_reason'] else '')
-                   ) if pl_ob else 'الشهادة: لا التزام موضع'
-            un_req_ = 'الشهادة: ' + ('، '.join(f"{o_['name']} [{o_['status_ar']}]" for o_ in cert_['obligations']
-                                             if o_['required'] and not o_['met']) or 'لا لازمَ غير مستوفى')
+            pl_ = (f"الشهادة: {pl_ob['status_ar']}" + (f" — {pl_ob['residual_reason']}" if pl_ob['residual_reason'] else '') +
+                   f"<br><sub>{h(pl_ob.get('measure') or '')}</sub>") if pl_ob else 'الشهادة: لا التزام موضع'
+            from sarf.algebra import certificate_unmet
+            nm_ = certificate_unmet(cert_)
+            un_req_ = 'الشهادة: ' + ('<br>'.join(h(f"{o_['name']} [{'لازم' if o_['required'] else 'جائز'}، {o_['status']}: {o_['status_ar']}]")
+                                                  for o_ in nm_) or 'كل الالتزامات مستوفاة أو جائزةٌ غائبة')
             rows_j.append([esc(J.id), f'{frm} – {to}', f"<span class='ar'>{h(' '.join(words))}</span>",
-                           ('مغلقة (الطبقة القديمة)' if J.closed else 'مفتوحة') + f"<br><b>{h(cert_['verdict_ar'])}</b><br><sub>{h(scope_)}</sub>",
+                           ('مغلقة (الطبقة القديمة)' if J.closed else 'مفتوحة') + f"<br><b>{h(cert_['verdict_ar'])}</b><br><sub>{h(scope_)}</sub>" + det_,
                            esc(bnd.get('F') or '—') + '<br><sub>الطبقة القديمة</sub>', bonds,
-                           f"{h(pl_)}<br><sub>الطبقة القديمة: {len(J.O.get('unplaced') or [])}</sub>",
-                           f"{h(un_req_)}<br><sub>الطبقة القديمة: {h('، '.join(opn) or '—')}</sub>"])
+                           f"{h(pl_.split('<br><sub>')[0])}" + ('<br><sub>' + pl_.split('<br><sub>')[1] if '<br><sub>' in pl_ else '') +
+                           f"<br><sub>الطبقة القديمة: {len(J.O.get('unplaced') or [])}</sub>",
+                           f"{un_req_}<br><sub>الطبقة القديمة: {h('، '.join(opn) or '—')}</sub>"])
             # ١٥ تحمل قيد جملها: الوحدة الخطابية لا تُعرض «مغلقة» وفي جملها حكمٌ موحَّد غير مغلق؛ ويُعرض أشدّ أحكامها
             from sarf.algebra import CLOSURE_AR
             order_ = list(CLOSURE_AR)
@@ -542,7 +555,8 @@ section(14, 'الجملة', '(الجملة تُبنى في الطبقة القد
         'الالتزامات كلها: إغلاق كل وحدة، وموضع كل كلمة، وحسم كل علاقة. فالجملة قد تكون تامّةً في التحليل مفتوحةً غير مغلقة. والآية لا تُغلق الجملة. '
         'والروابط معروضةٌ بأطرافها، والالتزامات المفتوحة كاملةً بلا اختصار',
         rows_j, ['الجملة', 'من – إلى', 'النص', 'الإغلاق (القديم ثم الموحَّد)', 'التمام (F) — الطبقة القديمة', 'الروابط — الطبقة القديمة',
-                 'موضع الكلمات — الشهادة (والقديم تحته)', 'لازمٌ غير مستوفى — الشهادة (والقديم تحته)'], tl_j)
+                 'موضع الكلمات (تغطية الأدوار المحلية) — الشهادة (والقديم تحته)',
+                 'غير مستوفى (لازمٌ وجائز) — الشهادة (والقديم تحته)'], tl_j)
 # ١٤أ العلاقات المحلية (عقد النواة الاسمية والتعلّق، sarf.relations) بأدلتها؛ و١٤ب محاور الصنف المستقلة
 from sarf.relations import verse_relations, check_records
 rows_r, tl_r, rows_x, tl_x = [], [], [], []
