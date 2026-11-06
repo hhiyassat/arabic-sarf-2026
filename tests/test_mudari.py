@@ -214,10 +214,31 @@ ff2 = _frame_faces(dict(heads=dict(verb='U'), frame=dict(candidate=dict(id='U#c'
                                                                                              dict(id='c2', status='REJECTED', tense='أمر', voice='معلوم')])))
 check('G03 _frame_faces من المرشّحات الكاملة الحيّة وحدها، بهوية مرشّحها (دُعُوا: الماضي المجهول؛ والأمر الممنوع لا وجه له)',
       [(f['tense'], f['voice'], f['morph_candidate_id']) for f in ff2] == [('ماضٍ', 'مجهول', 'U#c1')], ff2)
-fm = _face_cover([dict(face_id='F1', label='', voice='معلوم', unit='U', morph_candidate_id='U#c')],
-                 [dict(relation='R_other', role='فاعل', verb='OTHER'), dict(relation='R_face', role='فاعل', verb='U', faces=['F2']),
-                  dict(relation='R_def', role='فاعل', verb='U', status='DEFERRED'), dict(relation='R_ok', role='فاعل', verb='U', status='LICENSED')])
-check('G04 _face_cover لا يقبل علاقةً لفعلٍ آخر، ولا لوجهٍ آخر، ولا مؤجَّلة، ولو وافق وصف الدور والبناء', fm[0]['relations'] == ['R_ok'], fm)
+_F1 = dict(face_id='F1', label='', voice='معلوم', unit='U', morph_candidate_id='U#c1', frame_candidate_id='U#c')
+_ok = dict(role='فاعل', verb='U', status='LICENSED', candidate='U#c', rule='S01')
+fm = _face_cover([_F1], [dict(_ok, relation='R_other', verb='OTHER'), dict(_ok, relation='R_face', faces=['F2']),
+                         dict(_ok, relation='R_def', status='DEFERRED'), dict(_ok, relation='R_rej', status='REJECTED'),
+                         dict(_ok, relation='R_cand', candidate='U#c2'), dict(_ok, relation='R_nocand', candidate=None),
+                         dict(_ok, relation='R_norule', rule=None), dict(_ok, relation='R_role', role='نائب فاعل'),
+                         dict(_ok, relation='R_ok')])
+want = {'R_other': 'OTHER_VERB', 'R_face': 'OTHER_FACE', 'R_def': 'STATUS:DEFERRED', 'R_rej': 'STATUS:REJECTED',
+        'R_cand': 'OTHER_CANDIDATE', 'R_nocand': 'MISSING_FIELD:candidate', 'R_norule': 'MISSING_FIELD:rule',
+        'R_role': 'ROLE_VOICE_MISMATCH'}
+check('G04 _face_cover (§٤): يستوفي الوجهَ العلاقةُ التي تطابق الفعل والمرشّح والوجه والحالة والقاعدة وحدها؛ ويرفض بسببٍ مسمّى: '
+      'فعلاً آخر، ووجهاً آخر، ومؤجَّلة، ومرفوضة، ومرشّحاً آخر للفعل نفسه، وحقلاً لازماً غائباً (المرشّح، القاعدة)، وتوافق الوصف وحده',
+      fm[0]['relations'] == ['R_ok'] and fm[0]['refused'] == want, fm)
+ffA = _frame_faces(dict(heads=dict(verb='U'), frame=dict(candidate=dict(id='U#c'), candidates=[
+    dict(id='c1', status='DEFERRED', tense='مضارع', voice='معلوم', subject_role='فاعل'),
+    dict(id='c2', status='DEFERRED', tense='مضارع', voice='معلوم', subject_role='اسم الناسخ')])))
+check('G06 هوية الوجه تميّز المرشّح الكامل: مرشّحان لهما الزمن والبناء نفسيهما لا يتصادمان في هوية الوجه',
+      len({f['face_id'] for f in ffA}) == 2 and len({f['morph_candidate_id'] for f in ffA}) == 2, ffA)
+check('G07 حاصل ضرب الزمن والبناء من قائمتين مستقلتين نقصُ بيانات (UNLINKED_PRODUCT) لا أوجهٌ مرخّصة: لا يستوفيها شيء',
+      all(f['pairing'] == 'UNLINKED_PRODUCT' and f['data_gap'] for f in ff) and
+      _face_cover(ff[:1], [dict(_ok, relation='R', verb='U', candidate='U#c', role='فاعل أو نائب فاعل')])[0]['relations'] == [], ff)
+from sarf.algebra import _rel_met_faces
+_r2 = dict(relation_id='R2', faces=[dict(status='CONDITIONS_MET'), dict(status='CONDITIONS_MET')])
+check('G08 _rel_face_id لا يختار أول وجهٍ مستوفٍ: وجهان مستوفيان → لا معرّف منفرد، والقائمة كاملة',
+      _rel_face_id(_r2) is None and _rel_met_faces(_r2) == ['FACE:R2#face0', 'FACE:R2#face1'])
 check('G05 _rel_face_id لا يعيد الوجه الأول افتراضاً حين لا وجه استوفى شروطه',
       _rel_face_id(dict(relation_id='R', faces=[dict(status='HYPOTHESIS_UNCHECKED')])) is None and
       _rel_face_id(dict(relation_id='R', faces=[dict(status='X'), dict(status='CONDITIONS_MET')])) == 'FACE:R#face1')

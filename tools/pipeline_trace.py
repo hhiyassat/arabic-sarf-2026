@@ -728,27 +728,33 @@ section(15, 'الوحدة الخطابية', 'المعرّفات (2,282,n) فه�
         ['الوحدة', 'المدى', 'الجمل', 'الحالة', 'الحدّ'], tl_d)
 # ١٦ الفقرة المرشّحة (SARF_MAJOR_COMPLETION_TO_PARAGRAPH_03 §٢٠): من الجمل بهوياتها وشهاداتها، وروابطها بأدلّة الحدود، والإحالات،
 # والالتزامات، والحدّ؛ والفاحص المستقل للفقرة. والعقد مقترحٌ ينتظر اعتماد المالك تعريفَ الفقرة
-from sarf.algebra import paragraph_candidate, check_paragraph
+from sarf.algebra import paragraph_candidates, check_paragraph, PARAGRAPH_CHECKS
 _all_recs = [r for k_ in sorted(REL_CACHE) for r in REL_CACHE[k_]['records']]
-PC_ = paragraph_candidate(LT, CERTS, _all_recs)
-PC_err = check_paragraph(PC_, LT)
-rows_p = [['المكوّنات', '<br>'.join(h(f"{c['sentence']} {c['span'][0]}–{c['span'][1]}: الإسناد المحلي {c['local']}") for c in PC_['components'])],
+PCS_ = paragraph_candidates(LT, CERTS, _all_recs)
+PC_ = PCS_[-1]
+PC_err = check_paragraph(PC_, LT, CERTS, _all_recs)
+rows_p = [['المرشّحات', h(f"{len(PCS_)} مرشّح بنقاط البدء المعلنة (A1)" + ('، والتجميع مؤجَّل' if len(PCS_) > 1 else '') + '؛ والمعروض: ' + PC_['paragraph_id'])],
+          ['المكوّنات', '<br>'.join(h(f"{c['sentence']} {c['span'][0]}–{c['span'][1]}: الإسناد المحلي {c['local']}؛ أوجه {len(c['faces'])}" +
+                                      (f"؛ تجميعٌ داخلي مؤجَّل عند {', '.join(str(g['location']) for g in c['internal_groupings'])}" if c.get('internal_groupings') else ''))
+                                    for c in PC_['components'])],
           ['الروابط', '<br>'.join(h(f"{k['link_id']} [{k['status']}] {('، '.join(k['candidates'] or []) or '—')} ← {k['evidence'] or 'لا دليل'}"
-                                    + f" (الدليل {k['evidence_id']})") for k in PC_['links']) or '—'],
-          ['العلاقات الدلالية', h('السبب والغاية والنتيجة والدليل والتفسير والزمن: غير مقيَّمة (قواعد الأدوات PC.* غير منفّذة)')],
-          ['الإحالة', '<br>'.join(h(f"{x['ref_id']} ({x['signature']['person']}، {x['signature']['number']}، {x['signature']['gender']}): {x['status']} — {x['reason']}")
+                                    + f" (الدليل {k['evidence_id']}، القاعدة {k['rule']})") for k in PC_['links']) or '—'],
+          ['العلاقات الدلالية', h('CAUSE وPURPOSE وRESULT وEVIDENCE وEXPLANATION وTEMPORAL وCONDITION بين الجمل: غير مقيَّمة (قواعد الأدوات PC.* غير منفّذة في هذا المستوى)')],
+          ['الإحالة', '<br>'.join(h(f"{x['ref_id']} [{x['kind']}] «{x['form'] or 'مستتر'}» ({x['signature']['person']}، {x['signature']['number'] or '—'}، {x['signature']['gender'] or '—'}): {x['status']} — {x['reason']}")
                                   for x in PC_['references']) or '—'],
-          ['الحدّ', h(f"المصدر: البداية {PC_['boundary']['source_start'] or '—'}، والنهاية {PC_['boundary']['source_end'] or '—'}؛ "
-                      f"والحدّ اللغوي {PC_['boundary']['linguistic']}: {PC_['boundary']['reason']}")],
+          ['الحدّ', h(f"المصدر: البداية {PC_['boundary']['source_start'] or '—'}، والنهاية {PC_['boundary']['source_end'] or '—'} ({'، '.join(PC_['boundary']['source_end_kinds']) or '—'})؛ "
+                      f"والحدّ اللغوي ({PC_['boundary']['linguistic_rule']}) {PC_['boundary']['linguistic']}: {PC_['boundary']['reason']}")],
           ['الالتزامات', '<details><summary>' + h(f"{len(PC_['obligations'])} التزاماً") + '</summary>' +
-           '<br>'.join(h(f"{o['kind']} {o['id']} [{'لازم' if o['required'] else 'جائز'}، {o['status']}]: {o.get('reason') or ''}") for o in PC_['obligations'])
+           '<br>'.join(h(f"{o['kind']} ({o['rule']}) {o['id']} [{'لازم' if o['required'] else 'جائز'}، {o['status']}]: {o.get('reason') or ''}") for o in PC_['obligations'])
            + '</details>'],
           ['الحكم', h(f"{PC_['status']}؛ " + ('الأسباب: ' + '؛ '.join(sorted(set(x.split(' — ')[0] for x in PC_['reasons']))) if PC_['reasons'] else ''))],
-          ['الفاحص المستقل للفقرة', h('سليم (يفحص أدلّة الروابط وحدّ المصدر وحدها)' if not PC_err else '؛ '.join(PC_err))]]
-section(16, 'الفقرة', 'فقرةٌ مرشّحة بعقدٍ مقترح (ينتظر اعتماد المالك تعريف الفقرة): مكوّناتها الجمل بهوياتها وأحكامها بالمستويات، '
-        'وروابطها المرشّحة من أدلّة الحدود (عطف، حال، استئناف)، والإحالات الغائبة التزاماتٌ مؤجَّلة، وحدّ المصدر شاهدٌ لا حدٌّ لغوي؛ '
-        'ولا تُعلن مكتملةً ما بقي التزامٌ لازم', rows_p, ['البند', 'المحتوى'],
-        [f"{PC_['paragraph_id']}: {PC_['status']}، {len(PC_['components'])} جملة، {len(PC_['links'])} رابطاً، {len(PC_['references'])} إحالة"])
+          ['مدقّق شهادة الفقرة', h(('لا خطأ في الفحوص ' + '، '.join(PARAGRAPH_CHECKS) + ' (نطاقها: ما يُعاد من LT والشهادات والسجلات؛ ولا تفحص صحة الشهادات نفسها ولا تعيّن المراجع)')
+                                   if not PC_err else '؛ '.join(PC_err))]]
+section(16, 'الفقرة', 'مرشّحات فقرةٍ بعقدٍ تشغيليٍّ مقترح PC-04 (اعتماده للمالك ومنفصلٌ عن نجاح اختباره): مكوّناتها الجمل بهوياتها وأوجهها، '
+        'وروابطها المرشّحة من أدلّة الحدود، والإحالات (المستترة والمتصلة والمنفصلة والإشارة) التزاماتٌ مؤجَّلة، والتجميعات الداخلية المتنافسة مؤجَّلة، '
+        'وحدّ المصدر شاهدٌ مستقلٌّ عن الحدّ اللغوي PB-L1 بشروطه؛ ولا تُعلن مكتملةً ما بقي التزامٌ لازم', rows_p, ['البند', 'المحتوى'],
+        [f"{PC_['paragraph_id']}: {PC_['status']}، {len(PC_['components'])} جملة، {len(PC_['links'])} رابطاً، {len(PC_['references'])} إحالة، "
+         f"{sum(1 for o in PC_['obligations'] if o['kind'] == 'GROUPING')} تجميعٌ مؤجَّل؛ المدقّق: " + ('لا خطأ' if not PC_err else f'{len(PC_err)} خطأ')])
 
 # ---------- الإخراج ----------
 if not args.quiet:

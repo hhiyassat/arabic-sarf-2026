@@ -181,7 +181,9 @@ check('G24 «لَا يُقۡبَلُ مِنۡهَا شَفَٰعَةٌ» (2:48):
 
 # ---------- مراجعة 036 ----------
 cv = {c['sentence']: c for c in C}
-c13 = cv['L2.d13.J']
+# بالموضع لا بالرقم: دمج حدّ «وَأَقۡوَمُ» المؤجَّل (§١٥) يعيد ترقيم الجمل بعده
+cw = lambda w: next(c for c in C if f'2:282:{w}' in c['span'])
+c13 = cw(116)
 check('R01 «وَإِنْ تَفْعَلُوا فَإِنَّهُ فُسُوقٌ بِكُمْ»: تعلّق «بكم» بحثه غير مكتمل (A01)، فلا «مغلقة بالبنية المشتركة» بل نقص تغطية',
       c13['verdict_by_level']['LOCAL_PREDICATION'] == 'INCOMPLETE_RULE_COVERAGE' and any(x['rule'] == 'A01' and x['kind'] == 'COVERAGE' for x in c13['residuals']), c13['verdict'])
 check('R01b لا إغلاق (في وجهٍ ولا بالبنية المشتركة) مع باقٍ بحثه غير مكتمل في أي جملةٍ من 2:282',
@@ -198,7 +200,7 @@ check('R03b كل مستوفى بالطبقة القديمة يحمل معرّف 
       all(o_['discharge_evidence_id'] and (o_['discharge_relation_id'] or str(o_['discharge_evidence_id']).startswith('LEGACY:') and
           all(x.get('rank') and 'units' in x for x in o_['satisfied_by'] if x['status'] == 'LEGACY'))
           for c in C for o_ in c['obligations'] if o_['met']))
-b16 = cv['L2.d16.J']['boundary']
+b16 = cw(128)['boundary']
 check('R04 نهاية 2:282 ليست «آخر السورة»: حدّ المصدر «نهاية المدخل المحلَّل»، والحدّ اللغوي غير مثبت (الاستقلال لفظاً غير مفحوص)',
       not b16['proven'] and 'نهاية المدخل' in str(b16['source']) and 'آخر السورة' != b16['source'], b16)
 a_ = ms[('أَلَّا', 'تَرْتَابُوا')]
@@ -211,8 +213,8 @@ from sarf.algebra import certificate_unmet
 check('R06 ن١ «أَلَّا تَرۡتَابُوا»: مرخَّصٌ في وجهه، والاختيار مؤجَّل، والشرط الناقص مسمّى (فحص المفسّرة)؛ والشهادة تعدّه نقص تغطية لا إغلاقاً',
       a_['status'] == 'LICENSED' and a_['selection'] == 'DEFERRED' and a_['search_status'] == 'SEARCH_INCOMPLETE' and
       any('المفسّرة' in x for x in a_['search_scope']['outside_coverage']) and
-      any(x['rule'] == 'M02' and x['kind'] == 'COVERAGE' for x in cv['L2.d10.J']['residuals']) and
-      cv['L2.d10.J']['verdict'] not in ('CLOSED_IN_FACE', 'CLOSED_WITH_SHARED_STRUCTURE'))
+      any(x['rule'] == 'M02' and x['kind'] == 'COVERAGE' for x in cw(95)['residuals']) and
+      cw(95)['verdict'] not in ('CLOSED_IN_FACE', 'CLOSED_WITH_SHARED_STRUCTURE'))
 pb = [c['boundary'] for c in C if c['boundary']['levels']['LOCAL_PREDICATION'] == 'PROVEN']
 check('R07 ن٢ كل حدٍّ محلي مثبت يحمل القاعدة ومعرّف الدليل والمستوى وثباته المفحوص؛ والاستقلال لا يُدّعى مع عطفٍ محتمل',
       pb and all(b_.get('rule_id') and b_.get('evidence_id') and b_.get('level') and b_.get('stable_across_alternatives') and b_.get('independence')
@@ -302,7 +304,7 @@ check('F01 ن٦ كل فاعلٍ مستوفى بعلاقةٍ في 14أ يحمل �
 ob_d = next(o_ for c in C for o_ in c['obligations'] if 'يُضَارَّ' in o_['name'] and o_['requirement_kind'] == 'SUBJECT_OR_PASSIVE_AGENT')
 check('F02 ن٦ «لَا يُضَآرَّ كَاتِبٞ»: البناء مؤجَّل، فالاستيفاء في كل الأوجه بخريطةٍ صريحة: وجه المعلوم ووجه المجهول، ولكلٍّ علاقته',
       ob_d['status'] == 'MET_IN_ALL_FACES' and ob_d['face_id'].startswith('SHARED:') and
-      sorted(x['face_id'].split('|V=')[1] for x in ob_d['face_map']) == ['مجهول', 'معلوم'] and all(x['relations'] for x in ob_d['face_map']), ob_d)
+      sorted(x['face_id'].split('|V=')[1].split('|')[0] for x in ob_d['face_map']) == ['مجهول', 'معلوم'] and all(x['relations'] for x in ob_d['face_map']), ob_d)
 o2j, J2 = run_j(2, 282)
 JA = next(J for J in J2 if any(o_.name == 'فاعل «يُمْلِلْ»' for o_ in J.Omega))
 ca0 = closure_certificate(JA, o2j['records'])

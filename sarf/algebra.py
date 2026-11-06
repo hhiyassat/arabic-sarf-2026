@@ -1192,19 +1192,70 @@ def boundary_record(p, words, pos_of, bonds, obls, nuclei, du_start, mark, ayah_
 SEP_PRON_V = ('هُوَ', 'هِيَ', 'هُمْ', 'هُمَا', 'هُنَّ', 'أَنْتَ', 'أَنْتُمْ', 'أَنْتُمَا', 'أَنَا', 'نَحْنُ', 'أَنتَ', 'أَنتُمْ')
 
 
-def idha_fujaiyya(a, f):
-    """T14-5: «إِذَا» الفجائية لا الشرطية: يليها ضميرٌ منفصل يبدأ جملةً اسمية (فَإِذَا هِيَ حَيَّةٌ، إِذَا هُمۡ يَقۡنَطُونَ).
-    السند: مغني اللبيب (إذا: الفجائية تختصّ بالجمل الاسمية). → (فجائية؟، السبب)"""
+IDHA_SOURCE = ('ابن هشام، مغني اللبيب، باب «إذا»: الفجائية تختصّ بالجمل الاسمية ولا تحتاج إلى جواب ولا تقع في الابتداء ومعناها الحال؛ '
+               'والشرطية تختصّ بالدخول على الجملة الفعلية، وما وليها من اسمٍ بعده فعلٌ فاعلٌ لفعلٍ يفسّره المذكور عند البصريين '
+               '(إِذَا ٱلسَّمَآءُ ٱنشَقَّتۡ، وإذا أنت أكرمت الكريم ملكته)')
+
+
+def idha_reading(a, f):
+    """T14-5 مصحَّحاً (SARF_COMPREHENSIVE_REPAIR_04 §٧): الضمير المنفصل بعد «إِذَا» قرينةٌ تولّد مرشّح الفجائية، لا حكمٌ بها.
+    → dict(cue, faces, decision, evidence, alternatives) أو None إن لم تكن قرينة.
+    - FUJAIYYA: بعد الضمير ما لا يكون فعلَ شرطٍ ماضياً موافقاً له (اسمٌ أو شبه جملةٍ أو مضارع) والجملة اسمية، وقبل «إذا» فاءٌ
+      أو «ثُمَّ» أو أداةٌ تطلب جواباً قبلها (فالفجائية في موضع الجواب أو العطف، ولا تقع في الابتداء)
+    - AMBIGUOUS: بعد الضمير ماضٍ يوافقه (وجه الشرطية: الضمير فاعلٌ لفعلٍ يفسّره المذكور، أو مبتدأ عند الكوفيين)، أو لا سابقَ يرشّح
+      الفجائية: يبقى الوجهان، ولا يُحذف وجه الشرط
+    السند: IDHA_SOURCE"""
     if not is_form(f['operator'], ('إِذَا',)):
-        return False, None
+        return None
     segs = a.get('segments') or []
     wi = f['word_index'] + 1
     if wi >= len(segs):
-        return False, None
+        return None
     nxt = segs[wi]['word']
+    agr = {g['word_index']: g for g in a.get('agreement') or []}
     if is_form(nxt, SEP_PRON_V) or is_form(nxt, tuple(p_.replace('\u0652', '\u06e1') for p_ in SEP_PRON_V)):
-        return True, f'«إِذَا» يليها الضمير المنفصل «{nxt}»: جملةٌ اسمية، فهي الفجائية لا الشرطية (لا جواب ولا صدارة شرط)'
-    return False, None
+        nk = 'PRONOUN'
+    else:
+        # بدء جملةٍ اسمية بغير الضمير (SARF_COMPREHENSIVE_REPAIR_04 §٧، بقياس QAC): اسمٌ مرفوع، أو شبه جملة، أو موصول
+        g = word_feats(a)[wi]
+        jar = any(o['word_index'] == wi and o['group'] == '1' and o.get('status') == 'accepted' for o in a.get('operators') or [])
+        nk = ('RELATIVE' if is_form(nxt, ('الَّذِي', 'الَّتِي', 'الَّذِينَ')) else 'PP' if g.get('head') == 'pp' and jar else
+              'NOUN' if g.get('case') == 'رفع' and g.get('noun') and not g.get('verb') and wi not in agr else None)
+        if nk is None:
+            return None
+    g2 = agr.get(wi + 1)
+    madi_after = bool(g2) and g2.get('kind') == 'madi'
+    host = segs[f['word_index']]['word']
+    pre_fa = host.startswith('فَ')
+    pre_thumma = f['word_index'] > 0 and is_form(segs[f['word_index'] - 1]['word'], ('ثُمَّ',))
+    prev_ops = [o for o in a.get('operators') or [] if o['word_index'] < f['word_index'] and o.get('status') != 'blocked' and
+                is_form(o['operator'], ('لَمَّا', 'إِن', 'إِنْ', 'إِذَا', 'إِذَآ'))]
+    ev = []
+    if pre_fa:
+        ev.append('فاءٌ قبل «إذا»')
+    if pre_thumma:
+        ev.append('«ثُمَّ» قبل «إذا»')
+    if prev_ops:
+        ev.append('أداةٌ تطلب جواباً قبلها: ' + '، '.join(o['operator'] for o in prev_ops))
+    nominal = not madi_after
+    faces = [dict(face='FUJAIYYA', status='CONDITIONS_MET' if nominal and ev else 'CANDIDATE',
+                  why=('بعد الضمير ' + ('ما ليس فعلاً ماضياً' if nominal else 'ماضٍ') + '؛ ' + ('، '.join(ev) if ev else 'لا سابق يرشّحها')))]
+    faces.append(dict(face='CONDITIONAL', status='CONDITIONS_MET' if madi_after else ('EXCLUDED_BY_RULE' if nominal and ev else 'CANDIDATE'),
+                      why=('الضمير يليه ماضٍ يوافقه: فاعلٌ لفعلٍ يفسّره المذكور' if madi_after else
+                           'الشرطية تختصّ بالجملة الفعلية، والضمير يليه ما ليس فعلاً ماضياً' if nominal and ev else
+                           'لا مانع مثبت')))
+    dec = 'FUJAIYYA' if faces[0]['status'] == 'CONDITIONS_MET' and faces[1]['status'] == 'EXCLUDED_BY_RULE' else 'AMBIGUOUS'
+    return dict(cue=f'«إِذَا» يليها {dict(PRONOUN="الضمير المنفصل", NOUN="اسمٌ مرفوع", PP="شبه جملة", RELATIVE="موصول")[nk]} «{nxt}»',
+                next_kind=nk, faces=faces, decision=dec, evidence=ev,
+                after_pronoun=(segs[wi + 1]['word'] if wi + 1 < len(segs) else None), madi_after=madi_after, source=IDHA_SOURCE)
+
+
+def idha_fujaiyya(a, f):
+    """→ (فجائية؟، السبب): فجائيةٌ إن حسمها idha_reading وحده؛ والملتبس ليس فجائيةً (يبقى وجه الشرط)"""
+    r = idha_reading(a, f)
+    if not r or r['decision'] != 'FUJAIYYA':
+        return False, None
+    return True, r['cue'] + ': ' + r['faces'][0]['why'] + '؛ فهي الفجائية لا الشرطية (لا جواب ولا صدارة شرط)'
 
 
 def clause_start(a, wi):
@@ -1844,6 +1895,15 @@ def _boundary_kind(p, js, spans, cspans, nuc_pos, qawl_pos, starts, feats=None):
             (set(g.get('ops', [])) & {'6', '7'} or g.get('neg') or g.get('cond_amb')) and nxt_v and not g.get('an') or \
             (g['case'] == 'رفع' or g.get('head') == 'pron' or g.get('head') == 'pp' and _pp_clause(feats, h, nuc_pos)) and \
             span > 1
+        # عطف المفرد على ركنٍ مرفوع قبله (SARF_COMPREHENSIVE_REPAIR_04 §١٥): اسمٌ مرفوع بعد العاطف لا خبرَ مرفوعاً بعده في مقطعه،
+        # وقبله في الجملة مرفوعٌ يصلح معطوفاً عليه (ذَٰلِكُمۡ أَقۡسَطُ … وَأَقۡوَمُ لِلشَّهَٰدَةِ): وجه العطف على المفرد قائمٌ مع وجه الجملة،
+        # فالحدّ مؤجَّلٌ صراحةً بتجميعين متنافسين، لا قسمةٌ ثابتة
+        if clause and f['conj_letter'] in ('و', 'ف', 'ثم', 'أو') and g['case'] == 'رفع' and not g['verb'] and \
+                not starts[h] and h not in nuc_pos and g.get('head') != 'pron' and \
+                not any(feats[k]['case'] == 'رفع' or feats[k]['verb'] for k in range(h + 1, h + span)) and \
+                any(feats[k]['case'] == 'رفع' and not feats[k]['verb'] and feats[k].get('head') != 'pron' for k in range(js, p + 1)):
+            return ('possible', f'تجميعان متنافسان بعد {name}: عطف مفردٍ على مرفوعٍ قبله (داخل الجملة)، أو جملةٌ اسمية: '
+                                f'{relations_after(feats, p)}')
         if clause:
             return ('proven', f'نهاية جملة قبل {name}: وما بعدها {relations_after(feats, p)}')
         return None
@@ -2538,6 +2598,11 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
             J = Geo(f'L{s}.d{k}.J', (SENTENCE, 'جملة'), B=my_bonds,
                     Omega=[Obligation(o.name, o.required, o.met, o.ev, o.reason, o.units) for o in my_obls],
                     O=dict(layer='لغة', pending=[], location=locs, nuclei=[x[1] for x in my_nuc], boundary=rec))
+            # الحدود المحتملة داخل المدى (§١٥): تجميعان متنافسان (قسمةٌ عند الموضع، أو امتدادٌ داخل الجملة) يُحفظان صراحةً
+            dfb = [dict(location=r['location'], why=r['J_why'], groupings=['SPLIT', 'JOIN'], status='DEFERRED')
+                   for r in srec if r['J'] == 'possible' and r['location'] in locs[:-1]]
+            if dfb:
+                J.O['deferred_boundaries'] = dfb
             for p in range(p0, p1 + 1):
                 for G in wunits[p]:
                     if G.closed:
@@ -2708,50 +2773,100 @@ _ROLE_VOICES = {'فاعل': ('معلوم',), 'نائب فاعل': ('مجهول',
                 'اسم الناسخ أو فاعل التامّ': (None, 'معلوم')}
 
 
+def _sig(cand):
+    sv = (cand or {}).get('subject') or {}
+    return f"{sv.get('person')}{sv.get('number')}{sv.get('gender')}" if sv else 'None'
+
+
 def _frame_faces(fr):
-    """أوجه إطار الفعل: كل زمنٍ قائم في كل بناءٍ قائم، بمعرّفٍ آلي مشتقّ من المرشّح الصرفي المختار"""
+    """أوجه إطار الفعل بهويةٍ تميّز المرشّح الصرفي الكامل (SARF_COMPREHENSIVE_REPAIR_04 §٤):
+    - من المرشّحات الكاملة الحيّة إن وُجدت: كل مرشّحٍ وجهٌ بهويته (الفعل#المرشّح|الزمن|البناء|الدور)، فلا يتصادم مرشّحان لهما الزمن
+      والبناء نفسيهما؛ والممنوع لا يدخل.
+    - وإلا فتحليلٌ واحد: إن تعدّد فيه بُعدٌ واحد (الزمن أو البناء) فأوجهه قيم ذلك البُعد والآخر ثابت (pairing=SINGLE_ANALYSIS)؛
+      وإن تعدّد البعدان معاً فلا رابط بين قيمهما في البيانات، فالأزواج حاصل ضربٍ غير مربوط (pairing=UNLINKED_PRODUCT، data_gap):
+      تُعرض ولا تُعدّ أوجهاً مرخّصة، ولا يُستوفى بها التزام. ولا يكفي استبعاد «الأمر المجهول» لإثبات بقية الأزواج."""
     f_ = (fr or {}).get('frame') or {}
     cand = f_.get('candidate') or {}
     cid = cand.get('id')
     unit = (fr or {}).get('heads', {}).get('verb')
-    tenses = cand.get('tense_live') or [cand.get('tense')]
+    tenses = [t for t in (cand.get('tense_live') or [cand.get('tense')])]
     vv = f_.get('voice') or (None, None, None)
     voices = list(vv[2]) if isinstance(vv, (list, tuple)) and len(vv) > 2 and vv[2] else [cand.get('voice') or (vv[0] if vv else None)]
-    # لا حاصل ضرب (مراجعة 046): إن كان للإطار مرشّحاتٌ كاملة حيّة فأوجهه أزواجها وحدها؛ وإلا فالزمن × البناء بلا الممتنع
-    # (الأمر لا يُبنى للمجهول)
     live = [c_ for c_ in (f_.get('candidates') or []) if c_.get('status') != 'REJECTED' and (c_.get('tense') or c_.get('voice'))]
-    pairs = [(c_.get('tense'), c_.get('voice'), f"{unit}#{c_.get('id')}") for c_ in live] if live else \
-        [(t, v, cid) for t in tenses for v in voices if not (t == 'أمر' and v == 'مجهول')]
     out = []
-    for t, v, mc in pairs:
-        out.append(dict(face_id=f'FACE:{unit}|T={t}|V={v or "—"}', label=f'{t or "—"}، {v or "بلا بناء (ناسخ)"}',
-                        tense=t, voice=v, morph_candidate_id=mc, unit=unit))
+    if live:
+        for c_ in live:
+            mc = f"{unit}#{c_.get('id')}"
+            out.append(dict(face_id=f"FACE:{mc}|T={c_.get('tense')}|V={c_.get('voice') or '—'}|R={c_.get('subject_role') or '—'}",
+                            label=f"{c_.get('id')}: {c_.get('tense') or '—'}، {c_.get('voice') or 'بلا بناء (ناسخ)'}",
+                            tense=c_.get('tense'), voice=c_.get('voice'), morph_candidate_id=mc, frame_candidate_id=cid, unit=unit,
+                            pairing='LINKED_CANDIDATE', data_gap=None))
+        return out
+    unlinked = len(set(tenses)) > 1 and len(set(voices)) > 1
+    for t in tenses:
+        for v in voices:
+            if t == 'أمر' and v == 'مجهول':
+                continue
+            mc = f"{unit}#T={t}|V={v}|S={_sig(cand)}"
+            out.append(dict(face_id=f'FACE:{mc}', label=f'{t or "—"}، {v or "بلا بناء (ناسخ)"}', tense=t, voice=v,
+                            morph_candidate_id=mc, frame_candidate_id=cid, unit=unit,
+                            pairing='UNLINKED_PRODUCT' if unlinked else 'SINGLE_ANALYSIS',
+                            data_gap=('FACE_PAIRING_DATA_GAP: الزمن والبناء كلاهما متعدّد في تحليلٍ واحد بلا رابطٍ بين قيمهما؛ '
+                                      'فالزوج غير مثبت وجهاً') if unlinked else None))
     return out
 
 
-def _rel_face_id(r):
-    """معرّف وجه العلاقة: الوجه الذي استوفى شروطه بين أوجه السجل (بترتيبه)، أو وجه السجل الوحيد"""
+def _rel_met_faces(r):
+    """الأوجه المستوفية شروطها في سجل العلاقة (كلها، لا أولها)؛ والسجل بلا أوجهٍ وجهه الوحيد"""
     fs = r.get('faces') or []
     if not fs:
-        return f"FACE:{r['relation_id']}#single"
-    k = next((i for i, f in enumerate(fs) if f.get('status') == 'CONDITIONS_MET'), None)
-    # لا وجه استوفى شروطه: لا يُعاد الوجه الأول افتراضاً (مراجعة 046)
-    return f"FACE:{r['relation_id']}#face{k}" if k is not None else None
+        return [f"FACE:{r['relation_id']}#single"]
+    return [f"FACE:{r['relation_id']}#face{i}" for i, f in enumerate(fs) if f.get('status') == 'CONDITIONS_MET']
+
+
+def _rel_face_id(r):
+    """معرّف وجه العلاقة إن انفرد وجهٌ مستوفٍ؛ وإن تعدّدت الأوجه المستوفية فلا يُختار أولها (None، والقائمة في _rel_met_faces)؛
+    ولا وجه مستوفياً: None (مراجعة 046)"""
+    m = _rel_met_faces(r)
+    return m[0] if len(m) == 1 else None
+
+
+COVER_REQUIRED = ('relation', 'verb', 'candidate', 'status', 'rule')
+
+
+def _cover_reason(f, r_):
+    """لماذا لا تستوفي العلاقة الوجه (None = تستوفيه). الشروط (§٤): هوية الفعل، والمرشّح، والوجه، والعلاقة، وحالتها، ودليل انطباقها
+    (قاعدتها)؛ وغياب حقلٍ لازم يؤجّل الاستيفاء؛ وتوافق وصف الدور والبناء وحده لا يكفي"""
+    miss = [k for k in COVER_REQUIRED if not r_.get(k)]
+    if miss:
+        return 'MISSING_FIELD:' + ','.join(miss)
+    if f.get('data_gap'):
+        return 'FACE_PAIRING_DATA_GAP'
+    if f.get('unit') and r_['verb'] != f['unit']:
+        return 'OTHER_VERB'
+    if r_['candidate'] not in (f.get('frame_candidate_id'), f.get('morph_candidate_id')):
+        return 'OTHER_CANDIDATE'
+    if r_['status'] != 'LICENSED':
+        return 'STATUS:' + str(r_['status'])
+    if r_.get('faces'):
+        if f['face_id'] not in r_['faces'] and f.get('morph_candidate_id') not in r_['faces']:
+            return 'OTHER_FACE'
+        return None
+    # علاقةٌ بلا قائمة أوجه: اشتراكها في الأوجه مبرهنٌ إن كان دورها يسمّي بناء الوجه صراحةً («فاعل أو نائب فاعل»)، وإلا فوجهها وجه دورها
+    if f['voice'] not in _ROLE_VOICES.get(r_.get('role'), ()):
+        return 'ROLE_VOICE_MISMATCH'
+    return None
 
 
 def _face_cover(faces, rels):
-    """خريطة الاشتراك: لكل وجهٍ العلاقات المستوفية التي يقع وجهها فيه (البناء الذي يقتضيه دور المسند إليه)"""
-    # العلاقة تغطّي الوجه إن كانت للفعل نفسه، ومرخَّصة، ووجهها المسجَّل (إن سُجّل) هو هذا الوجه، وبناؤها يوافق دورها؛
-    # فلا يكفي توافق وصف الدور والبناء (مراجعة 046)
-    def ok(f, r_):
-        if r_.get('verb') and f.get('unit') and r_['verb'] != f['unit']:
-            return False
-        if r_.get('status') not in (None, 'LICENSED'):
-            return False
-        if r_.get('faces') and f['face_id'] not in r_['faces'] and f.get('morph_candidate_id') not in r_['faces']:
-            return False
-        return f['voice'] in _ROLE_VOICES.get(r_['role'], ())
-    return [dict(face_id=f['face_id'], label=f['label'], relations=[r_['relation'] for r_ in rels if ok(f, r_)]) for f in faces]
+    """خريطة الاشتراك: لكل وجهٍ العلاقات المستوفية فيه، وأسباب رفض غيرها (refused)"""
+    out = []
+    for f in faces:
+        rs = [(r_, _cover_reason(f, r_)) for r_ in rels]
+        out.append(dict(face_id=f['face_id'], label=f['label'], relations=[r_['relation'] for r_, w in rs if w is None],
+                        refused={r_.get('relation') or '?': w for r_, w in rs if w is not None} or None,
+                        pairing=f.get('pairing'), data_gap=f.get('data_gap')))
+    return out
 
 
 def closure_certificate(J, records, upstream=None):
@@ -2781,7 +2896,8 @@ def closure_certificate(J, records, upstream=None):
     # آخر السورة يُتحقّق من المصدر نفسه (موضع الحدّ آخرُ كلمةٍ في آخر آيات السورة في المصحف المعتمد)، لا من عبارةٍ في حقل السبب
     # (SARF_MAJOR_COMPLETION_TO_PARAGRAPH_03 §١٨): ادّعاءٌ بلا موضعٍ يوافقه لا يُرقّي الحدّ
     loc_b = bnd.get('location')
-    sura_end_src = bool(loc_b) and len(loc_b) >= 2 and _is_sura_end(loc_b[0], loc_b[1]) and \
+    # (SARF_COMPREHENSIVE_REPAIR_04 §٦) آخر كلمةٍ في السورة، لا أي موضعٍ في آيتها الأخيرة
+    sura_end_src = bool(loc_b) and len(loc_b) >= 3 and is_sura_end_word(loc_b) and \
         loc_b == max(J.O.get('location') or [loc_b])
     claim_sura = str(source_boundary or '').startswith('آخر السورة')
     b_rule = 'LEGACY:sentence_boundary (sarf.algebra.sentence_boundary)' if bnd.get('J') == 'proven' and not source_boundary else \
@@ -2919,11 +3035,14 @@ def closure_certificate(J, records, upstream=None):
                 # الإطار المؤجَّل (زمنٌ مرشّح) لا يُعرض مستوفياً بإطلاق: المستوفي بنيته الفرعية (الفاعل المرخَّص فيه)، مشتركةً في أوجه الإطار
                 frame_def = not lic and fr['status'] != 'LICENSED'
                 faces = _frame_faces(fr)
+                fcid = ((fr.get('frame') or {}).get('candidate') or {}).get('id')
                 rels = ([dict(relation=r['relation_id'], role=r.get('role_name') or role, verb=r['heads'].get('verb'), status=r['status'],
-                              faces=r.get('licensed_in_faces')) for r in lic] if lic else
-                        [dict(relation=fr['relation_id'], role=sj.get('role') or role, verb=fr['heads'].get('verb'), status=sj.get('status'))])
+                              faces=r.get('licensed_in_faces'), candidate=r.get('verb_candidate'), rule=r.get('rule_id')) for r in lic] if lic else
+                        [dict(relation=fr['relation_id'], role=sj.get('role') or role, verb=fr['heads'].get('verb'), status=sj.get('status'),
+                              candidate=fcid, rule=sj.get('rule') or fr.get('rule_id'))])
                 fmap = _face_cover(faces, rels)
                 covered = [x for x in fmap if x['relations']]
+                gap_ = [x for x in fmap if x.get('data_gap')]
                 rec.update(morph_candidate_id=(faces[0]['morph_candidate_id'] if faces else None), face_map=fmap,
                            face_id=(fmap[0]['face_id'] if len(fmap) == 1 else 'SHARED:' + '+'.join(x['face_id'] for x in fmap)),
                            face_label=('؛ '.join(x['label'] for x in fmap)))
@@ -2936,7 +3055,13 @@ def closure_certificate(J, records, upstream=None):
                             x['relations'] = []
                         covered = []
                         rec['evidence_invalid'] = [f'المستتر: {whyI}']
-                if len(covered) < len(fmap):
+                if gap_:
+                    # أزواج زمنٍ وبناءٍ غير مربوطة في البيانات (§٤): نقص بيانات، لا أوجهٌ مرخّصة ولا خلط أوجه
+                    rec.update(status='COVERAGE', face_pairing='UNLINKED_PRODUCT',
+                               residual_reason='FACE_PAIRING_DATA_GAP: الزمن (' + '، '.join(sorted({str(f_['tense']) for f_ in faces})) +
+                               ') والبناء (' + '، '.join(sorted({str(f_['voice']) for f_ in faces})) + ') متعدّدان في تحليلٍ واحد بلا رابطٍ بين قيمهما، '
+                               'فلا يُعدّ حاصل ضربهما أوجهاً مرخّصة؛ والعلاقة ' + '، '.join(x['relation'] for x in rels) + ' باقيةٌ مرشّحة')
+                elif len(covered) < len(fmap):
                     # وجهٌ بلا علاقةٍ يقع وجهها فيه: العلاقة أُنتجت في وجهٍ غير وجه الالتزام (خلط أوجه)، فلا استيفاء
                     miss = [x['label'] for x in fmap if not x['relations']]
                     rec.update(status='CONFLICT' if not covered and not rec.get('evidence_invalid') else 'SELECTION', candidates=[dict(relation=x['relation'], status='LICENSED',
@@ -2976,7 +3101,7 @@ def closure_certificate(J, records, upstream=None):
             inner = [r for r in lic if (r.get('function') or {}).get('status') == 'DEFERRED' or r.get('selection') == 'DEFERRED']
             if lic:
                 rec.update(status='MET', discharge_relation_id=lic[0]['relation_id'], discharge_evidence_id=lic[0]['relation_id'] + '#premises',
-                           face_id=_rel_face_id(lic[0]), face_label=lic[0].get('face') or f"وجه {lic[0]['rule_id']} المرخَّص",
+                           face_id=_rel_face_id(lic[0]), met_faces=_rel_met_faces(lic[0]), face_label=lic[0].get('face') or f"وجه {lic[0]['rule_id']} المرخَّص",
                            morph_candidate_id=((((frames.get((o.units or [None])[0]) or {}).get('frame') or {}).get('candidate') or {}).get('id')),
                            satisfied_by=[dict(relation=r['relation_id'], status='LICENSED', rule=r['rule_id']) for r in lic],
                            residual_reason='؛ '.join(f'{r["rule_id"]}: ' + ((r.get('function') or {}).get('text') or r.get('face_note') or '')
@@ -3082,6 +3207,8 @@ def closure_certificate(J, records, upstream=None):
         b_obl = level != 'LOCAL_PREDICATION' and b_rule != 'SOURCE:sura_end' and any(o['status'] == 'BOUNDARY' for o in req)
         if any(o['status'] == 'OPEN' for o in req) or any(x['kind'] == 'REQUIRED' for x in residuals):
             return 'OPEN_REQUIRED_OBLIGATION'
+        if J.O.get('deferred_boundaries'):
+            return 'DEFERRED_BOUNDARY'          # تجميعٌ داخلي غير محسوم: لا يُغلق المدى في أي مستوى
         if boundary_levels[level] != 'PROVEN' or b_obl or any(x['kind'] == 'BOUNDARY' for x in residuals):
             return 'DEFERRED_BOUNDARY'
         if any(o['status'] == 'COVERAGE' for o in req) or any(x['kind'] == 'COVERAGE' for x in residuals):
@@ -3107,7 +3234,7 @@ def closure_certificate(J, records, upstream=None):
                                                      linguistic_status=(f'مثبت في مستوى الجملة: {b_level}' if boundary_proven else
                                                                         f'مثبت محلياً وحده: {b_level}' if boundary_levels['LOCAL_PREDICATION'] == 'PROVEN'
                                                                         else 'غير مثبت: ' + (stable_b or 'لا حدّ إسنادٍ محلي')),
-                                                     source=source_boundary, sura_end_claim_rejected=fake_sura_end or None,
+                                                     internal_deferred=J.O.get('deferred_boundaries'), source=source_boundary, source_kinds=(source_boundary_kinds(loc_b) if loc_b else []), sura_end_claim_rejected=fake_sura_end or None,
                                                      evidence=(bnd.get('J_why') or bnd.get('category')) if local_src else None),
                 obligations=obls, residuals=residuals, relation_open=residuals, rejected_faces=rejected,
                 external_evidence_ids=sorted({e['id'] for o_ in obls for e in (o_.get('external_evidence') or [])}) or None,
@@ -3115,19 +3242,65 @@ def closure_certificate(J, records, upstream=None):
                 verdict_level_ar=CLOSURE_LEVEL_AR[verdict_level], verdict_by_level=verdict_by_level)
 
 
-# ---------- الفقرة: ParagraphCandidate (SARF_MAJOR_COMPLETION_TO_PARAGRAPH_03 §٢٠) ----------
-# العقد (مقترحٌ، ينتظر اعتماد المالك تعريفَ الفقرة):
-#   المكوّنات: جملٌ بهوياتها وشهاداتها (verdict_by_level)، متتابعةٌ في الوحدات الخطابية.
-#   الروابط: لكل جملتين متتاليتين رابطٌ مرشّحٌ من دليل حدّ الأولى (J_why: «وما بعدها عطف، أو استئناف»، «له الصدارة»…)؛
-#     وصنفه CONTINUATION (عطف) أو RESUMPTION (استئناف) أو CIRCUMSTANTIAL (حال)؛ والعلاقات الدلالية (CAUSE، PURPOSE، RESULT،
-#     EVIDENTIAL_SUPPORT، EXPLANATION) لا تُقيَّم قبل تنفيذ قواعد الأدوات PC.* — فتُسجَّل NOT_EVALUATED لا غائبة.
-#   الإحالة: لكل ضميرٍ غائب (مستترٍ أو متصل) التزام مرجعٍ بمرشّحيه من الجمل السابقة؛ وتعيين المرجع غير منفَّذ فيبقى مؤجَّلاً.
-#   اللازم: مكوّناتٌ مكتملةٌ محلياً، وروابطُ مثبتة لا مرشّحة، ومراجع محلولة، وحدٌّ لغوي.
-#   الاختياري: امتدادٌ بعد آخر جملةٍ تامّة (لا يمنع الاكتمال).
-#   الحدّ: حدّ المصدر (أول السورة وآخرها من المصحف المعتمد) شاهدُ مصدرٍ لا حدٌّ لغوي؛ فالحدّ اللغوي مؤجَّل ما لم تُنفَّذ قاعدته.
+# ---------- حدود المصدر بالكلمة (SARF_COMPREHENSIVE_REPAIR_04 §٦) ----------
+# أنواع الحدّ منفصلة: INPUT_END (آخر المدخل المحلَّل)، AYAH_END (آخر كلمةٍ في الآية)، SURA_END (آخر كلمةٍ في آخر آيات السورة)،
+# وLOCAL_PREDICATION_BOUNDARY وSENTENCE_BOUNDARY وDISCOURSE_BOUNDARY وPARAGRAPH_BOUNDARY حدودٌ لغوية بقواعدها؛ ولا يستوفي حدّ المصدر
+# التزاماً لغوياً مفتوحاً
+BOUNDARY_KINDS = ('INPUT_END', 'AYAH_END', 'SURA_END', 'LOCAL_PREDICATION_BOUNDARY', 'SENTENCE_BOUNDARY', 'DISCOURSE_BOUNDARY',
+                  'PARAGRAPH_BOUNDARY')
+_VERSE_LAST = {}
+
+
+def verse_last_word(sura, verse):
+    """فهرس آخر كلمةٍ (من 0) في الآية من المصحف المعتمد، بعد تجميع أجزاء المصدر (normalize_traced: مُّسَمࣰّ ى كلمةٌ واحدة)"""
+    k = (sura, verse)
+    if k not in _VERSE_LAST:
+        from . import quran_source
+        from .normalize_trace import normalize_traced
+        txt = next((t for s_, v_, t in quran_source.rows() if (s_, v_) == k), None)
+        _VERSE_LAST[k] = None if txt is None else len(normalize_traced(txt)['analysis'].split()) - 1
+    return _VERSE_LAST[k]
+
+
+def source_boundary_kinds(loc, input_last=None):
+    """أنواع حدّ المصدر عند الموضع (سورة، آية، كلمة من 0)"""
+    if not loc or len(loc) < 3:
+        return []
+    s_, v_, w_ = loc[0], loc[1], loc[2]
+    out = []
+    if input_last is not None and tuple(loc) == tuple(input_last):
+        out.append('INPUT_END')
+    lw = verse_last_word(s_, v_)
+    if lw is not None and w_ == lw:
+        out.append('AYAH_END')
+        if _is_sura_end(s_, v_):
+            out.append('SURA_END')
+    return out
+
+
+def is_sura_end_word(loc):
+    """آخر كلمةٍ في آخر آيات السورة، لا أي موضعٍ في الآية الأخيرة"""
+    return 'SURA_END' in source_boundary_kinds(loc)
+
+
+# ---------- الفقرة: ParagraphCandidate (SARF_COMPREHENSIVE_REPAIR_04 §١٦، عقدٌ تشغيليٌّ مقترح PC-04) ----------
+# الافتراضات المعلنة (لا تعريفٌ معتمد للفقرة بعد؛ والاعتماد منفصلٌ عن نجاح الاختبار):
+#   A1 المرشّح: مدى جملٍ متتابعة؛ ونقاط بدء المرشّحات: أول المدخل، وبداية كل سورة، وكل جملةٍ تبدأ بنداء (خطابٌ جديد)؛ ويُبنى معها
+#      مرشّح المدى كله إن تعدّدت النقاط (تجميعان متنافسان، لا اختيار)
+#   A2 المكوّن: جملةٌ بهويتها ومداها وأحكامها بالمستويات وأوجه التزاماتها (من شهادتها)
+#   A3 الرابط الداخلي: بين كل جملتين متتاليتين من دليل حدّ الأولى، بأوجهه (عطف، حال، استئناف…) واتجاهه؛ والعلاقات الدلالية
+#      (CAUSE، PURPOSE، …) لا تُقيَّم إلا بقواعد الأدوات PC.* المنفّذة، وإلا NOT_EVALUATED
+#   A4 الإحالة: الضمائر الغائبة (المستترة والمتصلة والمنفصلة) وأسماء الإشارة في السجلات، لكلٍّ التزام مرجعٍ بمرشّحيه
+#   A5 الالتزامات بقواعدها: PC-R1 اكتمال المكوّن محلياً، PC-R2 الرابط، PC-R3 الإحالة، PC-R4 حدّ الفقرة اللغوي
+#   A6 حدّ الفقرة اللغوي PB-L1: يثبت في الطرفين إن ثبت كلٌّ من (أ) حدّ مصدرٍ أو بدء خطابٍ جديد (نداء) بعده، و(ب) لا رابطَ مرشّحاً
+#      يعبره، و(ج) لا إحالةَ معلّقة تعبره؛ وما لم يُفحص شرطه يبقى مذكوراً بنقصه؛ ونهاية الملف أو السورة وحدها لا تثبته
 LINK_KIND = {'عطف': 'CONTINUATION', 'استئناف': 'RESUMPTION', 'حال': 'CIRCUMSTANTIAL', 'صفة': 'ATTRIBUTIVE', 'خبر': 'PREDICATIVE',
              'معيّة': 'COMITATIVE'}
-SEMANTIC_LINKS = ('CAUSE', 'PURPOSE', 'RESULT', 'EVIDENTIAL_SUPPORT', 'EXPLANATION', 'TEMPORAL_RELATION', 'REFERENCE')
+SEMANTIC_LINKS = ('CAUSE', 'PURPOSE', 'RESULT', 'EVIDENCE', 'EXPLANATION', 'TEMPORAL', 'CONDITION')
+STRUCTURAL_LINKS = ('COORDINATION', 'RESUMPTION', 'CIRCUMSTANTIAL', 'CONTINUATION', 'ATTRIBUTIVE', 'PREDICATIVE', 'COMITATIVE')
+REF_PRON_3 = ('هُ', 'هِ', 'هَا', 'هُمْ', 'هِمْ', 'هُمَا', 'هِمَا', 'هُنَّ', 'هِنَّ', 'هُمُ', 'هِمُ', 'هُوَ', 'هِيَ')
+REF_DEM = ('ذَٰلِكَ', 'ذَٰلِكُمْ', 'ذَٰلِكُمَا', 'تِلْكَ', 'هَٰذَا', 'هَٰذِهِ', 'هَٰؤُلَاءِ', 'أُولَٰئِكَ')
+PARAGRAPH_CONTRACT = 'PC-04 (SARF_COMPREHENSIVE_REPAIR_04 §١٦): عقدٌ تشغيليٌّ مقترح، اعتماده للمالك ومنفصلٌ عن نجاح اختباره'
 
 
 def paragraph_status(obligations):
@@ -3136,86 +3309,241 @@ def paragraph_status(obligations):
     return ('COMPLETE' if not bad else 'INCOMPLETE'), [f"{o['kind']}: {o['status']} — {o.get('reason') or ''}" for o in bad]
 
 
-def paragraph_candidate(LT, certs, records):
-    """→ ParagraphCandidate لمدى المدخل: المكوّنات، والروابط بأدلّتها، والإحالات، والالتزامات، والحدّ، والحكم"""
-    by_id = {c['sentence']: c for c in certs}
+def _pc_fingerprint(pc):
+    import hashlib, json as _j
+    body = {k: v for k, v in pc.items() if k != 'fingerprint'}
+    return hashlib.sha256(_j.dumps(body, ensure_ascii=False, sort_keys=True, default=str).encode()).hexdigest()[:16]
+
+
+def _sentences(LT):
     Js = [J for SP in LT for D in SP.A + SP.O.get('pending', []) for J in D.A + D.O.get('pending', [])]
     Js.sort(key=lambda J: min(J.O.get('location') or [(0, 0, 0)]))
-    comps, links, refs, obls = [], [], [], []
+    return Js
+
+
+def _link_from_boundary(a_, b_):
+    bnd = a_.O.get('boundary') or {}
+    why = str(bnd.get('J_why') or '')
+    alts = [x.strip().replace('أو ', '').strip() for x in why.split('وما بعدها ', 1)[1].split('،')] if 'وما بعدها ' in why else []
+    kinds = [LINK_KIND.get(x, 'OTHER:' + x) for x in alts if x]
+    if 'الصدارة' in why:
+        kinds = ['RESUMPTION']
+    ev = f"{a_.id}#boundary@{bnd.get('location')}" if bnd else None
+    status = 'PROVEN' if len(kinds) == 1 and bnd.get('J') == 'proven' else 'CANDIDATE' if kinds else 'NOT_ESTABLISHED'
+    return dict(link_id=f'{a_.id}→{b_.id}', src=a_.id, dst=b_.id, direction='src→dst', candidates=kinds or None,
+                faces=[f'{a_.id}→{b_.id}#{k}' for k in kinds] or None, evidence_id=ev, evidence=why or None,
+                premises=[f"حدّ {a_.id}: {bnd.get('J')} ({bnd.get('location')})"] if bnd else [], rule='PC-R2/boundary',
+                status=status, selected_face=kinds[0] if status == 'PROVEN' else None,
+                semantic=dict.fromkeys(SEMANTIC_LINKS, 'NOT_EVALUATED (قواعد الأدوات PC.* غير منفّذة في هذا المستوى)'))
+
+
+def _references(Js, records):
+    span = {(s_, v_, w_) for J in Js for (s_, v_, w_) in J.O.get('location') or []}
+    loc_of = lambda x: tuple(int(p_) for p_ in x.split(':')) if isinstance(x, str) and x.count(':') == 2 else None
+    refs = []
+    for r in records:
+        if r['type'] == 'VERB_FRAME':
+            sj = (r.get('frame') or {}).get('subject') or {}
+            imps = [sj.get('implicit_subject')] + [f_.get('implicit_subject') for f_ in sj.get('subject_faces') or []]
+            loc = ((r.get('positions') or {}).get('verb') or [None])[0]
+            L = loc_of(loc)
+            if L is not None and (L[0], L[1], L[2] - 1) not in span:
+                continue
+            for im in [x for x in imps if x and x.get('person') == 3]:
+                refs.append(dict(ref_id=im['implicit_id'], pronoun='مستتر', form=None, owner=r['heads'].get('verb'),
+                                 face=im['syntactic_face_id'], signature=dict(person=im['person'], number=im['number'], gender=im['gender']),
+                                 location=loc, kind='IMPLICIT'))
+        for role, txt in (r.get('texts') or {}).items():
+            if role in ('verb', 'preposition', 'mudaf', 'subject_candidate'):
+                continue
+            k_ = 'DEMONSTRATIVE' if is_form(txt, REF_DEM) else 'PRONOUN' if is_form(txt, REF_PRON_3) else None
+            if not k_:
+                continue
+            loc = ((r.get('positions') or {}).get(role) or [None])[0]
+            uid = ((r.get('members') or {}).get(role) or [None])[0]
+            if any(x['ref_id'] == f'REF:{uid}' for x in refs):
+                continue
+            refs.append(dict(ref_id=f'REF:{uid}', pronoun=txt, form=txt, owner=uid, face=None,
+                             signature=dict(person=3, number=None, gender=None), location=loc, kind=k_))
+    for x in refs:
+        x.update(status='DEFERRED', candidates_rule='سابقٌ أو لاحقٌ أو خارجيٌّ تجيزه القاعدة؛ والموافقة في العدد والجنس تولّد مرشّحين ولا تثبت المرجع',
+                 reason='تعيين المرجع غير منفَّذ (مانعٌ مسمّى: REFERENCE_RESOLUTION)',
+                 structure_required=False, discourse_required=True)
+    refs.sort(key=lambda x: x['ref_id'])
+    return refs
+
+
+def paragraph_candidates(LT, certs, records, vocative_starts=()):
+    """→ قائمة ParagraphCandidate (A1): مرشّحٌ لكل مدى بين نقاط البدء، ومرشّح المدى كله إن تعدّدت"""
+    Js = _sentences(LT)
+    if not Js:
+        return []
+    cuts = [0] + [i for i, J in enumerate(Js) if i and (min(J.O['location'])[1] == 1 and min(J.O['location'])[2] == 0 or J.id in vocative_starts)]
+    cuts = sorted(set(cuts))
+    groups = [Js[a_:b_] for a_, b_ in zip(cuts, cuts[1:] + [len(Js)])]
+    out = [_paragraph(g, LT, certs, records, Js) for g in groups]
+    if len(groups) > 1:
+        out.append(_paragraph(Js, LT, certs, records, Js, competing=[x['paragraph_id'] for x in out]))
+    return out
+
+
+def paragraph_candidate(LT, certs, records):
+    """مرشّح المدى كله (للعرض والتوافق): آخر ما تعيده paragraph_candidates"""
+    return paragraph_candidates(LT, certs, records)[-1]
+
+
+def _paragraph(Js, LT, certs, records, allJ, competing=None):
+    by_id = {c['sentence']: c for c in certs}
+    comps, obls = [], []
     for J in Js:
         c = by_id.get(J.id) or {}
         comps.append(dict(sentence=J.id, span=[min(J.O.get('location') or [None]), max(J.O.get('location') or [None])],
-                          verdict_by_level=c.get('verdict_by_level'), local=(c.get('verdict_by_level') or {}).get('LOCAL_PREDICATION')))
-    for a_, b_ in zip(Js, Js[1:]):
-        bnd = a_.O.get('boundary') or {}
-        why = str(bnd.get('J_why') or '')
-        alts = [x.strip().replace('أو ', '').strip() for x in why.split('وما بعدها ', 1)[1].split('،')] if 'وما بعدها ' in why else []
-        kinds = [LINK_KIND.get(x, 'OTHER:' + x) for x in alts if x]
-        if 'الصدارة' in why:
-            kinds = ['RESUMPTION']
-        ev = f"{a_.id}#boundary@{bnd.get('location')}" if bnd else None
-        links.append(dict(link_id=f'{a_.id}→{b_.id}', src=a_.id, dst=b_.id, candidates=kinds or None, evidence_id=ev,
-                          evidence=why or None, status=('PROVEN' if len(kinds) == 1 and bnd.get('J') == 'proven' else
-                                                         'CANDIDATE' if kinds else 'NOT_ESTABLISHED'),
-                          semantic=dict.fromkeys(SEMANTIC_LINKS[:-1], 'NOT_EVALUATED (قواعد الأدوات PC.* غير منفّذة)')))
-    # الإحالة: الضمير الغائب المستتر في إطار الفعل
-    rec_by_verb = {r['heads'].get('verb'): r for r in records if r['type'] == 'VERB_FRAME'}
-    js_of = {}
-    for J in Js:
-        for (s_, v_, w_) in J.O.get('location') or []:
-            js_of[(s_, v_, w_)] = J.id
-    for u, r in rec_by_verb.items():
-        sj = (r.get('frame') or {}).get('subject') or {}
-        imps = [sj.get('implicit_subject')] + [f_.get('implicit_subject') for f_ in sj.get('subject_faces') or []]
-        for im in [x for x in imps if x and x.get('person') == 3]:
-            loc = (r.get('positions') or {}).get('verb') or []
-            refs.append(dict(ref_id=im['implicit_id'], pronoun='مستتر', owner=u, face=im['syntactic_face_id'],
-                             signature=dict(person=im['person'], number=im['number'], gender=im['gender']),
-                             status='DEFERRED', reason='تعيين المرجع غير منفَّذ: المرشّحون الأسماء السابقة الموافقة في العدد والجنس',
-                             location=loc[0] if loc else None))
-    for k in links:
-        obls.append(dict(kind='LINK', id=k['link_id'], required=True, status='MET' if k['status'] == 'PROVEN' else
-                         ('CANDIDATE' if k['status'] == 'CANDIDATE' else 'OPEN'), reason=k['evidence'] or 'لا دليل حدٍّ بين الجملتين'))
+                          occurrences=sorted(J.O.get('location') or []),
+                          verdict_by_level=c.get('verdict_by_level'), local=(c.get('verdict_by_level') or {}).get('LOCAL_PREDICATION'),
+                          faces=sorted({o_.get('face_id') for o_ in c.get('obligations') or [] if o_.get('face_id')}),
+                          internal_groupings=J.O.get('deferred_boundaries')))
+    links = [_link_from_boundary(a_, b_) for a_, b_ in zip(Js, Js[1:])]
+    refs = _references(Js, records)
     for c in comps:
-        obls.append(dict(kind='COMPONENT_LOCAL', id=c['sentence'], required=True,
+        for g in c['internal_groupings'] or []:
+            obls.append(dict(kind='GROUPING', rule='PC-R5', id=f"{c['sentence']}@{g['location']}", required=True, status='DEFERRED',
+                             reason='تجميعان متنافسان داخل المكوّن: ' + g['why']))
+        obls.append(dict(kind='COMPONENT_LOCAL', rule='PC-R1', id=c['sentence'], required=True,
                          status='MET' if c['local'] in ('CLOSED_IN_FACE', 'CLOSED_WITH_SHARED_STRUCTURE') else 'DEFERRED',
                          reason=f"حكم الإسناد المحلي: {c['local']}"))
+    for k in links:
+        obls.append(dict(kind='LINK', rule='PC-R2', id=k['link_id'], required=True, status='MET' if k['status'] == 'PROVEN' else
+                         ('CANDIDATE' if k['status'] == 'CANDIDATE' else 'OPEN'), reason=k['evidence'] or 'لا دليل حدٍّ بين الجملتين'))
     for x in refs:
-        obls.append(dict(kind='REFERENCE', id=x['ref_id'], required=True, status='DEFERRED', reason=x['reason']))
-    # الحدّ: شاهد المصدر (من المصحف المعتمد) غير الحدّ اللغوي
+        obls.append(dict(kind='REFERENCE', rule='PC-R3', id=x['ref_id'], required=True, status='DEFERRED', reason=x['reason']))
     locs = [l for J in Js for l in J.O.get('location') or []]
+    all_locs = [l for J in allJ for l in J.O.get('location') or []]
     first, last = (min(locs), max(locs)) if locs else (None, None)
     src_start = bool(first) and first[1] == 1 and first[2] == 0
-    src_end = bool(last) and _is_sura_end(last[0], last[1]) and \
-        all(not (l[0] == last[0] and l[1] == last[1] and l[2] > last[2]) for l in locs)
-    boundary = dict(source_start=('SOURCE:sura_start' if src_start else None), source_end=('SOURCE:sura_end' if src_end else None),
-                    linguistic='NOT_PROVEN', reason='قاعدة الحدّ اللغوي للفقرة غير منفّذة؛ وحدّ المصدر شاهدٌ لا يثبت وحده الحدّ')
-    obls.append(dict(kind='BOUNDARY', id='paragraph#boundary', required=True, status='DEFERRED', reason=boundary['reason']))
+    end_kinds = source_boundary_kinds(last, max(all_locs) if all_locs else None)
+    # PB-L1 بشروطه: (أ) حدّ مصدرٍ أو بدء خطابٍ جديد، (ب) لا رابط مرشّح يعبر، (ج) لا إحالة معلّقة تعبر
+    nxt = next((J for J in allJ if min(J.O.get('location') or [(0, 0, 0)]) > last), None) if last else None
+    prv = next((J for J in reversed(allJ) if max(J.O.get('location') or [(0, 0, 0)]) < first), None) if first else None
+    cond = dict(
+        start=dict(a=('MET: بداية السورة' if src_start else 'MET: لا جملة قبله في المدخل' if prv is None else 'NOT_MET: جملةٌ قبله'),
+                   b='MET: لا رابط قبله' if prv is None else 'NOT_MET: رابطٌ مرشّح من الجملة السابقة',
+                   c='NOT_CHECKED: تعيين المرجع غير منفّذ'),
+        end=dict(a=('MET: ' + '، '.join(end_kinds)) if 'SURA_END' in end_kinds else
+                   ('NOT_MET: آخر المدخل ليس حدّ سورة' if nxt is None else 'NOT_MET: جملةٌ بعده'),
+                 b='MET: لا رابط بعده' if nxt is None else 'NOT_MET: رابطٌ مرشّح إلى ما بعده',
+                 c='NOT_CHECKED: تعيين المرجع غير منفّذ'))
+    ling = 'PROVEN' if all(v_.startswith('MET') for side in cond.values() for v_ in side.values()) else 'NOT_PROVEN'
+    boundary = dict(source_start=('SOURCE:sura_start' if src_start else None),
+                    source_end=('SOURCE:sura_end' if 'SURA_END' in end_kinds else None), source_end_kinds=end_kinds,
+                    linguistic=ling, linguistic_rule='PB-L1', conditions=cond,
+                    reason=('PB-L1 مستوفاة' if ling == 'PROVEN' else 'PB-L1 غير مستوفاة: ' + '؛ '.join(
+                        f'{side}.{k_} {v_}' for side, d_ in cond.items() for k_, v_ in d_.items() if not v_.startswith('MET'))))
+    obls.append(dict(kind='BOUNDARY', rule='PC-R4', id='paragraph#boundary', required=True,
+                     status='MET' if ling == 'PROVEN' else 'DEFERRED', reason=boundary['reason']))
     st, reasons = paragraph_status(obls)
-    return dict(paragraph_id=f"P:{first}..{last}", components=comps, links=links, references=refs, obligations=obls,
-                boundary=boundary, status='PARAGRAPH_CANDIDATE_' + st, reasons=reasons,
-                contract='SARF_MAJOR_COMPLETION_TO_PARAGRAPH_03 §٢٠ (عقدٌ مقترح ينتظر اعتماد المالك)')
+    pc = dict(paragraph_id=f"P:{first}..{last}", components=comps, links=links, references=refs, obligations=obls,
+              boundary=boundary, status='PARAGRAPH_CANDIDATE_' + st, reasons=reasons, competing_groupings=competing,
+              selection='DEFERRED' if competing else None, contract=PARAGRAPH_CONTRACT)
+    pc['fingerprint'] = _pc_fingerprint(pc)
+    return pc
 
 
-def check_paragraph(pc, LT):
-    """فاحصٌ مستقل للفقرة: كل رابطٍ يشير إلى حدّ جملةٍ موجود، ومرشّحوه مشتقّون من دليله، ولا رابط «مثبت» بلا دليلٍ وحيد؛
-    ولا حدّ مصدرٍ بلا موضعٍ يوافقه → قائمة الأخطاء"""
+# الفاحص: مدقّقٌ لشهادة الفقرة بفحوصٍ مسمّاة. النطاق: ما يُعاد من LT والشهادات والسجلات؛ ولا يفحص صحة الشهادات نفسها ولا قواعد
+# الجملة (لها closure_certificate وفاحصها)، ولا يعيّن المراجع
+PARAGRAPH_CHECKS = {
+    'PX01_COMPONENTS': 'وجود المكوّنات المطلوبة بهوياتها وامتداداتها كما في LT',
+    'PX02_OCCURRENCES': 'لا حذف مكوّن ولا تكراره ولا إسقاط وقوع نصّي',
+    'PX03_FACES': 'أوجه المكوّن من شهادته (لا وجه مرشّحٍ آخر)',
+    'PX04_LINK_ENDS': 'طرفا الرابط ونوعه واتجاهه ووجهه مشتقّةٌ من دليل الحدّ',
+    'PX05_LINK_EVIDENCE': 'معرّف الدليل ونصّه يطابقان حدّ الجملة، والمقدّمات منطبقة',
+    'PX06_OBLIGATIONS_GENERATED': 'كل التزامٍ تولّده القواعد موجود، ولا التزام بلا قاعدة',
+    'PX07_OBLIGATION_STATUS': 'حالة كل التزامٍ معادةُ الحساب من مصدره',
+    'PX08_VERDICT': 'الحكم معاد الحساب من الالتزامات وشهادة الحدّ',
+    'PX09_NO_PROMOTION': 'لا ترقية CANDIDATE إلى PROVEN ولا علاقة دلالية مقيَّمة بلا قاعدة',
+    'PX10_BOUNDARY': 'حدّ المصدر مستقلٌّ عن الحدّ اللغوي، وكلٌّ معاد الحساب',
+    'PX11_REFERENCES': 'الإحالات اللازمة من السجلات موجودة',
+    'PX12_FINGERPRINT': 'سلامة البصمة (تكاملٌ لا صحة دلالية)',
+}
+
+
+def check_paragraph(pc, LT, certs=None, records=None):
+    """مدقّق شهادة الفقرة → قائمة أخطاء «PXnn: …». الفحوص PX01–PX05 وPX09–PX10 من LT وحده؛ وPX06–PX08 وPX11 بإعادة التوليد من
+    الشهادات والسجلات إن مُرّرت (وإلا تُذكر غير مفحوصة)"""
     err = []
-    Js = {J.id: J for SP in LT for D in SP.A + SP.O.get('pending', []) for J in D.A + D.O.get('pending', [])}
-    for k in pc['links']:
-        J = Js.get(k['src'])
-        if J is None or k['dst'] not in Js:
-            err.append(f"{k['link_id']}: طرفٌ غير موجود")
+    allJ = _sentences(LT)
+    byJ = {J.id: J for J in allJ}
+    ids = [c['sentence'] for c in pc.get('components') or []]
+    if not ids or any(i not in byJ for i in ids):
+        err.append('PX01_COMPONENTS: مكوّنٌ غير موجود في LT أو قائمةٌ فارغة')
+    for c in pc.get('components') or []:
+        J = byJ.get(c['sentence'])
+        if J is not None and c.get('span') != [min(J.O['location']), max(J.O['location'])]:
+            err.append(f"PX01_COMPONENTS: امتداد {c['sentence']} لا يطابق LT")
+    if len(ids) != len(set(ids)):
+        err.append('PX02_OCCURRENCES: مكوّنٌ مكرّر')
+    seq = [J.id for J in allJ]
+    if ids and all(i in byJ for i in ids):
+        k0 = seq.index(ids[0])
+        if seq[k0:k0 + len(ids)] != ids:
+            err.append('PX02_OCCURRENCES: المكوّنات ليست مدىً متصلاً من جمل LT (حذفٌ أو إعادة ترتيب)')
+        occ = sorted(l for i in ids for l in byJ[i].O.get('location') or [])
+        got = sorted(tuple(l) for c in pc['components'] for l in c.get('occurrences') or [])
+        if occ != got:
+            err.append('PX02_OCCURRENCES: وقوعاتٌ نصية ساقطة أو زائدة')
+    links = pc.get('links') or []
+    want_links = [(a_, b_) for a_, b_ in zip(ids, ids[1:])]
+    if [(k['src'], k['dst']) for k in links] != want_links:
+        err.append('PX04_LINK_ENDS: طرفا رابطٍ أو ترتيبه لا يطابق تتابع المكوّنات')
+    for k in links:
+        if k['src'] not in byJ or k['dst'] not in byJ:
             continue
-        bnd = J.O.get('boundary') or {}
-        why = str(bnd.get('J_why') or '')
-        if k['status'] == 'PROVEN' and not (bnd.get('J') == 'proven' and k['candidates'] and len(k['candidates']) == 1):
-            err.append(f"{k['link_id']}: رابطٌ «مثبت» بلا دليل حدٍّ مثبتٍ وحيد الوجه")
-        if k['evidence'] and k['evidence'] != why:
-            err.append(f"{k['link_id']}: دليلٌ لا يطابق حدّ الجملة")
-        if k['status'] != 'NOT_ESTABLISHED' and not k['evidence']:
-            err.append(f"{k['link_id']}: رابطٌ بلا دليل")
-    locs = [l for J in Js.values() for l in J.O.get('location') or []]
-    if pc['boundary'].get('source_end') and not (locs and _is_sura_end(max(locs)[0], max(locs)[1])):
-        err.append('حدّ مصدرٍ «آخر السورة» بلا موضعٍ يوافقه')
+        exp = _link_from_boundary(byJ[k['src']], byJ[k['dst']])
+        if k.get('candidates') != exp['candidates'] or k.get('faces') != exp['faces'] or k.get('direction') != 'src→dst':
+            err.append(f"PX04_LINK_ENDS: {k['link_id']}: النوع أو الوجه أو الاتجاه لا يُشتقّ من دليل الحدّ")
+        if k.get('evidence_id') != exp['evidence_id'] or k.get('evidence') != exp['evidence']:
+            err.append(f"PX05_LINK_EVIDENCE: {k['link_id']}: دليلٌ لا يطابق حدّ الجملة")
+        if k['status'] != exp['status']:
+            err.append(f"PX09_NO_PROMOTION: {k['link_id']}: الحالة {k['status']} وما يقتضيه الدليل {exp['status']}")
+        bad_sem = [n_ for n_, v_ in (k.get('semantic') or {}).items() if not str(v_).startswith('NOT_EVALUATED')]
+        if bad_sem or set(k.get('candidates') or []) & set(SEMANTIC_LINKS):
+            err.append(f"PX09_NO_PROMOTION: {k['link_id']}: علاقةٌ دلالية ({', '.join(bad_sem or sorted(set(k.get('candidates') or []) & set(SEMANTIC_LINKS)))}) بلا قاعدة")
+    b = pc.get('boundary') or {}
+    if ids and all(i in byJ for i in ids):
+        first = min(l for i in ids for l in byJ[i].O['location'])
+        last = max(l for i in ids for l in byJ[i].O['location'])
+        all_last = max(l for J in allJ for l in J.O['location'])
+        src_start = first[1] == 1 and first[2] == 0
+        if bool(b.get('source_start')) != src_start:
+            err.append('PX10_BOUNDARY: حدّ مصدرٍ «بداية السورة» لا يوافق الموضع')
+        if bool(b.get('source_end')) != ('SURA_END' in source_boundary_kinds(last, all_last)):
+            err.append('PX10_BOUNDARY: حدّ مصدرٍ «آخر السورة» لا يوافق آخر كلمةٍ في السورة')
+        conds = b.get('conditions') or {}
+        exp_ling = 'PROVEN' if conds and all(str(v_).startswith('MET') for d_ in conds.values() for v_ in d_.values()) else 'NOT_PROVEN'
+        if b.get('linguistic') != exp_ling or any('NOT_CHECKED' in str(v_) for d_ in conds.values() for v_ in d_.values()) and \
+                b.get('linguistic') == 'PROVEN':
+            err.append('PX10_BOUNDARY: الحدّ اللغوي لا يُعاد حسابه من شروط PB-L1 (حدّ المصدر ليس حدّاً لغوياً)')
+    st, _ = paragraph_status(pc.get('obligations') or [])
+    if pc.get('status') != 'PARAGRAPH_CANDIDATE_' + st:
+        err.append(f"PX08_VERDICT: الحكم {pc.get('status')} والالتزامات تقتضي {st}")
+    if certs is not None and records is not None and ids and all(i in byJ for i in ids):
+        exp = _paragraph([byJ[i] for i in ids], LT, certs, records, allJ, competing=pc.get('competing_groupings'))
+        eo = {(o['kind'], o['id']): o for o in exp['obligations']}
+        go = {(o['kind'], o['id']): o for o in pc.get('obligations') or []}
+        if set(eo) - set(go):
+            err.append('PX06_OBLIGATIONS_GENERATED: التزاماتٌ تولّدها القواعد غائبة: ' + '، '.join(f'{k}:{i}' for k, i in sorted(set(eo) - set(go))))
+        if set(go) - set(eo):
+            err.append('PX06_OBLIGATIONS_GENERATED: التزاماتٌ بلا قاعدة تولّدها: ' + '، '.join(f'{k}:{i}' for k, i in sorted(set(go) - set(eo))))
+        for k_ in set(eo) & set(go):
+            if eo[k_]['status'] != go[k_]['status'] or eo[k_]['required'] != go[k_]['required']:
+                err.append(f'PX07_OBLIGATION_STATUS: {k_[0]}:{k_[1]} الحالة {go[k_]["status"]} والمعاد حسابه {eo[k_]["status"]}')
+        er = {x['ref_id'] for x in exp['references']}
+        gr = {x['ref_id'] for x in pc.get('references') or []}
+        if er - gr:
+            err.append('PX11_REFERENCES: إحالاتٌ لازمة غائبة: ' + '، '.join(sorted(er - gr)))
+        ef = {c['sentence']: c['faces'] for c in exp['components']}
+        for c in pc.get('components') or []:
+            if c.get('faces') != ef.get(c['sentence']):
+                err.append(f"PX03_FACES: أوجه {c['sentence']} ليست أوجه شهادتها")
+    if pc.get('fingerprint') != _pc_fingerprint(pc):
+        err.append('PX12_FINGERPRINT: البصمة لا تطابق المحتوى')
     return err

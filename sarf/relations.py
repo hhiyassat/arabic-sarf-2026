@@ -1985,7 +1985,7 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
             fz_ = [f_['face_id'] for f_ in subj.get('subject_faces') or [] if f_.get('unit') in subj['candidates'] and f_['status'] == LICENSED]
             R.append(_rec(ref, 'SUBJECT', 'S01', {'verb': v}, {'verb': [v], 'subject_candidate': cu}, DEFERRED,
                           subj['why'] + (('؛ والظاهر مرخَّصٌ في الوجه ' + '، '.join(fz_) + ' وحده، والوجه غير مختار') if fz_ else ''),
-                          premises=[f'«{v.text}»: ضمير الصيغة غائبٌ مفرد ({sf.get("st")})'], role_name=srole,
+                          premises=[f'«{v.text}»: ضمير الصيغة غائبٌ مفرد ({sf.get("st")})'], role_name=srole, verb_candidate=cand_rec['id'],
                           alternatives=[f'«{u_.text}» {srole}' for u_ in cu] + ['ضميرٌ مستتر'], licensed_in_faces=fz_ or None))
         if subj and subj.get('unit') and subj['status'] == LICENSED:
             u = subj['unit']
@@ -1993,7 +1993,7 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                           premises=[fr['relation_id'] if coherent else f'«{v.text}»: ضمير الصيغة غائبٌ مفرد مثبت ({sf.get("ev")})',
                                     f'«{u.text}»: {u.nominative()[1]}'],
                           checked=['منافسٌ مرفوعٌ في الإطار', 'عاملٌ مقبول في المرفوع', 'طرفٌ في علاقةٍ أخرى'],
-                          role_name=srole, mark_fact=dict(uid=u.uid, mark=subj.get('mark')), edges=[('SUBJECT', v.uid, u.uid)],
+                          role_name=srole, verb_candidate=cand_rec['id'], mark_fact=dict(uid=u.uid, mark=subj.get('mark')), edges=[('SUBJECT', v.uid, u.uid)],
                           **(dict(face='المعلوم أو المجهول', selection=DEFERRED, face_note=voice_faces['note'],
                                   voice_faces={k_: v_ for k_, v_ in voice_faces.items() if k_ not in ('note', 'faces')},
                                   voice_face_evidence=voice_faces.get('faces'),
