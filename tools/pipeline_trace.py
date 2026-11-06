@@ -89,38 +89,27 @@ def esc(x):
     return h(ar(x))
 
 
-# ---------- المراحل الصرفية لكل آية، مع لقطةٍ بعد كل مرحلة ----------
-PIPE = Pipeline(cat)
+# ---------- التشغيل كله من المحرّك الواحد (sarf.stages.run، SARF_DEPENDENCY_PIPELINE_AND_COMPLETION_05 §٥–٨) ----------
+# التقرير عارضٌ لناتج المحرّك: لا يستدعي المراحل بنفسه، ولا يعيد التطبيع، ولا ينتج حكماً لغوياً لملء قسم
+from sarf.stages import run as _engine_run, ENGINE as _ENGINE
+ENGINE_OPTS = dict(mode=('auto' if args.text else None), upstream=UP_EV)
+CTX = _engine_run(VERSES, {k: v for k, v in ENGINE_OPTS.items() if v is not None})
+_bad = {n: st for n, st in CTX.status.items() if st[0] not in ('EXECUTED', 'NOT_IMPLEMENTED')}
+if _bad:
+    raise SystemExit('المحرّك لم يُكمل: ' + '؛ '.join(f'{n}: {st[0]} — {st[1]}' for n, st in _bad.items()))
+_AN, _LOGS, _UN, _FE = CTX.get('analysis'), CTX.get('verse_logs'), CTX.get('units'), CTX.get('features')
 per_verse = []
 for s, v, text in VERSES:
-    ctx_cls = __import__('sarf.pipeline', fromlist=['VerseContext']).VerseContext
-    ctx = ctx_cls(text, 'auto' if args.text else quran_source.uthmani_mode())
-    snaps, logs = {}, []
-    for st in PIPE.stages:
-        logs.append((st.name, st.doc, st.fn(ctx, PIPE)))
-        if st.name in ('evidence', 'judge'):
-            snaps[st.name] = copy.deepcopy(ctx.candidates)
-    a = ctx.result()
-    per_verse.append(dict(s=s, v=v, text=text, ctx=ctx, a=a, snaps=snaps, logs=logs))
-
-# ---------- الطبقة اللغوية عبر الآيات ----------
+    k_ = f'{s}:{v}'
+    per_verse.append(dict(s=s, v=v, text=text, ctx=None, a=_AN[k_], snaps=_LOGS[k_]['snaps'], logs=_LOGS[k_]['logs'],
+                          units=_UN[k_]['units'], S=_UN[k_]['S'], F=_FE[k_], key=k_))
+_SENT = CTX.get('sentences')
+LT, lstats, cross = _SENT['LT'], _SENT['stats'], _SENT['cross']
+COND, RELS = CTX.get('legacy')['cond'], CTX.get('legacy')['rel']
+REL_CACHE = {(int(k.split(':')[0]), int(k.split(':')[1])): v for k, v in CTX.get('records').items()}
+CERT_BY_ID = CTX.get('certificates')
+CERTS = []                     # بترتيب العرض، من خانة الشهادات في المحرّك
 T = Trace()
-items, prev, cross, ends = [], None, [], set()
-for pv in per_verse:
-    S_, units = sentence_geo(pv['a'], f"Q{pv['s']}:{pv['v']}", T)
-    pv['units'], pv['S'] = units, S_
-    pv['F'] = unit_features(pv['a'], units)
-    items.append((pv['s'], pv['v'], pv['a'], units, S_))
-    cur = dict(s=pv['s'], v=pv['v'], text=pv['text'], a=pv['a'], units=units, S=S_)
-    if prev is not None:
-        cross += cross_ayah_links(lambda t_: analyze(cat, t_, 'auto' if args.text else quran_source.uthmani_mode()), prev, cur)
-        ends.add((prev['s'], prev['v']))
-    prev = cur
-COND, RELS = [], []
-REL_CACHE = {}
-CERTS = []                     # شهادات الإغلاق الموحَّدة (الدفعة F) لكل جملة في الصفحة
-LT, lstats, _ = linguistic_layer(items, Trace(), 'trace', cross=cross, checked_ends=frozenset(ends), cond_out=COND,
-                                rel_out=RELS)
 
 loc = lambda pv, wi: f"{pv['s']}:{pv['v']}:{wi + 1}"
 N = args.words
@@ -199,8 +188,7 @@ for pv in per_verse:
     pv['srcmap'] = source_map(pv['text'], pv['a']['normalized'])
     # العرض الإملائي (display) والعمليات المسجَّلة بقواعدها (sarf.normalize_trace)؛ والتحليل يجري على التمثيل التحليلي
     try:
-        nt = normalize_traced(pv['text'], implicit_sukun=None if args.text else
-                              {'on': True, 'off': False, 'auto': None}[quran_source.uthmani_mode()])
+        nt = CTX.get('normalization')[pv['key']]          # خانة التطبيع: منتَجةٌ مرةً واحدة في المحرّك
         disp = nt['display'].split()
         disp = disp if len(disp) == len(nor) else None
         ops = nt['ops_analysis']
@@ -228,8 +216,7 @@ section(2, 'التطبيع', 'تمثيلان من المصدر نفسه (sarf.no
 rows, tl = [], []
 for pv in per_verse:
     pv['codes'] = {}
-    for i, w in enumerate(pv['a']['normalized'].split()):
-        c = code(w)
+    for i, (w, c) in enumerate(zip(pv['a']['normalized'].split(), CTX.get('cells')[pv['key']])):
         pv['codes'][i] = c.split()
         rows.append([loc(pv, i), f"<span class='ar'>{h(w)}</span>", f'<code>{h(c)}</code>'])
         if i < N:
@@ -254,7 +241,7 @@ def cell_diff(src, real):
 
 rows, tl = [], []
 for pv in per_verse:
-    res = cvmod.run(pv['a']['normalized'])
+    res = CTX.get('syllables')[pv['key']]
     by_w = collections.defaultdict(list)
     for rend, pat, verdict, ws in res['rows']:
         by_w[ws[0] if ws else -1].append((rend, pat, verdict))
@@ -494,17 +481,7 @@ for SP in LT:
             bnd = J.O.get('boundary') or {}
             # شهادة الإغلاق الموحَّدة (sarf.algebra.closure_certificate، الدفعة F): التزامات الطبقة القديمة بما استوفاها في 14أ،
             # والتزامات 14أ المفتوحة داخل مدى الجملة، والحكم الموحَّد
-            recs_ = []
-            for (s_, v_) in sorted({(x[0], x[1]) for x in lc}):
-                pv_ = next((p for p in per_verse if p['s'] == s_ and p['v'] == v_), None)
-                if pv_ is None:
-                    continue
-                from sarf.relations import verse_relations
-                if (s_, v_) not in REL_CACHE:
-                    REL_CACHE[(s_, v_)] = verse_relations(pv_['a'], pv_['units'], pv_['F'], f'{s_}:{v_}', legacy_cond=COND, legacy_rel=RELS)
-                recs_ += REL_CACHE[(s_, v_)]['records']
-            from sarf.algebra import closure_certificate
-            cert_ = closure_certificate(J, recs_, upstream=UP_EV)
+            cert_ = CERT_BY_ID[J.id]                    # خانة الشهادات في المحرّك
             CERTS.append(cert_)
             un_ = [f"{x['rule']} {x['status']} ({x['kind']})" for x in cert_['residuals']]
             # الشهادة كاملةً بلا بتر (مراجعة 038): الملخّص من رموز حالات الالتزامات نفسها، والسجلّ الكامل في عنصرٍ قابلٍ للطيّ
@@ -582,7 +559,7 @@ from sarf.relations import verse_relations, check_records
 rows_r, tl_r, rows_x, tl_x = [], [], [], []
 for pv in per_verse:
     ref = f"{pv['s']}:{pv['v']}"
-    rel = verse_relations(pv['a'], pv['units'], pv['F'], ref, legacy_cond=COND, legacy_rel=RELS)
+    rel = CTX.get('records')[pv['key']]                # خانة العلاقات في المحرّك
     errs = check_records(rel['records'], rel['tokens'], rel.get('parts'))
     from sarf.relations import check_cross
     errs += check_cross(rel['records'], rel['axes'])
@@ -728,11 +705,11 @@ section(15, 'الوحدة الخطابية', 'المعرّفات (2,282,n) فه�
         ['الوحدة', 'المدى', 'الجمل', 'الحالة', 'الحدّ'], tl_d)
 # ١٦ الفقرة المرشّحة (SARF_MAJOR_COMPLETION_TO_PARAGRAPH_03 §٢٠): من الجمل بهوياتها وشهاداتها، وروابطها بأدلّة الحدود، والإحالات،
 # والالتزامات، والحدّ؛ والفاحص المستقل للفقرة. والعقد مقترحٌ ينتظر اعتماد المالك تعريفَ الفقرة
-from sarf.algebra import paragraph_candidates, check_paragraph, PARAGRAPH_CHECKS
-_all_recs = [r for k_ in sorted(REL_CACHE) for r in REL_CACHE[k_]['records']]
-PCS_ = paragraph_candidates(LT, CERTS, _all_recs)
+from sarf.algebra import PARAGRAPH_CHECKS
+_PARA = CTX.get('paragraphs')                     # خانة الفقرات في المحرّك (بمدقّقها)
+PCS_ = [x['candidate'] for x in _PARA]
 PC_ = PCS_[-1]
-PC_err = check_paragraph(PC_, LT, CERTS, _all_recs)
+PC_err = _PARA[-1]['check']
 rows_p = [['المرشّحات', h(f"{len(PCS_)} مرشّح بنقاط البدء المعلنة (A1)" + ('، والتجميع مؤجَّل' if len(PCS_) > 1 else '') + '؛ والمعروض: ' + PC_['paragraph_id'])],
           ['المكوّنات', '<br>'.join(h(f"{c['sentence']} {c['span'][0]}–{c['span'][1]}: الإسناد المحلي {c['local']}؛ أوجه {len(c['faces'])}" +
                                       (f"؛ تجميعٌ داخلي مؤجَّل عند {', '.join(str(g['location']) for g in c['internal_groupings'])}" if c.get('internal_groupings') else ''))
@@ -771,10 +748,10 @@ nav = ' '.join(f'<a href="#s{no}">{no}. {h(t)}</a>' for no, t, _, _, _ in SECTIO
 body = ''.join(f'<section id="s{no}"><h2>{no}. {h(t)}</h2><p class="mut">{h(d)}</p>{tb}</section>' for no, t, d, tb, _ in SECTIONS)
 import provenance
 PROV = provenance.identity('\n'.join(f'{s_}:{v_}\t{t_}' for s_, v_, t_ in VERSES), [
-    ('التحليل', 'حيٌّ في هذا التشغيل: analyze() لكل آية، بلا خبيئة (sarf/analyze_cache غير مستعمَلة)'),
-    ('المراحل ١–١١', 'Pipeline.run على نص الآية في هذا التشغيل'),
-    ('المراحل ١٢–١٦', 'sentence_geo وlinguistic_layer وcross_ayah_links على ناتج هذا التشغيل'),
-    ('السمات', 'unit_features على ناتج هذا التشغيل'),
+    ('المحرّك', f'sarf.stages.run (المحرّك {__import__("sarf.engine", fromlist=["x"]).ENGINE_VERSION}، هوية تشغيله {CTX.run_id})؛ والصفحة عارضةٌ لخاناته'),
+    ('حالة المراحل', '؛ '.join(f'{n}: {CTX.status[n][0]}' for n in _ENGINE.order)),
+    ('التطبيع', 'خانة normalization: normalize_traced مرةً واحدة، ويستهلكها التحليل والصفحة'),
+    ('التحليل والعلاقات والشهادات والفقرة', 'خانات analysis وrecords وcertificates وparagraphs في هذا التشغيل، بلا خبيئة'),
     ('ما لا يُقرأ', 'لا تقرير سابق ولا ملف من reports/ ولا مدوّنة QAC'),
 ])
 prov_tb = '<table><tbody>' + ''.join(f'<tr><th>{h(k)}</th><td><code>{h(str(v))}</code></td></tr>'
