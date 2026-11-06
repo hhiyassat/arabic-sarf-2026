@@ -228,7 +228,8 @@ def main():
             for x in feats:
                 S[f"attached:{x['provider']}:{x['route_id']}:{x['match_status']}"] += 1
             for x in drops:
-                S[f"excluded:{x['provider']}:{x['route_id']}:{x['match_status']}:{x['route_status'].split(':')[0]}"] += 1
+                why_ = x.get('attach_status', '').split(': ')[-1] if x.get('attach_status') else x['route_status'].split(':')[0]
+                S[f"excluded:{x['provider']}:{x['route_id']}:{x['match_status']}:{why_}"] += 1
             rm = res['root'].get(fr['root']) if fr['root'] and st != 'PROTECTED_NOT_QUERIED' else None
             if rm:
                 S['root_meaning:' + (rm['root_meaning'].get('error') or 'IN_BANK')] += 1
