@@ -84,6 +84,10 @@ def hfn_class(form):
 class HFN:
     """فهرس الأحداث: (الجذر، الوزن) ← الأحداث، ومعنى الصيغة لكل حدث"""
     def __init__(self, path=None):
+        env_ = os.environ.get('SARF_HFN', '')
+        if not path and env_ and not os.path.exists(os.path.join(env_, 'events.csv')):
+            # مسارٌ صريحٌ غير موجود لا يُستبدل به غيره صامتاً: كان يرجع إلى release_v36 فيُظنّ التشغيل على إصدارٍ لم يُستعمل
+            raise FileNotFoundError(f'SARF_HFN يشير إلى مسارٍ ليس فيه events.csv: {env_} — لا رجوع صامت إلى إصدارٍ آخر')
         self.path = path or next((p for p in HFN_PATHS if p and os.path.exists(os.path.join(p, 'events.csv'))), None)
         self.index = defaultdict(list)
         self.roots = set()
