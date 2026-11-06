@@ -2193,7 +2193,9 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
                                          tool=c_['tool'], amb=c_['amb'], obligations=[list(o) for o in c_['obligations']]))
         def _is_clause(p_):
             d_ = _boundary_kind(p_, 0, [], [], nuc_pos, set(), starts, feats)
-            return bool(d_) and d_[1].startswith('نهاية جملة قبل')
+            # الحدّ المؤجَّل بتجميعين (عطف مفرد أو جملة اسمية) يبقى في بنية العطف وجه الجملة كما كان، فلا يُفقد موضع المبتدأ
+            # (وَٱللَّهُ مَعَ ٱلصَّٰبِرِينَ، وَأَجَلࣱ مُّسَمًّى عِندَهُۥ)؛ والتجميع مؤجَّلٌ في طبقة الحدّ (SARF_..._05 §١٢: مراجعة التراجعات)
+            return bool(d_) and d_[1].startswith(('نهاية جملة قبل', 'تجميعان متنافسان'))
         coords = list(coord_structs(feats, set(nuc_pos), starts, not_conj, _is_clause, ay_end))
         single_B = {c['B'] for c in coords if c['level'] != 'جملة'} | {c['pos'] for c in coords if c['level'] != 'جملة'}
         # نهاية الصلة الفعلية: تمتدّ بما يُعطف عليها داخلها (صلةٌ معطوفة، أو مفردٌ معطوف في الصلة: وَمَآ أُنزِلَ)
