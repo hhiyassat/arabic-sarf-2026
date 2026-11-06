@@ -118,6 +118,13 @@ Jb = {max(J.O['location'])[2]: J for SP in LT2 for D in SP.A + SP.O.get('pending
 check('T15b مقابلة: قبل «وَٱللَّهُ بِكُلِّ شَيۡءٍ عَلِيمࣱ» مرفوعٌ بعده (عَلِيمࣱ) فالجملة الاسمية لازمة، والحدّ مثبت كما كان',
       121 in Jb and Jb[121].O['boundary'].get('J') == 'proven', sorted(Jb))
 
+def _dfb(sura, v):
+    LTx, _, _, _ = build(sura, [v])
+    return [g for SP in LTx for D in SP.A + SP.O.get('pending', []) for J in D.A + D.O.get('pending', [])
+            for g in J.O.get('deferred_boundaries') or [] if g['why'].startswith('تجميعان')]
+check('T15c عطف المفرد: «فَضۡلُ ٱللَّهِ … وَرَحۡمَتُهُۥ» (2:64) حدٌّ مؤجَّل بتجميعين؛ ومقابلةً «يَعۡلَمۡهُ ٱللَّهُ ‖ وَيَعۡلَمُ» (3:29) صورة مضارعٍ بيّنة فلا تُرشَّح مفرداً',
+      any(g['location'] == (2, 64, 8) for g in _dfb(2, 64)) and not _dfb(3, 29), (_dfb(2, 64), _dfb(3, 29)))
+
 # ---------- §٧ «إذا»: الضمير قرينةٌ لا حكم ----------
 from sarf.algebra import idha_reading, IDHA_SOURCE
 a6 = analyze(CAT, 'إِذَا أَنتَ أَكۡرَمۡتَ ٱلۡكَرِيمَ مَلَكۡتَهُۥ', quran_source.uthmani_mode())

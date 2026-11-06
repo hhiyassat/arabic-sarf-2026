@@ -1335,7 +1335,7 @@ def word_feats(a):
         else:
             sl0 = None
         out.append(dict(
-            conj=conj, conj_letter=(standalone or sl0 or sl[0]['text'][:1]) if conj else None,
+            conj=conj, conj_letter=(standalone or sl0 or sl[0]['text'][:1]) if conj else None, word=w_,
             # «مَن» و«ما» تكونان شرطاً فتطلبان جواباً بالفاء (وَمَن شَآءَ فَلۡيَكۡفُرۡ)، أو موصولاً أو غيره
             cond_amb=is_form(w_, ('مَنْ', 'مَا', 'مَهْمَا'), prefix=True),
             neg=is_form(w_, ('مَا', 'لَا', 'لَمْ', 'لَنْ', 'لَمَّا'), prefix=True),
@@ -1898,7 +1898,12 @@ def _boundary_kind(p, js, spans, cspans, nuc_pos, qawl_pos, starts, feats=None):
         # عطف المفرد على ركنٍ مرفوع قبله (SARF_COMPREHENSIVE_REPAIR_04 §١٥): اسمٌ مرفوع بعد العاطف لا خبرَ مرفوعاً بعده في مقطعه،
         # وقبله في الجملة مرفوعٌ يصلح معطوفاً عليه (ذَٰلِكُمۡ أَقۡسَطُ … وَأَقۡوَمُ لِلشَّهَٰدَةِ): وجه العطف على المفرد قائمٌ مع وجه الجملة،
         # فالحدّ مؤجَّلٌ صراحةً بتجميعين متنافسين، لا قسمةٌ ثابتة
-        if clause and f['conj_letter'] in ('و', 'ف', 'ثم', 'أو') and g['case'] == 'رفع' and not g['verb'] and \
+        # صورة المضارع البيّنة (ياءٌ أو نونٌ أوله بصورة المضارع، أو سين الاستقبال) فعلٌ لا مفرد: لا يُرشَّح عطفاً على مرفوع؛
+        # أما التاء والهمزة فتحتملان الاسم (تَحۡرِيرُ، أَقۡوَمُ، أُمَّهَٰتُ)، فيبقى الوجهان ما لم يثبت الفعل (إثبات الفعل بلا عامل غير منفّذ)
+        import re as _re
+        _w = _re.sub('^(?:وَ|فَ)', '', str(g.get('word') or ''))
+        _verb_shape = g.get('vshape') == 'mudari' and _w[:1] in ('ي', 'ن') or _w.startswith(('سَ', 'لِيَ', 'لِيُ', 'لِتَ', 'لِتُ', 'لِنَ', 'لِنُ'))
+        if clause and not _verb_shape and f['conj_letter'] in ('و', 'ف', 'ثم', 'أو') and g['case'] == 'رفع' and not g['verb'] and \
                 not starts[h] and h not in nuc_pos and g.get('head') != 'pron' and \
                 not any(feats[k]['case'] == 'رفع' or feats[k]['verb'] for k in range(h + 1, h + span)) and \
                 any(feats[k]['case'] == 'رفع' and not feats[k]['verb'] and feats[k].get('head') != 'pron' for k in range(js, p + 1)):
