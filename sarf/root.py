@@ -23,6 +23,7 @@ from .agreement import signature
 
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # خط أساس المعجم المعتمد: HFN release_v36 (حكم المالك، SARF_SEQUENTIAL_COMPLETION_PLAN_01، 5 نوفمبر 2026)
+HFN_BASELINE = 'release_v36'
 HFN_PATHS = [os.environ.get('SARF_HFN', ''),
              os.path.join(os.path.dirname(HERE), 'husseinframenet', 'release', 'release_v36'),
              os.path.expanduser('~/arabic-net/HusseinFrameNet/release/release_v36'),
@@ -88,6 +89,11 @@ class HFN:
         if not path and env_ and not os.path.exists(os.path.join(env_, 'events.csv')):
             # مسارٌ صريحٌ غير موجود لا يُستبدل به غيره صامتاً: كان يرجع إلى release_v36 فيُظنّ التشغيل على إصدارٍ لم يُستعمل
             raise FileNotFoundError(f'SARF_HFN يشير إلى مسارٍ ليس فيه events.csv: {env_} — لا رجوع صامت إلى إصدارٍ آخر')
+        if not path and env_ and os.path.basename(os.path.normpath(env_)) != HFN_BASELINE and \
+                os.environ.get('SARF_HFN_RELEASE_OK', '') != os.path.basename(os.path.normpath(env_)):
+            # إصدارٌ موجودٌ غير خط الأساس (بيئةٌ تحمل release_v19 مثلاً): لا يُقرأ صامتاً؛ ومن أراده يسمّيه صراحةً
+            raise RuntimeError(f'SARF_HFN يشير إلى {os.path.basename(os.path.normpath(env_))}، وخط الأساس المعتمد {HFN_BASELINE}: '
+                               f'لتشغيلٍ مقصود عليه عيّن SARF_HFN_RELEASE_OK={os.path.basename(os.path.normpath(env_))}')
         self.path = path or next((p for p in HFN_PATHS if p and os.path.exists(os.path.join(p, 'events.csv'))), None)
         self.index = defaultdict(list)
         self.roots = set()
