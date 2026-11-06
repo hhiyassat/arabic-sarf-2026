@@ -103,7 +103,8 @@ def _surah(items):
                     J[f'lv:{lv}:{v_}'] += 1
                 for lv, b_ in c_['boundary']['levels'].items():
                     J[f'blv:{lv}:{b_}'] += 1
-                J['face_mismatch'] += sum(str(ob['residual_reason']).startswith(('FACE_MISMATCH', 'FACE_PARTIAL')) for ob in c_['obligations'])
+                J['face_mismatch'] += sum(str(ob['residual_reason']).startswith('FACE_MISMATCH') for ob in c_['obligations'])
+                J['face_partial'] += sum(str(ob['residual_reason']).startswith('FACE_PARTIAL') for ob in c_['obligations'])
                 for ob in c_['obligations']:
                     J['obl:' + ob['status']] += 1
                     J['obl_discharged_by_14a'] += bool(ob.get('discharge_relation_id'))
@@ -213,7 +214,7 @@ def main():
                                           verdicts_by_level={lv: {k: SENT.get(f'lv:{lv}:{k}', 0) for k in CLOSURE_AR} for lv in CLOSURE_LEVELS},
                                           boundary_by_level={lv: {k.split(':')[2]: v for k, v in SENT.items() if k.startswith(f'blv:{lv}:')}
                                                              for lv in CLOSURE_LEVELS},
-                                          face_mismatch=SENT.get('face_mismatch', 0)),
+                                          face_mismatch=SENT.get('face_mismatch', 0), face_partial=SENT.get('face_partial', 0)),
                              note='closed وF_complete من الطبقة القديمة وحدها؛ وunified من شهادة الإغلاق الموحَّدة v2 (sarf.algebra.closure_certificate): '
                                   'أحكام الجملة السبعة، وحالات الالتزامات بأنواعها (لا يُستوفى التزامٌ إلا بعلاقةٍ من نوعه للوحدة والوجه)، '
                                   'وما في 14أ داخل المدى مؤجَّلاً مصنَّفاً (اختيار، حدّ، تغطية، لازم). '

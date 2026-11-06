@@ -1880,11 +1880,14 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                              candidates=cands, open=opn, object_requirement=obj_req))
         R.append(fr)
         frames[v.k] = fr
-        if subj and subj['status'] != LICENSED and subj.get('candidates'):
+        if subj and subj.get('candidates') and (subj['status'] != LICENSED or subj.get('subject_faces')):
+            # الظاهر المرخَّص في وجهٍ واحد من أوجه الصيغة لا يُرخَّص مطلقاً: يبقى سجلّه مؤجَّلاً، ويحمل هوية الوجه الذي رُخّص فيه
             cu = [by_uid_[u_] for u_ in subj['candidates']]
-            R.append(_rec(ref, 'SUBJECT', 'S01', {'verb': v}, {'verb': [v], 'subject_candidate': cu}, DEFERRED, subj['why'],
+            fz_ = [f_['face_id'] for f_ in subj.get('subject_faces') or [] if f_.get('unit') in subj['candidates'] and f_['status'] == LICENSED]
+            R.append(_rec(ref, 'SUBJECT', 'S01', {'verb': v}, {'verb': [v], 'subject_candidate': cu}, DEFERRED,
+                          subj['why'] + (('؛ والظاهر مرخَّصٌ في الوجه ' + '، '.join(fz_) + ' وحده، والوجه غير مختار') if fz_ else ''),
                           premises=[f'«{v.text}»: ضمير الصيغة غائبٌ مفرد ({sf.get("st")})'], role_name=srole,
-                          alternatives=[f'«{u_.text}» {srole}' for u_ in cu] + ['ضميرٌ مستتر']))
+                          alternatives=[f'«{u_.text}» {srole}' for u_ in cu] + ['ضميرٌ مستتر'], licensed_in_faces=fz_ or None))
         if subj and subj.get('unit') and subj['status'] == LICENSED:
             u = subj['unit']
             R.append(_rec(ref, 'SUBJECT', 'S01', {'verb': v, 'subject': u}, {'verb': [v], 'subject': [u]}, LICENSED, subj['why'],
