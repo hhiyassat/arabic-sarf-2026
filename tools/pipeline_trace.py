@@ -510,14 +510,23 @@ for SP in LT:
                       (f'وفي 14أ داخل مداها {len(un_)} باقياً مصنَّفاً (' +
                        '، '.join(f'{k_}×{c_}' for k_, c_ in sorted(__import__('collections').Counter(un_).items())) + ')'
                        if un_ else 'ولا علاقة في 14أ داخل مداها مؤجَّلةٌ أو بالتزامٍ مفتوح أو باختيارٍ مؤجَّل') +
-                      f"؛ والحدّ: {'مثبت' if cert_['boundary']['proven'] else 'غير مثبت'} ({cert_['boundary']['evidence'] or '—'})" +
+                      f"؛ والحدّ اللغوي: {cert_['boundary']['linguistic_status']}" +
+                      (f" ({cert_['boundary']['linguistic_evidence']})" if cert_['boundary']['linguistic_evidence'] else '') +
+                      (f"؛ وحدّ المصدر: {cert_['boundary']['source']}" if cert_['boundary']['source'] else '') +
                       (('؛ ومستوفى: ' + ' | '.join(sat_)) if sat_ else '') +
                       (('؛ وغير مستوفى: ' + ' | '.join(conf_)) if conf_ else '') +
                       (('؛ ووجوهٌ ممنوعة بمانعٍ مثبت: ' + ' | '.join(f"{x['rule']}: {x['barrier'][:80]}" for x in cert_['rejected_faces'])) if cert_['rejected_faces'] else ''))
             bonds = '<br>'.join(h(f'{b[0]}: {b[1]} → {b[2]}') for b in (J.O.get('bound') or [])) or '—'
+            pl_ob = next((o_ for o_ in cert_['obligations'] if o_['requirement_kind'] == 'PLACEMENT'), None)
+            pl_ = ('الشهادة: ' + pl_ob['status_ar'] + (f" — {pl_ob['residual_reason'][:160]}" if pl_ob['residual_reason'] else '')
+                   ) if pl_ob else 'الشهادة: لا التزام موضع'
+            un_req_ = 'الشهادة: ' + ('، '.join(f"{o_['name']} [{o_['status_ar']}]" for o_ in cert_['obligations']
+                                             if o_['required'] and not o_['met']) or 'لا لازمَ غير مستوفى')
             rows_j.append([esc(J.id), f'{frm} – {to}', f"<span class='ar'>{h(' '.join(words))}</span>",
                            ('مغلقة (الطبقة القديمة)' if J.closed else 'مفتوحة') + f"<br><b>{h(cert_['verdict_ar'])}</b><br><sub>{h(scope_)}</sub>",
-                           esc(bnd.get('F') or '—'), bonds, esc(len(J.O.get('unplaced') or [])), esc('، '.join(opn) or '—')])
+                           esc(bnd.get('F') or '—') + '<br><sub>الطبقة القديمة</sub>', bonds,
+                           f"{h(pl_)}<br><sub>الطبقة القديمة: {len(J.O.get('unplaced') or [])}</sub>",
+                           f"{h(un_req_)}<br><sub>الطبقة القديمة: {h('، '.join(opn) or '—')}</sub>"])
             # ١٥ تحمل قيد جملها: الوحدة الخطابية لا تُعرض «مغلقة» وفي جملها حكمٌ موحَّد غير مغلق؛ ويُعرض أشدّ أحكامها
             from sarf.algebra import CLOSURE_AR
             order_ = list(CLOSURE_AR)
@@ -527,12 +536,13 @@ for SP in LT:
                 f"<br><b>الحكم الموحَّد لجملها: {h(CLOSURE_AR[worst_])}</b><br><sub>{h('، '.join(f'{k_}×{c_}' for k_, c_ in sorted(__import__('collections').Counter(vs_).items())))}</sub>"
             rows_d[d_idx][3] = dv_
             tl_d[d_idx] = f"{D.id}: {len(Js)} جملة، {'مغلقة' if D.closed else 'مؤجَّلة'} [الموحَّد: {worst_}]"
-            tl_j.append(f"{J.id:<14} {frm}–{to}  {'مغلقة' if J.closed else 'مفتوحة'} [{cert_['verdict']}] ({'باقٍ في 14أ: ' + str(len(un_)) if un_ else 'لا باقٍ في 14أ'})  روابط {len(J.O.get('bound') or [])}  "
-                        f"بلا موضع {len(J.O.get('unplaced') or [])}  {' '.join(words)[:70]}")
+            tl_j.append(f"{J.id:<14} {frm}–{to}  القديم: {'مغلقة' if J.closed else 'مفتوحة'} | الموحَّد: [{cert_['verdict']}] ({'باقٍ في 14أ: ' + str(len(un_)) if un_ else 'لا باقٍ في 14أ'})  روابط {len(J.O.get('bound') or [])}  "
+                        f"موضع: {pl_ob['status'] if pl_ob else '—'}  {' '.join(words)[:70]}")
 section(14, 'الجملة', '(الجملة تُبنى في الطبقة القديمة قبل علاقات 14أ؛ ثم تمرّ شهادة الإغلاق الموحَّدة v2 (sarf.algebra.closure_certificate) بعدهما: لكل التزامٍ سجلٌّ بمعرّفه ونوعه ووجهه وحالته، ولا يُستوفى إلا بعلاقةٍ من نوعه للوحدة والوجه نفسيهما (فلا يُختزل «فاعل أو نائب فاعل» في «فاعل»، ولا يُلغي جدول الإسناد القديم تأجيلاً صريحاً في 14أ)؛ وما في 14أ داخل المدى مؤجَّلاً ليس التزاماً لازماً تلقائياً، بل يُصنَّف اختياراً أو حدّاً أو نقص تغطية؛ والحكم واحدٌ من سبعة: مغلقة في وجهها، مغلقة بالبنية المشتركة، التزامٌ لازمٌ غير مستوفى، حدٌّ مؤجَّل، اختيارٌ مؤجَّل، نقص تغطية، والوجه الممنوع يُعرض بمانعه) جهتان مختلفتان: «التمام» (F) أن في المدى نواةً ولا التزامَ نحويٍّ لازمٍ مفتوحاً (معمول، خبر، فاعل)؛ و«الإغلاق» أن تُستوفى '
         'الالتزامات كلها: إغلاق كل وحدة، وموضع كل كلمة، وحسم كل علاقة. فالجملة قد تكون تامّةً في التحليل مفتوحةً غير مغلقة. والآية لا تُغلق الجملة. '
         'والروابط معروضةٌ بأطرافها، والالتزامات المفتوحة كاملةً بلا اختصار',
-        rows_j, ['الجملة', 'من – إلى', 'النص', 'الإغلاق', 'التمام (F)', 'الروابط', 'كلمات بلا موضع', 'التزامات مفتوحة'], tl_j)
+        rows_j, ['الجملة', 'من – إلى', 'النص', 'الإغلاق (القديم ثم الموحَّد)', 'التمام (F) — الطبقة القديمة', 'الروابط — الطبقة القديمة',
+                 'موضع الكلمات — الشهادة (والقديم تحته)', 'لازمٌ غير مستوفى — الشهادة (والقديم تحته)'], tl_j)
 # ١٤أ العلاقات المحلية (عقد النواة الاسمية والتعلّق، sarf.relations) بأدلتها؛ و١٤ب محاور الصنف المستقلة
 from sarf.relations import verse_relations, check_records
 rows_r, tl_r, rows_x, tl_x = [], [], [], []
@@ -605,7 +615,7 @@ for pv in per_verse:
                        f"<code>{h(r['relation_id'])}</code>"])
         if len(tl_r) < N:
             tl_r.append(f"{r['type']:<18} {r['rule_id']} {r['status']:<9} " + ' / '.join(f'{k}=«{v}»' for k, v in r['texts'].items())[:110])
-    rows_r.append(['—', '—', '—', f'الفحص البنيوي: {"سليم" if not errs else h("؛ ".join(errs))}', '', '', '', '', ''])
+    rows_r.append(['—', '—', '—', f'الفحص البنيوي: {"سليم" if not errs else h("؛ ".join(errs))} (بنية السجلات وهوياتها ومقدّماتها، لا صحة الأحكام اللغوية)', '', '', '', '', ''])
     from sarf.relations import check_inflection
     ierrs = check_inflection(rel['axes'], rel['tokens'])
     cell = lambda v: f"{h(ar(v[0]) if v[0] is not None else 'غير محسوم')}<br><sub>{h(str(v[1] or ''))}</sub>"
@@ -664,7 +674,7 @@ for pv in per_verse:
                        f"<b>{h(inf['agreement'])}</b>" + ''.join(f'<br>{h(c)}' for c in inf['conflicts']) + nat + notes,
                        h(inf['statement'] or '—'), pcell, ucell])
     rows_x.append(['—', '—', '—', '—', '—', '—', '—', '—', '—',
-                   f'الفاحص المستقل للإعراب: {"سليم" if not ierrs else h("؛ ".join(ierrs))}', '', '', ''])
+                   f'الفاحص المستقل للإعراب: {"سليم" if not ierrs else h("؛ ".join(ierrs))} (يفحص محاور الإعراب وحدها: لا يشهد لشهادة الإغلاق ولا لاكتمال التغطية)', '', '', ''])
 section('14أ', 'العلاقات المحلية بأدلتها (عقد النواة الاسمية والتعلّق v1)',
         'سجلات sarf.relations: لكل علاقةٍ قاعدتها وإصدارها، وأطرافها بمواضعها، وسببها، ومقدّماتها (حقائق مصدرية أو علاقاتٌ قبلها)، '
         'وبدائلها ومضيفوها، وحقول الاكتمال المستقلة. «LICENSED» علاقةٌ محلية في وجهها، لا اختيارٌ نهائي ولا إغلاق جملة. '

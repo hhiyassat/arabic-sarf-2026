@@ -127,7 +127,10 @@ if hfn():
         MU, (LT, st) = layers([(2, 282)])
         Ds = LT[0].A + LT[0].O['pending']
         check('البقرة ٢٨٢: الحدود من الخانات (ما له الصدارة، والواو والفاء بعد جملة تامّة)، لا من العلامات',
-              len(Ds) > 1 and MU.closed and all(D.O['boundary'].get('J') == 'proven' for D in Ds), len(Ds))
+              len(Ds) > 1 and MU.closed and all(D.O['boundary'].get('J') == 'proven' for D in Ds[:-1]), len(Ds))
+        check('ونهاية المدخل (2:282 وحدها) ليست «آخر السورة»: حدُّ مصدرٍ لا حدٌّ لغوي، فلا يُثبت (مراجعة 036)',
+              Ds[-1].O['boundary'].get('J') is None and str(Ds[-1].O['boundary'].get('J_why')).startswith('نهاية المدخل'),
+              (Ds[-1].O['boundary'].get('J'), Ds[-1].O['boundary'].get('J_why')))
         check('ولا رابطة تعبر حدّ وحدة خطابية', st['bond_cross_du'] == 0, st)
 # سجل الحدّ B(b | a, q, c) = ⟨F, L, M, W, I, E⟩: جواز الوقف لا يساوي انغلاق العلاقة
 if hfn() and rows:

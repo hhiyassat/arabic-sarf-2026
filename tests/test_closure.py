@@ -102,18 +102,22 @@ check('G10 صيغة «كان» غير المحسومة (يكونا، تكون): 
       all(ob['status'] == 'SELECTION' for ob in obs if ob['requirement_kind'] == 'NASIKH_ISM_OR_SUBJECT'))
 check('G11 الأحكام من القائمة المحدّدة، والمؤجَّل في المدى مصنَّف (اختيار، حدّ، تغطية، لازم) لا التزامٌ لازمٌ تلقائياً',
       all(c['verdict'] in CLOSURE_AR for c in C) and all(x['kind'] in ('SELECTION', 'BOUNDARY', 'COVERAGE', 'REQUIRED') for c in C for x in c['residuals']))
-m = copy.deepcopy(o['records'])
-c13 = next(c for c in C if c['verdict'] == 'CLOSED_WITH_SHARED_STRUCTURE')
-rid = next(ob['discharge_relation_id'] for ob in c13['obligations'] if ob.get('discharge_relation_id'))
-next(r for r in m if r['relation_id'] == rid)['status'] = 'DEFERRED'
-Jx = None
-a = analyze(CAT, verse_text(2, 282), 'auto')
-S_, U_ = sentence_geo(a, 'Q2:282', Trace())
-LT, _, _ = linguistic_layer([(2, 282, a, U_, S_)], Trace(), 'test', cond_out=[], rel_out=[])
-Jx = next(J for SP in LT for D in SP.A + SP.O.get('pending', []) for J in D.A + D.O.get('pending', []) if J.id == c13['sentence'])
-c1 = closure_certificate(Jx, m)
-check('M23 إفساد: تنزيل العلاقة المستوفية في جملةٍ مغلقة يُسقط الإغلاق', c1['verdict'] not in ('CLOSED_IN_FACE', 'CLOSED_WITH_SHARED_STRUCTURE'),
-      c1['verdict'])
+a112 = analyze(CAT, verse_text(112, 3), 'auto')
+S112, U112 = sentence_geo(a112, 'Q112:3', Trace())
+C112_, R112_ = [], []
+LT112, _, _ = linguistic_layer([(112, 3, a112, U112, S112)], Trace(), 'test', cond_out=C112_, rel_out=R112_)
+o112 = verse_relations(a112, U112, unit_features(a112, U112), '112:3', legacy_cond=C112_, legacy_rel=R112_)
+J112 = [J for SP in LT112 for D in SP.A + SP.O.get('pending', []) for J in D.A + D.O.get('pending', [])][0]
+c0 = closure_certificate(J112, o112['records'])
+rid = next(ob['discharge_relation_id'] for ob in c0['obligations'] if ob.get('discharge_relation_id'))
+m = copy.deepcopy(o112['records'])
+r_ = next(r for r in m if r['relation_id'] == rid)
+r_['status'] = 'DEFERRED'
+if (r_.get('frame') or {}).get('subject'):
+    r_['frame']['subject']['status'] = 'DEFERRED'          # البنية المستوفية نفسها (فاعل الإطار)، لا رأس السجل وحده
+c1 = closure_certificate(J112, m)
+check('M23 إفساد: تنزيل العلاقة المستوفية في جملةٍ مغلقة («لَمۡ يَلِدۡ») يُسقط الإغلاق',
+      c0['verdict'] == 'CLOSED_IN_FACE' and c1['verdict'] not in ('CLOSED_IN_FACE', 'CLOSED_WITH_SHARED_STRUCTURE'), (c0['verdict'], c1['verdict']))
 
 # أمثلة موجبة ومقابلة خارج آية الدين (كل آيةٍ وحدها)
 _, C3 = run(112, 3)
@@ -123,9 +127,8 @@ _, C1 = run(108, 1)
 check('G13 مقابلة: «إِنَّآ أَعۡطَيۡنَٰكَ ٱلۡكَوۡثَرَ» (108:1) لا تُغلق: النواة نقص تغطيةٍ مسمّى (الفعل لم يُعرف)، وحدّ الآية غير مفحوص',
       C1[0]['verdict'] not in ('CLOSED_IN_FACE', 'CLOSED_WITH_SHARED_STRUCTURE') and
       any(ob['requirement_kind'] == 'NUCLEUS' and ob['status'] == 'COVERAGE' for ob in C1[0]['obligations']), [c['verdict'] for c in C1])
-check('G14 متعدّدة الأوجه: في 2:282 جملٌ «اختيارٌ مؤجَّل» و«مغلقة بالبنية المشتركة»، والمحرّك لا يؤجّل الجميع ولا يغلق الجميع',
-      {'DEFERRED_ANALYSIS_SELECTION', 'CLOSED_WITH_SHARED_STRUCTURE'} <= {c['verdict'] for c in C} and
-      len({c['verdict'] for c in C}) >= 3)
+check('G14 متعدّدة الأوجه: في 2:282 أحكامٌ مختلفة (اختيارٌ مؤجَّل، ونقص تغطية، وحدٌّ مؤجَّل)، والمحرّك لا يحكم بحكمٍ واحد للجميع',
+      {'DEFERRED_ANALYSIS_SELECTION', 'INCOMPLETE_RULE_COVERAGE', 'DEFERRED_BOUNDARY'} <= {c['verdict'] for c in C})
 
 # ---------- ٤ المصدر المؤوَّل بنيةً ----------
 ms = {(r['texts']['harf'], r['texts']['verb']): r for r in o['records'] if r['type'] == 'MASDAR'}
@@ -139,8 +142,9 @@ e1 = ms[('أَنْ', 'تَكْتُبُو')]['extent']
 check('G16 امتداد «أَنۡ تَكۡتُبُوهُ»: المثبت الحرف والفعل والضمير المتصل بهوياتها، وما بعدها مرشّحٌ حدّه غير مثبت',
       e1['proven_text'] == 'أَنْ تَكْتُبُو هُ' and e1['boundary_status'] == 'DEFERRED' and len(e1['proven']) == 3)
 e2 = ms[('أَلَّا', 'تَكْتُبُو')]['extent']
-check('G17 «أَلَّا تَكۡتُبُوهَا»: لا شيء بعد الأعضاء المرخَّصة في الإطار، فالحدّ مثبت', e2['boundary_status'] == 'LICENSED' and
-      e2['proven_text'] == 'أَلَّا تَكْتُبُو هَا')
+check('G17 «أَلَّا تَكۡتُبُوهَا»: لا شيء بعد الأعضاء المرخَّصة، لكن نفاد البحث داخل الإطار لا يثبت حدّ المصدر: حدّ الإطار عاطف '
+      'قد يُعطف به فعلٌ داخل المصدر، فالحدّ مؤجَّل بدليله المسمّى (مراجعة 036)', e2['boundary_status'] == 'DEFERRED' and
+      e2['proven_text'] == 'أَلَّا تَكْتُبُو هَا' and 'عاطف' in e2['frame_end'])
 e3 = ms[('أَنْ', 'يُمِلَّ')]['extent']
 check('G18 «أَن يُمِلَّ هُوَ»: «هو» مرشّح فاعلٍ مؤجَّل، فهو في الامتداد المرشّح لا المثبت', 'هُوَ' in e3['candidate_text'] and
       'هُوَ' not in e3['proven_text'])
@@ -168,6 +172,32 @@ o48, _ = run(2, 48)
 s48 = [r for r in o48['records'] if r['type'] == 'SUBJECT' and r['texts'].get('verb') == 'يُقْبَلُ']
 check('G24 «لَا يُقۡبَلُ مِنۡهَا شَفَٰعَةٌ» (2:48): شبه الجملة بين المجهول والمرفوع قد تكون نائب الفاعل — يبقى مؤجَّلاً (حراسة سلسلة القواعد)',
       s48 and all(r['status'] == 'DEFERRED' and 'شبه جملة' in r['reason'] for r in s48), [(r['status'], r['reason'][:60]) for r in s48])
+
+# ---------- مراجعة 036 ----------
+cv = {c['sentence']: c for c in C}
+c13 = cv['L2.d13.J']
+check('R01 «وَإِنْ تَفْعَلُوا فَإِنَّهُ فُسُوقٌ بِكُمْ»: تعلّق «بكم» بحثه غير مكتمل (A01)، فلا «مغلقة بالبنية المشتركة» بل نقص تغطية',
+      c13['verdict'] == 'INCOMPLETE_RULE_COVERAGE' and any(x['rule'] == 'A01' and x['kind'] == 'COVERAGE' for x in c13['residuals']), c13['verdict'])
+check('R01b لا إغلاق (في وجهٍ ولا بالبنية المشتركة) مع باقٍ بحثه غير مكتمل في أي جملةٍ من 2:282',
+      all(not (c['verdict'] in ('CLOSED_IN_FACE', 'CLOSED_WITH_SHARED_STRUCTURE') and any(x['kind'] == 'COVERAGE' for x in c['residuals'])) for c in C))
+pl6 = next(o_ for o_ in cv['L2.d6.J']['obligations'] if o_['requirement_kind'] == 'PLACEMENT')
+check('R02 «فَلْيُمْلِلْ وَلِيُّهُ»: «وليّ» و«هُ» طرفان في S01 وI01 المرخَّصتين، فلا يُعدّان بلا موضع؛ والباقي «هُوَ» وحده (في S01 المؤجَّل)',
+      'Q2:282.w49.u0' not in pl6['residual_reason'] and 'Q2:282.w49.u1' not in pl6['residual_reason'] and 'Q2:282.w47.u0' in pl6['residual_reason'],
+      pl6['residual_reason'])
+ob5 = next(o_ for o_ in cv['L2.d5.J']['obligations'] if o_['name'].startswith('مفعول «يَبْخَسْ'))
+check('R03 مفعول «يبخس»: 14أ لا تسجّل مفعولاً («شيئاً» مرشّحٌ غير مربوط)، فلا يُعلن مستوفى بنصّ «مفعول به» القديم: تعارض طبقتين',
+      ob5['status'] == 'CONFLICT' and not ob5['met'] and 'UNLINKED_CANDIDATE' in ob5['residual_reason'], ob5)
+check('R03b كل مستوفى بالطبقة القديمة يحمل معرّف دليلٍ قابلاً للتتبّع (المصدر والالتزام والوحدات والرتبة)',
+      all(o_['discharge_evidence_id'] and (o_['discharge_relation_id'] or str(o_['discharge_evidence_id']).startswith('LEGACY:') and
+          all(x.get('rank') and 'units' in x for x in o_['satisfied_by'] if x['status'] == 'LEGACY'))
+          for c in C for o_ in c['obligations'] if o_['met']))
+b16 = cv['L2.d16.J']['boundary']
+check('R04 نهاية 2:282 ليست «آخر السورة»: حدّ المصدر «نهاية المدخل المحلَّل»، والحدّ اللغوي غير مثبت (الاستقلال لفظاً غير مفحوص)',
+      not b16['proven'] and 'نهاية المدخل' in str(b16['source']) and 'آخر السورة' != b16['source'], b16)
+a_ = ms[('أَلَّا', 'تَرْتَابُوا')]
+check('R05 «أَلَّا» مع حذف النون: المقدّمة «حذف النون متحقّق ولا يحسم النصب أو الجزم» (لا «النصب مكتوب»)، ووجه المصدرية استوفى شروطه، '
+      'ووجه المفسّرة فرضيةٌ غير مفحوصة لا وجهٌ مكافئ', 'لا يحسم' in a_['premises'][1] and 'النصب مكتوب' not in a_['premises'][1] and
+      [f_['status'] for f_ in a_['faces']] == ['CONDITIONS_MET', 'HYPOTHESIS_UNCHECKED'])
 
 print('ALL OK' if not FAIL else f'FAILED {len(FAIL)}: {FAIL}')
 sys.exit(1 if FAIL else 0)

@@ -1447,10 +1447,17 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
         rec = _rec(ref, 'MASDAR', 'M02', {'harf': an, 'verb': vt}, {'harf': [an], 'verb': [vt]}, LICENSED if excl else DEFERRED,
                    (f'«{an.text} {vt.text}» = «أَنْ لَا {vt.text}» في تأويل مصدرٍ منفي: «أَنْ» في «أَلَّا» ناصبةٌ مصدرية، بدليل النصب الخالص المكتوب '
                     f'على الفعل ({wm_[0]})؛ والوظيفة: {fn}') if excl else
-                   (f'«{an.text} {vt.text}»: علامة الفعل «{wm_[0]}» نصبٌ أو جزم، فالوجهان قائمان: «أَنْ» مصدريةٌ و«لا» نافيةٌ والفعل منصوب '
-                    f'(مصدرٌ مؤوَّل)، أو «أَنْ» مفسّرةٌ و«لا» ناهيةٌ والفعل مجزوم؛ ولا يُختار وجهٌ بلا دليل (شرط المفسّرة: جملةٌ قبلها فيها معنى القول '
-                    f'دون حروفه — غير مفحوص)'),
-                   premises=[f'«{an.text}» في الجرد المعتمد MERGED: أَنْ + لَا', f'«{vt.text}»: النصب مكتوب ({wm_[0]}) ولا يحتمل الرفع'],
+                   (f'«{an.text} {vt.text}»: «{wm_[0]}» لا يحسم النصب أو الجزم. وجه المصدرية والنفي استوفى شروطه المكتوبة، '
+                    f'ووجه «أَنْ» المفسّرة و«لا» الناهية فرضيةٌ لم يُفحص شرطها (جملةٌ قبلها فيها معنى القول دون حروفه): '
+                    f'فلا يُرخَّص الأول ما بقيت الفرضية غير مفحوصة، ولا تُعدّ الفرضية وجهاً مكافئاً'),
+                   premises=[f'«{an.text}» في الجرد المعتمد MERGED: أَنْ + لَا',
+                             f'«{vt.text}»: النصب مكتوب ({wm_[0]})، والفتحة لا تحتمل الجزم ولا الرفع' if excl else
+                             f'«{vt.text}»: {wm_[0]} متحقّق، ولا يحسم وحده النصب أو الجزم؛ وتعيين الحالة تابعٌ لتحليل الأداة'],
+                   faces=[dict(face='أَنْ المصدرية + لا النافية + المضارع المنصوب (مصدرٌ مؤوَّل)', status='CONDITIONS_MET',
+                               note='شروطه المكتوبة مستوفاة: «أَنْ» في الجرد، والعلامة تحتمل النصب')] +
+                         ([] if excl else [dict(face='أَنْ المفسّرة + لا الناهية + المضارع المجزوم', status='HYPOTHESIS_UNCHECKED',
+                                                note='فرضيةٌ تنتظر فحص شرطها (جملةٌ قبلها فيها معنى القول دون حروفه)؛ لم يُفحص، فليست وجهاً '
+                                                     'مكافئاً لوجهٍ استوفى شروطه')]),
                    checked=['الجرد المعتمد MERGED', 'العلامة المكتوبة على الفعل', 'الماضي (لا تنصبه أَنْ)'],
                    alternatives=['فاعل', 'مفعول به', 'مبتدأ', 'خبر', 'مجرورٌ بحرفٍ قبله'] if excl else
                    ['أَنْ المصدرية + لا النافية + المنصوب (مصدرٌ مؤوَّل)', 'أَنْ المفسّرة + لا الناهية + المجزوم'],
@@ -2138,15 +2145,21 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
         fe2 = frame_end(idx[vt.k])
         last = max(idx[by_uid_[u].k] for u in mem)
         cand = [toks[j] for j in range(last + 1, fe2)]
+        # حدّ الإطار ليس حدّ المصدر: نهاية الآية حدُّ مصدرٍ لا حدٌّ لغوي، والعاطف قد يعطف فعلاً داخل المصدر (أَنْ تَفۡعَلَ وَتَفۡعَلَ)،
+        # وما له الصدارة يبدأ إطاراً بلا دليلٍ على انتهاء المصدر قبله (مراجعة 036)
+        fe_why = ('نهاية الآية (حدُّ مصدرٍ لا حدٌّ لغوي)' if fe2 >= len(toks) else
+                  f'عاطفٌ «{toks[fe2].text}» ({toks[fe2].loc}) يبدأ إطاراً، وقد يُعطف به فعلٌ داخل المصدر' if toks[fe2].conj else
+                  f'«{toks[fe2].text}» ({toks[fe2].loc}) يبدأ إطاراً بالصدارة، ولا يثبت به انتهاء المصدر')
         rec['members']['extent'] = mem
         rec['positions']['extent'] = [by_uid_[u].loc for u in mem]
         rec['texts']['extent'] = ' '.join(by_uid_[u].text for u in mem)
         rec['extent'] = dict(proven=mem, proven_text=rec['texts']['extent'], evidence=why,
                              candidate=[t.uid for t in cand], candidate_text=' '.join(t.text for t in cand),
-                             boundary_status=LICENSED if not cand else DEFERRED,
-                             boundary_note='الحدّ مثبت: لا شيء بعد الأعضاء المرخَّصة في إطار الفعل' if not cand else
-                             f'ما بعد الأعضاء المرخَّصة إلى حدّ إطار الفعل ({cand[0].loc}–{cand[-1].loc}) امتدادٌ مرشّح: '
-                             'لم تثبت علاقاتُه بالفعل، فحدّ المصدر غير مثبت')
+                             boundary_status=DEFERRED, frame_end=fe_why,
+                             boundary_note=(f'لا شيء بعد الأعضاء المرخَّصة إلى حدّ إطار الفعل، وحدّ الإطار {fe_why}: نفاد البحث داخل الإطار '
+                                            'لا يثبت حدّ المصدر' if not cand else
+                                            f'ما بعد الأعضاء المرخَّصة إلى حدّ إطار الفعل ({cand[0].loc}–{cand[-1].loc}) امتدادٌ مرشّح لم تثبت '
+                                            f'علاقاتُه بالفعل؛ وحدّ الإطار {fe_why}'))
 
     # أدوار العمل من العلاقات المرخَّصة وحدها (لا من المؤجَّل)
     by_uid = {t.uid: t for t in toks}
