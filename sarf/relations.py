@@ -99,6 +99,16 @@ def subject_pronoun_written(sig, tense):
     return None, None
 
 
+def tense_safe_for_isnad(v, tf):
+    """مانع S01.p/S01.f: مضارع تَفَعَّلَ وتَفَاعَلَ بحذف إحدى التاءين يُكتب كماضيهما (تَشَٰبَهَ، تَوَلَّوۡا)؛ فما بدأ بتاءٍ مفتوحة
+    على هذين الوزنين لا يُبنى عليه ترخيص الإسناد بالصيغة وإن أُثبت زمنه مضارعاً → (آمن، السبب)"""
+    P = ((getattr(v, 'G', None) and v.G.Theta.get('P')) or '')
+    if tf.get('v') == 'مضارع' and P in ('V', 'VI') and v.text[:1] == 'ت':
+        return False, (f'«{v.text}» على {P} أوله تاء: يلتبس مضارعه المحذوف إحدى تاءيه بالماضي كتابةً، '
+                       'فلا يُرخَّص طرف الإسناد بالصيغة حتى يُحسم الزمن (TENSE_V_VI_AMBIGUOUS)')
+    return True, None
+
+
 def _join_ar(x):
     """قائمة قيمٍ نصية بفاصلةٍ عربية بدل تمثيل بايثون."""
     return '، '.join(str(i) for i in x) if isinstance(x, (list, tuple)) else str(x)
@@ -1635,7 +1645,7 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
             kc = nk is not None and (nk.case in ('نصب', 'جر أو نصب', 'نصب أو جر'))
             opn.append('الاستعمال (ناسخ أو تامّ) غير محسوم: ' + (f'«{nk.text}» ({nk.loc}) منصوبٌ أو محتمل النصب كتابةً، خبرٌ مرشّح إن كان ناقصاً'
                                                               if kc else 'لا خبرَ مرشّحٌ منصوبٌ بعده في الإطار'))
-        elif sf.get('st') == 'مثبت' and tf.get('st') == 'مثبت' and \
+        elif sf.get('st') == 'مثبت' and tf.get('st') == 'مثبت' and tense_safe_for_isnad(v, tf)[0] and \
                 subject_pronoun_written(sp, tf.get('v'))[0] in ('WRITTEN', 'HIDDEN_OBLIGATORY'):
             # S01.p: الصيغة تثبت طرف الإسناد في وجهها قبل البحث عن ظاهر (الترخيص المبكر)؛ والزمن مثبتٌ شرطاً، فلا يُستدلّ بالسابقة وحدها
             kw_, sanad_ = subject_pronoun_written(sp, tf.get('v'))
@@ -1704,9 +1714,20 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                 raf_ = [u for u in ov_ if u.nominative()[0] is True and (u.nounish() or u.divine)]
                 unres_ = [u for u in scan.get('unresolved') or [] if 'رفع' in (_written_mark(u)[1] or ())]
                 faces_ = []
+                barred_ = []
+                R_ = (v.G.Theta.get('R') or '') if getattr(v, 'G', None) is not None else ''
+                wa_amb = any(x.get('number') == 'plural' for x in alts) and any(x.get('number') == 'singular' for x in alts) and \
+                    v.text.rstrip('\u0652\u064e\u064f\u0650\u0670').endswith(('وا', 'و'))
+                for x in list(alts):
+                    if wa_amb and x.get('number') == 'singular' and R_ and not R_.endswith('و'):
+                        # الواو آخرَ الصيغة لامُ الناقص الواوي أو واو الجماعة؛ والجذر «R_» ليس ناقصاً واوياً، فوجه المفرد ممتنعٌ بمانعٍ مثبت
+                        barred_.append(dict(signature=x, barrier=f'الواو ليست لام الجذر «{R_}»: فهي واو الجماعة، ولا وجه للمفرد',
+                                            status=REJECTED, rule='S01.f/wa'))
+                        alts.remove(x)
                 for x in alts:
                     fid = f'{v.uid}#T={tf.get("v")}|V={vf.get("v") or "—"}|S={x.get("person")}{x.get("number")}{x.get("gender")}'
-                    kw_, sanad_ = subject_pronoun_written(x, tf.get('v')) if tf.get('st') == 'مثبت' else (None, None)
+                    safe_, unsafe_why = tense_safe_for_isnad(v, tf)
+                    kw_, sanad_ = subject_pronoun_written(x, tf.get('v')) if tf.get('st') == 'مثبت' and safe_ else (None, None)
                     if kw_ in ('WRITTEN', 'HIDDEN_OBLIGATORY'):
                         faces_.append(dict(face_id=fid, signature=x, kind='ضمير متصل مكتوب' if kw_ == 'WRITTEN' else 'ضمير مستتر وجوباً (غير مكتوب)',
                                            status=LICENSED, rule='S01.p', implicit=kw_ != 'WRITTEN', unit=None, sanad=sanad_))
@@ -1720,14 +1741,20 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                                            implicit=True, unit=None))
                     else:
                         faces_.append(dict(face_id=fid, signature=x, kind='غير معيَّن', status=DEFERRED, rule='S01.f', unit=None,
-                                           blocked_by=('NOUN_CLASS_UNRESOLVED' if scan.get('unresolved') else 'TENSE_NOT_PROVEN' if tf.get('st') != 'مثبت'
+                                           blocked_by=('TENSE_V_VI_AMBIGUOUS' if not safe_ else
+                                                       'NOUN_CLASS_UNRESOLVED' if scan.get('unresolved') else 'TENSE_NOT_PROVEN' if tf.get('st') != 'مثبت'
                                                        else 'COMPETING_OVERT' if len(raf_) > 1 or unres_ else 'SEARCH_BOUNDARY'),
-                                           why=_face(x) + ('' if tf.get('st') == 'مثبت' else '؛ والزمن غير مثبت') +
+                                           why=_face(x) + ('' if tf.get('st') == 'مثبت' else '؛ والزمن غير مثبت') + (f'؛ {unsafe_why}' if not safe_ else '') +
                                                ('؛ أعاقه تحليل الاسم لا قاعدة المضارعة: صنف ' + '، '.join(f'«{u.text}»' for u in scan.get('unresolved'))
                                                 + ' غير محسوم' if scan.get('unresolved') else '')))
                 all_ok = faces_ and all(f_['status'] == LICENSED for f_ in faces_)
-                subj = dict(kind='في كل أوجه الصيغة' if all_ok else 'غير معيَّن', role=srole, status=LICENSED if all_ok else DEFERRED,
-                            rule='S01.f', subject_faces=faces_, selection='DEFERRED',
+                if barred_ and len(faces_) == 1 and faces_[0]['status'] == LICENSED:
+                    # بقي وجهٌ واحد بعد المانع: طرف الإسناد مثبتٌ فيه، لا «في كل الأوجه»
+                    all_ok = True
+                subj = dict(kind=(faces_[0]['kind'] if barred_ and len(faces_) == 1 else 'في كل أوجه الصيغة') if all_ok else 'غير معيَّن',
+                            role=srole, status=LICENSED if all_ok else DEFERRED, unit=None,
+                            rule='S01.f', subject_faces=faces_, rejected_faces=barred_ or None,
+                            selection='DEFERRED' if len(faces_) > 1 else 'SINGLE_FACE_AFTER_BARRIER',
                             why=(f'ضمير الصيغة غير مثبت ({sf.get("st")}): {sf.get("ev")}؛ ' +
                                  ('وطرف الإسناد مرخَّصٌ في كل وجه: ' if all_ok else 'والأوجه: ') +
                                  '؛ '.join(f"{_pron_ar(f_['signature'])}: {f_['kind']}" + (f" «{f_.get('unit_text')}»" if f_.get('unit_text') else '') +

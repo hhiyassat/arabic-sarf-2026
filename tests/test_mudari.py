@@ -115,9 +115,12 @@ check('X01 المستتر وحدةٌ بنيوية غير مكتوبة: لا unit
 check('X02 إفساد الشخص: غائبٌ مفرد بدل المتكلم في «نَكۡتُبُ» يُسقط الترخيص المبكر (لا مستتر وجوباً بلا صيغته)',
       subject_pronoun_written(dict(person=3, number='singular', gender='masc'), 'مضارع')[0] == 'HIDDEN_OR_OVERT')
 # ٣ الزمن غير المثبت لا يُرخّص بالسابقة وحدها: S01.p يشترط الزمن المثبت
-src = open(os.path.join(ROOT, 'sarf', 'relations.py'), encoding='utf-8').read()
-check('X03 لا استدلال بالسابقة وحدها: S01.p مشروطٌ بزمنٍ مثبت (tf.st == مثبت) في الفرع الرئيس وأوجه الصيغة',
-      "sf.get('st') == 'مثبت' and tf.get('st') == 'مثبت'" in src and "if tf.get('st') == 'مثبت' else (None, None)" in src)
+o142 = analyze_text(next(x for a, b, x in quran_source.rows() if (a, b) == (2, 142)), '2:142')
+unp = [r['frame']['subject'] for r in o142['records'] if r['type'] == 'VERB_FRAME' and (r['frame'].get('candidate') or {}).get('tense_status') != 'مثبت'
+       and (r['frame'].get('subject') or {}).get('subject_faces')]
+check('X03 لا استدلال بالسابقة وحدها: حيث الزمن غير مثبت (2:142) لا يُرخَّص طرف الإسناد بالصيغة في أي وجه (TENSE_NOT_PROVEN)',
+      unp and all(x['status'] == 'DEFERRED' and x.get('blocked_by') == 'TENSE_NOT_PROVEN' for s_ in unp for x in s_['subject_faces']),
+      [[(x['status'], x.get('blocked_by')) for x in s_['subject_faces']] for s_ in unp])
 # ٤ ربط العلاقة بوجهٍ آخر: إفساد خريطة أوجه «تَضِلَّ» بجعل الوجه المؤجَّل مرخَّصاً بلا علاقة يُسقطه الفاحص؟ — نُفسد السجل فيصير الوجهان مرخَّصين
 from mudari_probe import analyze_text as _at
 o2 = _at(next(x for a, b, x in quran_source.rows() if (a, b) == (2, 282)), '2:282')
@@ -134,6 +137,20 @@ check('X04 إفساد سجلّ الوجه: ادّعاء وجه الغائبة م
 # ٥ توليد وجهٍ غير موجود من حاصل الضرب: أوجه «تَضِلَّ» اثنان (مخاطب مذكر، غائبة) لا أربعة
 check('X05 لا حاصل ضرب: أوجه «تَضِلَّ» اثنان من بدائل الصيغة نفسها، لا (مخاطب/غائب × مذكر/مؤنث)',
       len(FR['تَضِلَّ']['frame']['subject']['subject_faces']) == 2)
+
+# ---------- مانعان من مراجعة الانتقالات ----------
+def qframe(vs, w):
+    a, b = map(int, vs.split(':'))
+    o_ = analyze_text(next(x for s_, v_, x in quran_source.rows() if (s_, v_) == (a, b)), vs)
+    return next(r for r in o_['records'] if r['type'] == 'VERB_FRAME' and r['texts'].get('verb') == w)['frame']['subject']
+s = qframe('2:216', 'تُحِبُّوا')
+check('B01 «تُحِبُّوا»: الواو ليست لام الجذر «حبب»، فوجه المفرد ممتنعٌ بمانعٍ مثبت، والفاعل واو الجماعة المكتوبة (وجهٌ واحد)',
+      s['status'] == 'LICENSED' and s['kind'] == 'ضمير متصل مكتوب' and len(s['subject_faces']) == 1 and s.get('rejected_faces'), s)
+s = qframe('2:70', 'تَشَٰبَهَ')
+check('B02 «تَشَٰبَهَ» (2:70): تَفَاعَلَ أوله تاء يلتبس مضارعه المحذوف التاء بماضيه كتابةً: لا يُرخَّص الإسناد بالصيغة (TENSE_V_VI_AMBIGUOUS)',
+      s['status'] == 'DEFERRED' and all(x.get('blocked_by') == 'TENSE_V_VI_AMBIGUOUS' for x in s['subject_faces']), s)
+s = qframe('4:149', 'تَعْفُوا')
+check('B03 مقابلة B01: «تَعۡفُوا» جذره «عفو» ناقصٌ واوي، فوجه المفرد باقٍ ولا يُمنع', any(x['signature']['number'] == 'singular' for x in s['subject_faces']), s)
 
 print('ALL OK' if not FAIL else f'FAILED {len(FAIL)}: {FAIL}')
 sys.exit(1 if FAIL else 0)

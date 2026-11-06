@@ -2835,7 +2835,7 @@ def closure_certificate(J, records, upstream=None):
                            face_label='؛ '.join(x['label'] for x in fmap),
                            morph_candidate_id=((fr.get('frame') or {}).get('candidate') or {}).get('id'))
                 if okf:
-                    rec.update(status='MET_IN_ALL_FACES', discharge_relation_id=fr['relation_id'],
+                    rec.update(status='MET_IN_ALL_FACES' if len(fmap) > 1 else 'MET', discharge_relation_id=fr['relation_id'],
                                discharge_evidence_id=fr['relation_id'] + '#subject_faces',
                                satisfied_by=[dict(relation=x['relations'][0], status='LICENSED_IN_FACE', rule=x['rule']) for x in fmap],
                                residual_reason='أوجه الصيغة غير محسومة، وطرف الإسناد مرخَّصٌ في كلٍّ منها بهويته؛ والاختيار مؤجَّل')
