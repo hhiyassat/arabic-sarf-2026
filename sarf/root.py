@@ -453,6 +453,8 @@ def morph(text, info=None):
                     status='not_applicable', root=None, form_class=None, root_status=prot['root_status'],
                     reason=prot['reason'], protected=prot)
     out = _morph(text, info)
+    if out is not None:
+        out['faces'] = morph_faces(text, out)
     if prot and out is not None:
         alt = {k: out.get(k) for k in ('status', 'root', 'form_class', 'level', 'reason')}
         out.update(status='class_deferred', root=None, form_class=None, level=None, root_status='CLASS_DEFERRED',
@@ -463,6 +465,32 @@ def morph(text, info=None):
                     status='not_applicable', root=None, form_class=None, root_status=prot['root_status'],
                     reason=prot['reason'], protected=prot)
     return out
+
+
+def morph_faces(text, out):
+    """أوجه الكلمة بهويةٍ من محتواها (AR02 §٥): لكل (جذر، وزن) مولَّد وجه؛ ومرخَّصٌ إن ورد في HFN (بشواهده كلها في وجهٍ واحد،
+    فلا يتكرّر الوجه بتكرّر الشاهد)، ومختارٌ إن قُبل؛ وحالته واحدة من GENERATED، LICENSED، SELECTED، RANKED، DEFERRED.
+    لا يُختار أول مدخلٍ معجمي بترتيبه: الوجه المختار ما قبله morph، ومدخله ما طابقه"""
+    lic = {}
+    for x in out.get('licensed') or []:
+        f = lic.setdefault((x['root'], x['form_class']), dict(root=x['root'], form_class=x['form_class'], lemmas=set(), evidence_ids=set(),
+                                                             hfn_forms=set()))
+        f['lemmas'].add(x['verb']); f['evidence_ids'].add(x['event_id']); f['hfn_forms'].add(x.get('hfn_form') or '')
+    faces = []
+    for root, cls in sorted(set(out.get('candidates') or []) | set(lic)):
+        L = lic.get((root, cls))
+        lemma = sorted(L['lemmas'])[0] if L and len(L['lemmas']) == 1 else None
+        key = analysis_key(text, root, cls, 'فعل', lemma)
+        if L is None:
+            st = 'GENERATED'
+        elif out.get('root') == root and out.get('form_class') == cls:
+            st = {'accepted': 'SELECTED', 'ranked': 'RANKED'}.get(out.get('status'), 'LICENSED')
+        else:
+            st = 'LICENSED' if out.get('status') != 'accepted' else 'REJECTED_WITH_BARRIER'
+        faces.append(dict(analysis_id=analysis_id(key), root=root, form_class=cls, kind='فعل', lemma=lemma,
+                          lemma_alternatives=sorted(L['lemmas']) if L and len(L['lemmas']) > 1 else [],
+                          evidence_ids=sorted(L['evidence_ids']) if L else [], status=st))
+    return faces
 
 
 def _morph(text, info=None):
@@ -599,8 +627,53 @@ def pattern_record(lic, cls):
                 realized_pattern_source='LEXICON_RETRIEVAL' if real else None, form_family=cls)
 
 
+# ---------- هوية الوجه (AR02): من محتوى التحليل لا من ترتيب العرض ----------
+def analysis_key(span, root, cls, kind, lemma):
+    """مفتاح التحليل: الجزء المغطّى (بحروفه وحركاته كما في _plain_vowels)، والجذر، والوزن أو الصنف، ونوع الوجه، واللمّة"""
+    return (_plain_vowels(span or ''), root or '', cls or '', kind or '', _plain_vowels(lemma or ''))
+
+
+def analysis_id(key):
+    import hashlib, json
+    return 'A' + hashlib.sha1(json.dumps(list(key), ensure_ascii=False).encode('utf-8')).hexdigest()[:12]
+
+
+def face_rivals(peeled, whole_faces):
+    """→ (المنافسون، الشواهد المكرّرة، الجذر المشترك أو None).
+    peeled: dict(span, root, form_class, kind, lemma) لوجه القطع المقبول؛ whole_faces: [dict(span, root, form_class|pos, kind, lemma, evidence)].
+    المنافس وجهٌ يختلف تحليله (التقشير أو الجذر أو الوزن أو الصنف أو اللمّة)، ولو اتفق الجذر؛ وما طابق تحليلَ القطع نفسه
+    (الجذر والوزن واللمّة) شاهدٌ مكرّر لا منافس؛ وتكرار الشاهد للتحليل الواحد لا يُنشئ منافساً ثانياً"""
+    pk = (peeled['root'], peeled.get('form_class') or '', _plain_vowels(peeled.get('lemma') or ''))
+    rivals, dup, seen = [], [], set()
+    for f in whole_faces:
+        fk = analysis_key(f['span'], f['root'], f.get('form_class') or f.get('pos'), f.get('kind'), f.get('lemma'))
+        if (f['root'], f.get('form_class') or '', _plain_vowels(f.get('lemma') or '')) == pk:
+            dup.append(dict(f, analysis_id=analysis_id(fk)))
+            continue
+        if fk in seen:
+            continue                                  # شاهدٌ آخر للتحليل نفسه
+        seen.add(fk)
+        rivals.append(dict(f, analysis_id=analysis_id(fk)))
+    shared = peeled['root'] if rivals and all(r['root'] == peeled['root'] for r in rivals) else None
+    return rivals, dup, shared
+
+
 # ---------- قراءة الكلمة كلها منافساً لقراءة القطع ----------
 _WHOLE = None
+
+
+def _match_policy_text(text, rivals):
+    """وصف المطابقة بحسب ما تحققه فعلاً: حرفاً وحركة (NFC)، أو بتوحيد كراسي الهمزة، أو بمفتاح الاسم الذي يُسقط حركة الآخر"""
+    import unicodedata
+    pols = set()
+    for r in rivals:
+        if r['kind'] != 'فعل':
+            pols.add('بمفتاح الاسم: بلا حركة الآخر والسكون')
+        elif unicodedata.normalize('NFC', r['lemma']) == unicodedata.normalize('NFC', text):
+            pols.add('حرفاً وحركة')
+        else:
+            pols.add('حرفاً وحركة بعد توحيد كراسي الهمزة وحذف العلامات العثمانية')
+    return '؛ '.join(sorted(pols))
 
 
 def whole_word_matches(text):
@@ -681,21 +754,42 @@ def verse_morph(segs, governed=None, nouns=()):
             # الكلمة كلها، والجذع مع ما بعده من اللواحق (فَتَبَرَّكَ: «تَبَرَّكَ» بعد الفاء)
             span = ''.join(x['text'] for x in seg['slots'][s['index']:])
             spans = [t for t in dict.fromkeys((whole, span)) if t and _plain_vowels(t) != _plain_vowels(s['text'])]
+            occ = f"w{seg['word_index']}.s{s['index']}"
             if m['status'] in ('accepted', 'ranked') and spans:
-                rivals = list(dict.fromkeys(x for t in spans for x in whole_word_matches(t) if x[0] != m.get('root')))
-                whole = next((t for t in spans if any(x in whole_word_matches(t) for x in rivals)), whole) if rivals else whole
+                lic = [x for x in m['licensed'] if (x['root'], x['form_class']) == (m.get('root'), m.get('form_class'))]
+                peeled = dict(span=s['text'], root=m.get('root'), form_class=m.get('form_class'), kind='فعل',
+                              lemma=lic[0]['verb'] if len({x['verb'] for x in lic}) == 1 else None)
+                wf = [dict(span=t, root=r, form_class=c, pos=p if c is None else None, kind=p, lemma=l)
+                      for t in spans for (r, c, l, p) in whole_word_matches(t)]
+                rivals, dup, shared = face_rivals(peeled, wf)
                 if rivals:
-                    # القطع لم يثبت: الكلمة كلها تطابق مدخلاً في HFN بجذرٍ آخر (تَبَرَّكَ ماضي «برك»، نَاقِه اسم فاعل «نقه»)؛
-                    # فالوجهان محفوظان، والاختيار مؤجَّل حتى يقوم مانعٌ أو دليل
-                    m = dict(m, status='deferred', level=None, root=None, form_class=None,
-                             whole_word_rivals=[dict(root=r, form_class=c, lemma=l, pos=p) for r, c, l, p in rivals],
-                             reason='قطع الكلمة غير مثبت: الكلمة كلها «' + whole + '» تطابق مدخل HFN حرفاً وحركة: ' +
-                                    '، '.join(f'{l} ({r})' for r, c, l, p in rivals[:3]) + f' — وقراءة القطع: {m.get("root")}')
+                    # القطع لم يثبت: الكلمة كلها (أو الجذع مع لواحقه) تطابق مدخلاً في HFN بتحليلٍ آخر — جذرٍ أو وزنٍ أو صنفٍ آخر،
+                    # أو التقشير نفسه (تَبَرَّكَ ماضي «برك»، نَاقِه اسم فاعل «نقه»)؛ فالأوجه محفوظة، والاختيار مؤجَّل.
+                    # وإن اتفقت الأوجه كلها في الجذر ثبت الجذر المشترك، وبقي التقشير والصنف والوزن مؤجَّلة
+                    pid = analysis_id(analysis_key(peeled['span'], peeled['root'], peeled['form_class'], 'فعل', peeled['lemma']))
+                    t0 = rivals[0]['span']
+                    m = dict(m, status='deferred', level=None, root=None, form_class=None, occurrence_id=occ,
+                             peeled_face=dict(peeled, analysis_id=pid, status='LICENSED_NOT_SELECTED'),
+                             whole_word_rivals=[dict(root=r['root'], form_class=r.get('form_class'), lemma=r['lemma'], pos=r['kind'],
+                                                     span=r['span'], analysis_id=r['analysis_id'], status='LICENSED_NOT_SELECTED')
+                                                for r in rivals],
+                             shared_root=shared, shared_root_status='PROVEN_COMMON_TO_ALL_FACES' if shared else None,
+                             reason='قطع الكلمة غير مثبت: «' + t0 + '» تطابق مدخل HFN (' + _match_policy_text(t0, rivals) + '): ' +
+                                    '، '.join(f"{r['lemma']} ({r['root']})" for r in rivals[:3]) + f' — وقراءة القطع: {peeled["root"]}' +
+                                    (f' — والجذر المشترك بين الأوجه: {shared}' if shared else ''))
+                elif dup:
+                    m = dict(m, duplicate_evidence=[d['analysis_id'] for d in dup])
             top = m['licensed'][0] if m['licensed'] else None
             out.append(dict(word_index=seg['word_index'], slot=s['index'], status=m['status'], level=m.get('level'),
                             root=m.get('root'), form_class=m.get('form_class'), cells=m['cells'],
                             pattern=m.get('pattern') if m['status'] == 'accepted' else None,
                             whole_word_rivals=m.get('whole_word_rivals'),
+                            occurrence_id=f"w{seg['word_index']}.s{s['index']}",
+                            analysis_id=analysis_id(analysis_key(s['text'], m.get('root'), m.get('form_class'), 'فعل',
+                                                                 (m['licensed'][0]['verb'] if m['licensed'] else None)))
+                            if m['status'] == 'accepted' else None,
+                            peeled_face=m.get('peeled_face'), shared_root=m.get('shared_root'),
+                            shared_root_status=m.get('shared_root_status'),
                             reason=m.get('reason'), n_candidates=len(m['candidates']),
                             event=({k: top[k] for k in ('event_id', 'verb', 'masdar', 'hfn_form', 'source',
                                                          'sibawayh', 'meaning')}

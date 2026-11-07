@@ -34,7 +34,12 @@ def pub(w):
 check('R1 تمثيل «آ»: ء مفتوحة ثم ألف، والرسم الأصلي لا يُمسّ', _plain_toks('آبَ')[0] == ('ء', {'َ'}) and _plain_toks('آبَ')[1][0] == 'ا')
 check('R1 موجب: آبَ يطابق فعل HFN «ءوب» حرفاً وحركة', ('ءوب', 'I') in lic('آبَ'))
 check('R1 مقابل: آمَنَ يبقى «ءمن» أَفْعَلَ', ('ءمن', 'IV') in lic('آمَنَ'))
-check('R1 مقابل: الحماية «آللَّهُ» لا تتغيّر', protected('آللَّهُ') == protected('آللَّهُ') and (protected('ءَاللَّهُ') or {}).get('cls') == (protected('ءَاللَّهُ') or {}).get('cls'))
+# (AR02 §١٤: كان هذا الشرط يقارن الاستدعاء بنفسه؛ صار توقّعاً صريحاً يكشف رجوع العيب)
+for w in ('آللَّهُ', 'ءَاللَّهُ'):
+    pr = protected(w)
+    check(f'R1 مقابل: «{w}» لفظ الجلالة محمي بهويته وفئته وبلا جذر', pr is not None and pr['cls'] == 'اسم ذهبي' and
+          pr['identity'] == 'لفظ الجلالة' and pr['ambiguous'] is False and pr['root_status'] == 'NOT_APPLICABLE' and
+          morph(w)['status'] == 'not_applicable' and morph(w).get('root') is None, pr)
 # R2 الألف الأخيرة لام الناقص لا لاحقة التثنية وحدها
 check('R2 موجب: دَعَا ← دعو I، وبَتَا ← بتو I', ('دعو', 'I') in lic('دَعَا') and ('بتو', 'I') in lic('بَتَا'))
 check('R2 مقابل: كَتَبَا (مثنى) لا يُرخَّص له جذرٌ زائف', lic('كَتَبَا') == set(), lic('كَتَبَا'))
@@ -91,6 +96,7 @@ check('R8 لا وزن لوجهٍ مؤجَّل', all(x.get('pattern') is None for
 # فحص الإفساد: إفساد الجذر أو الوزن يُكتشف بمطابقة الشكل المتحقق
 m = morph('اجْتَبَيْتُ')
 lic_ok = [x for x in m['licensed'] if x['root'] == m['root']]
-check('C1 الوجه المقبول متّسق: جذره ووزنه من الرخصة نفسها', lic_ok and all(x['form_class'] == m['form_class'] for x in lic_ok))
+# (AR02 §١٤: هذا فحص اتساقٍ لا إفساد؛ واختبارات الإفساد الفعلية في tests/test_analyzer_repair_ar02.py)
+check('C1 اتساق الوجه المقبول: جذره ووزنه من الرخصة نفسها', lic_ok and all(x['form_class'] == m['form_class'] for x in lic_ok))
 print('نجح' if not FAILS else f'فشل {len(FAILS)}: {FAILS}')
 sys.exit(1 if FAILS else 0)
