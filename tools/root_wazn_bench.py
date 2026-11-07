@@ -276,7 +276,10 @@ def _analyze_word(word, pos_assisted=False):
     out = dict(word=word)
     prot = protected(word)
     out['protected'] = dict(cls=prot.get('cls'), identity=prot.get('identity'), ambiguous=prot.get('ambiguous'),
+                            proclitics=prot.get('proclitics'), enclitic=prot.get('enclitic'),
                             root_status=prot.get('root_status')) if prot else None
+    si = stem_info(word)
+    out['stem_info'] = {k: si.get(k) for k in ('pos', 'kind', 'prefix', 'suffix', 'object')}
     faces_ = []
     # الفعل: قوالب الماضي برخصة HFN (morph)؛ وما لم يثبت أنه فعل يُرخَّص بمطابقة فعل HFN حرفاً وحركة (استرجاع)
     m = morph(word)
@@ -302,7 +305,9 @@ def _analyze_word(word, pos_assisted=False):
         faces_.append(dict(root=root, wazn=PARTICIPLE_WAZN.get((cls, kind)), form_class=cls, kind='اسم ' + kind,
                            source='RULE:participle_template_licensed_by_HFN', evidence=p[5] if len(p) > 5 else None))
     for (root, pos, pattern, lu, lemma) in lex_index().get(_lex_key(word), []):
-        faces_.append(dict(root=root, wazn=None, verb_pattern=cmp_form(pattern), kind=pos, source='RETRIEVAL:hfn_lexical_unit',
+        # نمط المدخل في HFN: لاسمي الفاعل والمفعول ميزانهما (فَاعِل، مَفْعُول)؛ وللمصدر باب فعله لا ميزانه، فلا وزن مصدرٍ من هنا
+        faces_.append(dict(root=root, wazn=cmp_form(pattern) if pos in ('اسم فاعل', 'اسم مفعول') else None,
+                           verb_pattern=cmp_form(pattern) if pos == 'مصدر' else None, kind=pos, source='RETRIEVAL:hfn_lexical_unit',
                            evidence=lu, lemma=lemma))
     uniq, seen = [], set()
     for f in faces_:
@@ -420,8 +425,17 @@ def classify(ref, rec, avail):
         return 'CORRECT_CANDIDATE_NOT_SELECTED' if ref['root'] in roots else 'ROOT_ERROR'
     if ref['root'] in roots:
         return 'CONTEXT_REQUIRED'                 # المرشّح الصحيح حاضر، والإثبات ينتظر صنفاً أو سياقاً
+    if ref['root'] in {c['root'] for c in A.get('template_candidates') or []}:
+        return 'CORRECT_CANDIDATE_NOT_SELECTED'   # ولّده القالب ولم يُرخَّص
     if not (set(ref['word']) & TASHKEEL) or ref['missing_tashkeel']:
         return 'INSUFFICIENT_DIACRITICS'
+    r = ref['root']
+    if len(r) == 3 and r[1] == r[2] and '\u0651' not in ref['word'] and sum(1 for ch in ref['word'] if ch not in TASHKEEL) == 2:
+        return 'INSUFFICIENT_DIACRITICS'          # مضعّفٌ مكتوبٌ بحرفين بلا شدّة (بَق ← بقق)
+    si = A.get('stem_info') or {}
+    if si.get('object') or si.get('suffix') or si.get('prefix'):
+        if avail['word_in_hfn_v36']:
+            return 'PEELING_ERROR'                # قُشر من الكلمة لاحقةٌ أو سابقة وهي من أصلها (بَتَّكَ ← بَتَّ + كَ)
     if not avail['root_in_hfn_v36'] or not avail['word_in_hfn_v36']:
         return 'LEXICON_GAP'
     if roots:
@@ -463,6 +477,15 @@ def compare(pkg, analysis, out_dir, corrections=None):
                    root_in_candidates=ref['root'] in {f['root'] for f in faces_},
                    pair_in_candidates=bool(pair_ok), verb_form_in_candidates=verbform_ok,
                    extra_unsupported_candidates=len({f['root'] for f in faces_} - {ref['root']}))
+        P_ = A.get('protected')
+        if A.get('level') == 'PROTECTED':
+            res['protection_assessment'] = (('WRONG_PROTECTION_PEELED' if (P_.get('proclitics') or P_.get('enclitic')) else
+                                             'SHOULD_BE_CLASS_DEFERRED') if avail['word_in_hfn_v36'] else 'PROTECTED_NO_LEXICAL_ALTERNATIVE_IN_V36')
+        bacc = sorted({x['root'] for x in (B or {}).get('morph') or [] if x['status'] == 'accepted' and x.get('root')})
+        res['B_proven_roots'] = bacc
+        res['B_root_proven_correct'] = (bacc == [ref['root']]) if bacc else None
+        res['wazn_matches_surface_pattern_only'] = bool(proven and ref['surface_pattern'] and ref['surface_pattern'] != ref['wazn'] and
+                                                        cmp_form(ref['surface_pattern']) in {cmp_form(x) for x in proven['wazn']})
         ok = res['root_proven_correct'] is True and (res['wazn_proven_correct'] in (True, None))
         res['category'] = 'AGREE' if ok else classify(ref, rec, avail)
         per.append(res)
@@ -482,6 +505,8 @@ def compare(pkg, analysis, out_dir, corrections=None):
         withw = [r for r in rs if r['ref_wazn']]
         pc = sum(1 for r in withw if r['pair_in_candidates'])
         prot = sum(1 for r in rs if r['A_level'] == 'PROTECTED')
+        bp = [r for r in rs if r.get('B_proven_roots')]
+        bpc = sum(1 for r in bp if r['B_root_proven_correct'])
         return dict(n=n,
                     root_proven=dict(n=len(pr), correct=prc, precision=round(prc / len(pr), 4) if pr else None, wilson_low=wilson_low(prc, len(pr))),
                     root_coverage=dict(k=len(pr), n=n, value=round(len(pr) / n, 4) if n else None),
@@ -492,6 +517,10 @@ def compare(pkg, analysis, out_dir, corrections=None):
                     wrong_decision=sum(1 for r in pr if not r['root_proven_correct']),
                     extra_unsupported_candidates=dict(rows_with_extra=sum(1 for r in rs if r['extra_unsupported_candidates']),
                                                       total=sum(r['extra_unsupported_candidates'] for r in rs)),
+                    B_public_root_proven=dict(n=len(bp), correct=bpc, precision=round(bpc / len(bp), 4) if bp else None,
+                                              wilson_low=wilson_low(bpc, len(bp)), coverage=round(len(bp) / n, 4) if n else None),
+                    wazn_error_surface_pattern_only=sum(1 for r in rs if r.get('wazn_matches_surface_pattern_only')),
+                    protection_assessment=dict(collections.Counter(r.get('protection_assessment') for r in rs if r['A_level'] == 'PROTECTED')),
                     protected=prot, levels=dict(collections.Counter(r['A_level'] for r in rs)),
                     public_levels=dict(collections.Counter(r['B_level'] for r in rs)),
                     deferral_reasons=dict(collections.Counter((r['A_reason'] or '')[:70] for r in rs if r['A_level'] != 'ROOT_PROVEN').most_common(15)),
