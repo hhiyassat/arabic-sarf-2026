@@ -262,12 +262,14 @@ def _affix_vowels_ok(cls, tmpl, seq):
     return True
 
 
-def candidates(text, info=None, any_pos=False, _nested=False):
+def candidates(text, info=None, any_pos=False, _nested=False, extended=False):
     """T19c: → [(الجذر، الوزن)] مرشَّحة من قوالب الأوزان، بلا رخصة بعد.
     تُجرَّب القراءات التي تحتملها الكتابة، والرخصة تفصل بينها:
       - ما أوّله حرف من أحرف المضارعة يُجرَّب ماضياً أيضاً (أَذِنَ، نَادَىٰ، تَنَفَّسَ)، وأَفۡعِلۡ أمراً
       - الفاء والواو وهمزة الاستفهام في أوله تُجرَّب سابقةً (فَقُلۡ، أَرَءَيۡتَ)
-    any_pos: يُجرَّب قالب الماضي على ما لم يثبت أنه فعل"""
+    any_pos: يُجرَّب قالب الماضي على ما لم يثبت أنه فعل
+    extended (AR01، لمحرّك الجذر _morph وحده حيث الرخصة مقيّدة): قراءة الكلمة كلها بلا ضمير مفعول (R5)، والألف الأخيرة لامَ
+    الناقص (R2). ولا تصل إلى مستهلكين آخرين (رخصة العامل) بلا قيدها"""
     info = info or stem_info(text)
     if not _nested:
         INSERTED.clear(); READING.clear()          # حالة الكلمة وحدها: لا يتسرّب إليها ما قبلها
@@ -277,8 +279,8 @@ def candidates(text, info=None, any_pos=False, _nested=False):
     kind = info['kind'] if info['kind'] in ('madi', 'mudari', 'amr') else 'madi'
     if PAST_SUFFIX.search(text):
         kind = 'madi'                                # تُمۡ، نَا، تُ بعد ساكن: لاحقة الماضي تنفي المضارع (أَقۡرَرۡتُمۡ)
-    readings.append((text, dict(info, kind=kind)))
-    if info.get('object') and not _nested:
+    readings.append((text, dict(info, kind=kind, extended=extended)))
+    if extended and info.get('object') and not _nested:
         # الطرف يشبه ضميراً متصلاً، وقد يكون من أصل الكلمة: تُجرَّب الكلمة كلها ماضياً بلا لاحقة، ولا تُرخَّص هذه
         # القراءة إلا بمطابقة فعل HFN حرفاً وحركة (UNPEELED)
         readings.append((text, dict(info, kind='madi', object=None, suffix=None, prefix=None, unpeeled=True)))
@@ -324,6 +326,7 @@ def candidates(text, info=None, any_pos=False, _nested=False):
 
 
 PAST_SUFFIX = re.compile('\u0652(تُمْ|تُمَا|تُنَّ|نَا|تُ|تَ|تِ)$')
+EXTENDED = set()   # ما زادته القراءات الموسّعة على المرشّحات الأساسية للكلمة الجارية
 UNPEELED = set()   # (الجذر، الوزن) من قراءة الكلمة كلها بلا ضمير مفعول: لا تُرخَّص إلا بالمطابقة التامة
 INSERTED = set()   # (الجذر، الوزن) الذي افتُرض فيه حرف محذوف، للكلمة الجارية (يُفرَّغ مع كل كلمة)
 READING = {}   # (الجذر، الوزن) ← نص القراءة التي أنتجته (بلا السابقة إن نُزعت)
@@ -333,7 +336,7 @@ def _candidates_kind(text, info):
     toks, wasl, sig = _base(text, info)
     kind = info['kind']
     alt_bases = [toks]
-    if kind == 'madi' and sig in ('ا', 'تَا') and not info.get('object'):
+    if info.get('extended') and kind == 'madi' and sig in ('ا', 'تَا') and not info.get('object'):
         full, w_full = _expand_base(_plain_toks(text))
         # شكل الماضي وحده: أوله مفتوح أو بعد همزة وصل، وما قبل الألف مفتوح (دَعَا، ٱشۡتَرَىٰ)؛ لا «كُلَا» (أمر المثنى)
         # والقراءة بعد نزع الألف أقصر من أي ماضٍ (دَعَ، بَ): فإن صلحت ماضياً تاماً (ٱسۡتَبَقَ + ا) فالألف للتثنية، ولا تُولَّد
@@ -468,7 +471,12 @@ def _morph(text, info=None):
     shown = text
     if info.get('moved'):                     # قُلِ ٱللَّهُمَّ: الكسر لالتقاء الساكنين، والأصل السكون
         text = text[:-1] + SUKUN
-    cands = candidates(text, info, any_pos=exact_only)
+    base_c = candidates(text, info, any_pos=exact_only)
+    cands = candidates(text, info, any_pos=exact_only, extended=True)
+    # ما زادته القراءات الموسّعة (R2، R5) لا يُرخَّص إلا بمطابقة فعل HFN حرفاً وحركة، ولا يُعرض مرشّحاً بلا رخصة
+    # (فلا يتسرّب إلى رخصة العامل «فعلاً محتملاً»: لِيُّنَا ليس «لين»)
+    EXTENDED.clear()
+    EXTENDED.update(c for c in cands if c not in base_c)
     if not cands:
         return None
     H = hfn()
@@ -478,8 +486,8 @@ def _morph(text, info=None):
         for e in H.index.get((root, cls), []):
             if exact_only and _plain_vowels(e['verb']) not in (surface, _plain_vowels(READING.get((root, cls), text))):
                 continue                     # ما لم يثبت أنه فعل: لا يُرخَّص إلا بمطابقة فعل HFN حرفاً وحركة (كَتَبَ)
-            if (root, cls) in UNPEELED and _plain_vowels(e['verb']) != surface:
-                continue                     # قراءة الكلمة كلها بلا ضمير: بالمطابقة التامة وحدها
+            if ((root, cls) in UNPEELED or (root, cls) in EXTENDED) and _plain_vowels(e['verb']) != surface:
+                continue                     # القراءات الموسّعة: بالمطابقة التامة وحدها
             lp, lps = lemma_pattern(cls, e['form'])
             licensed.append(dict(root=root, form_class=cls, hfn_form=e['form'], verb=e['verb'],
                                  lemma_pattern=lp, lemma_pattern_source=lps, realized_pattern=e['form'],
@@ -516,6 +524,10 @@ def _morph(text, info=None):
         if same:
             licensed = same + [x for x in licensed if x not in same]
     pairs = list(dict.fromkeys((x['root'], x['form_class']) for x in licensed))
+    lic_pairs = set(pairs)
+    cands = [c for c in cands if c not in EXTENDED or c in lic_pairs]
+    if not cands:
+        return None                          # لم يبقَ إلا ما زادته القراءات الموسّعة بلا رخصة: كأنه لم يكن
     out = dict(cells=cell_code(cells(shown)), candidates=cands, licensed=licensed, kind=info['kind'],
                level=None, selection=selection)
     if not H:
