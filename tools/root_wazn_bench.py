@@ -163,6 +163,9 @@ def resource_fingerprint():
 
 
 def git_commit():
+    fz = os.path.join(H, '.frozen_commit')          # النسخة المجمّدة (git archive) تحمل التزامها في هذا الملف
+    if os.path.exists(fz):
+        return open(fz).read().strip()
     try:
         return subprocess.run(['git', '-C', H, 'rev-parse', 'HEAD'], capture_output=True, text=True).stdout.strip() or None
     except Exception:
