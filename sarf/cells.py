@@ -551,3 +551,56 @@ def stem_licence(text, verbs=True):
                             m.get('root') == cand[0][0] else 'فعل محتمل'
                         out.append((kind, cand[0][0], cand[0][1]))
     return tuple(out)
+
+
+# علامات التثنية والجمع السالم في آخر الاسم (بحروفها وحركاتها)، وما قبلها مفتوحٌ أو مكسورٌ أو مضموم بحسبها
+NUMBER_MARKS = (('َيْنِ', 'تثنية (نصب/جر)'), ('َانِ', 'تثنية (رفع)'), ('ِينَ', 'جمع مذكر سالم (نصب/جر)'),
+                ('ُونَ', 'جمع مذكر سالم (رفع)'), ('َاتٍ', 'جمع مؤنث سالم'), ('َاتٌ', 'جمع مؤنث سالم'), ('َاتِ', 'جمع مؤنث سالم'),
+                ('َاتُ', 'جمع مؤنث سالم'))
+
+
+def number_mark_splits(text):
+    """→ [(الجذع، العلامة، نوعها)]: فصل علامة التثنية أو الجمع السالم حين يبقى جذعٌ من ثلاثة أحرف فأكثر؛ والتاء قبل علامة
+    التثنية تاءُ تأنيثٍ تُردّ مربوطة (امْرَأَتَانِ ← امْرَأَة). فصلٌ مرشّح لا مثبت: «مِسْكِينَ» يحتمله وهو مفرد"""
+    out = []
+    for mark, kind in NUMBER_MARKS:
+        if not text.endswith(mark):
+            continue
+        stem = text[:-len(mark)]
+        if len([c for c in stem if c.isalpha()]) < 3:
+            continue
+        if kind.startswith('تثنية') and stem.endswith('ت'):
+            stem = stem[:-1] + 'ة'
+        out.append((stem, mark, kind))
+    return out
+
+
+def noun_template_faces(text, _split=True):
+    """AR02 §٧: أوجهٌ اسمية من أبنية سيبويه للكلمة كلها، جذرها في HFN: (الجذر، البناء، المعرّف، الصفحة، العمليات).
+    وجهٌ مرخّصٌ بالقالب والجذر، لا مثبت: لا يعيّن نوع الاشتقاق ولا المعنى، ولا يُضيف حركةً غير مكتوبة.
+    وتُجرَّب الكلمة بعد فصل علامة التثنية أو الجمع السالم (segmentation: الجذع + العلامة)، والوجهان محفوظان"""
+    out = []
+    if _split:
+        for stem, mark, kind in number_mark_splits(text):
+            for f in noun_template_faces(stem, _split=False):
+                ops = ['TA_MARBUTA_TO_TA_BEFORE_NUMBER_MARK'] if stem.endswith('ة') and kind.startswith('تثنية') else []
+                out.append(dict(f, segmentation=[stem, mark], number_mark=kind, split_operations=ops))
+    out += [dict(f, segmentation=[text], number_mark=None) for f in _noun_template_faces_whole(text)]
+    return out
+
+
+def _noun_template_faces_whole(text):
+    cs, tk = cells_of(text, 'N')
+    if not cs:
+        return []
+    out = []
+    for cs2, ops in weak_variants(cs, tk):
+        from .root import hfn
+        for root, sid, page, pat, alpha, ex in _sibawayh_match(cs2, hfn(), bool(ops)):
+            f = dict(root=root, pattern=pat, sid=sid, page=page, operations=list(ops), kind='بناء اسمي', status='TEMPLATE_LICENSED',
+                     source='data/patterns/awzan_sibawayh_308.csv')
+            if f not in out:
+                out.append(f)
+        if out:
+            break
+    return out

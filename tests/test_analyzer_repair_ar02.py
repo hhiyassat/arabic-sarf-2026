@@ -141,6 +141,37 @@ rec = dict(mutation='حدود التقشير', word='تَبَرَّكَ', origin
 MUT.append(rec)
 check('M حدود التقشير: الأصل سليم، وتغيّر الجزء، وكشفه SEGMENTATION', ok0 and 'SEGMENTATION' in det, rec)
 
+# ---------- N: مسار الأسماء (الدفعة ٣) ----------
+from sarf.cells import noun_template_faces, number_mark_splits
+
+
+def rebuild(f):
+    st, *rest = f['segmentation']
+    if 'TA_MARBUTA_TO_TA_BEFORE_NUMBER_MARK' in (f.get('split_operations') or []):
+        st = st[:-1] + 'ت'
+    return st + ''.join(rest)
+
+
+for w, root, mark in (('شَهِيدَيْنِ', 'شهد', 'َيْنِ'), ('رَجُلَيْنِ', 'رجل', 'َيْنِ'), ('امْرَأَتَانِ', 'مرء', 'َانِ'), ('كَاتِبُونَ', 'كتب', 'ُونَ')):
+    fs = [f for f in noun_template_faces(w) if f['root'] == root and f['number_mark']]
+    check(f'N1 {w}: الجذع + العلامة «{mark}» بوجهٍ اسمي جذره {root}، ويُعاد تركيب الكلمة من أجزائها حرفاً وحركة',
+          fs and fs[0]['segmentation'][1] == mark and rebuild(fs[0]) == w and fs[0]['status'] == 'TEMPLATE_LICENSED', fs[:1])
+check('N2 مقابل: «حِينَ» لا تُفصل فيها «ِينَ» (الجذع أقصر من ثلاثة)', number_mark_splits('حِينَ') == [])
+fs = noun_template_faces('مِسْكِينَ')
+check('N3 التباس: «مِسْكِينَ» يحتمل الجمع والمفرد، والوجهان محفوظان', any(f['number_mark'] for f in fs) and any(not f['number_mark'] for f in fs))
+check('N4 ناقص التشكيل: «نَحيف» لا وجه اسمي له ولا حركة مُضافة', noun_template_faces('نَحيف') == [])
+check('N5 الوجه الاسمي مرخّصٌ بالقالب لا مثبت', all(f['status'] == 'TEMPLATE_LICENSED' for f in noun_template_faces('شَهِيد')))
+mm = morph('نَمِشْ')
+check('N6 §٨: «نَمِشْ» الفعل غير مثبت (حرف المضارعة والسكون وحدهما) والوجه الاسمي «نمش» فَعِلٌ منافس، والفعل محفوظ',
+      mm['status'] == 'deferred' and mm['noun_template_rivals'][0]['root'] == 'نمش' and any(f['root'] == 'ميش' for f in mm['faces']))
+a = analyze(CAT, 'نَمِشْ', 'auto')
+check('N7 عابر للطبقات: «نَمِشْ» في الواجهة العامة مؤجَّل لا «ميش»', a['morph'][0]['status'] == 'deferred' and a['morph'][0].get('root') is None, a['morph'])
+for w, r in (('لَمْ يَكْتُبْ', 'كتب'), ('وَلْيَكْتُبْ', 'كتب')):
+    a = analyze(CAT, w, 'auto')
+    check(f'N8 مقابل: «{w}» يحكمه عامل، فالفعل مثبت ({r})', any(x['status'] == 'accepted' and x['root'] == r for x in a['morph']))
+mm = morph('يَكْتُبْ')
+check('N9 مقابل: «يَكْتُبْ» البناء يقرأ الياء زائدة بالجذر نفسه: لا منازعة', mm['status'] == 'accepted' and mm['root'] == 'كتب', mm['status'])
+
 # ---------- X: عابرة للطبقات ----------
 a = analyze(CAT, 'تَبَرَّكَ', 'auto')
 x = a['morph'][0]

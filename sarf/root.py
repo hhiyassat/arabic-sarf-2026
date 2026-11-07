@@ -455,6 +455,7 @@ def morph(text, info=None):
     out = _morph(text, info)
     if out is not None:
         out['faces'] = morph_faces(text, out)
+        out = _contest_by_noun_template(text, info or stem_info(text), out)
     if prot and out is not None:
         alt = {k: out.get(k) for k in ('status', 'root', 'form_class', 'level', 'reason')}
         out.update(status='class_deferred', root=None, form_class=None, level=None, root_status='CLASS_DEFERRED',
@@ -465,6 +466,36 @@ def morph(text, info=None):
                     status='not_applicable', root=None, form_class=None, root_status=prot['root_status'],
                     reason=prot['reason'], protected=prot)
     return out
+
+
+NOUN_RIVAL_EVIDENCE = ('حرف المضارعة',)
+
+
+def _no_case_vowel(text):
+    """آخر الكلمة بلا حركة إعراب (سكونٌ أو لا علامة أو شدةٌ وحدها)"""
+    t = letters(text)
+    return bool(t) and not (set(t[-1][1]) & {FATHA, DAMMA, KASRA, FATHATAN, DAMMATAN, KASRATAN})
+
+
+def _contest_by_noun_template(text, info, out):
+    """AR02 §٨: الفعل المضارع الذي دليله حرف المضارعة وسكون الآخر وحدهما لا يثبت إن قرأ بناءٌ اسميٌّ من أبنية سيبويه الكلمةَ كلها
+    والحرفُ الأول فيه أصلٌ لجذرٍ في HFN (نَمِشْ: «نمش» فَعِلٌ)، ولم يثبت الفعل بعاملٍ يحكمه؛ فالسكون في كلمةٍ مفردة قد يكون وقفاً.
+    الوجهان محفوظان، ولا يُضاف حرفٌ ولا حركة. ولا يُنازَع بالبناء الذي يقرأ الحرف زائداً (يَعْلَمْ ← «علم» يَفْعَلٌ: الجذر نفسه)"""
+    if out.get('status') != 'accepted' or info.get('governed') or not _no_case_vowel(text):
+        return out
+    ev = info.get('evidence') or []
+    if not ev or not all(any(e.startswith(k) for k in NOUN_RIVAL_EVIDENCE) for e in ev):
+        return out
+    from .cells import noun_template_faces
+    first = letters(text)[0][0]
+    rivals = [f for f in noun_template_faces(text) if f['root'] != out.get('root') and _norm(f['root'][0]) == _norm(first)]
+    if not rivals:
+        return out
+    faces = [dict(f, status='LICENSED' if f.get('status') == 'SELECTED' else f.get('status')) for f in out.get('faces') or []]
+    return dict(out, status='deferred', level=None, root=None, form_class=None, faces=faces, pattern=None,
+                noun_template_rivals=rivals,
+                reason='الفعل غير مثبت: دليله حرف المضارعة وسكون الآخر وحدهما، وبناءٌ اسميٌّ يقرأ الكلمة كلها والحرف أصلاً: ' +
+                       '، '.join(f"{r['root']} {r['pattern']} ({r['sid']})" for r in rivals[:3]) + f' — وقراءة الفعل: {out.get("root")}')
 
 
 def morph_faces(text, out):
@@ -793,7 +824,8 @@ def verse_morph(segs, governed=None, nouns=()):
                 if whole.get('suffix') and whole.get('object') == nxt['text']:
                     info = dict(whole, object=None)
             if (seg['word_index'], s['index']) in governed:
-                info = dict(info, pos='verb')
+                # الحكم بعاملٍ مقبول يثبت الفعل؛ أما شهادة HFN وحدها ('HFN') والتوافق ('T18') فلا تنفيان الوجه الاسمي في §٨
+                info = dict(info, pos='verb', governed=governed[(seg['word_index'], s['index'])] not in ('HFN', 'T18'))
             m = morph(s['text'], info)
             if not m:
                 continue
@@ -808,6 +840,10 @@ def verse_morph(segs, governed=None, nouns=()):
                               lemma=lic[0]['verb'] if len({x['verb'] for x in lic}) == 1 else None)
                 wf = [dict(span=t, root=r, form_class=c, pos=p if c is None else None, kind=p, lemma=l)
                       for t in spans for (r, c, l, p) in whole_word_matches(t)]
+                if not info.get('governed') and whole and _no_case_vowel(whole):
+                    from .cells import noun_template_faces
+                    wf += [dict(span=whole, root=f['root'], form_class=None, pos='بناء اسمي', kind='بناء اسمي', lemma=f['pattern'])
+                           for f in noun_template_faces(whole) if f['root'] != m.get('root')]
                 rivals, dup, shared = face_rivals(peeled, wf)
                 if rivals:
                     # القطع لم يثبت: الكلمة كلها (أو الجذع مع لواحقه) تطابق مدخلاً في HFN بتحليلٍ آخر — جذرٍ أو وزنٍ أو صنفٍ آخر،
