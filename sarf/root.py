@@ -148,6 +148,25 @@ def _plain_vowels(t):
     return ''.join(_norm(c) for c in re.sub('[\u0670\u06D6-\u06ED\u0640]', '', t))
 
 
+def match_policy(a, b):
+    """AR02 §١٢: سياسة المطابقة التي تحققت فعلاً بين نصّين: NFC_LITERAL (حرفاً وحركة)، أو UTHMANI_MARKS_REMOVED (بعد حذف
+    الخنجرية والعلامات العثمانية وحدها)، أو HAMZA_SEAT_UNIFIED (بعد توحيد كراسي الهمزة أيضاً، كما يفعل _plain_vowels)، أو None"""
+    import unicodedata
+    nf = lambda x: unicodedata.normalize('NFC', x or '')
+    if nf(a) == nf(b):
+        return 'NFC_LITERAL'
+    marks = lambda x: nf(re.sub('[\u0670\u06D6-\u06ED\u0640]', '', x or ''))
+    if marks(a) == marks(b):
+        return 'UTHMANI_MARKS_REMOVED'
+    if _plain_vowels(a) == _plain_vowels(b):
+        return 'HAMZA_SEAT_UNIFIED'
+    return None
+
+
+MATCH_POLICY_AR = {'NFC_LITERAL': 'حرفاً وحركة', 'UTHMANI_MARKS_REMOVED': 'حرفاً وحركة بعد حذف العلامات العثمانية',
+                   'HAMZA_SEAT_UNIFIED': 'حرفاً وحركة بعد توحيد كراسي الهمزة'}
+
+
 def _norm(L):
     return HAMZA.get(L, L)
 
@@ -599,6 +618,7 @@ def _morph(text, info=None):
                 continue                     # القراءات الموسّعة: بالمطابقة التامة وحدها
             lp, lps = lemma_pattern(cls, e['form'])
             licensed.append(dict(root=root, form_class=cls, hfn_form=e['form'], verb=e['verb'],
+                                 match_policy=match_policy(e['verb'], text) or match_policy(e['verb'], READING.get((root, cls), text)),
                                  lemma_pattern=lp, lemma_pattern_source=lps, realized_pattern=e['form'],
                                  masdar=e['masdar'], event_id=e['event_id'], source=e['source'],
                                  sibawayh=e['sibawayh_rules'], tier=e['tier'],
@@ -620,7 +640,8 @@ def _morph(text, info=None):
     # الترجيح لا الإثبات (مراجعة التقرير الخامسة ٣): قراءة النص كله المطابقة حرفاً وحركة تُرجَّح على منافسٍ لا يطابق،
     # والمنافس محفوظٌ بسببه؛ فالنتيجة «مرجَّح» لا «مثبت»، و«مثبت» ما لا منافس له
     if exact and others:
-        selection['decision'] = (f'ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN حرفاً وحركة (شهادتها {_tier(exact)})، '
+        pol = sorted({MATCH_POLICY_AR.get(x.get('match_policy'), 'حرفاً وحركة') for x in exact})
+        selection['decision'] = (f'ترجيح بالمطابقة: قراءة النص كله تطابق فعلاً في HFN {"؛ ".join(pol)} (شهادتها {_tier(exact)})، '
                                  f'ومنافسها لا يطابق (شهادته {_tier(others)})؛ والمنافس محفوظ')
         selection['ranked'] = True
         selection['alternatives'] = sorted({f"{x['root']}/{x['form_class']}" for x in others})
@@ -644,8 +665,8 @@ def _morph(text, info=None):
         return out
     if exact_only and pairs:
         # يطابق فعلاً في HFN حرفاً وحركة، ولم يثبت أنه فعل بالكتابة (مَالَ: فعلٌ أو اسم): مرشَّح لا مقبول
-        out.update(status='deferred', level='lemma', reason='يطابق فعل HFN «' + licensed[0]['verb'] +
-                   '» حرفاً وحركة، ولم يثبت بالكتابة أنه فعل', root=None)
+        out.update(status='deferred', level='lemma', reason='يطابق فعل HFN «' + licensed[0]['verb'] + '» ' +
+                   MATCH_POLICY_AR.get(licensed[0].get('match_policy'), 'حرفاً وحركة') + '، ولم يثبت بالكتابة أنه فعل', root=None)
         return out
     # الاقتصاد: قراءةٌ لا تفترض حرفاً محذوفاً وجذرها مسجَّل تمنع قبول قراءةٍ تفترضه (يُسِرُّونَ: سرر لا سرو)
     direct = [(r, c) for r, c in cands if (r, c) not in INSERTED and r in H.roots]

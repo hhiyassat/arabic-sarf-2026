@@ -176,6 +176,17 @@ for w, r in (('وَقُلْ', 'قول'), ('وَقُولُوا', 'قول'), ('و�
 mm = morph('يَكْتُبْ')
 check('N9 مقابل: «يَكْتُبْ» البناء يقرأ الياء زائدة بالجذر نفسه: لا منازعة', mm['status'] == 'accepted' and mm['root'] == 'كتب', mm['status'])
 
+# ---------- H: المطابقة والهمزة (الدفعة ٤) ----------
+from sarf.root import match_policy
+check('H1 سياسة المطابقة كما تحققت: حرفية، وبعد العلامات العثمانية، وبتوحيد الكرسي، ولا شيء', match_policy('كَتَبَ', 'كَتَبَ') == 'NFC_LITERAL' and
+      match_policy('اسْتَهْنَءَ', 'اسْتَهْنَأَ') == 'HAMZA_SEAT_UNIFIED' and match_policy('كَتَبَ', 'كَذَبَ') is None)
+mm = morph('اسْتَهْنَأَ')
+check('H2 «اسْتَهْنَأَ»: الرخصة بتوحيد الكرسي مسجَّلة، والسبب لا يدّعي «حرفاً وحركة» مجرّدة', mm['licensed'] and
+      mm['licensed'][0]['match_policy'] == 'HAMZA_SEAT_UNIFIED' and 'توحيد كراسي الهمزة' in mm['reason'], mm.get('reason'))
+mm = morph('كَتَبَ')
+check('H3 مقابل: «كَتَبَ» مطابقة حرفية، والسبب «حرفاً وحركة»', mm['licensed'][0]['match_policy'] == 'NFC_LITERAL' and
+      'حرفاً وحركة،' in mm['reason'])
+
 # ---------- X: عابرة للطبقات ----------
 a = analyze(CAT, 'تَبَرَّكَ', 'auto')
 x = a['morph'][0]
