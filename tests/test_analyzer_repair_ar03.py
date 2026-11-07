@@ -67,6 +67,12 @@ check('G2 المكتوب لا يفصل (حسب بلا حركات): لا وجه �
 fs = morph_faces('حَسَبْتُ', out)
 check('G3 المكتوب يفصل (حَسَبْتُ): حَسَبَ وحده مختارٌ بالكتابة، وحَسِبَ مرخّصٌ غير مختار', [(f['lemma'], f['status']) for f in fs] ==
       [('حَسَبَ', 'SELECTED'), ('حَسِبَ', 'LICENSED')] and fs[0]['selection_basis'] == 'WRITTEN_FORM_UNIQUE', [(f['lemma'], f['status']) for f in fs])
+LIC2 = [dict(root='سءم', form_class='I', verb='سَءِمَ', hfn_form='فَعِلَ', event_id='HFN-E-d880a5df34'),
+        dict(root='سءم', form_class='I', verb='سَئِمَ', hfn_form='فَعِلَ', event_id='HFN-E-a73e7ce511')]
+fs = morph_faces('تَسْـَٔمُوٓا', dict(status='accepted', root='سءم', form_class='I', level='event', licensed=LIC2, candidates=[('سءم', 'I')]))
+check('G5 حدثان للّمّة نفسها بكرسيّين (سَءِمَ/سَئِمَ): تحليلٌ واحد بدليلين، والهجاء المعروض ما يتحقق من الجذر والقالب، لا لمّتان بهويةٍ واحدة',
+      len(fs) == 1 and fs[0]['lemma'] == 'سَئِمَ' and len(fs[0]['evidence_ids']) == 2 and fs[0]['status'] == 'SELECTED' and
+      fs[0]['lemma_spelling_basis'] == 'REALIZED_SPELLING', [(f['lemma'], f['status'], f['evidence_ids']) for f in fs])
 m = morph('حَسَبَ', dict(stem_info('حَسَبَ'), pos='verb', governed=True))
 check('G4 morph: حَسَبَ المحكوم بعامل وجهٌ مختار واحد، ووزن الوقوع وزنه هو (فَعَلَ) لا وزن المجموعة', m['status'] == 'accepted' and
       [f['lemma'] for f in m['faces'] if f['status'] == 'SELECTED'] == ['حَسَبَ'] and m['pattern']['lemma_pattern'] == 'فَعَلَ' and
@@ -127,6 +133,7 @@ mutate('٧ دليل لمّةٍ أخرى بالجذر والباب نفسيهما
 mutate('٨أ جذرٌ على وجهٍ محمي', 'إِنَّ', lambda m: m.update(root='ءنن', form_class='I'), 'PROTECTION')
 mutate('٨ب وزنٌ على وجهٍ محمي', 'إِنَّ', lambda m: m.update(pattern=dict(lemma_pattern='فَعَلَ')), 'PROTECTION')
 mutate('٩ وجهٌ مختار بعد تأجيل الفئة', 'سَمِنَ', lambda m: m['faces'][0].__setitem__('status', 'SELECTED'), 'PROTECTION')
+mutate('١٠ وجهان بهويةٍ واحدة', 'كَتَبْتُ', lambda m: m['faces'].append(copy.deepcopy(dict(sel(m), status='LICENSED'))), 'IDENTITY')
 mutate('٩ب الحالات الأربع تناقض الأوجه', 'كَتَبْتُ', lambda m: m['statuses'].__setitem__('analysis_selection_status', 'DEFERRED_MULTIPLE_LEMMAS'), 'STATUS')
 
 # ---------- D: المثنى (§٦) ----------

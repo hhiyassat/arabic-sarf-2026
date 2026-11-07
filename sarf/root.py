@@ -635,11 +635,19 @@ def morph_faces(text, out):
     ولكل (جذر، وزن) مولَّدٍ بلا رخصة وجهٌ GENERATED. ولا يُختار وجهٌ (SELECTED) إلا إذا انفرد بالجذر والوزن المقبولين، ولم
     يُعارضه تحقيقٌ مغطّى (§٨). وإذا تعدّدت لمّات الجذر والوزن المقبولين فالجذر مثبت والاختيار الكامل مؤجَّل.
     الحالات: GENERATED، LICENSED، SELECTED، SELECTED_ROOT_LICENCE (رخصة جذرٍ بلا حدث)، RANKED، REJECTED_WITH_BARRIER"""
-    groups = {}
+    # التجميع بمفتاح التحليل نفسه (analysis_key): حدثان لِلّمّة نفسها يختلفان في كرسيّ الهمزة وحده (سَءِمَ/سَئِمَ في HFN v36) تحليلٌ
+    # واحد بدليلين، لا لمّتان؛ والهجاءات محفوظة في lemma_spellings، ويُعرض منها ما يتحقق من الجذر والقالب إن انفرد
+    raw = {}
     for x in out.get('licensed') or []:
-        k = (x['root'], x['form_class'], x['verb'], x.get('hfn_form') or '')
-        g = groups.setdefault(k, set())
-        g.add(x['event_id'])
+        k = (x['root'], x['form_class'], _plain_vowels(x['verb']), x.get('hfn_form') or '')
+        raw.setdefault(k, {}).setdefault(x['verb'], set()).add(x['event_id'])
+    groups, spell = {}, {}
+    for (r, c, _, f), sp in raw.items():
+        ok = sorted(v for v in sp if face_realization(text, r, c, f, v)['lemma']['status'] == 'MATCHED')
+        lemma = ok[0] if len(ok) == 1 else sorted(sp)[0]
+        groups[(r, c, lemma, f)] = set().union(*sp.values())
+        spell[(r, c, lemma, f)] = (sorted(sp), 'REALIZED_SPELLING' if len(ok) == 1 else 'SINGLE_SPELLING' if len(sp) == 1 else
+                                   'SORTED_SPELLING_NO_SINGLE_REALIZATION')
     acc = out.get('status') == 'accepted'
     sel_pair = (out.get('root'), out.get('form_class')) if acc else None
     n_sel = sum(1 for (r, c, v, f) in groups if (r, c) == sel_pair)
@@ -657,6 +665,8 @@ def morph_faces(text, out):
         key = analysis_key(text, root, cls, 'فعل', lemma, form)
         face = dict(analysis_id=analysis_id(key), root=root, form_class=cls, kind='فعل', lemma=lemma, hfn_forms=[form] if form else [],
                     evidence_ids=sorted(evs))
+        if len(spell[(root, cls, lemma, form)][0]) > 1:
+            face['lemma_spellings'], face['lemma_spelling_basis'] = spell[(root, cls, lemma, form)]
         face['realization'] = face_realization(text, root, cls, form, lemma)
         face['patterns'] = pattern_targets(text, cls, form, lemma, face['evidence_ids'])
         if (root, cls) == sel_pair:

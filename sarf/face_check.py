@@ -159,6 +159,9 @@ def check_face_record(word, m):
             _check_face(word, f, out)
         else:
             out.append(('SCHEMA', 'وجهٌ ليس سجلاً'))
+    ids = [f.get('analysis_id') for f in faces if isinstance(f, dict)]
+    if len(ids) != len(set(ids)):
+        out.append(('IDENTITY', 'وجهان بهويةٍ واحدة: التحليل الواحد وجهٌ واحد بأدلته كلها'))
     sel = [f for f in faces if isinstance(f, dict) and f.get('status') in ('SELECTED', 'SELECTED_ROOT_LICENCE')]
     if len(sel) > 1:
         out.append(('SELECTION', f'أكثر من وجهٍ مختار: {len(sel)}'))
