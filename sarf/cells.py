@@ -6,6 +6,7 @@ sarf.cells — الخلايا من الرسم، ورخصة بناء الاسم (
   - participle_analyses: اسما الفاعل والمفعول قياساً بقوالبهما، مرخَّصين بحدثٍ أو جذرٍ في HFN
   - sibawayh_analyses: أبنية الاسم عند سيبويه، وجذرها في HFN
 """
+import unicodedata
 from dataclasses import dataclass, field
 from functools import lru_cache
 
@@ -441,6 +442,7 @@ PROPER_V = ('مُوسَى', 'عِيسَى', 'هَٰمَٰنَ', 'هَٰرُون�
 # الأسماء المحذوفة اللام (باب ما حُذفت لامه): لا تُبنى على ثلاثة أصول مكتوبة، فهي مرخَّصة بأعيانها
 BILITERAL_V = {'يَد': 'يدي', 'دَم': 'دمي', 'غَد': 'غدو', 'أَب': 'أبو', 'أَخ': 'أخو', 'بَنِي': 'بني', 'بَنُو': 'بني',
                'سْم': 'سمو', 'فَم': 'فوه', 'شَفَة': 'شفه', 'سَنَة': 'سنو', 'لُغَة': 'لغو', 'مِائَة': 'مءي'}
+_BILITERAL_NFC = {unicodedata.normalize('NFC', k): v for k, v in BILITERAL_V.items()}
 
 
 def _hollow_fatha(t, root, cls):
@@ -560,47 +562,91 @@ NUMBER_MARKS = (('َيْنِ', 'تثنية (نصب/جر)'), ('َانِ', 'تثن
 
 
 def number_mark_splits(text):
-    """→ [(الجذع، العلامة، نوعها)]: فصل علامة التثنية أو الجمع السالم حين يبقى جذعٌ من ثلاثة أحرف فأكثر؛ والتاء قبل علامة
-    التثنية تاءُ تأنيثٍ تُردّ مربوطة (امْرَأَتَانِ ← امْرَأَة). فصلٌ مرشّح لا مثبت: «مِسْكِينَ» يحتمله وهو مفرد"""
+    """→ [(الجذع، العلامة، نوعها، العمليات)]: فصل علامة التثنية أو الجمع السالم (فصلٌ مرشّح لا مثبت: «مِسْكِينَ» يحتمله وهو مفرد).
+    AR03 §٦ — التوليد غير الترخيص وغير الاختيار:
+      • الجذع بتائه كما كُتب محفوظٌ دائماً (بَيْتَانِ ← بَيْت، صَوْتَانِ ← صَوْت)؛
+      • وبديل التاء المربوطة يُولَّد بقاعدةٍ مشروطة: علامة تثنية، والتاء آخر الجذع، وقبلها حرفٌ مفتوح — فتاء التأنيث لا يسبقها
+        إلا مفتوح (امْرَأَتَانِ ← امْرَأَة، شَجَرَتَانِ)؛ والساكن قبل التاء (بَيْت، صَوْت) يمنع البديل؛
+      • والجذع الأقصر من ثلاثة لا يُرفض بشرط طولٍ عام: يُطلب في باب ما حُذفت لامه (BILITERAL_V) بمطابقةٍ حرفية بحركاتها
+        (يَدَانِ ← يَد)، وإلا فهو مؤجَّلٌ بسببٍ مسمّى في number_mark_deferrals"""
     out = []
     for mark, kind in NUMBER_MARKS:
         if not text.endswith(mark):
             continue
         stem = text[:-len(mark)]
-        if len([c for c in stem if c.isalpha()]) < 3:
+        if len(letters(stem)) < 3:
+            if unicodedata.normalize('NFC', stem) in _BILITERAL_NFC:
+                out.append((stem, mark, kind, ['DELETED_LAM_STEM']))
             continue
-        if kind.startswith('تثنية') and stem.endswith('ت'):
-            stem = stem[:-1] + 'ة'
-        out.append((stem, mark, kind))
+        out.append((stem, mark, kind, []))
+        toks = letters(stem)
+        if kind.startswith('تثنية') and toks[-1][0] == 'ت' and FATHA in toks[-2][1]:
+            out.append((stem[:-1] + 'ة', mark, kind, ['TA_MARBUTA_TO_TA_BEFORE_NUMBER_MARK']))
+    return out
+
+
+def number_mark_deferrals(text):
+    """ما انتهى بعلامة عددٍ ولم يُفصل: سببٌ مسمّى لا رفضٌ صامت"""
+    out = []
+    for mark, kind in NUMBER_MARKS:
+        if text.endswith(mark) and len(letters(text[:-len(mark)])) < 3 and \
+                unicodedata.normalize('NFC', text[:-len(mark)]) not in _BILITERAL_NFC:
+            out.append(dict(stem=text[:-len(mark)], mark=mark, kind=kind, status='DEFERRED',
+                            reason='SHORT_STEM_NO_DELETED_RADICAL_RULE'))
     return out
 
 
 def noun_template_faces(text, _split=True):
     """AR02 §٧: أوجهٌ اسمية من أبنية سيبويه للكلمة كلها، جذرها في HFN: (الجذر، البناء، المعرّف، الصفحة، العمليات).
     وجهٌ مرخّصٌ بالقالب والجذر، لا مثبت: لا يعيّن نوع الاشتقاق ولا المعنى، ولا يُضيف حركةً غير مكتوبة.
-    وتُجرَّب الكلمة بعد فصل علامة التثنية أو الجمع السالم (segmentation: الجذع + العلامة)، والوجهان محفوظان"""
+    وتُجرَّب الكلمة بعد فصل علامة التثنية أو الجمع السالم (segmentation: الجذع + العلامة)، والوجهان محفوظان؛ والعدد مرشّحٌ
+    بالعلامة لا مثبت (number_status = CANDIDATE_BY_ENDING)"""
     out = []
     if _split:
-        for stem, mark, kind in number_mark_splits(text):
-            for f in noun_template_faces(stem, _split=False):
-                ops = ['TA_MARBUTA_TO_TA_BEFORE_NUMBER_MARK'] if stem.endswith('ة') and kind.startswith('تثنية') else []
-                out.append(dict(f, segmentation=[stem, mark], number_mark=kind, split_operations=ops))
+        for stem, mark, kind, ops in number_mark_splits(text):
+            if 'DELETED_LAM_STEM' in ops:
+                fs = [dict(root=_BILITERAL_NFC[unicodedata.normalize('NFC', stem)], pattern=None, sid=None, page=None, operations=[],
+                           kind='اسم محذوف اللام', status='LEXICALLY_LICENSED', source='sarf/cells.py BILITERAL_V')]
+            else:
+                fs = noun_template_faces(stem, _split=False)
+            for f in fs:
+                out.append(dict(f, segmentation=[stem, mark], number_mark=kind, number_status='CANDIDATE_BY_ENDING',
+                                split_operations=ops))
     out += [dict(f, segmentation=[text], number_mark=None) for f in _noun_template_faces_whole(text)]
     return out
 
 
 def _noun_template_faces_whole(text):
+    """مولِّد مرشّحاتٍ اسمية (أبنية سيبويه بجذرٍ في HFN) — لا محلّلٌ اسمي كامل؛ ومنافسته للقراءة الفعلية في root._contest_by_noun_template.
+    AR03 §١٠: تُجرَّب صور المعتلّ كلها (weak_variants) لا أولها المثمر، ويُحذف المكرّر الحقيقي وحده (الجذر والبناء والمعرّف
+    نفسها)، وتُجمع مسارات التحويل المختلفة إلى الوجه نفسه في operation_paths. وweak_variants تقف عند أول موضعٍ لكل تحويل:
+    فإن صلح للتحويل موضعٌ آخر لم يُجرَّب سُجّل search_status = SEARCH_INCOMPLETE"""
     cs, tk = cells_of(text, 'N')
     if not cs:
         return []
-    out = []
+    from .root import hfn
+    incomplete = _weak_positions(cs) > 1
+    groups = {}
     for cs2, ops in weak_variants(cs, tk):
-        from .root import hfn
         for root, sid, page, pat, alpha, ex in _sibawayh_match(cs2, hfn(), bool(ops)):
-            f = dict(root=root, pattern=pat, sid=sid, page=page, operations=list(ops), kind='بناء اسمي', status='TEMPLATE_LICENSED',
-                     source='data/patterns/awzan_sibawayh_308.csv')
-            if f not in out:
-                out.append(f)
-        if out:
-            break
+            k = (root, pat, sid)
+            g = groups.setdefault(k, dict(root=root, pattern=pat, sid=sid, page=page, operation_paths=[], kind='بناء اسمي',
+                                          status='TEMPLATE_LICENSED', source='data/patterns/awzan_sibawayh_308.csv',
+                                          search_status='SEARCH_INCOMPLETE' if incomplete else 'COMPLETE'))
+            if list(ops) not in g['operation_paths']:
+                g['operation_paths'].append(list(ops))
+    out = []
+    for k in groups:                         # ترتيب الظهور (الخلايا كما هي أولاً)، وكل مسارٍ محفوظ
+        g = groups[k]
+        g['operations'] = g['operation_paths'][0]
+        out.append(g)
     return out
+
+
+def _weak_positions(cells):
+    """عدد المواضع الصالحة لتحويلٍ واحد من تحويلات weak_variants (التي تقف عند الأول)"""
+    n1 = sum(1 for i in range(len(cells) - 2)
+             if cells[i + 1].H == '∅' and cells[i + 1].C == cells[i + 2].C and cells[i].L == 1 and
+             (cells[i + 1].C == 'ي' and cells[i].H == 'i' or cells[i + 1].C == 'و' and cells[i].H == 'u'))
+    n2 = sum(1 for a in cells[:-1] if a.L == 2 and a.O.get('madd') in ('ي', 'و') and (a.H, a.O['madd']) in (('i', 'ي'), ('u', 'و')))
+    return max(n1, n2)

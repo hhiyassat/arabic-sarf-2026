@@ -148,22 +148,36 @@ def _plain_vowels(t):
     return ''.join(_norm(c) for c in re.sub('[\u0670\u06D6-\u06ED\u0640]', '', t))
 
 
-def match_policy(a, b):
-    """AR02 §١٢: سياسة المطابقة التي تحققت فعلاً بين نصّين: NFC_LITERAL (حرفاً وحركة)، أو UTHMANI_MARKS_REMOVED (بعد حذف
-    الخنجرية والعلامات العثمانية وحدها)، أو HAMZA_SEAT_UNIFIED (بعد توحيد كراسي الهمزة أيضاً، كما يفعل _plain_vowels)، أو None"""
+MATCH_TRANSFORMS = {
+    'UTHMANI_MARKS_AND_TATWEEL_REMOVED': 'حذف الألف الخنجرية والعلامات العثمانية (U+06D6–U+06ED) والتطويل',
+    'HAMZA_SEAT_UNIFIED': 'توحيد كراسي الهمزة (أ إ ؤ ئ آ ← ء)',
+}
+
+
+def match_transformations(a, b):
+    """AR03 §٩: → قائمة التحويلات المسمّاة التي تحققت بها المطابقة ([] = NFC وحده)، أو None إن لم تتحقق"""
     import unicodedata
     nf = lambda x: unicodedata.normalize('NFC', x or '')
     if nf(a) == nf(b):
-        return 'NFC_LITERAL'
+        return []
     marks = lambda x: nf(re.sub('[\u0670\u06D6-\u06ED\u0640]', '', x or ''))
     if marks(a) == marks(b):
-        return 'UTHMANI_MARKS_REMOVED'
+        return ['UTHMANI_MARKS_AND_TATWEEL_REMOVED']
     if _plain_vowels(a) == _plain_vowels(b):
-        return 'HAMZA_SEAT_UNIFIED'
+        return (['UTHMANI_MARKS_AND_TATWEEL_REMOVED'] if marks(a) != nf(a) or marks(b) != nf(b) else []) + ['HAMZA_SEAT_UNIFIED']
     return None
 
 
-MATCH_POLICY_AR = {'NFC_LITERAL': 'حرفاً وحركة', 'UTHMANI_MARKS_REMOVED': 'حرفاً وحركة بعد حذف العلامات العثمانية',
+def match_policy(a, b):
+    """AR02 §١٢، مضبوطة في AR03 §٩: NFC_LITERAL تعني NFC وحده؛ وغيرها اسم أقوى تحويلٍ لزم (UTHMANI_MARKS_AND_TATWEEL_REMOVED أو
+    HAMZA_SEAT_UNIFIED)، والقائمة الكاملة في match_transformations؛ أو None"""
+    t = match_transformations(a, b)
+    if t is None:
+        return None
+    return t[-1] if t else 'NFC_LITERAL'
+
+
+MATCH_POLICY_AR = {'NFC_LITERAL': 'حرفاً وحركة', 'UTHMANI_MARKS_AND_TATWEEL_REMOVED': 'حرفاً وحركة بعد حذف العلامات العثمانية والتطويل',
                    'HAMZA_SEAT_UNIFIED': 'حرفاً وحركة بعد توحيد كراسي الهمزة'}
 
 
@@ -460,6 +474,72 @@ def _madi_exact(t, verb):
     return len(tt) > k + 1 and all(L in 'تنواهمكيا' for L, _ in tt[k + 1:])
 
 
+# لواحق الماضي (AR03 §٩): بحروفها وحركاتها، وحركة اللام التي تقتضيها؛ والمفعول بعد الفاعل لا قبله
+SUBJ_SUFFIXES = (('تُ', SUKUN, False), ('تَ', SUKUN, False), ('تِ', SUKUN, False), ('تُمَا', SUKUN, False), ('تُمْ', SUKUN, False),
+                 ('تُمُو', SUKUN, True), ('تُنَّ', SUKUN, False), ('نَا', SUKUN, False), ('نَ', SUKUN, False), ('تْ', FATHA, False),
+                 ('تَا', FATHA, False), ('ا', FATHA, False), ('وا', DAMMA, False), ('و', DAMMA, True), ('', FATHA, True))
+OBJ_SUFFIXES = ('هُ', 'هِ', 'هَا', 'هُمْ', 'هُمَا', 'هُنَّ', 'كَ', 'كِ', 'كُمْ', 'كُمَا', 'كُنَّ', 'نِي', 'نَا')
+_SUFFIX_TRANSFORMS = (('\u06E1', SUKUN, 'UTHMANI_SUKUN_AS_SUKUN'), ('\u06DF', '', 'UTHMANI_SILENT_MARK_REMOVED'),
+                      ('\u06E5', '', 'UTHMANI_SILAH_MARK_REMOVED'), ('\u06E6', '', 'UTHMANI_SILAH_MARK_REMOVED'))
+
+
+def madi_suffix_parse(t, verb):
+    """→ None إن لم يطابق الجذع حروف الماضي وحركاته إلى ما قبل اللام؛ وإلا dict(status, spans, transformations):
+    MATCHED_STEM_AND_LICENSED_SUFFIX إن انقسم الباقي لاحقةَ إسنادٍ تقتضي حركة اللام المكتوبة ثم ضميرَ مفعولٍ واحداً على الأكثر
+    (بهذا الترتيب، حرفاً وحركة)، وإلا SUFFIX_NOT_LICENSED (كَتَبَتَتَ). وكل تحويلٍ للرسم العثماني يُسمّى"""
+    import unicodedata
+    tr = []
+    for a, b, name in _SUFFIX_TRANSFORMS:
+        if a in t:
+            t = t.replace(a, b)
+            if name not in tr:
+                tr.append(name)
+    t = unicodedata.normalize('NFC', t)
+    vt, tt = letters(verb), letters(t)
+    k = len(vt) - 1
+    if k < 2 or len(tt) <= k or list(tt[:k]) != list(vt[:k]) or tt[k][0] != vt[k][0]:
+        return None
+    lam = tt[k][1]
+    rest = tt[k + 1:]
+    stem_span = ''.join(L + ''.join(sorted(m)) for L, m in tt[:k + 1])
+
+    def eat(seq, inv):
+        it = letters(inv)
+        if len(seq) < len(it) or [L for L, _ in seq[:len(it)]] != [L for L, _ in it]:
+            return None
+        moved = False
+        for j, ((L, m), (L2, m2)) in enumerate(zip(seq[:len(it)], it)):
+            if set(m) == set(m2):
+                continue
+            if j == len(seq) - 1 == len(it) - 1 and set(m2) <= {SUKUN} and len(set(m)) == 1 and set(m) <= {FATHA, DAMMA, KASRA}:
+                moved = True                 # الساكن آخر الكلمة يُحرَّك لالتقاء الساكنين (قَالَتِ ٱمْرَأَتُ)
+                continue
+            return None
+        return len(it), moved
+    for subj, need, obj_only in SUBJ_SUFFIXES:
+        if need not in lam:
+            continue
+        r = eat(rest, subj) if subj else (0, False)
+        if r is None:
+            continue
+        n, moved = r
+        tail = rest[n:]
+        objs = [None] if not tail else []
+        for o in OBJ_SUFFIXES if tail else ():
+            r2 = eat(tail, o)
+            if r2 and r2[0] == len(tail):
+                objs.append((o, r2[1]))
+        for ob in objs:
+            if ob is None and obj_only:
+                continue
+            ops = list(tr) + (['FINAL_SUKUN_MOVED'] if moved and not tail or (ob and ob[1]) else [])
+            return dict(status='MATCHED_STEM_AND_LICENSED_SUFFIX',
+                        spans=dict(stem=stem_span, subject_suffix=subj or None, object_suffix=ob[0] if ob else None),
+                        transformations=ops)
+    return dict(status='SUFFIX_NOT_LICENSED', spans=dict(stem=stem_span, rest=''.join(L + ''.join(sorted(m)) for L, m in rest)),
+                transformations=tr)
+
+
 def morph(text, info=None):
     """→ dict(cells, candidates, licensed=[…], status, root, form, wazn, evidence) أو None إن لم يكن فعلاً.
     بوابة الحماية الدستورية أولاً (sarf/protected.py): العوامل المائة والمبنيات والأسماء الذهبية لا يُستخرج لها جذر،
@@ -552,7 +632,7 @@ def morph_faces(text, out):
         for (r, c, v, f) in groups:
             if (r, c) == sel_pair:
                 rz = face_realization(text, r, c, f, v)
-                written[(r, c, v, f)] = rz['lemma']['status'] == 'MATCHED' and rz['word']['status'] in ('MATCHED', 'MATCHED_STEM')
+                written[(r, c, v, f)] = rz['lemma']['status'] == 'MATCHED' and rz['word']['status'] in ('MATCHED', 'MATCHED_STEM_AND_LICENSED_SUFFIX')
     by_writing = [k for k, ok in written.items() if ok]
     faces = []
     for (root, cls, lemma, form), evs in sorted(groups.items()):
@@ -562,13 +642,14 @@ def morph_faces(text, out):
         face['realization'] = face_realization(text, root, cls, form, lemma)
         face['patterns'] = pattern_targets(text, cls, form, lemma, face['evidence_ids'])
         if (root, cls) == sel_pair:
-            conflict = face['realization']['lemma']['status'] == 'MISMATCH'
+            conflict = 'REALIZATION_MISMATCH' if face['realization']['lemma']['status'] == 'MISMATCH' else \
+                'SUFFIX_NOT_LICENSED' if face['realization']['word']['status'] == 'SUFFIX_NOT_LICENSED' else None
             only = n_sel == 1 or (len(by_writing) == 1 and by_writing[0] == (root, cls, lemma, form))
             face['status'] = 'SELECTED' if only and not conflict else 'LICENSED'
             if n_sel > 1:
                 face['selection_basis'] = 'WRITTEN_FORM_UNIQUE' if face['status'] == 'SELECTED' else 'NOT_SELECTED_AMONG_LEMMAS'
             if conflict:
-                face['selection_blocked_by'] = 'REALIZATION_MISMATCH'
+                face['selection_blocked_by'] = conflict
         elif (root, cls) == (out.get('root'), out.get('form_class')) and out.get('status') == 'ranked':
             face['status'] = 'RANKED'
         else:
@@ -612,11 +693,17 @@ def face_realization(text, root, cls, hfn_form, lemma):
     lem = verify(root, cls, hfn_form, lemma)
     import unicodedata
     nf = lambda x: unicodedata.normalize('NFC', x or '')
+    sp = madi_suffix_parse(text, lemma) if lem['status'] == 'MATCHED' and nf(text) != nf(lemma) else None
     if lem['status'] == 'MATCHED' and nf(text) == nf(lemma):
-        word = dict(reconstruction_target='INPUT_WORD', comparison_policy='NFC_LITERAL', status='MATCHED')
-    elif lem['status'] == 'MATCHED' and _madi_exact(text, lemma):
-        word = dict(reconstruction_target='INPUT_WORD', comparison_policy='MADI_STEM_TO_LAST_RADICAL+ASSIGNMENT_SUFFIX',
-                    status='MATCHED_STEM', note='حروف الماضي وحركاته حتى اللام كما في اللمّة، ثم لواحق الإسناد والمفعول')
+        word = dict(reconstruction_target='INPUT_WORD', comparison_policy='NFC_LITERAL', status='MATCHED', transformations=[])
+    elif sp and sp['status'] == 'MATCHED_STEM_AND_LICENSED_SUFFIX':
+        # الجذع حتى اللام كاللمّة، ثم لاحقة إسنادٍ مرخّصة بحركة اللام، ثم ضمير مفعول — بهذا الترتيب؛ لا تحقّقٌ لتصريف الكلمة كلها
+        word = dict(reconstruction_target='INPUT_WORD', status=sp['status'], spans=sp['spans'], transformations=sp['transformations'],
+                    comparison_policy='NFC_LITERAL' if not sp['transformations'] else 'NAMED_TRANSFORMATIONS',
+                    note='الجذع واللاحقة متحقَّقان بقاعدة لواحق الماضي؛ والإعراب والزمن والإسناد خارج هذا الحكم')
+    elif sp:
+        word = dict(reconstruction_target='INPUT_WORD', status='SUFFIX_NOT_LICENSED', spans=sp['spans'], transformations=sp['transformations'],
+                    note='الجذع حتى اللام كاللمّة، والباقي لا ينقسم لاحقةَ إسنادٍ ثم ضميرَ مفعول')
     else:
         word = dict(reconstruction_target='INPUT_WORD', status='NOT_COVERED',
                     note='التصريف (المضارع والأمر والمزيد بلواحق متحركة) خارج تغطية التحقيق في هذه الجولة'
