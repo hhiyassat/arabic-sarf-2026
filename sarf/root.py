@@ -475,15 +475,26 @@ def morph(text, info=None):
     if out is not None:
         out['faces'] = morph_faces(text, out)
         out = _contest_by_noun_template(text, info or stem_info(text), out)
+        if out.get('status') == 'accepted':
+            # وزن الوقوع من الوجه المختار وحده (لمّته وقالبه)، لا من مجموعة الجذر والباب؛ ولا وزن بلا وجهٍ مختار (§٤)
+            sf = [f for f in out['faces'] if f['status'] == 'SELECTED']
+            out['pattern'] = pattern_record([x for x in out['licensed'] if (x['root'], x['form_class'], x['verb'], x.get('hfn_form')) ==
+                                             (sf[0]['root'], sf[0]['form_class'], sf[0]['lemma'], (sf[0]['hfn_forms'] or [None])[0])],
+                                            sf[0]['form_class']) if sf else None
     if prot and out is not None:
         alt = {k: out.get(k) for k in ('status', 'root', 'form_class', 'level', 'reason')}
         out.update(status='class_deferred', root=None, form_class=None, level=None, root_status='CLASS_DEFERRED',
-                   protected=prot, alternative=alt,
+                   protected=prot, alternative=alt, pattern=None,
+                   faces=[dict(f, status='LICENSED', selection_basis='CLASS_DEFERRED')
+                          if f['status'] in ('SELECTED', 'SELECTED_ROOT_LICENCE') or f.get('selection_basis') else f
+                          for f in out.get('faces') or []],
                    reason=f'تعيين الفئة مؤجَّل: وحدةٌ محمية مرشّحة ({prot["cls"]} «{prot["identity"]}») أو {prot["alternative"]}')
     elif prot:
         return dict(cells=cell_code(cells(text)), candidates=[], licensed=[], kind=None, level=None, selection={},
                     status='not_applicable', root=None, form_class=None, root_status=prot['root_status'],
                     reason=prot['reason'], protected=prot)
+    if out is not None:
+        out['statuses'] = selection_statuses(out)
     return out
 
 
@@ -513,7 +524,8 @@ def _contest_by_noun_template(text, info, out):
               and not f.get('number_mark')]
     if not rivals:
         return out
-    faces = [dict(f, status='LICENSED' if f.get('status') == 'SELECTED' else f.get('status')) for f in out.get('faces') or []]
+    faces = [dict(f, status='LICENSED' if f.get('status') in ('SELECTED', 'SELECTED_ROOT_LICENCE') else f.get('status'))
+             for f in out.get('faces') or []]
     return dict(out, status='deferred', level=None, root=None, form_class=None, faces=faces, pattern=None,
                 noun_template_rivals=rivals,
                 reason='الفعل غير مثبت: دليله حرف المضارعة وسكون الآخر وحدهما، وبناءٌ اسميٌّ يقرأ الكلمة كلها والحرف أصلاً: ' +
@@ -521,36 +533,76 @@ def _contest_by_noun_template(text, info, out):
 
 
 def morph_faces(text, out):
-    """أوجه الكلمة بهويةٍ من محتواها (AR02 §٥): لكل (جذر، وزن) مولَّد وجه؛ ومرخَّصٌ إن ورد في HFN (بشواهده كلها في وجهٍ واحد،
-    فلا يتكرّر الوجه بتكرّر الشاهد)، ومختارٌ إن قُبل؛ وحالته واحدة من GENERATED، LICENSED، SELECTED، RANKED، DEFERRED.
-    لا يُختار أول مدخلٍ معجمي بترتيبه: الوجه المختار ما قبله morph، ومدخله ما طابقه"""
-    lic = {}
+    """أوجه الكلمة (AR03 §٣): لكل (جذر، وزن، لمّة، صيغة HFN) وجهٌ مستقلٌّ بأدلته، فلا تُدمج لمّتان أو صيغتان في وجهٍ واحد؛
+    ولكل (جذر، وزن) مولَّدٍ بلا رخصة وجهٌ GENERATED. ولا يُختار وجهٌ (SELECTED) إلا إذا انفرد بالجذر والوزن المقبولين، ولم
+    يُعارضه تحقيقٌ مغطّى (§٨). وإذا تعدّدت لمّات الجذر والوزن المقبولين فالجذر مثبت والاختيار الكامل مؤجَّل.
+    الحالات: GENERATED، LICENSED، SELECTED، SELECTED_ROOT_LICENCE (رخصة جذرٍ بلا حدث)، RANKED، REJECTED_WITH_BARRIER"""
+    groups = {}
     for x in out.get('licensed') or []:
-        f = lic.setdefault((x['root'], x['form_class']), dict(root=x['root'], form_class=x['form_class'], lemmas=set(), evidence_ids=set(),
-                                                             hfn_forms=set()))
-        f['lemmas'].add(x['verb']); f['evidence_ids'].add(x['event_id']); f['hfn_forms'].add(x.get('hfn_form') or '')
+        k = (x['root'], x['form_class'], x['verb'], x.get('hfn_form') or '')
+        g = groups.setdefault(k, set())
+        g.add(x['event_id'])
+    acc = out.get('status') == 'accepted'
+    sel_pair = (out.get('root'), out.get('form_class')) if acc else None
+    n_sel = sum(1 for (r, c, v, f) in groups if (r, c) == sel_pair)
+    # إذا تعدّدت لمّات الجذر والوزن المقبولين فالمكتوب دليل الاختيار: ما تحقّقت الكلمة الداخلة منه بحروفها وحركاتها (MATCHED أو
+    # MATCHED_STEM) وانفرد بذلك اختير؛ وإلا فالاختيار مؤجَّل والجذر مثبت (حَسَبَ/فَعَلَ وحَسِبَ/فَعِلَ وجهان لا وجهٌ بلمّةٍ فارغة)
+    written = {}
+    if n_sel > 1:
+        for (r, c, v, f) in groups:
+            if (r, c) == sel_pair:
+                rz = face_realization(text, r, c, f, v)
+                written[(r, c, v, f)] = rz['lemma']['status'] == 'MATCHED' and rz['word']['status'] in ('MATCHED', 'MATCHED_STEM')
+    by_writing = [k for k, ok in written.items() if ok]
     faces = []
-    for root, cls in sorted(set(out.get('candidates') or []) | set(lic)):
-        L = lic.get((root, cls))
-        lemma = sorted(L['lemmas'])[0] if L and len(L['lemmas']) == 1 else None
-        key = analysis_key(text, root, cls, 'فعل', lemma)
-        if L is None:
-            st = 'GENERATED'
-        elif out.get('root') == root and out.get('form_class') == cls:
-            st = {'accepted': 'SELECTED', 'ranked': 'RANKED'}.get(out.get('status'), 'LICENSED')
+    for (root, cls, lemma, form), evs in sorted(groups.items()):
+        key = analysis_key(text, root, cls, 'فعل', lemma, form)
+        face = dict(analysis_id=analysis_id(key), root=root, form_class=cls, kind='فعل', lemma=lemma, hfn_forms=[form] if form else [],
+                    evidence_ids=sorted(evs))
+        face['realization'] = face_realization(text, root, cls, form, lemma)
+        face['patterns'] = pattern_targets(text, cls, form, lemma, face['evidence_ids'])
+        if (root, cls) == sel_pair:
+            conflict = face['realization']['lemma']['status'] == 'MISMATCH'
+            only = n_sel == 1 or (len(by_writing) == 1 and by_writing[0] == (root, cls, lemma, form))
+            face['status'] = 'SELECTED' if only and not conflict else 'LICENSED'
+            if n_sel > 1:
+                face['selection_basis'] = 'WRITTEN_FORM_UNIQUE' if face['status'] == 'SELECTED' else 'NOT_SELECTED_AMONG_LEMMAS'
+            if conflict:
+                face['selection_blocked_by'] = 'REALIZATION_MISMATCH'
+        elif (root, cls) == (out.get('root'), out.get('form_class')) and out.get('status') == 'ranked':
+            face['status'] = 'RANKED'
         else:
-            st = 'LICENSED' if out.get('status') != 'accepted' else 'REJECTED_WITH_BARRIER'
-        face = dict(analysis_id=analysis_id(key), root=root, form_class=cls, kind='فعل', lemma=lemma,
-                    lemma_alternatives=sorted(L['lemmas']) if L and len(L['lemmas']) > 1 else [],
-                    evidence_ids=sorted(L['evidence_ids']) if L else [], status=st,
-                    hfn_forms=sorted(L['hfn_forms']) if L else [])
-        if L and lemma and len(L['hfn_forms']) == 1:
-            face['realization'] = face_realization(text, root, cls, next(iter(L['hfn_forms'])), lemma)
-            face['patterns'] = pattern_targets(text, cls, next(iter(L['hfn_forms'])), lemma, face['evidence_ids'])
-        elif L:
-            face['realization'] = dict(status='NOT_COVERED', reason='أكثر من لمّةٍ أو صيغةٍ للوجه: لا هدف واحد')
+            face['status'] = 'REJECTED_WITH_BARRIER' if acc else 'LICENSED'
         faces.append(face)
+    lic_pairs = {(r, c) for (r, c, v, f) in groups}
+    for root, cls in sorted(set(out.get('candidates') or []) - lic_pairs):
+        st = 'GENERATED'
+        ev = []
+        if acc and out.get('level') == 'root' and (root, cls) == sel_pair:
+            st, ev = 'SELECTED_ROOT_LICENCE', [f'ROOT:{root}']
+        faces.append(dict(analysis_id=analysis_id(analysis_key(text, root, cls, 'فعل', None)), root=root, form_class=cls, kind='فعل',
+                          lemma=None, hfn_forms=[], evidence_ids=ev, status=st))
     return faces
+
+
+def selection_statuses(out):
+    """AR03 §٤: أربع حالاتٍ مستقلة من الأوجه نفسها"""
+    st = out.get('status')
+    faces = out.get('faces') or []
+    if st == 'not_applicable':
+        return dict(root_status='NOT_APPLICABLE', pattern_status='NOT_APPLICABLE', analysis_selection_status='NOT_APPLICABLE',
+                    class_status='PROTECTED')
+    if st == 'class_deferred':
+        return dict(root_status='CLASS_DEFERRED', pattern_status='DEFERRED', analysis_selection_status='DEFERRED', class_status='CLASS_DEFERRED')
+    sel = [f for f in faces if f.get('status') == 'SELECTED']
+    root_sel = [f for f in faces if f.get('status') == 'SELECTED_ROOT_LICENCE']
+    if st == 'accepted':
+        a = 'SELECTED' if sel else ('ROOT_LICENCE_ONLY' if root_sel else
+                                    'DEFERRED_REALIZATION_CONFLICT' if any(f.get('selection_blocked_by') for f in faces) else 'DEFERRED_MULTIPLE_LEMMAS')
+        p = sel[0]['patterns']['lemma_pattern']['status'] if sel else 'DEFERRED'
+        return dict(root_status='PROVEN', pattern_status=p, analysis_selection_status=a, class_status='VERB_PROVEN')
+    return dict(root_status='RANKED' if st == 'ranked' else 'DEFERRED', pattern_status='DEFERRED', analysis_selection_status='DEFERRED',
+                class_status='DEFERRED' if out.get('noun_template_rivals') else 'NOT_PROVEN_BY_THIS_LAYER')
 
 
 def face_realization(text, root, cls, hfn_form, lemma):
@@ -730,9 +782,11 @@ def pattern_record(lic, cls):
 
 
 # ---------- هوية الوجه (AR02): من محتوى التحليل لا من ترتيب العرض ----------
-def analysis_key(span, root, cls, kind, lemma):
-    """مفتاح التحليل: الجزء المغطّى (بحروفه وحركاته كما في _plain_vowels)، والجذر، والوزن أو الصنف، ونوع الوجه، واللمّة"""
-    return (_plain_vowels(span or ''), root or '', cls or '', kind or '', _plain_vowels(lemma or ''))
+def analysis_key(span, root, cls, kind, lemma, wazn=None):
+    """مفتاح التحليل: الجزء المغطّى (بحروفه وحركاته كما في _plain_vowels)، والجذر، والوزن أو الصنف، ونوع الوجه، واللمّة،
+    وصيغة الوزن (قالب HFN) إن عُرفت (AR03 §٢: فَعَلَ وفَعِلَ تحليلان). ولا يُضاف الحقل السادس إلا إذا عُرف، فتبقى هويات ما لا قالب له"""
+    k = (_plain_vowels(span or ''), root or '', cls or '', kind or '', _plain_vowels(lemma or ''))
+    return k + (_plain_vowels(wazn),) if wazn else k
 
 
 def analysis_id(key):
@@ -741,21 +795,24 @@ def analysis_id(key):
 
 
 def face_rivals(peeled, whole_faces):
-    """→ (المنافسون، الشواهد المكرّرة، الجذر المشترك أو None).
-    peeled: dict(span, root, form_class, kind, lemma) لوجه القطع المقبول؛ whole_faces: [dict(span, root, form_class|pos, kind, lemma, evidence)].
-    المنافس وجهٌ يختلف تحليله (التقشير أو الجذر أو الوزن أو الصنف أو اللمّة)، ولو اتفق الجذر؛ وما طابق تحليلَ القطع نفسه
-    (الجذر والوزن واللمّة) شاهدٌ مكرّر لا منافس؛ وتكرار الشاهد للتحليل الواحد لا يُنشئ منافساً ثانياً"""
-    pk = (peeled['root'], peeled.get('form_class') or '', _plain_vowels(peeled.get('lemma') or ''))
-    rivals, dup, seen = [], [], set()
+    """→ (المنافسون، الشواهد المكرّرة، الجذر المشترك أو None) — AR03 §٢.
+    هوية التحليل: الامتداد (التقسيم) والجذر والوزن أو الصنف ونوع الوجه واللمّة (analysis_key). فوجهان يتفقان في الجذر والباب
+    واللمّة ويختلفان في الامتداد أو الصنف تحليلان مختلفان. وتكرار الدليل للتحليل نفسه (المفتاح نفسه) لا يُنشئ وجهاً ثانياً:
+    يُجمع في وجهٍ واحد بأدلته كلها. وما طابق مفتاحُه وجهَ القطع نفسه شاهدٌ مكرّر له"""
+    pkey = analysis_key(peeled['span'], peeled['root'], peeled.get('form_class'), peeled.get('kind') or 'فعل', peeled.get('lemma'),
+                        peeled.get('wazn'))
+    groups = {}
     for f in whole_faces:
-        fk = analysis_key(f['span'], f['root'], f.get('form_class') or f.get('pos'), f.get('kind'), f.get('lemma'))
-        if (f['root'], f.get('form_class') or '', _plain_vowels(f.get('lemma') or '')) == pk:
-            dup.append(dict(f, analysis_id=analysis_id(fk)))
-            continue
-        if fk in seen:
-            continue                                  # شاهدٌ آخر للتحليل نفسه
-        seen.add(fk)
-        rivals.append(dict(f, analysis_id=analysis_id(fk)))
+        fk = analysis_key(f['span'], f['root'], f.get('form_class') or f.get('pos'), f.get('kind'), f.get('lemma'), f.get('wazn'))
+        g = groups.setdefault(fk, dict(f, analysis_id=analysis_id(fk), evidence=[]))
+        ev = f.get('evidence')
+        if ev is not None and ev not in g['evidence']:
+            g['evidence'].append(ev)
+    rivals, dup = [], []
+    for fk in sorted(groups):
+        g = groups[fk]
+        g['evidence'] = sorted(g['evidence'], key=str)
+        (dup if fk == pkey else rivals).append(g)
     shared = peeled['root'] if rivals and all(r['root'] == peeled['root'] for r in rivals) else None
     return rivals, dup, shared
 
@@ -862,7 +919,7 @@ def verse_morph(segs, governed=None, nouns=()):
                 lic = [x for x in m['licensed'] if (x['root'], x['form_class']) == (m.get('root'), m.get('form_class'))]
                 peeled = dict(span=s['text'], root=m.get('root'), form_class=m.get('form_class'), kind='فعل',
                               lemma=lic[0]['verb'] if len({x['verb'] for x in lic}) == 1 else None)
-                wf = [dict(span=t, root=r, form_class=c, pos=p if c is None else None, kind=p, lemma=l)
+                wf = [dict(span=t, root=r, form_class=c, pos=p if c is None else None, kind=p, lemma=l, evidence=f'{r}|{c or p}|{l}')
                       for t in spans for (r, c, l, p) in whole_word_matches(t)]
                 rivals, dup, shared = face_rivals(peeled, wf)
                 if rivals:
@@ -888,9 +945,10 @@ def verse_morph(segs, governed=None, nouns=()):
                             pattern=m.get('pattern') if m['status'] == 'accepted' else None,
                             whole_word_rivals=m.get('whole_word_rivals'),
                             occurrence_id=f"w{seg['word_index']}.s{s['index']}",
-                            analysis_id=analysis_id(analysis_key(s['text'], m.get('root'), m.get('form_class'), 'فعل',
-                                                                 (m['licensed'][0]['verb'] if m['licensed'] else None)))
+                            # هوية التحليل هوية الوجه المختار وحده، لا أول مرشّح (§١١)؛ فإن لم يُختر وجهٌ كامل فلا هوية تحليلٍ مختار
+                            analysis_id=next((f['analysis_id'] for f in m.get('faces') or [] if f.get('status') == 'SELECTED'), None)
                             if m['status'] == 'accepted' else None,
+                            statuses=selection_statuses(m),
                             peeled_face=m.get('peeled_face'), shared_root=m.get('shared_root'),
                             noun_template_rivals=m.get('noun_template_rivals'),
                             shared_root_status=m.get('shared_root_status'),

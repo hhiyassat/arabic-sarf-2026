@@ -30,8 +30,10 @@ def check(name, ok, info=''):
 P = dict(span='تَبَرَّ', root='برر', form_class='I', kind='فعل', lemma='بَرَّ')
 r, d, sh = face_rivals(P, [dict(span='تَبَرَّكَ', root='برر', form_class='V', kind='فعل', lemma='تَبَرَّرَ')])
 check('F1 جذرٌ واحد ووزنٌ مختلف: منافسٌ لا يختفي، والجذر المشترك ثابت', len(r) == 1 and sh == 'برر', (r, sh))
+# F2 عُدّل في AR03 §٢ (كان يفرض العيب: امتدادٌ آخر «تَبَرَّكَ» عُدّ شاهداً مكرّراً لاتفاق الجذر والباب واللمّة).
+# الصحيح: الامتداد جزءٌ من هوية التحليل؛ فالامتداد الآخر وجهٌ منافس، والجذر المشترك ثابت
 r, d, sh = face_rivals(P, [dict(span='تَبَرَّكَ', root='برر', form_class='I', kind='فعل', lemma='بَرَّ')])
-check('F2 جذرٌ ووزنٌ ولمّةٌ واحدة: شاهدٌ مكرّر لا منافس (لا تأجيل زائف)', r == [] and len(d) == 1, (r, d))
+check('F2 جذرٌ ووزنٌ ولمّةٌ واحدة بامتدادٍ آخر: منافسٌ لا شاهدٌ مكرّر، والجذر المشترك ثابت', len(r) == 1 and d == [] and sh == 'برر', (r, d))
 r, d, sh = face_rivals(P, [dict(span='تَبَرَّكَ', root='برر', form_class=None, pos='مصدر', kind='مصدر', lemma='تَبَرُّك')])
 check('F3 جذرٌ واحد وصنفٌ مختلف (اسم): منافس، والجذر المشترك ثابت', len(r) == 1 and sh == 'برر', (r, sh))
 r, d, sh = face_rivals(P, [dict(span='تَبَرَّكَ', root='برك', form_class='V', kind='فعل', lemma='تَبَرَّكَ'),
@@ -53,7 +55,8 @@ check('F7 ترتيب الأدلة لا يغيّر المنافسين ولا هو
 # ---------- I: هوية الوجه ----------
 m = morph('كَتَبْتُ')
 f = m['faces'][0]
-check('I1 الهوية من المحتوى: تُعاد بالمفتاح نفسه', f['analysis_id'] == analysis_id(analysis_key('كَتَبْتُ', f['root'], f['form_class'], 'فعل', f['lemma'])))
+# I1 عُدّل في AR03 §٢: القالب (hfn_forms) صار جزءاً من مفتاح التحليل (فَعَلَ وفَعِلَ تحليلان)
+check('I1 الهوية من المحتوى: تُعاد بالمفتاح نفسه', f['analysis_id'] == analysis_id(analysis_key('كَتَبْتُ', f['root'], f['form_class'], 'فعل', f['lemma'], f['hfn_forms'][0])))
 check('I2 الهوية لا تتبع ترتيب العرض (لا C1/C2)', not f['analysis_id'].startswith('C') and f['analysis_id'].startswith('A'))
 m1, m2 = morph('ادَّخَرَ'), morph('ادَّخَرَ')
 check('I3 تشغيلان: الأوجه وهوياتها وحالاتها متطابقة', json.dumps(m1['faces'], ensure_ascii=False) == json.dumps(m2['faces'], ensure_ascii=False))
