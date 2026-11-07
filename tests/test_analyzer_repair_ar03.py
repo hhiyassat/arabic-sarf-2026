@@ -234,6 +234,15 @@ fk = [f for f in (m or {}).get('faces') or [] if f.get('lemma') == 'كَتَبَ
 check('L8 عابر: إن رُخّص «كَتَبَ» لكَتَبَتَتَ فلا يُختار (اللاحقة غير مرخّصة تمنع الاختيار)', m is None or not fk or
       all(f['status'] != 'SELECTED' and f.get('selection_blocked_by') == 'SUFFIX_NOT_LICENSED' for f in fk), fk)
 
+w = R('كَتَبُو')
+check('L9 الامتداد يقف قبل ضمير المفعول (كَتَبُو|هُ): NOT_COVERED بسببٍ مسمّى، لا SUFFIX_NOT_LICENSED', w['status'] == 'NOT_COVERED' and
+      w['reason'] == 'SUFFIX_REQUIRES_OBJECT_OUTSIDE_SPAN', w)
+w = face_realization('وَعَدْتُّمْ', 'وعد', 'I', 'فَعَلَ', 'وَعَدَ')['word']
+check('L10 تاء الفاعل المدغمة بعد الدال (وَعَدْتُّمْ): مرخّصة بتحويلٍ مسمّى', w['status'] == 'MATCHED_STEM_AND_LICENSED_SUFFIX' and
+      'TA_ASSIMILATED_AFTER_DAL_TA' in w['transformations'], w)
+w = face_realization('كَتَبْتُّمْ', 'كتب', 'I', 'فَعَلَ', 'كَتَبَ')['word']
+check('L11 مقابل: التاء المشدّدة بعد غير الدال والطاء والتاء (كَتَبْتُّمْ) غير مرخّصة', w['status'] == 'SUFFIX_NOT_LICENSED', w)
+
 # ---------- W: مسارات الوجه الاسمي (§١٠) ----------
 from sarf.cells import _noun_template_faces_whole
 fs = _noun_template_faces_whole('حَصِين')

@@ -518,14 +518,23 @@ def madi_suffix_parse(t, verb):
                 continue
             return None
         return len(it), moved
+    incomplete = None
     for subj, need, obj_only in SUBJ_SUFFIXES:
         if need not in lam:
             continue
-        r = eat(rest, subj) if subj else (0, False)
+        seq, assim = rest, False
+        r = eat(seq, subj) if subj else (0, False)
+        if r is None and subj.startswith('ت') and tt[k][0] in 'دطت' and rest and rest[0][0] == 'ت' and SHADDA in rest[0][1]:
+            # تاء الفاعل بعد لامٍ دالٍ أو طاءٍ أو تاء تُدغم فيها فتُكتب مشدّدة (وَعَدتُّمْ، بَسَطتَّ)
+            seq = [(rest[0][0], frozenset(set(rest[0][1]) - {SHADDA}))] + list(rest[1:])
+            r, assim = eat(seq, subj), True
         if r is None:
             continue
         n, moved = r
-        tail = rest[n:]
+        tail = seq[n:]
+        if obj_only and not tail and subj:
+            incomplete = subj                # «و» أو «تُمُو» بلا ألف آخر الامتداد: ضمير المفعول بعده في خانةٍ أخرى (اتَّبَعُو|هُ)
+            continue
         objs = [None] if not tail else []
         for o in OBJ_SUFFIXES if tail else ():
             r2 = eat(tail, o)
@@ -534,10 +543,13 @@ def madi_suffix_parse(t, verb):
         for ob in objs:
             if ob is None and obj_only:
                 continue
-            ops = list(tr) + (['FINAL_SUKUN_MOVED'] if moved and not tail or (ob and ob[1]) else [])
+            ops = list(tr) + (['TA_ASSIMILATED_AFTER_DAL_TA'] if assim else []) + \
+                (['FINAL_SUKUN_MOVED'] if moved and not tail or (ob and ob[1]) else [])
             return dict(status='MATCHED_STEM_AND_LICENSED_SUFFIX',
                         spans=dict(stem=stem_span, subject_suffix=subj or None, object_suffix=ob[0] if ob else None),
                         transformations=ops)
+    if incomplete:
+        return dict(status='SUFFIX_REQUIRES_OBJECT_OUTSIDE_SPAN', spans=dict(stem=stem_span, subject_suffix=incomplete), transformations=tr)
     return dict(status='SUFFIX_NOT_LICENSED', spans=dict(stem=stem_span, rest=''.join(L + ''.join(sorted(m)) for L, m in rest)),
                 transformations=tr)
 
@@ -707,6 +719,10 @@ def face_realization(text, root, cls, hfn_form, lemma):
         word = dict(reconstruction_target='INPUT_WORD', status=sp['status'], spans=sp['spans'], transformations=sp['transformations'],
                     comparison_policy='NFC_LITERAL' if not sp['transformations'] else 'NAMED_TRANSFORMATIONS',
                     note='الجذع واللاحقة متحقَّقان بقاعدة لواحق الماضي؛ والإعراب والزمن والإسناد خارج هذا الحكم')
+    elif sp and sp['status'] == 'SUFFIX_REQUIRES_OBJECT_OUTSIDE_SPAN':
+        word = dict(reconstruction_target='INPUT_WORD', status='NOT_COVERED', reason=sp['status'], spans=sp['spans'],
+                    transformations=sp['transformations'],
+                    note='لاحقة الإسناد «' + sp['spans']['subject_suffix'] + '» لا تأتي إلا قبل ضمير مفعول، والضمير خارج هذا الامتداد')
     elif sp:
         word = dict(reconstruction_target='INPUT_WORD', status='SUFFIX_NOT_LICENSED', spans=sp['spans'], transformations=sp['transformations'],
                     note='الجذع حتى اللام كاللمّة، والباقي لا ينقسم لاحقةَ إسنادٍ ثم ضميرَ مفعول')
