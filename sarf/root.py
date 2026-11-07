@@ -487,10 +487,57 @@ def morph_faces(text, out):
             st = {'accepted': 'SELECTED', 'ranked': 'RANKED'}.get(out.get('status'), 'LICENSED')
         else:
             st = 'LICENSED' if out.get('status') != 'accepted' else 'REJECTED_WITH_BARRIER'
-        faces.append(dict(analysis_id=analysis_id(key), root=root, form_class=cls, kind='فعل', lemma=lemma,
-                          lemma_alternatives=sorted(L['lemmas']) if L and len(L['lemmas']) > 1 else [],
-                          evidence_ids=sorted(L['evidence_ids']) if L else [], status=st))
+        face = dict(analysis_id=analysis_id(key), root=root, form_class=cls, kind='فعل', lemma=lemma,
+                    lemma_alternatives=sorted(L['lemmas']) if L and len(L['lemmas']) > 1 else [],
+                    evidence_ids=sorted(L['evidence_ids']) if L else [], status=st,
+                    hfn_forms=sorted(L['hfn_forms']) if L else [])
+        if L and lemma and len(L['hfn_forms']) == 1:
+            face['realization'] = face_realization(text, root, cls, next(iter(L['hfn_forms'])), lemma)
+            face['patterns'] = pattern_targets(text, cls, next(iter(L['hfn_forms'])), lemma, face['evidence_ids'])
+        elif L:
+            face['realization'] = dict(status='NOT_COVERED', reason='أكثر من لمّةٍ أو صيغةٍ للوجه: لا هدف واحد')
+        faces.append(face)
     return faces
+
+
+def face_realization(text, root, cls, hfn_form, lemma):
+    """التحقيق العكسي للوجه (AR02 §١٠): اللمّة من الجذر وصيغة HFN بعملياتٍ مسمّاة مقابل لمّة الحدث؛ ثم الكلمة الداخلة:
+    إن كانت اللمّة نفسها، أو ماضياً بلاحقة إسنادٍ تطابق حروفه وحركاته اللمّةَ إلى ما قبل حركة اللام (_madi_exact)، وإلا NOT_COVERED"""
+    from .realize import verify
+    lem = verify(root, cls, hfn_form, lemma)
+    import unicodedata
+    nf = lambda x: unicodedata.normalize('NFC', x or '')
+    if lem['status'] == 'MATCHED' and nf(text) == nf(lemma):
+        word = dict(reconstruction_target='INPUT_WORD', comparison_policy='NFC_LITERAL', status='MATCHED')
+    elif lem['status'] == 'MATCHED' and _madi_exact(text, lemma):
+        word = dict(reconstruction_target='INPUT_WORD', comparison_policy='MADI_STEM_TO_LAST_RADICAL+ASSIGNMENT_SUFFIX',
+                    status='MATCHED_STEM', note='حروف الماضي وحركاته حتى اللام كما في اللمّة، ثم لواحق الإسناد والمفعول')
+    else:
+        word = dict(reconstruction_target='INPUT_WORD', status='NOT_COVERED',
+                    note='التصريف (المضارع والأمر والمزيد بلواحق متحركة) خارج تغطية التحقيق في هذه الجولة'
+                    if lem['status'] == 'MATCHED' else 'اللمّة نفسها لم تتحقق')
+    return dict(lemma=lem, word=word)
+
+
+def pattern_targets(text, cls, hfn_form, lemma, evidence_ids):
+    """أهداف الوزن منفصلة (AR02 §١١): لكلٍّ target وvalue_or_alternatives وstatus وsource وevidence_ids.
+    e['form'] في HFN صيغة اللمّة المتحققة، لا شكل الكلمة الداخلة؛ وعائلة الباب لا تُختار وزناً"""
+    import unicodedata
+    lp, src = lemma_pattern(cls, hfn_form)
+    same = unicodedata.normalize('NFC', text) == unicodedata.normalize('NFC', lemma or '')
+    real = re.sub(r'\s*\(.*\)$', '', hfn_form or '')
+    return dict(
+        lemma_pattern=dict(target='ميزان اللمّة المجرّد', value_or_alternatives=lp,
+                           status='SELECTED' if len(lp) == 1 else 'ALTERNATIVES', source=src, evidence_ids=evidence_ids),
+        lemma_realized_pattern=dict(target='صيغة اللمّة المتحققة كما في HFN (form)', value_or_alternatives=[real], status='RETRIEVED',
+                                    source='LEXICON_RETRIEVAL', evidence_ids=evidence_ids),
+        stem_pattern=dict(target='وزن جذع الكلمة الداخلة', value_or_alternatives=[real] if same else [], status='DERIVED_INPUT_EQUALS_LEMMA'
+                          if same else 'NOT_COVERED', source='INPUT_EQUALS_LEMMA' if same else None, evidence_ids=evidence_ids if same else []),
+        word_pattern=dict(target='وزن الكلمة الداخلة بلواحقها', value_or_alternatives=[real] if same else [],
+                          status='DERIVED_INPUT_EQUALS_LEMMA' if same else 'NOT_COVERED', source='INPUT_EQUALS_LEMMA' if same else None,
+                          evidence_ids=evidence_ids if same else []),
+        form_family=dict(target='باب الفعل', value_or_alternatives=[cls], status='FAMILY_NOT_A_SELECTED_WAZN', source='TEMPLATE_CLASS',
+                         evidence_ids=evidence_ids))
 
 
 def _morph(text, info=None):

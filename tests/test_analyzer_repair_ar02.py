@@ -103,6 +103,44 @@ mutate('حالة الاختيار', 'ادَّخَرَ', lambda m: [f.__setitem__
 mutate('نقل الحماية إلى وجهٍ غير محمي', 'إِنَّ', lambda m: m.update(root='ءنن', form_class='I'), 'PROTECTION')
 mutate('جذرٌ مقبول لوجهٍ مؤجَّل الفئة', 'سَمِنَ', lambda m: m.update(root='سمن'), 'PROTECTION')
 
+# ---------- R: التحقيق العكسي (الدفعة ٢) ----------
+from sarf.realize import verify, realize_lemma
+for root, cls, form, lemma, op in (('ضلل', 'IV', 'أَفْعَلَ', 'أَضَلَّ', 'GEMINATE_MERGE'), ('صفو', 'VIII', 'افْتَعَى (افتعل ناقص)', 'اصْطَفَى', "VIII_TA_TO_TA'"),
+                                   ('ءمن', 'IV', 'أَفْعَلَ', 'آمَنَ', 'HAMZA_SEAT'), ('دعو', 'I', 'فَعَلَ (ناقص واوي)', 'دَعَا', 'WEAK_LAM'),
+                                   ('ذكر', 'VIII', 'افْتَعَلَ', 'ادَّكَرَ', 'VIII_TA_TO_DAL_ASSIMILATED'), ('وقي', 'VIII', 'افْتَعَى (افتعل ناقص)', 'اتَّقَى', 'VIII_FA_ASSIMILATED_TO_TA')):
+    r = verify(root, cls, form, lemma)
+    check(f'R1 {lemma}: يُعاد من {root}+{form} بالعملية {op}', r['status'] == 'MATCHED' and op in r['operations'], r)
+r = realize_lemma('قول', 'I', 'فَعَلَ')
+check('R2 الأجوف غير المعلّم: بديلان (قَوَلَ، قَالَ) لا اختيار', sorted(x['form'] for x in r['alternatives']) == sorted(['قَوَلَ', 'قَالَ']), r)
+r = verify('بءر', 'VIII', 'افْتَعَلَ', 'ابْتَءَرَ')
+check('R3 همزةٌ بلا كرسيّ في الهدف: حالةٌ مسمّاة لا مطابقة', r['status'] == 'MISMATCH_HAMZA_SEAT_ONLY' and r['matched'] is False, r)
+r = verify('كتب', 'I', 'فَعَلَ', 'كَذَبَ')
+check('R4 الهدف مختلف: MISMATCH بالموضع، لا إخفاء بتجريد', r['status'] == 'MISMATCH' and r['differences'] and r['differences'][0]['position'] == 1, r)
+mm = morph('آمَنَ')
+f = next(x for x in mm['faces'] if x['root'] == 'ءمن' and x['form_class'] == 'IV')
+check('R5 نجاح التحقيق لا يثبت الاختيار: آمَنَ يتحقق ويبقى مؤجَّلاً (لا دليل فعلية بالكتابة)', f['realization']['lemma']['status'] == 'MATCHED' and
+      mm['status'] == 'deferred' and f['status'] == 'LICENSED')
+f = sel(morph('كَتَبْتُ'))
+check('W1 أهداف الوزن: الميزان مختار، والمتحقق صيغة لمّة، ووزن الكلمة غير مغطّى، والعائلة ليست وزناً مختاراً',
+      f['patterns']['lemma_pattern']['status'] == 'SELECTED' and f['patterns']['lemma_realized_pattern']['status'] == 'RETRIEVED' and
+      f['patterns']['word_pattern']['status'] == 'NOT_COVERED' and f['patterns']['form_family']['status'] == 'FAMILY_NOT_A_SELECTED_WAZN')
+mutate('القالب (صيغة HFN)', 'كَتَبْتُ', lambda m: sel(m).__setitem__('hfn_forms', ['فَعَّلَ']), 'REALIZATION')
+mutate('العملية الصرفية', 'ادَّخَرَ', lambda m: sel(m)['realization']['lemma'].__setitem__('operations', ['SUBSTITUTE']), 'REALIZATION')
+mutate('علامة التصريف (حكم الكلمة الداخلة)', 'كَتَبْتُ', lambda m: sel(m)['realization']['word'].__setitem__('status', 'MATCHED'), 'INFLECTION')
+# (دخر + افتعل يُعاد هو أيضاً «ادَّخَرَ»: التباسٌ حقيقي لا يكشفه التحقيق، فالمُفسِد جذرٌ يُعاد بغير الكلمة)
+mutate('الجذر (بالتحقيق)', 'ادَّخَرَ', lambda m: sel(m).__setitem__('root', 'ذكر'), 'REALIZATION')
+from sarf.face_check import check_verse_entry
+a = analyze(CAT, 'تَبَرَّكَ', 'auto')
+e = a['morph'][0]
+ok0 = check_verse_entry('تَبَرَّكَ', e, 'تَبَرَّ') == []
+e2 = copy.deepcopy(e)
+e2['peeled_face']['span'] = 'بَرَّكَ'
+det = sorted({d for d, _ in check_verse_entry('تَبَرَّكَ', e2, 'تَبَرَّ')})
+rec = dict(mutation='حدود التقشير', word='تَبَرَّكَ', original_valid=ok0, value_actually_changed=e2 != e, expected_detector='SEGMENTATION',
+           actual_detector=det, mutated_rejected=bool(det))
+MUT.append(rec)
+check('M حدود التقشير: الأصل سليم، وتغيّر الجزء، وكشفه SEGMENTATION', ok0 and 'SEGMENTATION' in det, rec)
+
 # ---------- X: عابرة للطبقات ----------
 a = analyze(CAT, 'تَبَرَّكَ', 'auto')
 x = a['morph'][0]
