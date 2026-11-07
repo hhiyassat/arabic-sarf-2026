@@ -52,6 +52,23 @@ def cmp_form(s):
     return s
 
 
+def unmarked_consonants(w):
+    """عدد الحروف غير المضبوطة في غير آخر الكلمة، سوى الألف وآ وى وحرفي المدّ بعد حركتهما (معياراً لنقص الضبط، لا حكماً)"""
+    base = []                                   # [(حرف، علاماته)]
+    for c in w:
+        if c in TASHKEEL and base:
+            base[-1][1].append(c)
+        elif c not in TASHKEEL:
+            base.append((c, []))
+    n = 0
+    for i, (c, marks) in enumerate(base[:-1]):
+        pm = base[i - 1][1] if i else []
+        if marks or c in 'اآى' or (c == 'و' and '\u064f' in pm) or (c == 'ي' and '\u0650' in pm):
+            continue
+        n += 1
+    return n
+
+
 def read_tsv(p):
     with open(p, encoding='utf-8') as f:
         r = csv.reader(f, delimiter='\t', quoting=csv.QUOTE_NONE)
@@ -458,7 +475,7 @@ def compare(pkg, analysis, out_dir, corrections=None):
     for rec in recs:
         ref = dict(ref_by[rec['id']])
         ref['row_review'] = row_review_status(rec['id'], corr)
-        ref['missing_tashkeel'] = sum(1 for ch in ref['word'] if ch not in TASHKEEL) > 2 * sum(1 for ch in ref['word'] if ch in TASHKEEL)
+        ref['missing_tashkeel'] = unmarked_consonants(ref['word']) >= 2
         A, B = rec['A_LEXICAL_MORPH'], rec['B_PUBLIC']
         avail = dict(root_in_hfn_v36=ref['root'] in Hh.roots, word_in_hfn_v36=(nfc(ref['word']) in hfn_verbs or _lex_key(ref['word']) in LEX))
         faces_ = A.get('faces') or []
