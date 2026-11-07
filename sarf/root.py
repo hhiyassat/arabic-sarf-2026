@@ -152,10 +152,28 @@ def _norm(L):
     return HAMZA.get(L, L)
 
 
+def _plain_toks(text):
+    """حروف التحليل: الخنجرية ألف، و«آ» همزةٌ مفتوحة بعدها ألف مدّ (آبَ = ءَابَ، آمَنَ = ءَامَنَ). الرسم الأصلي لا يُمسّ"""
+    return [(L, set(m)) for L, m in letters(re.sub('\u0670', 'ا', text.replace('آ', 'ء' + FATHA + 'ا')))]
+
+
+def _expand_base(toks):
+    """همزة الوصل أولاً تُنزع، والشدة حرفان"""
+    wasl = False
+    if toks and toks[0][0] == 'ا' and not toks[0][1]:
+        toks, wasl = toks[1:], True
+    out = []
+    for L, m in toks:
+        if SHADDA in m:
+            out.append((L, {SUKUN}))
+        out.append((L, m))
+    return out, wasl
+
+
 def _base(text, info):
     """الحروف بعد نزع الضمير المفعول ولواحق الإسناد وحرف المضارعة وهمزة الوصل؛ والشدة حرفان"""
     # الألف الخنجرية ألفٌ (يُخَٰدِعُونَ، عَٰهَدُوا)
-    toks = [(L, set(m)) for L, m in letters(re.sub('\u0670', 'ا', text.replace('آ', 'ءا')))]
+    toks = _plain_toks(text)
     if info.get('object'):
         toks = toks[:-len(letters(info['object']))]
     sig = signature(text, info)
@@ -260,6 +278,10 @@ def candidates(text, info=None, any_pos=False, _nested=False):
     if PAST_SUFFIX.search(text):
         kind = 'madi'                                # تُمۡ، نَا، تُ بعد ساكن: لاحقة الماضي تنفي المضارع (أَقۡرَرۡتُمۡ)
     readings.append((text, dict(info, kind=kind)))
+    if info.get('object') and not _nested:
+        # الطرف يشبه ضميراً متصلاً، وقد يكون من أصل الكلمة: تُجرَّب الكلمة كلها ماضياً بلا لاحقة، ولا تُرخَّص هذه
+        # القراءة إلا بمطابقة فعل HFN حرفاً وحركة (UNPEELED)
+        readings.append((text, dict(info, kind='madi', object=None, suffix=None, prefix=None, unpeeled=True)))
     t0 = letters(text)
     if kind == 'madi' and info.get('suffix') in ('وا', 'و') and t0:
         if len(t0) == 4 and FATHA in t0[0][1]:
@@ -284,8 +306,14 @@ def candidates(text, info=None, any_pos=False, _nested=False):
                 if c not in rest_c:
                     rest_c.append(c)                 # فَأَعۡرِضۡ: البقية بقراءاتها كلها (أمر أَفۡعَلَ)
     res = []
+    if not _nested:
+        UNPEELED.clear()
     for t, inf in readings:
         for c in _candidates_kind(t, inf):
+            if inf.get('unpeeled'):
+                if c in res:
+                    continue
+                UNPEELED.add(c)
             if c not in res:
                 res.append(c)
             READING[c] = READING.get(c) or t
@@ -296,6 +324,7 @@ def candidates(text, info=None, any_pos=False, _nested=False):
 
 
 PAST_SUFFIX = re.compile('\u0652(تُمْ|تُمَا|تُنَّ|نَا|تُ|تَ|تِ)$')
+UNPEELED = set()   # (الجذر، الوزن) من قراءة الكلمة كلها بلا ضمير مفعول: لا تُرخَّص إلا بالمطابقة التامة
 INSERTED = set()   # (الجذر، الوزن) الذي افتُرض فيه حرف محذوف، للكلمة الجارية (يُفرَّغ مع كل كلمة)
 READING = {}   # (الجذر، الوزن) ← نص القراءة التي أنتجته (بلا السابقة إن نُزعت)
 
@@ -304,6 +333,10 @@ def _candidates_kind(text, info):
     toks, wasl, sig = _base(text, info)
     kind = info['kind']
     alt_bases = [toks]
+    if kind == 'madi' and sig in ('ا', 'تَا') and not info.get('object'):
+        full, w_full = _expand_base(_plain_toks(text))
+        if w_full == wasl and full != toks:
+            alt_bases.append(full)                   # دَعَا، بَتَا: الألف لام الناقص لا ألف التثنية (والرخصة تفصل)
     if sig == 'وا؟' and toks and toks[-1][0] == 'و':
         alt_bases.append(toks[:-1])                  # تَهِنُوا: الواو للجمع لا لام الناقص
     tmpls = {'madi': PAST, 'mudari': MUDARI, 'amr': AMR}[kind]
@@ -331,6 +364,9 @@ def _candidates_kind(text, info):
         # افتعل وحده: تاء الافتعال تُقلب طاءً أو دالاً (ٱصۡطَبِرۡ، ٱدَّكَرَ)
         if cls == 'VIII' and len(toks) > 1 and toks[1][0] in ('ط', 'د'):
             seqs.append([toks[0], ('ت', toks[1][1])] + toks[2:])
+            if toks[0][0] == 'د' and toks[1][0] == 'د':
+                # سيبويه (الكتاب ٤/٤٦٨): اذتكر ← ادَّكَرَ؛ فالدال المدغمة فاؤها دالٌ أو ذال
+                seqs.append([('ذ', toks[0][1]), ('ت', toks[1][1])] + toks[2:])
         for seq in seqs:
             if not seq:
                 continue                               # تسلسلٌ فارغ بعد نزع اللواحق (أَتَاكَ في الرسم الإملائي): لا قالب يطابقه
@@ -439,7 +475,11 @@ def _morph(text, info=None):
         for e in H.index.get((root, cls), []):
             if exact_only and _plain_vowels(e['verb']) not in (surface, _plain_vowels(READING.get((root, cls), text))):
                 continue                     # ما لم يثبت أنه فعل: لا يُرخَّص إلا بمطابقة فعل HFN حرفاً وحركة (كَتَبَ)
+            if (root, cls) in UNPEELED and _plain_vowels(e['verb']) != surface:
+                continue                     # قراءة الكلمة كلها بلا ضمير: بالمطابقة التامة وحدها
+            lp, lps = lemma_pattern(cls, e['form'])
             licensed.append(dict(root=root, form_class=cls, hfn_form=e['form'], verb=e['verb'],
+                                 lemma_pattern=lp, lemma_pattern_source=lps, realized_pattern=e['form'],
                                  masdar=e['masdar'], event_id=e['event_id'], source=e['source'],
                                  sibawayh=e['sibawayh_rules'], tier=e['tier'],
                                  meaning=H.meanings.get(e['event_id'])))
@@ -491,6 +531,7 @@ def _morph(text, info=None):
         return out
     if len(pairs) == 1:
         out.update(status='accepted', root=pairs[0][0], form_class=pairs[0][1], level='event')
+        out['pattern'] = pattern_record([x for x in licensed if (x['root'], x['form_class']) == pairs[0]], pairs[0][1])
         if selection.get('ranked'):
             # الترجيح منفصلٌ عن الإثبات (مراجعة التقرير السادسة ٦): المرجَّح لا يُقبل ولا يدخل الإغلاق ولا الاستدلال،
             # ويُحفظ بقراءته ومنافسيه حتى يُحسم
@@ -505,6 +546,7 @@ def _morph(text, info=None):
     # ويبقى الحدث ومعناه مؤجَّلين. ولا يُطبَّق على ما لم يثبت أنه فعل.
     rooted = list(dict.fromkeys((r, c) for r, c in cands if r in H.roots)) if not exact_only else []
     if len(rooted) == 1:
+        out['pattern'] = pattern_record([], rooted[0][1])
         out.update(status='accepted', root=rooted[0][0], form_class=rooted[0][1], level='root',
                    reason='الجذر مسجَّل في HFN، والوزن بالقالب؛ ولا حدث مسجَّل بهذا الوزن، فالحدث ومعناه مؤجَّلان')
     elif rooted:
@@ -513,6 +555,54 @@ def _morph(text, info=None):
     else:
         out.update(status='deferred', reason='لم يثبت بالكتابة أنه فعل، ولا يطابق فعلاً في HFN حرفاً وحركة'
                    if exact_only else 'لا رخصة: لم يرد أيٌّ من المرشَّحات في HFN')
+    return out
+
+
+# ---------- الميزان والشكل المتحقق ----------
+I_WAZN = ('فَعَلَ', 'فَعِلَ', 'فَعُلَ')
+
+
+def lemma_pattern(cls, hfn_form):
+    """ميزان الماضي المجرّد للوجه (لا شكله بعد الإعلال): المزيد بالتحويل المعلن WAZN؛ والثلاثي من صيغة HFN إن عيّنت
+    حركة العين (فَعِلَ، «فَعَلَ (ناقص واوي)»، «فَعَلَ/فَعِلَ (أجوف)» بديلان)، وإلا فالعائلة كلها بدائل لا اختيار"""
+    if cls != 'I':
+        return ([WAZN[cls]], 'DECLARED_FORM_MAPPING') if cls in WAZN else ([], 'NONE')
+    base = (hfn_form or '').split(' (')[0]
+    opts = [x for x in base.split('/') if x in I_WAZN]
+    return (opts, 'LEXICON_FORM') if opts else (list(I_WAZN), 'CANDIDATE_FAMILY')
+
+
+def pattern_record(lic, cls):
+    """حقول الوزن للوجه المقبول: الميزان (lemma_pattern) والشكل المتحقق (realized_pattern) وعائلة الباب، كلٌّ بحالته.
+    لا يُختار من البدائل بأولها"""
+    lps = sorted({p for x in lic for p in x.get('lemma_pattern') or []}) or lemma_pattern(cls, None)[0]
+    srcs = sorted({x.get('lemma_pattern_source') for x in lic}) or [lemma_pattern(cls, None)[1]]
+    real = sorted({x['realized_pattern'] for x in lic if x.get('realized_pattern')})
+    return dict(lemma_pattern=lps[0] if len(lps) == 1 else None, lemma_pattern_alternatives=lps if len(lps) > 1 else [],
+                lemma_pattern_status='SELECTED' if len(lps) == 1 else 'ALTERNATIVES', lemma_pattern_source=srcs,
+                realized_pattern=real[0] if len(real) == 1 else None, realized_pattern_alternatives=real if len(real) > 1 else [],
+                realized_pattern_source='LEXICON_RETRIEVAL' if real else None, form_family=cls)
+
+
+# ---------- قراءة الكلمة كلها منافساً لقراءة القطع ----------
+_WHOLE = None
+
+
+def whole_word_matches(text):
+    """→ مداخل HFN التي تطابقها الكلمة كلها حرفاً وحركة: أفعالٌ (بالحركات كاملة) وأسماءٌ (بمفتاح المعجم الاسمي)"""
+    global _WHOLE
+    H = hfn()
+    if not H:
+        return []
+    if _WHOLE is None:
+        _WHOLE = {}
+        for (root, cls), es in H.index.items():
+            for e in es:
+                _WHOLE.setdefault(_plain_vowels(e['verb']), set()).add((root, cls, e['verb'], 'فعل'))
+    out = sorted(_WHOLE.get(_plain_vowels(text), ()))
+    from .cells import lex_index, _lex_key
+    for (root, pos, pattern, lu, lemma) in lex_index().get(_lex_key(text), []):
+        out.append((root, None, lemma, pos))
     return out
 
 
@@ -572,9 +662,25 @@ def verse_morph(segs, governed=None, nouns=()):
             m = morph(s['text'], info)
             if not m:
                 continue
+            whole = seg.get('word') or ''
+            # الكلمة كلها، والجذع مع ما بعده من اللواحق (فَتَبَرَّكَ: «تَبَرَّكَ» بعد الفاء)
+            span = ''.join(x['text'] for x in seg['slots'][s['index']:])
+            spans = [t for t in dict.fromkeys((whole, span)) if t and _plain_vowels(t) != _plain_vowels(s['text'])]
+            if m['status'] in ('accepted', 'ranked') and spans:
+                rivals = list(dict.fromkeys(x for t in spans for x in whole_word_matches(t) if x[0] != m.get('root')))
+                whole = next((t for t in spans if any(x in whole_word_matches(t) for x in rivals)), whole) if rivals else whole
+                if rivals:
+                    # القطع لم يثبت: الكلمة كلها تطابق مدخلاً في HFN بجذرٍ آخر (تَبَرَّكَ ماضي «برك»، نَاقِه اسم فاعل «نقه»)؛
+                    # فالوجهان محفوظان، والاختيار مؤجَّل حتى يقوم مانعٌ أو دليل
+                    m = dict(m, status='deferred', level=None, root=None, form_class=None,
+                             whole_word_rivals=[dict(root=r, form_class=c, lemma=l, pos=p) for r, c, l, p in rivals],
+                             reason='قطع الكلمة غير مثبت: الكلمة كلها «' + whole + '» تطابق مدخل HFN حرفاً وحركة: ' +
+                                    '، '.join(f'{l} ({r})' for r, c, l, p in rivals[:3]) + f' — وقراءة القطع: {m.get("root")}')
             top = m['licensed'][0] if m['licensed'] else None
             out.append(dict(word_index=seg['word_index'], slot=s['index'], status=m['status'], level=m.get('level'),
                             root=m.get('root'), form_class=m.get('form_class'), cells=m['cells'],
+                            pattern=m.get('pattern') if m['status'] == 'accepted' else None,
+                            whole_word_rivals=m.get('whole_word_rivals'),
                             reason=m.get('reason'), n_candidates=len(m['candidates']),
                             event=({k: top[k] for k in ('event_id', 'verb', 'masdar', 'hfn_form', 'source',
                                                          'sibawayh', 'meaning')}

@@ -304,6 +304,19 @@ def protected(text, iltiqa=True):
     info, pre, enc = best
     out = dict(info, form=text, proclitics=pre, enclitic=enc, root_status=NOT_APPLICABLE, reason=REASON)
     out.setdefault('ambiguous', False)
+    if not out['ambiguous'] and (pre or enc or out.get('cls') == CLASS_GOLDEN):
+        # الحماية بقطع سابقة أو لاحقة، أو اسمٌ ذهبي: إن طابقت الكلمة كلها مدخلاً في HFN حرفاً وحركة (فَتَكَ، سَمِنَ، كَمَنَ،
+        # أَحۡمَدَ فعلاً) فالوجه المعجمي الكامل قائم؛ فلا تنتقل حماية البقية المقشورة إلى الكلمة كلها، ويؤجَّل تعيين الفئة
+        # (الدستور ١: ما احتمل وحدةً محمية وتحليلاً آخر class_deferred)، والحماية باقيةٌ على المرشّح المحمي
+        from .root import whole_word_matches
+        # الفعل وحده بحركاته كاملةً حتى الآخر؛ لا مفتاح الاسم الذي يُسقط حركة الآخر والسكون (كَمَنْ «كَ + مَنْ» لا يطابق كَمَنَ)
+        lex = [x for x in whole_word_matches(text) if x[3] == 'فعل']
+        if lex:
+            out['ambiguous'] = True
+            out['lexical_rivals'] = [dict(root=r, form_class=c, lemma=l, pos=p) for r, c, l, p in lex]
+            out['alternative'] = 'كلمةٌ معجمية كاملة تطابق HFN حرفاً وحركة: ' + '، '.join(f'{l} ({r})' for r, c, l, p in lex[:3])
+            out['alternatives'] = [out['alternative']]
+            return out
     if out['ambiguous']:
         out['alternative'] = ('فعلٌ تامّ غير عامل (يُحلَّل جذره بديلاً، ولا يُقبل حتى تُعيَّن الفئة)'
                               if out['cls'] == CLASS_OPERATOR else 'اسمٌ غير عَلَم يشترك معه لفظاً')

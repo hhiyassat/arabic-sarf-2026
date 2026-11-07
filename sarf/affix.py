@@ -287,8 +287,9 @@ def stem_info(text):
             if kind == 'madi' and info['suffix'] is None:
                 if toks[-1][0] == 'ت' and toks[-1][1] == {SUKUN}:
                     info['suffix'] = 'تْ'
-                elif len(toks) >= 4 and toks[-2][0] == 'ت' and toks[-1][0] == 'م' and SUKUN in toks[-3][1]:
-                    info['suffix'] = 'تُمْ'                 # ٱسۡتَكۡبَرۡتُمۡ
+                elif len(toks) >= 4 and toks[-2][0] == 'ت' and toks[-1][0] == 'م' and SUKUN in toks[-3][1] and \
+                        DAMMA in toks[-2][1] and not toks[-1][1] & {FATHA, KASRA, DAMMA}:
+                    info['suffix'] = 'تُمْ'                 # ٱسۡتَكۡبَرۡتُمۡ؛ لا ٱسۡتَكۡتَمَ (التاء مفتوحة والميم متحركة: من الأصل)
                 elif toks[-1][0] == 'ت' and toks[-1][1] & {FATHA, DAMMA, KASRA} and SUKUN in toks[-2][1]:
                     info['suffix'] = 'تُ'
             if info['suffix'] == 'ي':
