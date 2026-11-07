@@ -175,7 +175,7 @@ def check_face_record(word, m):
     elif pat and full:
         lp = (full[0].get('patterns') or {}).get('lemma_pattern', {}).get('value_or_alternatives') or []
         got = ([pat.get('lemma_pattern')] if pat.get('lemma_pattern') else pat.get('lemma_pattern_alternatives')) if isinstance(pat, dict) else None
-        if got != lp or \
+        if sorted(got or []) != sorted(lp) or \
                 pat.get('realized_pattern') != (full[0].get('hfn_forms') or [None])[0]:
             out.append(('PATTERN', f"وزن الوقوع {pat.get('lemma_pattern') if isinstance(pat, dict) else pat} لا يطابق وزن الوجه المختار {lp}"))
     return out

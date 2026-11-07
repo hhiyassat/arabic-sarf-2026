@@ -341,6 +341,10 @@ def unit_geo(a, wi, ui, base_id, T, governed_info=None):
     if agr:
         F.update(subject=agr.get('pronouns'), voice=agr.get('voice'))
     G.Theta.update(R=root, P=m['form_class'], F=F, alpha=alpha, ops=ops)
+    # AR03 §١١: الإغلاق بالجذر والباب لا يعني اختيار الوجه الكامل؛ فحالة الاختيار وهويته من morph نفسه، لا من أول مرشّح
+    st_ = m.get('statuses') or {}
+    G.Theta['analysis_selection'] = dict(status=st_.get('analysis_selection_status'), analysis_id=m.get('analysis_id'),
+                                         pattern_status=st_.get('pattern_status'))
     wm = wazn_meaning(m['form_class'])
     if wm:
         G.Theta['wazn_meaning'] = dict(wazn=wm[0], meaning=wm[1], sources=wm[2], status=wm[3])

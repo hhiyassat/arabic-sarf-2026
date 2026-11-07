@@ -501,6 +501,8 @@ def madi_suffix_parse(t, verb):
         return None
     lam = tt[k][1]
     rest = tt[k + 1:]
+    if not rest:
+        return None                          # لا لاحقة: الكلمة على حروف الماضي بحركة لامٍ أخرى (بَرِمْ) — خارج قاعدة اللواحق
     stem_span = ''.join(L + ''.join(sorted(m)) for L, m in tt[:k + 1])
 
     def eat(seq, inv):
@@ -555,6 +557,10 @@ def morph(text, info=None):
     if out is not None:
         out['faces'] = morph_faces(text, out)
         out = _contest_by_noun_template(text, info or stem_info(text), out)
+        if out.get('status') == 'ranked' and out.get('pattern'):
+            out['ranked_pattern'] = out['pattern']         # المرجَّح ليس إثباتاً: وزنه محفوظٌ باسمه، لا وزناً للوقوع
+        if out.get('status') != 'accepted':
+            out['pattern'] = None
         if out.get('status') == 'accepted':
             # وزن الوقوع من الوجه المختار وحده (لمّته وقالبه)، لا من مجموعة الجذر والباب؛ ولا وزن بلا وجهٍ مختار (§٤)
             sf = [f for f in out['faces'] if f['status'] == 'SELECTED']

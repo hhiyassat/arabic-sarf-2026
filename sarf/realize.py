@@ -195,7 +195,9 @@ def _hamza_seats(t):
             else:
                 out[0][0] = 'إ' if own == KASRA else 'أ'
         else:
-            if prev is None and out[i - 1][0] == 'ا' and own == FATHA:
+            if i == 1 and out[0][0] == 'ا' and not out[0][1] and own == SUKUN:
+                out[i][0] = 'ئ'                                 # ساكنةٌ بعد همزة الوصل في الماضي المزيد: الوصل مكسور (ائْتَمَنَ)
+            elif prev is None and out[i - 1][0] == 'ا' and own == FATHA:
                 pass                                            # بعد ألفٍ ساكنة مفتوحةً: على السطر (سَاءَلَ)
             else:
                 cand = [v for v in (own, prev) if v in SHORT]
