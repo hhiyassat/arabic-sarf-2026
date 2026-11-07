@@ -335,7 +335,8 @@ def _candidates_kind(text, info):
     alt_bases = [toks]
     if kind == 'madi' and sig in ('ا', 'تَا') and not info.get('object'):
         full, w_full = _expand_base(_plain_toks(text))
-        if w_full == wasl and full != toks:
+        # شكل الماضي وحده: أوله مفتوح أو بعد همزة وصل، وما قبل الألف مفتوح (دَعَا، ٱشۡتَرَىٰ)؛ لا «كُلَا» (أمر المثنى)
+        if w_full == wasl and full != toks and len(full) >= 3 and (FATHA in full[0][1] or w_full) and FATHA in full[-2][1]:
             alt_bases.append(full)                   # دَعَا، بَتَا: الألف لام الناقص لا ألف التثنية (والرخصة تفصل)
     if sig == 'وا؟' and toks and toks[-1][0] == 'و':
         alt_bases.append(toks[:-1])                  # تَهِنُوا: الواو للجمع لا لام الناقص
