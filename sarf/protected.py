@@ -304,8 +304,8 @@ def protected(text, iltiqa=True):
     info, pre, enc = best
     out = dict(info, form=text, proclitics=pre, enclitic=enc, root_status=NOT_APPLICABLE, reason=REASON)
     out.setdefault('ambiguous', False)
-    if not out['ambiguous'] and (pre or enc or out.get('cls') == CLASS_GOLDEN):
-        # الحماية بقطع سابقة أو لاحقة، أو اسمٌ ذهبي: إن طابقت الكلمة كلها مدخلاً في HFN حرفاً وحركة (فَتَكَ، سَمِنَ، كَمَنَ،
+    if not out['ambiguous'] and (pre or out.get('cls') == CLASS_GOLDEN):
+        # الحماية بقطع سابقة، أو اسمٌ ذهبي: إن طابقت الكلمة كلها مدخلاً في HFN حرفاً وحركة (فَتَكَ، سَمِنَ، كَمَنَ،
         # أَحۡمَدَ فعلاً) فالوجه المعجمي الكامل قائم؛ فلا تنتقل حماية البقية المقشورة إلى الكلمة كلها، ويؤجَّل تعيين الفئة
         # (الدستور ١: ما احتمل وحدةً محمية وتحليلاً آخر class_deferred)، والحماية باقيةٌ على المرشّح المحمي
         from .root import whole_word_matches
