@@ -488,7 +488,10 @@ def _contest_by_noun_template(text, info, out):
         return out
     from .cells import noun_template_faces
     first = letters(text)[0][0]
-    rivals = [f for f in noun_template_faces(text) if f['root'] != out.get('root') and _norm(f['root'][0]) == _norm(first)]
+    if _norm(first) == _norm((out.get('root') or ' ')[0]):
+        return out                    # قراءة الفعل نفسها تجعل الحرف أصلاً (أَذِّنْ ← ءذن): لا خلاف على الحرف
+    rivals = [f for f in noun_template_faces(text) if f['root'] != out.get('root') and _norm(f['root'][0]) == _norm(first)
+              and not f.get('number_mark')]
     if not rivals:
         return out
     faces = [dict(f, status='LICENSED' if f.get('status') == 'SELECTED' else f.get('status')) for f in out.get('faces') or []]
@@ -840,10 +843,6 @@ def verse_morph(segs, governed=None, nouns=()):
                               lemma=lic[0]['verb'] if len({x['verb'] for x in lic}) == 1 else None)
                 wf = [dict(span=t, root=r, form_class=c, pos=p if c is None else None, kind=p, lemma=l)
                       for t in spans for (r, c, l, p) in whole_word_matches(t)]
-                if not info.get('governed') and whole and _no_case_vowel(whole):
-                    from .cells import noun_template_faces
-                    wf += [dict(span=whole, root=f['root'], form_class=None, pos='بناء اسمي', kind='بناء اسمي', lemma=f['pattern'])
-                           for f in noun_template_faces(whole) if f['root'] != m.get('root')]
                 rivals, dup, shared = face_rivals(peeled, wf)
                 if rivals:
                     # القطع لم يثبت: الكلمة كلها (أو الجذع مع لواحقه) تطابق مدخلاً في HFN بتحليلٍ آخر — جذرٍ أو وزنٍ أو صنفٍ آخر،
