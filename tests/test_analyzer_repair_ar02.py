@@ -196,6 +196,31 @@ a = analyze(CAT, 'وَقَالَتْ', 'auto')
 x = a['morph'][0]
 check('X2 analyze: وَقَالَتْ مقبول بوجهٍ واحد ذي هوية، بلا منافس', x['status'] == 'accepted' and x['analysis_id'] and not x.get('whole_word_rivals'))
 
+# ---------- C: المستهلكون (الدفعة ٥) ----------
+from sarf.algebra import sentence_geo, Trace
+from sarf.features import unit_features
+
+
+def layers(w):
+    a = analyze(CAT, w, 'auto')
+    S_, U = sentence_geo(a, 'B', Trace())
+    return a, U, unit_features(a, U)
+
+
+a, U, F = layers('نَمِشْ')
+check('C1 السمات: «نَمِشْ» الصنف مؤجَّل (لا «فعل» مثبت) والوحدة غير مغلقة بجذر', F[(0, 0)]['pos']['st'] == 'مؤجَّل' and not U[(0, 0)].closed)
+a, U, F = layers('لَمْ يَكْتُبْ')
+check('C2 مقابل: «لَمْ يَكْتُبْ» الصنف فعلٌ مثبت والوحدة مغلقة', F[(1, 0)]['pos']['v'] == 'فعل' and F[(1, 0)]['pos']['st'] == 'مثبت' and U[(1, 0)].closed)
+a, U, F = layers('تَبَرَّكَ')
+check('C3 الإغلاق: «تَبَرَّكَ» لا تُغلق بجذر وجهٍ مؤجَّل، ولا وزن على مستوى الوقوع', not U[(0, 0)].closed and U[(0, 0)].Theta.get('root') is None and
+      a['morph'][0].get('pattern') is None)
+a, U, F = layers('وَقَالَتْ')
+check('C4 مقابل: «وَقَالَتْ» تُغلق، وسمتها من وجهها المختار', U[(0, 1)].closed and F[(0, 1)]['pos']['v'] == 'فعل' and
+      a['morph'][0]['analysis_id'] and a['morph'][0]['pattern']['lemma_pattern'] == 'فَعَلَ')
+a, U, F = layers('ادَّخَرَ')
+check('C5 حدٌّ مسمّى: «ادَّخَرَ» مقبولٌ في morph (ذخر) والوحدة لا تُغلق لأن Realize في algebra بلا إدغام افتعل — مفتوحةٌ لا مغلقةٌ خطأً',
+      a['morph'][0]['status'] == 'accepted' and a['morph'][0]['root'] == 'ذخر' and not U[(0, 0)].closed)
+
 json.dump(MUT, open(os.environ.get('AR02_MUTATIONS_OUT', '/dev/null'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 print('نجح' if not FAILS else f'فشل {len(FAILS)}: {FAILS}')
 sys.exit(1 if FAILS else 0)

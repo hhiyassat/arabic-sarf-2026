@@ -706,6 +706,11 @@ def unit_features(a, units):
             prot = G.Theta.get('protected')
             if stem_i is not None and (wi, stem_i) in agr:
                 rec = verb_features(G, agr[(wi, stem_i)], morph.get((wi, stem_i)), encl, gov.get((wi, stem_i)))
+                mrec = morph.get((wi, stem_i)) or {}
+                if mrec.get('noun_template_rivals'):
+                    # AR02 §١٥: وجهٌ اسمي حيّ ينازع الفعل (§٨): لا تبقى سمات الوجه الفعلي مختارةً على الوقوع
+                    rec = {'pos': feat(None, DEFER, 'فعلٌ أو اسم: بناءٌ اسمي (' + '، '.join(
+                        f"{r['root']} {r['pattern']}" for r in mrec['noun_template_rivals'][:2]) + ') ينازع دليل الفعل (حرف المضارعة وسكون الآخر)')}
             elif stem is not None and not prot and lexk not in ('عامل', 'مبني', 'لفظ الجلالة'):
                 rec = noun_features(G, seg, stem, any(s['type'] == 'أل' for s in slots), encl)
             elif _verbal_operator(_with_subject(G.O['text'], su, ui, seg)):

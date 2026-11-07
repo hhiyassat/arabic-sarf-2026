@@ -892,6 +892,7 @@ def verse_morph(segs, governed=None, nouns=()):
                                                                  (m['licensed'][0]['verb'] if m['licensed'] else None)))
                             if m['status'] == 'accepted' else None,
                             peeled_face=m.get('peeled_face'), shared_root=m.get('shared_root'),
+                            noun_template_rivals=m.get('noun_template_rivals'),
                             shared_root_status=m.get('shared_root_status'),
                             reason=m.get('reason'), n_candidates=len(m['candidates']),
                             event=({k: top[k] for k in ('event_id', 'verb', 'masdar', 'hfn_form', 'source',
