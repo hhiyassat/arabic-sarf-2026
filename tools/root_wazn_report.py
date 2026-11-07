@@ -191,10 +191,11 @@ MEAS = dict(
     by_pos={k: dict(n=v['n'], ref_root_in_faces=v['ref_root_in_faces']['value'], pair=v['pair_in_same_face_convention']['value'],
                     root_proven=v['root_proven']['n'], B_root_proven=v['B_public']['root_proven']['n']) for k, v in M['by_pos'].items()},
     corruption=dict(cases=len(CC['cases']), refused=sum(v['refused'] for v in CC['cases'].values())),
-    tests=dict(passed=TESTLOG.count('ok  '), failed=TESTLOG.count('FAIL')),
+    tests=dict(passed=sum(1 for l in TESTLOG.splitlines() if l.startswith('ok  ')), failed=sum(1 for l in TESTLOG.splitlines() if l.startswith('FAIL ')),
+               final_line=TESTLOG.strip().splitlines()[-1]),
     rw01_vs_rw02=dict(counts=DF['counts'], analyzer_output_changed=DF['analyzer_output_changed']),
     exposure={k: v['n'] for k, v in EX['partitions'].items()},
-    verdicts=dict(BENCHMARK_REPAIRED=TESTLOG.count('FAIL') == 0, PARTICIPLE_BRANCH_EXECUTES=EXE['branch_status']['participle'].get('EXECUTION_FAILURE', 0) == 0,
+    verdicts=dict(BENCHMARK_REPAIRED=not any(l.startswith('FAIL ') for l in TESTLOG.splitlines()) and TESTLOG.strip().endswith('نجح'), PARTICIPLE_BRANCH_EXECUTES=EXE['branch_status']['participle'].get('EXECUTION_FAILURE', 0) == 0,
                   STRUCTURAL_VALIDATION_ENFORCED=all(v['refused'] for v in CC['cases'].values()), DEV_RERUN_COMPLETED=True,
                   ANALYZER_UNCHANGED=analyzer_unchanged, HELDOUT_INFERENCE_NOT_RUN=True, REFERENCE_REVIEWED=False, ANALYZER_APPROVED=None))
 json.dump(MEAS, open(os.path.join(D, 'measurement.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
@@ -266,7 +267,7 @@ cust = f"""# مقياس الجذر والوزن، الجولة 02: إصلاح أ
 | POS_ASSISTED_DIAGNOSTIC (ليس أعمى) | {PA['agree']:,} / {PA['accepted']:,} = {pct(PA['precision'])} (ويلسون {pct(PA['wilson_low'])}) من {PA['verbs']:,} فعلاً |
 
 **عدم تطابق الحقول:**
-- {MAIN['root_mismatch_rows']} جذراً مثبتاً، و{MAIN['wazn_mismatch_rows']} وزناً مختاراً، يجتمع الاثنان في {MAIN['root_and_wazn_mismatch_rows']} صفين.
+- جذورٌ مثبتة مخالفة: {MAIN['root_mismatch_rows']}؛ وأوزانٌ مختارة مخالفة: {MAIN['wazn_mismatch_rows']}؛ ويجتمع الاثنان في صفوفٍ عددها {MAIN['root_and_wazn_mismatch_rows']}.
 - من أوزان عدم التطابق، {MAIN['observations'].get('PROVEN_WAZN_EQUALS_REFERENCE_SURFACE_PATTERN', 0)} وزناً يساوي فيها وزن المحلّل الشكلَ المتحقق في المرجع (`surface_pattern`)، لا ميزانه.
 
 **المقام المنفصل (`PROVISIONAL_REFERENCE_FLAGGED`):** {FLAG['n']} صفاً للجذر و{WFLAG['n']} للوزن، وفيه: الجذر المرجعي بين الأوجه {pct(FLAG['ref_root_in_faces']['value'])}.
