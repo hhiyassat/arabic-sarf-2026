@@ -159,7 +159,7 @@ cmp_table = [
     ('وزنٌ مثبت (موافق/المجموع)', f"{g1['wazn_proven']['correct']}/{g1['wazn_proven']['n']}",
      f"{WMAIN['wazn_selected']['agree_convention']['k']}/{WMAIN['wazn_selected']['n']}",
      'RW01 عدّ العائلة وقائمة الأوزان وزناً مثبتاً؛ RW02 يعدّ الوزن المختار الواحد وحده'),
-    ('أعطال التنفيذ (كلمات)', 0, EXE['words_with_any_failure'],
+    ('أعطال التنفيذ (كلمات)', 'المعلن 0؛ والفعلي 16,499', EXE['words_with_any_failure'],
      'RW01 أعلن صفراً خطأً: فرع المشتقات فشل في 16,499 صفاً ولم يُعدّ؛ RW02 بعد الإصلاح'),
     ('«CONTEXT_REQUIRED»', g1['categories'].get('CONTEXT_REQUIRED'), 0,
      f"أُعيدت تسميتها REFERENCE_CANDIDATE_PRESENT_SELECTION_UNRESOLVED ({MAIN['observations'].get('REFERENCE_CANDIDATE_PRESENT_SELECTION_UNRESOLVED')})")]
@@ -288,6 +288,8 @@ cust = f"""# مقياس الجذر والوزن، الجولة 02: إصلاح أ
 **إصلاح أداة القياس ليس تحسيناً في المحلّل.**
 
 ## ٥. ما بقي عيباً مقترحاً في المحلّل (لجولةٍ لاحقة)
+
+الأعداد على كل صفوف dev (RAW_ALL)، لأن العيب في المحلّل لا يتوقف على حالة مراجعة المرجع.
 
 | الرمز | العدد | الحالة |
 |---|---:|---|
