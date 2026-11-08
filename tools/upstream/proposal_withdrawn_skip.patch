@@ -1,0 +1,24 @@
+--- frozen_base/sarf/root.py	2026-11-07 21:04:21.000000000 +0000
++++ frozen_c2/sarf/root.py	2026-11-08 08:34:16.108191239 +0000
+@@ -101,6 +101,10 @@
+         if not self.path:
+             return
+         for e in csv.DictReader(open(os.path.join(self.path, 'events.csv'), encoding='utf-8')):
++            if (e.get('event_review_v36') or '').startswith('WITHDRAWN'):
++                # مقترح (SARF_UPSTREAM_CONSUMPTION_2026_11_08 §٧): الحدث المسحوب لا يُقرأ حدثاً حياً، ويُحفظ مرجعه وسببه
++                self.withdrawn = getattr(self, 'withdrawn', []) + [(e['event_id'], e['verb'], e['event_review_v36'][:80])]
++                continue
+             cls = hfn_class(e['form'])
+             self.roots.add(e['root_K'])
+             if cls:
+--- frozen_base/sarf/cells.py	2026-11-07 21:04:21.000000000 +0000
++++ frozen_c2/sarf/cells.py	2026-11-08 08:34:29.715436258 +0000
+@@ -141,6 +141,8 @@
+         if H.path and os.path.exists(os.path.join(H.path, 'lexical_units.csv')):
+             ev_root = {}
+             for e in csv.DictReader(open(os.path.join(H.path, 'events.csv'), encoding='utf-8')):
++                if (e.get('event_review_v36') or '').startswith('WITHDRAWN'):
++                    continue                 # مقترح §٧: لمّات الحدث المسحوب لا تعود من طريق فهرس الأسماء
+                 ev_root[e['event_id']] = e['root_K']
+             for x in csv.DictReader(open(os.path.join(H.path, 'lexical_units.csv'), encoding='utf-8')):
+                 if x['pos_ar'] in NOUN_POS and x['event_id'] in ev_root:
