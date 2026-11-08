@@ -120,7 +120,7 @@ def main():
     # ---------- HFN v47: الإصدار المثبت ومخططه وأحداثه (المسحوب يُعرف ويُستبعد) ----------
     rel = PIN['hfn_release']
     hdir = os.path.join(P['hfn'], 'release', rel)
-    H47 = {}
+    H47, EV47 = {}, {}
     ok_ev = need(f'HFN:release/{rel}/events.csv', os.path.join(hdir, 'events.csv'), EXP.get(f'HFN:release/{rel}/events.csv'))
     ok_mf = need(f'HFN:release/{rel}/MANIFEST.json', os.path.join(hdir, 'MANIFEST.json'), EXP.get(f'HFN:release/{rel}/MANIFEST.json'))
     if ok_ev and ok_mf:
@@ -135,6 +135,7 @@ def main():
                 R[f'HFN:release/{rel}/MANIFEST.json']['status'] = 'CONFIG_ERROR: COUNTS_EVENTS_MISMATCH'
             for e in rows:
                 H47.setdefault(letters(e['verb']), []).append(e)
+                EV47[e['event_id']] = e
             out['hfn47_counts'] = dict(events=len(rows), withdrawn=sum(1 for e in rows if e['event_review_v36'].startswith('WITHDRAWN')),
                                        manifest_counts_events=man.get('counts', {}).get('events'))
             FORMS = sorted({e['form'] for e in rows})
@@ -180,6 +181,7 @@ def main():
     XW = None
     if need('WAZN:data/hfn_form_crosswalk.tsv', os.path.join(P['wazn'], 'data', 'hfn_form_crosswalk.tsv'), EXP.get('WAZN:data/hfn_form_crosswalk.tsv')):
         XW = {r['hfn_form']: r for r in csv.DictReader(open(os.path.join(P['wazn'], 'data', 'hfn_form_crosswalk.tsv'), encoding='utf-8'), delimiter='\t')}
+        out['form_crosswalk'] = {f: r['wazn_code'] for f, r in XW.items()}
     # البناء في الإصدار وجدول الربط: المدعوم وغير المدعوم كما هو، بلا تقريب إلى أقرب بناء
     if H47 and XW is not None:
         out['hfn47_form_support'] = {f: (dict(wazn_code=XW[f]['wazn_code'], status=XW[f]['status'], categories=XW[f]['categories'])
@@ -358,6 +360,43 @@ def main():
                                      semantic_axes=j.get('semantic_axes'), body=j.get('body_snippet'), text_status='OCR_UNVERIFIED'))
             o['maqayis'] = dict(status='OK' if recs else 'QUERY_OK_NO_RESULT', records=recs, via='AMLN:data/maqayis_bank_crosswalk.tsv (bank_K)')
         out['root'][root] = o
+    # ---------- مراجع الأحداث: كل معرّف حدثٍ في صفٍّ يُقرن بحقول الحدث نفسه في الإصدار المثبت (للتحقّق من الهوية وحالة السحب) ----------
+    # والمعرّفات التي لا تحملها واجهة المحرّك تُستردّ من الجدول المثبت نفسه (بصمته مفحوصة): mutawaa_v7 (base_event، mutawaa_event)،
+    # وtaadiya_T_JAL في AMLN (base_event للّازم)؛ ولا يُخمَّن معرّفٌ لم يُكتب في المصدر
+    MU_EV, TJ_EV = {}, {}
+    if MU is not None and R.get('WAZN:' + os.path.relpath(MU.TABLE, P['wazn']), {}).get('status') == 'OK':
+        for r_ in csv.DictReader(open(MU.TABLE, encoding='utf-8'), delimiter='\t'):
+            MU_EV.setdefault((r_['root'], letters(r_['base']), letters(r_['mutawaa'])), []).append((r_.get('base_event') or None, r_.get('mutawaa_event') or None))
+    if R.get('AMLN:ahdath/taadiya_T_JAL.tsv', {}).get('status') == 'OK':
+        for r_ in csv.DictReader(open(os.path.join(P['amln'], 'ahdath', 'taadiya_T_JAL.tsv'), encoding='utf-8'), delimiter='\t'):
+            TJ_EV.setdefault((letters(r_['base']), letters(r_['verb'])), []).append((r_.get('base_event') or None, r_.get('event_id') or None))
+
+    def ref(eid):
+        if not eid:
+            return None
+        e = EV47.get(eid)
+        if e is None:
+            return dict(event_id=eid, found=False)
+        return dict(event_id=eid, found=True, root_K=e['root_K'], verb=e['verb'], form=e['form'],
+                    withdrawn=e['event_review_v36'].startswith('WITHDRAWN'))
+
+    for lem_, o in out['lemma'].items():
+        for key, d in o.items():
+            if not isinstance(d, dict) or not isinstance(d.get('rows'), list):
+                continue
+            for x in d['rows']:
+                if key == 'hfn47':
+                    x['event_ref'] = ref(x['event_id'])
+                elif key in ('mutawaa', 'mutawaa_base'):
+                    ids = MU_EV.get((x['root'], letters(x['base']), letters(x['mutawaa'])), [])
+                    x['event_ids_from_table'] = ids
+                    pick = sorted({(i[0] if key == 'mutawaa' else i[1]) for i in ids if (i[0] if key == 'mutawaa' else i[1])})
+                    x['event_ref'] = ref(pick[0]) if len(pick) == 1 else (dict(found=False, ambiguous=pick) if pick else None)
+                elif key == 'taadiya_T_JAL':
+                    ids = sorted({i[0] for i in TJ_EV.get((letters(x.get('lazim')), letters(x.get('mutaaddi'))), []) if i[0]})
+                    x['event_ref'] = ref(ids[0]) if len(ids) == 1 else (dict(found=False, ambiguous=ids) if ids else None)
+                elif key in ('transitivity_wasit_v5', 'sifat_v2', 'ahdath', 'jiha'):
+                    x['event_ref'] = ref(x.get('event_id'))
     out['maqayis_unmapped_entries'] = [dict(entry_id=x['entry_id'], display=x['root_display'], basis=x['basis']) for x in MQX.get('', [])]
     json.dump(out, sys.stdout, ensure_ascii=False)
 

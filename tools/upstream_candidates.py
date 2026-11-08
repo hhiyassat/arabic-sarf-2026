@@ -76,7 +76,73 @@ MUJARRAD_FORMS = ('فَعَلَ', 'فَعِلَ', 'فَعُلَ')
 ST = dict(PROTECTED='PROTECTED_NOT_QUERIED', UNRESOLVED='IDENTITY_OR_LEMMA_UNRESOLVED', NO_RESULT='QUERY_OK_NO_RESULT',
           MATCH='CANDIDATE_MATCH', NON_MATCH='NON_MATCH', BLOCKED='ROUTE_BLOCKED', WITHDRAWN='WITHDRAWN_RECORD',
           MISSING='RESOURCE_MISSING', ERROR='INTERFACE_OR_CONFIG_ERROR', UNSUPPORTED='UNSUPPORTED_FORM')
+ST.update(CONFLICT='LEXEME_IDENTITY_CONFLICT', EVENT_MISMATCH='EVENT_ID_FIELD_MISMATCH', UNDETERMINED='IDENTITY_UNDETERMINED')
 RANK = ('CANDIDATE', 'مرشّح: لا يدخل الإغلاق ولا الاستدلال')
+# هوية الدليل (SARF_UPSTREAM_CONSUMER_REPAIR_02 §٣): بصمة sha256 على ترميز JSON قانوني (مفاتيح مرتّبة، UTF-8، بلا فراغات) لحقول الهوية والحمولة،
+# فلا يحيل معرّفٌ واحد إلى محتويين، ولا يتوقّف على ترتيب الصفوف
+EVIDENCE_ID_ALGO = 'sha256(canonical_json_v1)[:32]'
+EVIDENCE_ID_FIELDS = ('occurrence_id', 'morph_candidate_id', 'analysis_id', 'source_key', 'provider', 'route_id', 'source_commit', 'release_id',
+                      'source_file_sha256', 'source_row_id', 'payload')
+
+
+def canonical(d):
+    return json.dumps(d, ensure_ascii=False, sort_keys=True, separators=(',', ':'))
+
+
+def evidence_id(content):
+    import hashlib
+    return 'UPEV-' + hashlib.sha256(canonical({k: content.get(k) for k in EVIDENCE_ID_FIELDS}).encode('utf-8')).hexdigest()[:32]
+
+
+def verify_evidence_registry(records):
+    """→ قائمة الأخطاء: معرّفٌ لا يطابق بصمة محتواه، أو معرّفٌ واحد بمحتويين"""
+    errs, seen = [], {}
+    for e in records:
+        if evidence_id(e) != e['evidence_id']:
+            errs.append(('ID_DOES_NOT_MATCH_CONTENT', e['evidence_id']))
+        c = canonical({k: e.get(k) for k in EVIDENCE_ID_FIELDS})
+        if seen.setdefault(e['evidence_id'], c) != c:
+            errs.append(('SAME_ID_DIFFERENT_CONTENT', e['evidence_id']))
+    return errs
+
+
+def identity(fr, row_root, row_form, row_verb, ev, xw):
+    """هوية صفّ المصدر مقابل الوجه (§٢): الجذر، والبناء (تصنيف sarf نفسه hfn_class، وجدول wazn-net hfn_form_crosswalk شاهداً ثانياً)،
+    ومعرّف الحدث وحقوله وحالة سحبه. → (الحالة، التفصيل). لا يُنسخ جذرٌ فوق جذر، ونقص المعلومة تأجيل"""
+    from sarf.root import hfn_class
+    from worker import letters
+    K = lambda r_: query_key(r_)[0]
+    d = dict(face_root=fr['root'], face_class=fr['pattern'], row_root=row_root or None, row_form=row_form or None, row_verb=row_verb, event_ref=ev)
+    if ev and ev.get('ambiguous'):
+        return ST['UNDETERMINED'], dict(d, reason='EVENT_ID_AMBIGUOUS_IN_SOURCE_TABLE')
+    if ev and ev.get('found') is False:
+        return ST['UNDETERMINED'], dict(d, reason='EVENT_ID_NOT_IN_PINNED_RELEASE')
+    if ev and ev.get('withdrawn'):
+        return ST['WITHDRAWN'], dict(d, reason='EVENT_WITHDRAWN')
+    if ev:
+        mis = []
+        if row_root and K(row_root) != K(ev['root_K']):
+            mis.append('root')
+        if row_form and hfn_class(row_form) != hfn_class(ev['form']):
+            mis.append('form')
+        if row_verb and letters(row_verb) != letters(ev['verb']):
+            mis.append('verb')
+        if mis:
+            return ST['EVENT_MISMATCH'], dict(d, reason='EVENT_ID_FIELDS_DISAGREE: ' + ','.join(mis))
+    src_root = row_root or (ev or {}).get('root_K')
+    src_form = row_form or (ev or {}).get('form')
+    if not src_root or not src_form:
+        return ST['UNDETERMINED'], dict(d, reason='MISSING_' + ('ROOT' if not src_root else 'FORM'))
+    sc, xc = hfn_class(src_form), (xw or {}).get(src_form) or None
+    d.update(source_root=src_root, source_form=src_form, source_class=sc, crosswalk_code=xc,
+             event_linked_to_face=bool(ev) and ev.get('event_id') in {e['event_id'] for e in fr['hfn_events']})
+    if sc is None:
+        return ST['UNDETERMINED'], dict(d, reason='FORM_CLASS_UNKNOWN')
+    if xc and xc != sc:
+        return ST['UNDETERMINED'], dict(d, reason=f'CROSSWALK_DISAGREES ({xc} ≠ {sc})')
+    if K(src_root) != K(fr['root']) or sc != fr['pattern']:
+        return ST['CONFLICT'], dict(d, reason=('ROOT ' if K(src_root) != K(fr['root']) else '') + ('FORM' if sc != fr['pattern'] else ''))
+    return 'IDENTITY_OK', dict(d, reason=None)
 
 
 def query_key(root):
@@ -171,10 +237,24 @@ def feature_rows(fr, lem, W, res, pins):
     P, RS = res['provenance'], res['resources']
     rows = []
 
-    def base(provider, route, source_key, file_key, row_id, row_verb, match, diff, scope, extra, state=None, route_ok=True):
+    XW = res.get('form_crosswalk') or {}
+
+    def base(provider, route, source_key, file_key, row_id, row_verb, match, diff, scope, extra, state=None, route_ok=True, idn=None):
         meta = ROUTES.get((provider, route)) or {}
         pv = {'AMLN': 'amln', 'WAZN': 'wazn', 'HFN': 'hfn'}[provider]
-        st = state or _state(match, route_ok)
+        ist, idd = identity(fr, *idn, XW) if idn is not None else (ST['UNDETERMINED'], dict(reason='NO_IDENTITY_FIELDS'))
+        # الأولوية: المسحوب، ثم المسلك المحجوب، ثم تعارض معرّف الحدث، ثم تعارض الهوية، ثم الهوية غير المحسومة، ثم المطابقة حرفاً وحركة
+        if state:
+            st = state
+        elif ist == ST['WITHDRAWN']:
+            st = ST['WITHDRAWN']
+        elif not route_ok:
+            st = ST['BLOCKED']
+        elif ist != 'IDENTITY_OK':
+            st = ist
+        else:
+            st = _state(match, route_ok)
+        extra = dict(extra, identity_status=ist, identity=idd)
         rows.append(dict(occurrence=dict(verse=fr['verse'], word_index=fr['word_index'], unit=fr['unit'], relation_id=fr['relation_id'], text=fr['text']),
                          face=dict(morph_candidate_id=fr['morph_candidate_id'], analysis_id=fr['analysis_id'], root=fr['root'], pattern=fr['pattern']),
                          vocalized_lemma=lem, query_text=lem, row_text=row_verb, provider=provider, source_key=source_key, route_id=route,
@@ -203,7 +283,8 @@ def feature_rows(fr, lem, W, res, pins):
                  dict(value=dict(event_id=x['event_id'], form=x['form'], transitivity=x['transitivity'], masdar=x['masdar'],
                                  masdar_wasit_v37=x.get('masdar_wasit_v37'), transitivity_wasit_v37=x.get('transitivity_wasit_v37')),
                       event_id_in_base=x['event_id'] in v36, event_review=x['event_review'],
-                      exclusion_reason=('حدثٌ مسحوب (event_review_v36 يبدأ بـWITHDRAWN): لا يُقرأ حدثاً حياً' if x['withdrawn'] else None)), state=st)
+                      exclusion_reason=('حدثٌ مسحوب (event_review_v36 يبدأ بـWITHDRAWN): لا يُقرأ حدثاً حياً' if x['withdrawn'] else None)), state=st,
+                 idn=(x['root_K'], x['form'], x['verb'], x.get('event_ref')))
     else:
         missing('hfn47', d)
     # ---- wazn: المطاوعة ----
@@ -220,13 +301,15 @@ def feature_rows(fr, lem, W, res, pins):
                  'mutawaa: ' + ('اللمّة أصلٌ له مطاوع' if side == 'base' else 'اللمّة مطاوِعٌ لأصل'),
                  dict(value=dict(base=x['base'], base_form=x['base_form'], mutawaa=x['mutawaa'], mutawaa_form=x['mutawaa_form'], athar=x['athar']),
                       lemma_side=side, block_reason=(BLOCKED[('WAZN', 'MUTAWAA:BASE_UNRESOLVED')] if unresolved else
-                                                     None if ok else 'UNREGISTERED_ROUTE: ' + x['route'])), route_ok=ok)
+                                                     None if ok else 'UNREGISTERED_ROUTE: ' + x['route'])), route_ok=ok,
+                 idn=(x['root'], x['base_form'] if side == 'base' else x['mutawaa_form'], x['row_verb'], x.get('event_ref')))
     # ---- wazn: التعدية بالهمزة ----
     d = W['taadiya_T_JAL']
     if d.get('rows'):
         for x in d['rows']:
             base('WAZN', 'T_JAL', 'taadiya_T_JAL', 'WAZN:engines/taadiya_engine.py', f"{x.get('lazim')}→{x.get('mutaaddi')}", x['row_verb'], x['match'], x['diff'],
-                 'taadiya: اللمّة لازمٌ له متعدٍّ مسموع — لا يدخل قرار التعدية', dict(value={k: x.get(k) for k in ('lazim', 'mutaaddi', 'sifa', 'maful', 'form')}))
+                 'taadiya: اللمّة لازمٌ له متعدٍّ مسموع — لا يدخل قرار التعدية', dict(value={k: x.get(k) for k in ('lazim', 'mutaaddi', 'sifa', 'maful', 'form')}),
+                 idn=(None, None, x.get('lazim'), x.get('event_ref')))
     else:
         missing('taadiya_T_JAL', d)
     # ---- wazn: تعدّي الوسيط v5 (المجرّد وحده) ----
@@ -242,7 +325,8 @@ def feature_rows(fr, lem, W, res, pins):
                  dict(value=tv, harf=x['harf'] or None, basis_v5=x['basis_v5'], transitivity_v1=x['transitivity_v1'], harf_v1=x['harf_v1'] or None,
                       changed_from_v1=(tv != x['transitivity_v1'] or (x['harf'] or '') != (x['harf_v1'] or '')), hfn_transitivity=x['hfn_transitivity'],
                       upstream_event_id=x['event_id'], event_id_in_base=x['event_id'] in v36, block_reason=why,
-                      no_value_reason=(None if st is None else f'قيمة الوسيط «{tv}» ليست لازماً ولا متعدياً')), state=st, route_ok=ok)
+                      no_value_reason=(None if st is None else f'قيمة الوسيط «{tv}» ليست لازماً ولا متعدياً')), state=st, route_ok=ok,
+                 idn=(x['root'], x['form'], x['verb'], x.get('event_ref')))
     else:
         missing('transitivity_wasit_v5', d)
     # ---- wazn: الصفات v2 (معلومة مرشّحة) ----
@@ -252,7 +336,7 @@ def feature_rows(fr, lem, W, res, pins):
             base('WAZN', 'SIFAT_V2', 'sifat_v2', 'WAZN:data/sifat_v2.tsv', f"{x['event_id']}:{x['word']}", x['verb'], x['match'], x['diff'],
                  'sifat (معلومة مرشّحة): لا يُستنتج منها نوع اشتقاقٍ ولا وزنٌ مختار',
                  dict(value=dict(word=x['word'], template=x['template'], kind=x['kind'], transitivity_wasit=x['transitivity_wasit']),
-                      upstream_event_id=x['event_id'], event_id_in_base=x['event_id'] in v36))
+                      upstream_event_id=x['event_id'], event_id_in_base=x['event_id'] in v36), idn=(x['root'], x['form'], x['verb'], x.get('event_ref')))
     else:
         missing('sifat_v2', d)
     # ---- AMLN: الحدث وأثره، وجهة الفاعل ----
@@ -276,7 +360,8 @@ def feature_rows(fr, lem, W, res, pins):
                  dict(extra, upstream_event_id=x.get('event_id'), event_id_in_base=x.get('event_id') in v36,
                       upstream_vowel_judgement=dict(match=x.get('upstream_match'), keep=x.get('upstream_keep'),
                                                     note='حكم الواجهة المتسامح محفوظ للفحص؛ والحالة هنا من إعادة الفحص حرفاً وحركة'),
-                      block_reason=None if ok else BLOCKED.get(('AMLN', x['route']), 'UNREGISTERED_ROUTE')), route_ok=ok)
+                      block_reason=None if ok else BLOCKED.get(('AMLN', x['route']), 'UNREGISTERED_ROUTE')), route_ok=ok,
+                 idn=(x.get('root') or None, None, x['row_verb'], x.get('event_ref')))
     return rows
 
 
@@ -291,24 +376,33 @@ def root_rows(fr, rm):
                 note='معنى الجذر ليس المعنى السياقي المختار للكلمة؛ والنصوص OCR غير محقّق', rank=RANK[0])
 
 
-def evidence_records(fr, feats, rr, prov):
-    """سمات المنبع في نظام الأدلّة (للتقرير وشهادة الإغلاق): تُعرض ولا تستوفي التزاماً ولا تغلق وجهاً"""
+def evidence_records(fr, feats, rr, prov, pins=None):
+    """سمات المنبع في نظام الأدلّة (للتقرير وشهادة الإغلاق): تُعرض ولا تستوفي التزاماً ولا تغلق وجهاً. المعرّف بصمة المحتوى (EVIDENCE_ID_ALGO)"""
     out = []
+    occ = f"{fr['unit']}|{fr['relation_id']}"
+    rel = lambda x: (pins or {}).get('hfn_release') if x['provider'] == 'HFN' else x.get('file')
     for x in feats:
         if x['state'] != ST['MATCH']:
             continue
-        com = (x.get('commit') or '')[:7]
-        out.append(dict(id=f"UPSTREAM:{fr['unit']}:{x['source_key']}:{x['route_id']}:{com}", unit=fr['unit'], feature=x['source_key'],
-                        route=x['route_id'], provider=x['provider'], commit=com, rank='مرشّح من مصدرٍ خارجي', rank_code='EXTERNAL_CANDIDATE',
-                        value=x.get('value'), face=x['face'], lemma=x['vocalized_lemma'], match=x['match'], route_status=x['route_status'],
-                        wilson_low=x['route_measure']['wilson_low'], discharges_obligation=False, closes_face=False, conditions_met=False))
+        c = dict(occurrence_id=occ, morph_candidate_id=fr['morph_candidate_id'], analysis_id=fr['analysis_id'], source_key=x['source_key'],
+                 provider=x['provider'], route_id=x['route_id'], source_commit=x.get('commit'), release_id=rel(x), source_file_sha256=x.get('file_sha256'),
+                 source_row_id=x.get('row_id'), payload=dict(value=x.get('value'), lemma=x['vocalized_lemma'], row_text=x.get('row_text'), match=x['match']))
+        c['evidence_id'] = evidence_id(c)
+        x['evidence_id'] = c['evidence_id']
+        out.append(dict(c, id=c['evidence_id'], unit=fr['unit'], feature=x['source_key'], route=x['route_id'], commit=(x.get('commit') or '')[:7],
+                        rank='مرشّح من مصدرٍ خارجي', rank_code='EXTERNAL_CANDIDATE', value=x.get('value'), face=x['face'], lemma=x['vocalized_lemma'],
+                        match=x['match'], route_status=x['route_status'], wilson_low=x['route_measure']['wilson_low'],
+                        discharges_obligation=False, closes_face=False, conditions_met=False))
     mq = ((rr or {}).get('maqayis_fallback') or {})
     if mq.get('status') == 'OK':
-        com = (prov.get('maq', {}).get('commit') or '')[:7]
-        out.append(dict(id=f"UPSTREAM:{fr['unit']}:root_meaning:MAQAYIS_CROSSWALK:{com}", unit=fr['unit'], feature='root_meaning',
-                        route='MAQAYIS_CROSSWALK', provider='MAQAYIS', commit=com, rank='شاهد OCR غير محقّق', rank_code='OCR_UNVERIFIED_WITNESS',
-                        value=dict(query_key=rr['query_key'], records=[dict(entry_id=r_['entry_id'], display=r_.get('display'), axes=r_.get('semantic_axes'))
-                                                                        for r_ in mq['records']]),
+        c = dict(occurrence_id=occ, morph_candidate_id=fr['morph_candidate_id'], analysis_id=fr['analysis_id'], source_key='root_meaning', provider='MAQAYIS',
+                 route_id='MAQAYIS_CROSSWALK', source_commit=prov.get('maq', {}).get('commit'), release_id='output/maqayis_all_roots.json',
+                 source_file_sha256=(pins or {}).get('files', {}).get('MAQ:output/maqayis_all_roots.json'), source_row_id='|'.join(sorted(str(r_['entry_id']) for r_ in mq['records'])),
+                 payload=dict(query_key=rr['query_key'], records=[dict(entry_id=r_['entry_id'], display=r_.get('display'), axes=r_.get('semantic_axes'))
+                                                                for r_ in mq['records']]))
+        c['evidence_id'] = evidence_id(c)
+        out.append(dict(c, id=c['evidence_id'], unit=fr['unit'], feature='root_meaning', route='MAQAYIS_CROSSWALK', commit=(c['source_commit'] or '')[:7],
+                        rank='شاهد OCR غير محقّق', rank_code='OCR_UNVERIFIED_WITNESS', value=c['payload'],
                         note='معنى الجذر ليس المعنى المختار في السياق', discharges_obligation=False, closes_face=False, conditions_met=False))
     return out
 
@@ -343,7 +437,7 @@ def run(FR, pins):
         rr = root_rows(fr, res['root'].get(fr['root'])) if fr['root'] and st != ST['PROTECTED'] else None
         feats = [x for x in rows if x['state'] == ST['MATCH']]
         out.append(dict(fr, lemma_status=st, lemma_reason=why, query_status=('NOT_QUERIED: ' + why) if st == ST['PROTECTED'] else 'QUERIED',
-                        evidence=evidence_records(fr, feats, rr, res['provenance']),
+                        evidence=evidence_records(fr, feats, rr, res['provenance'], pins),
                         upstream_candidates=dict(rows=rows, root_meaning=rr)))
     return out, res, lemmas, rq
 

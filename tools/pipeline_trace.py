@@ -710,7 +710,7 @@ if os.environ.get('SARF_UP_EVIDENCE'):
     rows_u, tl_u = [], []
     for r in _UPR:
         if r['lemma_status'] == 'PROTECTED_NOT_QUERIED':
-            rows_u.append([h(f"{r['verse']}:{(r['word_index'] or 0) + 1}"), h(r['text']), '—', '—', '—', '—', h('لم يُسأل'), h(r['lemma_reason']), '—', '—'])
+            rows_u.append([h(f"{r['verse']}:{(r['word_index'] or 0) + 1}"), h(r['text']), '—', '—', '—', '—', h('لم يُسأل'), h(r['lemma_reason']), '—', '—', '—'])
             continue
         for x in r['upstream_candidates']['rows']:
             if x['state'] == 'QUERY_OK_NO_RESULT':
@@ -720,8 +720,10 @@ if os.environ.get('SARF_UP_EVIDENCE'):
             val = json.dumps(val, ensure_ascii=False)[:160] if isinstance(val, (dict, list)) else (val or '—')
             rows_u.append([h(f"{r['verse']}:{(r['word_index'] or 0) + 1}"), h(r['text']), h(x['face'].get('analysis_id') or '—'), h(x.get('vocalized_lemma')),
                            h(f"{x.get('provider', '—')}:{x.get('source_key')} @{(x.get('commit') or '')[:7]}"), h(x.get('route_id') or '—'),
-                           h(x['state']), h(x.get('block_reason') or x.get('exclusion_reason') or x.get('unresolved_reason') or x.get('detail') or '—'),
-                           h(f"{x.get('match') or '—'} «{x.get('row_text') or '—'}» ({dk})"), h(val)])
+                           h(x['state']), h(x.get('block_reason') or x.get('exclusion_reason') or x.get('unresolved_reason') or
+                                            ((x.get('identity') or {}).get('reason') and f"الهوية: {x['identity']['reason']} (جذر المصدر {(x.get('identity') or {}).get('source_root') or (x.get('identity') or {}).get('row_root') or '—'})")
+                                            or x.get('detail') or '—'),
+                           h(f"{x.get('match') or '—'} «{x.get('row_text') or '—'}» ({dk})"), h(val), h(x.get('evidence_id') or '—')])
         rr = r['upstream_candidates'].get('root_meaning')
         if rr:
             mq = rr.get('maqayis_fallback') or {}
@@ -729,15 +731,17 @@ if os.environ.get('SARF_UP_EVIDENCE'):
                            h('HFN bank v11 / مقاييس (جدول الربط)'), h(f"مفتاح {rr['query_key']} ({rr['key_rule']})"),
                            h(f"البنك {(rr.get('bank_v11') or {}).get('status')}؛ المقاييس {mq.get('status')}"), h('OCR غير محقّق؛ ليس المعنى السياقي'),
                            h('host_refs: ' + ('، '.join((rr.get('host_refs') or {}).get('value') or []) or '—')),
-                           h('، '.join(f"{x.get('display')} {x.get('semantic_axes') or ''}" for x in mq.get('records') or [])[:160] or '—')])
+                           h('، '.join(f"{x.get('display')} {x.get('semantic_axes') or ''}" for x in mq.get('records') or [])[:160] or '—'),
+                           h(next((e['evidence_id'] for e in r.get('evidence') or [] if e.get('source_key') == 'root_meaning'), '—'))])
     _st = collections.Counter(x['state'] for r in _UPR for x in r['upstream_candidates']['rows'])
     tl_u.append('الحالات: ' + '، '.join(f'{k} {n}' for k, n in sorted(_st.items())))
     section('14ج', 'سمات المصادر الحديثة (مرشّحة)',
             'من ملفّ الاستهلاك المرشّح (tools/upstream_candidates.py) بمصادره المثبتة: HFN v47، وwazn-net (mutawaa_v7، تعدّي الوسيط v5، sifat_v2)، '
             'وAMLN (R1، R1W، T_JAL، وجهة الفاعل)، وبنك الجذور v11 ومقاييس ابن فارس. كل صفٍّ CANDIDATE مربوطٌ بالوقوع ووجهه ولمّته: لا يدخل التقسيم ولا الصنف '
-            'ولا الجذر ولا الوزن ولا العامل ولا التعلّق ولا الإغلاق، ولا يُقبل منه إلا التطابق حرفاً وحركة؛ وWASL_ONLY وSUKUN_ONLY محفوظان للفحص بحكم المالك. '
+            'ولا الجذر ولا الوزن ولا العامل ولا التعلّق ولا الإغلاق، ولا يُقبل منه إلا ما وافق جذر الوجه وبناءه وحدثه (وإلا LEXEME_IDENTITY_CONFLICT) وطابق حرفاً وحركة؛ '
+            'ومعرّف الدليل بصمة محتواه (sha256)، وهو نفسه في القسم ١٤؛ وWASL_ONLY وSUKUN_ONLY محفوظان للفحص بحكم المالك. '
             'والصفوف «لا نتيجة» محذوفةٌ من العرض ومعدودةٌ في السطر الأخير',
-            rows_u, ['الموضع', 'الكلمة', 'الوجه', 'اللمّة', 'المصدر والالتزام', 'المسلك', 'الحالة', 'السبب', 'المطابقة وفرقها', 'القيمة'], tl_u)
+            rows_u, ['الموضع', 'الكلمة', 'الوجه', 'اللمّة', 'المصدر والالتزام', 'المسلك', 'الحالة', 'السبب', 'المطابقة وفرقها', 'القيمة', 'معرّف الدليل'], tl_u)
 section(15, 'الوحدة الخطابية', 'المعرّفات (2,282,n) فهرسٌ داخلي يبدأ من 0 (internal_index_0_based): الكلمة n فيها هي الكلمة n+1 في المواضع الخارجية. الجمل المتصلة بحدودها وتعلّقها. ونهاية السورة تحدّ نطاق المصدر ولا تثبت وحدها اكتمال البنية: '
         'الإغلاق الخارجي لا يُحكم به إلا باستيفاء التزامات الوحدة', rows_d,
         ['الوحدة', 'المدى', 'الجمل', 'الحالة', 'الحدّ'], tl_d)

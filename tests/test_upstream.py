@@ -121,7 +121,7 @@ W0 = dict(hfn47=NO, mutawaa=NO, mutawaa_base=NO, taadiya_T_JAL=NO, transitivity_
 r_ = [x for x in UC.feature_rows(fr0, 'كَسَرَ', W0, res0, PINS) if x.get('route_id') == 'R2']
 mutation('M04 المسلك: صفٌّ من R2 يُحقن في جواب AMLN ← ROUTE_BLOCKED بسببه، ولا دليل منه', r_ and r_[0]['state'] == 'ROUTE_BLOCKED' and
          r_[0]['block_reason'] == UC.BLOCKED[('AMLN', 'R2')] and not UC.evidence_records(fr0, r_, None, res0['provenance']), r_)
-W1 = dict(W0, ahdath=NO, transitivity_wasit_v5=dict(status='OK', rows=[dict(event_id='E2', verb='كَسَّرَ', form='فَعَّلَ', transitivity_wasit='متعدي', harf='',
+W1 = dict(W0, ahdath=NO, transitivity_wasit_v5=dict(status='OK', rows=[dict(event_id='E2', root='كسر', verb='كَسَّرَ', form='فَعَّلَ', transitivity_wasit='متعدي', harf='',
                                                                              basis_v5='V1', transitivity_v1='متعدي', harf_v1='', hfn_transitivity='متعدي',
                                                                              match='EXACT', diff=[])]))
 r_ = [x for x in UC.feature_rows(fr0, 'كَسَّرَ', W1, res0, PINS) if x.get('source_key') == 'transitivity_wasit_v5']
@@ -273,6 +273,78 @@ bad = {u: [dict(e, discharges_obligation=True, closes_face=True, conditions_met=
 c2, _ = certs(2, 282, bad)
 mutation('M09 الاعتماد: دليلٌ يدّعي الاستيفاء والإغلاق ← لا تتغيّر الشهادة، ويُكتب ادّعاؤه False', [strip(c) for c in c2] == [strip(c) for c in c0] and
          all(not e['discharges_obligation'] for c in c2 for o_ in c['obligations'] for e in (o_.get('external_evidence') or [])))
+
+# ================= SARF_UPSTREAM_CONSUMER_REPAIR_02 =================
+# ---------- §٢ هوية المعجم: الجذر والبناء ومعرّف الحدث، في كل عائلات المصادر ----------
+OUT2, SUM2 = os.path.join(TMP, 'w.jsonl.gz'), os.path.join(TMP, 'w.json')
+p2 = subprocess.run([sys.executable, '-s', 'tools/upstream_candidates.py', OUT2, SUM2, '--verses', '2:8', '--jobs', '1'], capture_output=True, text=True,
+                    env=dict(os.environ, PYTHONHASHSEED='0'))
+R8 = [json.loads(l) for l in gzip.open(OUT2, 'rt', encoding='utf-8')]
+yq = [x for r in R8 if r['text'] == 'يَقُولُ' for x in r['upstream_candidates']['rows'] if x['source_key'] == 'hfn47']
+bad = [x for x in yq if x['value']['event_id'] == 'HFN-E-e1bbafba2a']
+good = [x for x in yq if x['value']['event_id'] != 'HFN-E-e1bbafba2a' and x['state'] == 'CANDIDATE_MATCH']
+check('R01 الشاهد الحاكم (يَقُولُ، 2:8، جذر الوجه قول): حدث «قَالَ» تحت قيل (HFN-E-e1bbafba2a، مصدره قَيْلُولَة) LEXEME_IDENTITY_CONFLICT بلا دليل، '
+      'وحدث قول نفسه CANDIDATE_MATCH', p2.returncode == 0 and bad and all(x['state'] == 'LEXEME_IDENTITY_CONFLICT' and 'ROOT' in x['identity']['reason']
+                                                                     and not x.get('evidence_id') for x in bad) and good and
+      not any(e['source_row_id'] == 'HFN-E-e1bbafba2a' for r in R8 for e in r['evidence']), [(x['value']['event_id'], x['state']) for x in yq])
+allr = [x for r in rows for x in r['upstream_candidates']['rows']]
+check('R02 لا CANDIDATE_MATCH بهويةٍ غير IDENTITY_OK في أي عائلة', all(x.get('identity_status') == 'IDENTITY_OK' for x in allr if x['state'] == 'CANDIDATE_MATCH'))
+fid = dict(fr0, root='قول', pattern='I', hfn_events=[dict(event_id='HFN-E-8ca9af323a', verb='قَالَ')])
+EVR = lambda root, form, verb, eid='EX', wd=False: dict(event_id=eid, found=True, root_K=root, verb=verb, form=form, withdrawn=wd)
+st_, d_ = UC.identity(fid, 'قيل', 'فَعَلَ', 'قَالَ', EVR('قيل', 'فَعَلَ', 'قَالَ'), {})
+mutation('M10 جذر مصدرٍ مختلف مع لمّةٍ مطابقة ← LEXEME_IDENTITY_CONFLICT', st_ == 'LEXEME_IDENTITY_CONFLICT' and 'ROOT' in d_['reason'], (st_, d_))
+st_, d_ = UC.identity(fid, 'قول', 'فَعَّلَ', 'قَالَ', None, {})
+mutation('M11 بناءٌ غير متوافق (فَعَّلَ لوجهٍ من الباب I) ← LEXEME_IDENTITY_CONFLICT', st_ == 'LEXEME_IDENTITY_CONFLICT' and 'FORM' in d_['reason'], (st_, d_))
+st_, d_ = UC.identity(fid, 'قول', 'فَعَلَ', 'قَالَ', EVR('كتب', 'فَعَلَ', 'كَتَبَ'), {})
+mutation('M12 معرّف حدثٍ يخالف حقوله ← EVENT_ID_FIELD_MISMATCH', st_ == 'EVENT_ID_FIELD_MISMATCH', (st_, d_))
+st_, d_ = UC.identity(fid, 'قول', 'فَعَلَ', 'قَالَ', EVR('قول', 'فَعَلَ', 'قَالَ', wd=True), {})
+check('R03 معرّف حدثٍ مسحوب في صفٍّ من أي عائلة (لا HFN وحده) ← WITHDRAWN_RECORD بسبب السحب نفسه', st_ == 'WITHDRAWN_RECORD' and d_['reason'] == 'EVENT_WITHDRAWN')
+st_, d_ = UC.identity(fid, None, None, 'قَالَ', None, {})
+check('R04 نقص معلومات الهوية تأجيل لا تخمين: IDENTITY_UNDETERMINED', st_ == 'IDENTITY_UNDETERMINED' and d_['reason'].startswith('MISSING'))
+st_, d_ = UC.identity(fid, 'قول', 'فَعَلَ', 'قَالَ', None, {'فَعَلَ': 'II'})
+check('R05 جدول الربط الموثّق يخالف تصنيف sarf للبناء ← IDENTITY_UNDETERMINED (لا يُختار أحدهما)', st_ == 'IDENTITY_UNDETERMINED' and 'CROSSWALK' in d_['reason'])
+st_, d_ = UC.identity(fid, 'قول', 'فَعَلَ', 'قَالَ', EVR('قول', 'فَعَلَ', 'قَالَ', 'HFN-E-8ca9af323a'), {'فَعَلَ': 'I'})
+check('R06 شاهد موجب: الجذر والبناء والحدث متوافقة ← IDENTITY_OK ومرتبطٌ بحدث الوجه', st_ == 'IDENTITY_OK' and d_['event_linked_to_face'], d_)
+# ---------- §٦ المسحوب يصل إلى بوابة الاستهلاك في بيئةٍ سليمة (لا بإفساد البصمة) ----------
+frW = dict(fr0, text='بَهْمَنَ', unit='UW', root='بهمن', pattern='QI', hfn_events=[dict(event_id='Z', verb='بَهْمَنَ')])
+oW, resW, _, _ = UC.run([frW], PINS)
+rW = [x for x in oW[0]['upstream_candidates']['rows'] if x['source_key'] == 'hfn47']
+check('R07 سجلٌّ مسحوبٌ حقيقي من الإصدار المثبت السليم يبلغ البوابة عبر run() ويُرفض بسبب WITHDRAWN نفسه، بلا دليل',
+      rW and all(x['state'] == 'WITHDRAWN_RECORD' for x in rW) and not oW[0]['evidence'], [(x['row_text'], x['state']) for x in rW])
+WI = dict(W0, ahdath=NO, sifat_v2=dict(status='OK', rows=[dict(event_id='HFN-E-34cc036f8f', root='بهمن', form='فَعْلَلَ', verb='بَهْمَنَ', word='x', template='t',
+                                                               kind='k', transitivity_wasit='لازم', match='EXACT', diff=[], row_verb='بَهْمَنَ',
+                                                               event_ref=resW and None)]))
+evw = [e for e in client.call([dict(lemma='بَهْمَنَ')], [], P, PINS)['lemma']['بَهْمَنَ']['hfn47']['rows'] if e['withdrawn']][0]
+WI['sifat_v2']['rows'][0]['event_ref'] = dict(event_id=evw['event_id'], found=True, root_K=evw['root_K'], verb=evw['verb'], form=evw['form'], withdrawn=True)
+rI = [x for x in UC.feature_rows(frW, 'بَهْمَنَ', WI, res0, PINS) if x['source_key'] == 'sifat_v2']
+check('R08 منفذ العلاقات: صفّ صفاتٍ يحيل بمعرّفه إلى حدثٍ مسحوب (حُقن بعد التحقّق من المصدر) ← WITHDRAWN_RECORD، لا CANDIDATE_MATCH',
+      rI and rI[0]['state'] == 'WITHDRAWN_RECORD', rI[:1])
+r1 = client.call([dict(lemma='بَهْمَنَ')], [], P, PINS)['lemma']['بَهْمَنَ']['hfn47']['rows']
+r2 = client.call([dict(lemma='بَهْمَنَ'), dict(lemma='كَسَرَ')], [], P, PINS)['lemma']['بَهْمَنَ']['hfn47']['rows']
+check('R09 منفذ الفهرس والذاكرة: كل استدعاءٍ عمليةٌ جديدة بلا خبيئة مشتركة، والسحب نفسه في الاستدعاءين، ومرجع الحدث مقروءٌ من الإصدار لا من ذاكرة',
+      [x['withdrawn'] for x in r1] == [x['withdrawn'] for x in r2] and all(x['event_ref']['withdrawn'] == x['withdrawn'] for x in r1 + r2))
+# ---------- §٣ معرّفات الأدلّة ----------
+allev = [e for r in rows for e in r['evidence']]
+check('R10 كل معرّف دليلٍ بصمة محتواه، ولا معرّفٌ واحد بمحتويين', allev and not UC.verify_evidence_registry(allev), UC.verify_evidence_registry(allev)[:3])
+e0 = allev[0]
+twin = dict(e0, payload=dict(e0['payload'], value='محتوى آخر'))
+mutation('M13 دليلان مختلفان بالمعرّف نفسه ← SAME_ID_DIFFERENT_CONTENT وID_DOES_NOT_MATCH_CONTENT',
+         {k for k, _ in UC.verify_evidence_registry([e0, twin])} >= {'ID_DOES_NOT_MATCH_CONTENT', 'SAME_ID_DIFFERENT_CONTENT'})
+swap = dict(e0, analysis_id='A-OTHER-FACE')
+mutation('M14 تبديل وجه الدليل مع بقاء نص الكلمة والمعرّف ← ID_DOES_NOT_MATCH_CONTENT', any(k == 'ID_DOES_NOT_MATCH_CONTENT' for k, _ in UC.verify_evidence_registry([swap])))
+frD = dict(fr0, root='كسر', pattern='I', hfn_events=[dict(event_id='E1', verb='كَسَرَ')])
+two = [dict(source_key='hfn47', state='CANDIDATE_MATCH', provider='HFN', route_id='RELEASE_V47_EVENT', commit='c' * 40, file='f', file_sha256='s', row_id=i,
+            value=dict(event_id=i), vocalized_lemma='كَسَرَ', row_text='كَسَرَ', match='EXACT', face=dict(analysis_id='A'), route_status='RELEASE_CANDIDATE',
+            route_measure=dict(wilson_low=None)) for i in ('E1', 'E9')]
+ev2 = UC.evidence_records(frD, two, None, res0['provenance'], PINS)
+ev2r = UC.evidence_records(frD, list(reversed([dict(x) for x in two])), None, res0['provenance'], PINS)
+check('R11 حدثان مختلفان للوجه نفسه: دليلان بمعرّفين مختلفين، ولا يستبدل أحدهما الآخر؛ والمعرّفات ثابتة بعكس الترتيب',
+      len({e['evidence_id'] for e in ev2}) == 2 and {e['evidence_id'] for e in ev2} == {e['evidence_id'] for e in ev2r})
+ids_cert = {i for c in c1 for i in (c.get('external_evidence_ids') or [])}
+reg = {e['evidence_id'] for e in allev}
+check('R12 لا مرجع يتيم ولا ملتبس: كل معرّفٍ في الشهادات موجودٌ في السجلّ بمحتوى واحد', ids_cert and ids_cert <= reg, sorted(ids_cert - reg)[:3])
+c3, _ = certs(2, 282, {u: [dict(e, discharges_obligation=True, closes_face=True, conditions_met=True, status='MET') for e in v] for u, v in EVD.items()})
+mutation('M15 نقل سمةٍ حديثة إلى استيفاءٍ أو إغلاق ← الشهادة لا تتغيّر', [strip(c) for c in c3] == [strip(c) for c in c0])
 
 print(json.dumps(dict(mutations=MUT), ensure_ascii=False))
 print('ALL OK' if not FAIL else f'FAILED {len(FAIL)}: {FAIL}')
