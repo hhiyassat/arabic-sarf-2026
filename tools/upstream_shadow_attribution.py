@@ -6,7 +6,7 @@
 التي يستعملها المحلّل نفسه (قراءة فقط): أحداث (الجذر، الوزن) لوجهها (hfn_class)، وأحداث الكلمة كلها (_plain_vowels)، ولمّات الأسماء
 (_lex_key، NOUN_POS)، والجذور المسمّاة في نصّ سبب التأجيل. ثم يُصنَّف كل فرق:
 
-  PROVEN_RECORD           مدخلٌ صرفي لوجهٍ تغيّرت أحداث مفتاحه، أو مفتاحٌ مسمّى في نصّه — بمعرّفات السجلّات
+  PROVEN_RECORD           مدخلٌ صرفي (وجه) تغيّرت أحداث مفتاحه هو، أو مفتاحٌ سمّاه سببه — بمعرّفات السجلّات؛ لا رصيد الكلمة
   LINKED_BY_NAMED_RECORD  في قيمة الفرق نفسها سجلٌّ متغيّر مسمّى (معرّفه أو لمّته أو جذره المقتبس): رابطٌ مسمّى، أقوى من المكاني ولا يثبت السببية وحده
   REPRESENTATION_WASL     القيمتان واحدةٌ إذا وُحّدت «ٱ» و«ا» (تمثيل، HFN-D068)
   AGGREGATE_REPRESENTATION تمثيلٌ تجميعي للآية كلها (S، أو مدخل trace لا يحمل سجلاً)
@@ -82,10 +82,11 @@ def main():
     # سجلّات كل كلمة: من مداخلها الصرفية (مفاتيح الوجه، والجذور المسمّاة في السبب) ومن نصوص وحداتها (الكلمة كلها، ولمّات الأسماء)
     word_recs = collections.defaultdict(lambda: dict(ids=set(), toks=set(), kinds=set()))
     face_of = {}
+    entry_recs = collections.defaultdict(lambda: dict(ids=set(), keys=set(), faces=set()))
     for v in S0:
         for side, S in ((0, S0), (1, S1)):
             a = (S.get(v) or {}).get('a', {})
-            for m in a.get('morph', []):
+            for mi, m in enumerate(a.get('morph', [])):
                 w = m.get('word_index')
                 keys = {(m.get('root'), m.get('form_class'))} if m.get('root') else set()
                 for r_, c_ in re.findall(r'(\S{3,4}) \((I{1,3}|IV|V|VI{1,3}|IX|X|Q[IV]+)\)', str(m.get('reason') or '')):
@@ -96,6 +97,11 @@ def main():
                         word_recs[(v, w)]['ids'] |= set(ids)
                         word_recs[(v, w)]['toks'] |= toks
                         word_recs[(v, w)]['kinds'].add(f'EVENTS_OF_KEY {k[0]}/{k[1]}')
+                        # سجلّات مدخل الوجه نفسه (بموضعه في الطرفين): مفتاحاه وما سمّاه سببه — لا رصيد الكلمة كلها
+                        e_ = entry_recs[(v, mi)]
+                        e_['ids'] |= set(ids)
+                        e_['keys'].add(f'{k[0]}/{k[1]}')
+                        e_['faces'].add(m.get('analysis_id'))
                 if side == 0:
                     face_of.setdefault((v, w), set()).add(m.get('analysis_id'))
             for uk, u in (S.get(v) or {}).get('units', {}).items():
@@ -137,14 +143,17 @@ def main():
             sb, ss = str(d['base']), str(d['shadow'])
             rec = word_recs.get((v, w))
             cls, ev = 'UNRESOLVED', None
-            if p.startswith('a/morph/') and rec and rec['ids'] and any(r_ != 'NO_EVENT_CHANGE_FOR_FACE_KEY' for r_ in d.get('reasons', [])) and \
-                    any(k.startswith('EVENTS_OF_KEY') for k in rec['kinds']):
-                cls, ev = 'PROVEN_RECORD', dict(records=sorted(rec['ids'])[:20], via=sorted(rec['kinds']))
+            mi = int(p.split('/')[2]) if p.startswith('a/morph/') and p.split('/')[2].isdigit() else None
+            er = entry_recs.get((v, mi)) if mi is not None else None
+            if er and er['ids']:
+                # مثبتٌ للوجه: سجلٌّ متغيّر لمفتاح مدخل الوجه نفسه (جذره ووزنه، أو مفتاحٌ سمّاه سببه) في الموضع نفسه من الطرفين
+                cls, ev = 'PROVEN_RECORD', dict(records=sorted(er['ids'])[:20], face_keys=sorted(er['keys']), faces=sorted(x for x in er['faces'] if x))
             elif rec and rec['ids'] and any(t in sb or t in ss for t in rec['toks']):
                 hit = sorted(t for t in rec['toks'] if t in sb or t in ss)[:6]
                 cls, ev = 'LINKED_BY_NAMED_RECORD', dict(records=sorted(rec['ids'])[:20], tokens=hit, via=sorted(rec['kinds']))
             elif p.startswith('a/morph/') and rec and rec['ids']:
-                cls, ev = 'PROVEN_RECORD', dict(records=sorted(rec['ids'])[:20], via=sorted(rec['kinds']))
+                # سجلّ الكلمة لا مدخل الوجه: ارتباطٌ مكاني (لا يُسمّى مثبتاً للوجه)
+                cls, ev = 'SPATIAL_WORD', dict(records_in_word=sorted(rec['ids'])[:10], note='سجلٌّ لكلمة الوجه لا لمفتاح مدخله')
             elif sb.replace('ٱ', 'ا') == ss.replace('ٱ', 'ا') and sb != ss:
                 cls, ev = 'REPRESENTATION_WASL', dict(decision='HFN-D068 (release_v44): همزة الوصل «ٱ» في حقول الكلمات')
             elif top in ('S', 'trace'):
@@ -158,11 +167,19 @@ def main():
             f.write(json.dumps(dict(verse=v, word_index=w, analysis_ids_base=sorted(x for x in face_of.get((v, w), set()) if x), path=p, base=d['base'],
                                     shadow=d['shadow'], previous_reasons=d.get('reasons'), attribution=cls, evidence=ev), ensure_ascii=False, default=str) + '\n')
     prev_un = sum(1 for d in diffs if d.get('reasons') == ['UNATTRIBUTED'])
-    summ = dict(differences=len(diffs), classes={k: C.get(k, 0) for k in CLASSES}, completeness='COMPLETE' if not C.get('UNRESOLVED') else 'PARTIAL',
+    causal = C.get('PROVEN_RECORD', 0) + C.get('REPRESENTATION_WASL', 0)
+    summ = dict(differences=len(diffs), classes={k: C.get(k, 0) for k in CLASSES},
+                classification_completeness='COMPLETE' if not C.get('UNRESOLVED') else 'PARTIAL',
+                causal_explanation_completeness='COMPLETE' if causal == len(diffs) else 'PARTIAL',
+                causally_explained=causal, not_causally_explained=len(diffs) - causal,
+                completeness_definitions=dict(classification='كل فرقٍ في صنفٍ غير UNRESOLVED',
+                                              causal='كل فرقٍ PROVEN_RECORD (سجلٌّ لمفتاح الوجه نفسه) أو REPRESENTATION_WASL؛ والمسمّى والمكاني والتجميعي ليست تعليلاً سببياً'),
+                completeness='PARTIAL' if (C.get('UNRESOLVED') or causal != len(diffs)) else 'COMPLETE',
                 previous_unattributed=prev_un, top_paths_by_class={f'{a} | {b}': n for (a, b), n in by_cls_path.most_common(60)},
                 note='SPATIAL_* ارتباطٌ مكاني لا سبب؛ وPROVEN_RECORD سجلٌّ لمفتاح الوجه نفسه؛ وLINKED_BY_NAMED_RECORD سجلٌّ مسمّى في الفرق؛ ولا يُحكم على فرقٍ بالصواب')
     json.dump(summ, open(OUT + '.json', 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
-    print(json.dumps(dict(differences=len(diffs), classes=summ['classes'], completeness=summ['completeness'], previous_unattributed=prev_un), ensure_ascii=False))
+    print(json.dumps(dict(differences=len(diffs), classes=summ['classes'], classification=summ['classification_completeness'],
+                          causal=summ['causal_explanation_completeness'], causally_explained=causal, previous_unattributed=prev_un), ensure_ascii=False))
 
 
 if __name__ == '__main__':

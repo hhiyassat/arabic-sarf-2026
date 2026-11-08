@@ -333,13 +333,64 @@ mutation('M13 دليلان مختلفان بالمعرّف نفسه ← SAME_ID_
 swap = dict(e0, analysis_id='A-OTHER-FACE')
 mutation('M14 تبديل وجه الدليل مع بقاء نص الكلمة والمعرّف ← ID_DOES_NOT_MATCH_CONTENT', any(k == 'ID_DOES_NOT_MATCH_CONTENT' for k, _ in UC.verify_evidence_registry([swap])))
 frD = dict(fr0, root='كسر', pattern='I', hfn_events=[dict(event_id='E1', verb='كَسَرَ')])
+FACE_D = dict(morph_candidate_id=frD['morph_candidate_id'], analysis_id=frD['analysis_id'], root='كسر', pattern='I')
 two = [dict(source_key='hfn47', state='CANDIDATE_MATCH', provider='HFN', route_id='RELEASE_V47_EVENT', commit='c' * 40, file='f', file_sha256='s', row_id=i,
-            value=dict(event_id=i), vocalized_lemma='كَسَرَ', row_text='كَسَرَ', match='EXACT', face=dict(analysis_id='A'), route_status='RELEASE_CANDIDATE',
-            route_measure=dict(wilson_low=None)) for i in ('E1', 'E9')]
-ev2 = UC.evidence_records(frD, two, None, res0['provenance'], PINS)
-ev2r = UC.evidence_records(frD, list(reversed([dict(x) for x in two])), None, res0['provenance'], PINS)
-check('R11 حدثان مختلفان للوجه نفسه: دليلان بمعرّفين مختلفين، ولا يستبدل أحدهما الآخر؛ والمعرّفات ثابتة بعكس الترتيب',
-      len({e['evidence_id'] for e in ev2}) == 2 and {e['evidence_id'] for e in ev2} == {e['evidence_id'] for e in ev2r})
+            value=dict(event_id=i, masdar=m_), vocalized_lemma='كَسَرَ', row_text='كَسَرَ', match='EXACT', face=dict(FACE_D), route_status='RELEASE_CANDIDATE',
+            route_measure=dict(wilson_low=None)) for i, m_ in (('E1', 'كَسْر'), ('E9', 'كُسُور'))]
+
+
+def row_map(evs):
+    """صفّ المصدر ← (معرّف الدليل، محتواه القانوني)"""
+    return {(e['occurrence_id'], e['source_key'], e['route_id'], str(e['source_row_id'])): (e['evidence_id'], UC.canonical({k: v for k, v in e.items() if k not in UC.ID_KEYS}))
+            for e in evs}
+
+
+ev2 = UC.evidence_records(frD, [dict(x) for x in two], None, res0['provenance'], PINS)
+ev2r = UC.evidence_records(frD, [dict(x) for x in reversed(two)], None, res0['provenance'], PINS)
+check('R11a حدثان مختلفان للوجه نفسه: دليلان بمعرّفين ومحتويين مختلفين، ولا يستبدل أحدهما الآخر، والسجلّ سليم',
+      len({e['evidence_id'] for e in ev2}) == 2 and len(row_map(ev2)) == 2 and not UC.verify_evidence_registry(ev2), UC.verify_evidence_registry(ev2))
+check('R11b ثبات الربط بعكس الترتيب: لكل صفّ مصدرٍ المعرّفُ نفسه والمحتوى نفسه (لا تساوي المجموعتين وحده)', row_map(ev2) == row_map(ev2r))
+# من المسار العام: وقوعان بترتيبين، وأحداث كل وقوعٍ بترتيبين
+frA = dict(frN, unit='UA', relation_id='RA', hfn_events=[dict(event_id='E1', verb='كَتَبَ')])
+frB = dict(fr0, text='كَسَرَ', unit='UB', relation_id='RB', root='كسر', hfn_events=[dict(event_id='E2', verb='كَسَرَ')])
+o1, _, _, _ = UC.run([frA, frB], PINS)
+o2, _, _, _ = UC.run([frB, frA], PINS)
+m1 = row_map([e for r in o1 for e in r['evidence']])
+m2 = row_map([e for r in o2 for e in r['evidence']])
+check('R11c من run(): تبديل ترتيب الوقوعات لا يغيّر ربط أي صفّ مصدرٍ بمعرّفه ومحتواه', m1 and m1 == m2, (len(m1), len(m2)))
+# إفساد: معرّفٌ من موضع الصفّ في التشغيل — يكشفه اختبار الربط لا اختبار المجموعتين
+pos = lambda evs: [dict(e, evidence_id=f'POS-{i}', id=f'POS-{i}') for i, e in enumerate(evs)]
+mutation('M22 معرّفٌ من ترتيب الصفّ: تساوي مجموعتي المعرّفات لا يكشفه، واختبار الربط يكشفه',
+         {e['evidence_id'] for e in pos(ev2)} == {e['evidence_id'] for e in pos(ev2r)} and row_map(pos(ev2)) != row_map(pos(ev2r)))
+# ---------- مراجعة b2f926e §١–§٢: الإحالة إلى الحدث دقيقة، وفشل المفتاح تأجيل ----------
+EVK = lambda root, form, verb: dict(event_id='EK', found=True, root_K=root, verb=verb, form=form, withdrawn=False)
+st_, d_ = UC.identity(fid, 'قول', 'فَعِلَ', 'قَالَ', EVK('قول', 'فَعَلَ', 'قَالَ'), {})
+mutation('M16 بابٌ مختلف تحت الفئة نفسها I (الصفّ فَعِلَ، والحدث فَعَلَ) ← EVENT_ID_FIELD_MISMATCH: form', st_ == 'EVENT_ID_FIELD_MISMATCH' and 'form' in d_['reason'], (st_, d_.get('reason')))
+fa = dict(fid, root='ءمم', hfn_events=[dict(event_id='EK', verb='أَمَّ')])
+st_, d_ = UC.identity(fa, 'ءمم', 'فَعَلَ', 'أُمَّ', EVK('ءمم', 'فَعَلَ', 'أَمَّ'), {})
+mutation('M17 تشكيلٌ مختلف بالحروف نفسها (أُمَّ / أَمَّ) ← EVENT_ID_FIELD_MISMATCH: verb', st_ == 'EVENT_ID_FIELD_MISMATCH' and 'verb' in d_['reason'], (st_, d_.get('reason')))
+fq = dict(fid, root='قاو')
+st_, d_ = UC.identity(fq, 'قاي', 'فَعَلَ', 'قَالَ', None, {})
+mutation('M18 جذران مختلفان يفشل تحويل مفتاحيهما (قاو / قاي) ← IDENTITY_UNDETERMINED، لا مساواة قيمتي الفشل',
+         st_ == 'IDENTITY_UNDETERMINED' and d_['reason'].startswith('ROOT_KEY_UNRESOLVED'), (st_, d_.get('reason')))
+mis_, und_, _ = UC.reference_check('قاي', None, None, EVK('قاو', 'فَعَلَ', 'قَالَ'))
+check('R14 فشل المفتاح في الإحالة إلى الحدث تأجيلٌ لا مساواة', not mis_ and und_ == ['ROOT_KEY_UNRESOLVED'], (mis_, und_))
+st_, d_ = UC.identity(fid, 'قول', 'فَعَلَ', 'قَالَ', EVK('قول', 'فَعَلَ (أجوف)', 'قَالَ'), {})
+check('R15 شاهد موجب: صيغة الصفّ بديلٌ في تسمية HFN («فَعَلَ» ∈ «فَعَلَ (أجوف)») ← IDENTITY_OK بتحويلٍ مسجّل',
+      st_ == 'IDENTITY_OK' and any(t.startswith('FORM_LABEL_ALTERNATIVE') for t in d_['reference_check']['transforms']), d_.get('reference_check'))
+st_, d_ = UC.identity(dict(fid, root='ءخذ', hfn_events=[]), 'ءخذ', 'افْتَعَلَ', 'ٱتَّخَذَ', EVK('ءخذ', 'افْتَعَلَ', 'اتَّخَذَ'), {})
+check('R16 «ٱ/ا» في الفعل تحويلٌ معلن مسجّل، لا مخالفة', d_.get('reference_check', {}).get('transforms') == ['WASL_ALIF'] and st_ != 'EVENT_ID_FIELD_MISMATCH', (st_, d_))
+# ---------- مراجعة b2f926e §٣: الحقول المكرّرة التي تقرؤها المستهلكات ----------
+etw = next(e for e in allev if e['source_key'] == 'transitivity_wasit_v5') if any(e['source_key'] == 'transitivity_wasit_v5' for e in allev) else e0
+tv = dict(etw, value=('متعدي' if etw.get('value') != 'متعدي' else 'لازم'))
+codes = lambda e: {k for k, _ in UC.verify_evidence_registry([e])}
+mutation('M19 تغيير value وحدها (لازم ← متعدي) مع بقاء payload.value والمعرّف ← VALUE_DIFFERS_FROM_PAYLOAD وID_DOES_NOT_MATCH_CONTENT',
+         {'VALUE_DIFFERS_FROM_PAYLOAD', 'ID_DOES_NOT_MATCH_CONTENT'} <= codes(tv), codes(tv))
+fr_ = dict(e0, face=dict(e0['face'], root='ءءء'))
+mutation('M20 تغيير face.root وحده ← ID_DOES_NOT_MATCH_CONTENT', 'ID_DOES_NOT_MATCH_CONTENT' in codes(fr_), codes(fr_))
+al = dict(e0, id='UPEV-' + '0' * 32)
+mutation('M21 الحقل البديل id يخالف evidence_id ← ID_ALIAS_DIFFERS', 'ID_ALIAS_DIFFERS' in codes(al), codes(al))
+check('R17 سجلات الأدلّة الحالية كلها متّسقة في الحقول المكرّرة والبصمة', not UC.verify_evidence_registry(allev), UC.verify_evidence_registry(allev)[:3])
 ids_cert = {i for c in c1 for i in (c.get('external_evidence_ids') or [])}
 reg = {e['evidence_id'] for e in allev}
 check('R12 لا مرجع يتيم ولا ملتبس: كل معرّفٍ في الشهادات موجودٌ في السجلّ بمحتوى واحد', ids_cert and ids_cert <= reg, sorted(ids_cert - reg)[:3])
