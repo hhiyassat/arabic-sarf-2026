@@ -256,7 +256,8 @@ def main():
             for e in H47.get(letters(lem), []):
                 m, d = match_class(lem, e['verb'])
                 rows.append(dict(event_id=e['event_id'], verb=e['verb'], root_K=e['root_K'], form=e['form'], transitivity=e['transitivity'],
-                                 masdar=e['masdar'], event_review=e['event_review_v36'][:160],
+                                 masdar=e['masdar'], masdar_wasit_v37=e.get('masdar_wasit_v37') or None,
+                                 transitivity_wasit_v37=e.get('transitivity_wasit_v37') or None, event_review=e['event_review_v36'][:160],
                                  withdrawn=e['event_review_v36'].startswith('WITHDRAWN'), match=m, diff=d))
             o['hfn47'] = dict(status='OK' if rows else 'QUERY_OK_NO_RESULT', rows=rows)
         # المطاوعة: المحرّك المثبت (يطابق بتسامح: السكون وٱ)؛ ويُعاد فحص كل صفٍّ هنا

@@ -75,7 +75,7 @@ def _surah(items):
                         continue
                     out['conflicts'] += 1
                     out['by_kind'][ob['requirement_kind']] += 1
-                    tw = [e for e in (ob.get('external_evidence') or []) if e['feature'] == 'transitivity_wasit']
+                    tw = [e for e in (ob.get('external_evidence') or []) if e['feature'] in ('transitivity_wasit', 'transitivity_wasit_v5')]
                     if not tw:
                         continue
                     out['touched'] += 1

@@ -200,7 +200,8 @@ def feature_rows(fr, lem, W, res, pins):
             st = ST['WITHDRAWN'] if x['withdrawn'] else None
             base('HFN', 'RELEASE_V47_EVENT', 'hfn47', f"HFN:release/{pins['hfn_release']}/events.csv", x['event_id'], x['verb'], x['match'], x['diff'],
                  'hfn_v47_event: الحدث في الإصدار الحديث بجانب قيمة الأساس (لا تحلّ محلّها)',
-                 dict(value=dict(event_id=x['event_id'], form=x['form'], transitivity=x['transitivity'], masdar=x['masdar']),
+                 dict(value=dict(event_id=x['event_id'], form=x['form'], transitivity=x['transitivity'], masdar=x['masdar'],
+                                 masdar_wasit_v37=x.get('masdar_wasit_v37'), transitivity_wasit_v37=x.get('transitivity_wasit_v37')),
                       event_id_in_base=x['event_id'] in v36, event_review=x['event_review'],
                       exclusion_reason=('حدثٌ مسحوب (event_review_v36 يبدأ بـWITHDRAWN): لا يُقرأ حدثاً حياً' if x['withdrawn'] else None)), state=st)
     else:
