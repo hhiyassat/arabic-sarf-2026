@@ -80,8 +80,9 @@ PY
 }
 snap() { local dir="$1" hp="$2" rel="$3" out="$4"
   (cd "$OUT/meta" && meta "$(basename "$out")" "$hp" "$rel")
-  if [ -n "$rel" ]; then (cd "$dir" && env SARF_HFN="$hp" SARF_HFN_RELEASE_OK="$rel" run_t "$TMO" python3 -s tools/snapshot_outputs.py dump . "$out" --jobs 2 "${VARG[@]}")
-  else (cd "$dir" && env -u SARF_HFN_RELEASE_OK SARF_HFN="$hp" run_t "$TMO" python3 -s tools/snapshot_outputs.py dump . "$out" --jobs 2 "${VARG[@]}"); fi
+  # run_t دالّةٌ في الصدفة: تُصدَّر المتغيّرات في صدفةٍ فرعية (لا env، فهو لا يستدعي الدوال)
+  if [ -n "$rel" ]; then (cd "$dir" && export SARF_HFN="$hp" SARF_HFN_RELEASE_OK="$rel" && run_t "$TMO" python3 -s tools/snapshot_outputs.py dump . "$out" --jobs 2 "${VARG[@]}")
+  else (cd "$dir" && unset SARF_HFN_RELEASE_OK && export SARF_HFN="$hp" && run_t "$TMO" python3 -s tools/snapshot_outputs.py dump . "$out" --jobs 2 "${VARG[@]}"); fi
   fault bg_fail && [ "$(basename "$out")" = snap_v47.pkl.gz ] && { echo "REPRO_FAULT bg_fail" >&2; return 7; }
   return 0
 }
@@ -100,7 +101,7 @@ bg cand_old in_dir "$OUT/frozen_old" "${OLDENV[@]}" python3 -s tools/upstream_ca
 bg cand_new in_dir "$B" "${UPENV[@]}" python3 -s tools/upstream_candidates.py "$OUT/m/cand.jsonl.gz" "$OUT/m/cand.json" --jobs 2 "${VARG[@]}"
 wait_all
 fault missing_result && rm -f "$OUT/m/cand_old.json"
-(cd "$B" && env SARF_HFN="$V36" run_t "$TMO" python3 -s tools/upstream_conflicts.py "$OUT/m/cand.jsonl.gz" "$OUT/m/cert_check.json" --jobs "$JOBS" "${VARG[@]}") >> "$LOG"
+(cd "$B" && export SARF_HFN="$V36" && run_t "$TMO" python3 -s tools/upstream_conflicts.py "$OUT/m/cand.jsonl.gz" "$OUT/m/cert_check.json" --jobs "$JOBS" "${VARG[@]}") >> "$LOG"
 for f in cand_old.json cand.json cand_old.jsonl.gz cand.jsonl.gz cert_check.json; do [ -s "$OUT/m/$f" ] || { echo "نتيجةٌ ناقصة: $OUT/m/$f" >&2; exit 4; }; done
 (cd "$B" && python3 -s tools/upstream_repair_measure.py "$OUT/m/cand_old.jsonl.gz" "$OUT/m/cand.jsonl.gz" "$V47" "$OUT/pinned/wazn" "$OUT/m/repair" "$OUT/m/cert_check.json") >> "$LOG"
 # ٥ الاختبارات على نسخة الفرع (كل ملفٍّ عمليةٌ مستقلة بمهلةٍ محمولة)، مع عدّ الفحوص المنفّذة لا الملفات
