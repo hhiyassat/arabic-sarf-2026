@@ -58,7 +58,7 @@ def _surah(items):
     for s, v, a, U, F in per:
         RBV[(s, v)] = verse_relations(a, U, F, f'{s}:{v}', legacy_cond=C, legacy_rel=Rl)['records']
     out = dict(conflicts=0, touched=0, cls=collections.Counter(), by_kind=collections.Counter(), examples=collections.defaultdict(list),
-               identical_without_evidence=0, sentences=0, evidence_on_obligations=0)
+               identical_without_evidence=0, sentences=0, evidence_on_obligations=0, ids=set())
     for SP in LT:
         for D in SP.A + SP.O.get('pending', []):
             for Jx in D.A + D.O.get('pending', []):
@@ -68,6 +68,9 @@ def _surah(items):
                 c0 = closure_certificate(Jx, recs)
                 out['sentences'] += 1
                 out['identical_without_evidence'] += _strip(c1) == _strip(c0)
+                out['ids'] |= set(c1.get('external_evidence_ids') or [])
+                for ob_ in c1['obligations']:
+                    out['ids'] |= {e.get('evidence_id') or e['id'] for e in (ob_.get('external_evidence') or [])}
                 fr = {r['heads'].get('verb'): r for r in recs if r['type'] == 'VERB_FRAME'}
                 for ob in c1['obligations']:
                     out['evidence_on_obligations'] += bool(ob.get('external_evidence'))
@@ -105,7 +108,9 @@ def main():
         parts = P.map(_surah, groups, chunksize=1)
     T = dict(conflicts=0, touched=0, cls=collections.Counter(), by_kind=collections.Counter(), examples=collections.defaultdict(list),
              identical_without_evidence=0, sentences=0, evidence_on_obligations=0)
+    ids = set()
     for p in parts:
+        ids |= p['ids']
         for k in ('conflicts', 'touched', 'identical_without_evidence', 'sentences', 'evidence_on_obligations'):
             T[k] += p[k]
         T['cls'].update(p['cls'])
@@ -114,6 +119,7 @@ def main():
             T['examples'][k] = (T['examples'][k] + v)[:8]
     T['cls'] = dict(sorted(T['cls'].items()))
     T['by_kind'] = dict(T['by_kind'])
+    T['external_evidence_ids_seen'] = sorted(ids)
     json.dump(T, open(sys.argv[2], 'w', encoding='utf-8'), ensure_ascii=False, indent=1, default=str)
     print(json.dumps({k: T[k] for k in ('sentences', 'identical_without_evidence', 'conflicts', 'touched', 'cls')}, ensure_ascii=False))
 
