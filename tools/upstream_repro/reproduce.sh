@@ -8,17 +8,19 @@
 # REPRO_FAULT=bg_fail|missing_result يحقن عطلاً لاختبار الأداة (tools/upstream_repro/test_reproduce.sh)؛ ولا يُعيَّن في التشغيل المرجعي.
 set -euo pipefail
 BASE=02b136014c9d3b25cc332e9455e331e5fd563e44
-VERSES=""; SKIP_TESTS=0; JOBS=3; TMO=7200
+VERSES=""; SKIP_TESTS=0; CHECK_ONLY=0; JOBS=3; TMO=7200
 while [ $# -gt 0 ]; do
   case "$1" in
     --sarf) SARF="$2";; --data) DATA="$2";; --hfn) HFN="$2";; --hfn-base) V36="$2";; --wazn) WAZN="$2";; --amln) AMLN="$2";; --maq) MAQ="$2";;
     --branch) BR_C="$2";; --old) OLD_C="$2";; --out) OUT="$2";; --verses) VERSES="$2";; --jobs) JOBS="$2";;
     --skip-tests) SKIP_TESTS=1; shift; continue;;
+    --check-only) CHECK_ONLY=1; shift; continue;;   # يعيد خطوة الثوابت وحدها على OUT موجود (لا يكتب غير m/invariants.json)
     *) echo "معامل غير معروف: $1" >&2; exit 2;;
   esac; shift 2
 done
 for v in SARF DATA HFN V36 WAZN AMLN MAQ BR_C OLD_C OUT; do [ -n "${!v:-}" ] || { echo "ناقص: $v" >&2; exit 2; }; done
-[ ! -e "$OUT" ] || { echo "OUT موجود: لا يُستبدل تسليمٌ سابق ($OUT)" >&2; exit 2; }
+if [ "$CHECK_ONLY" = 1 ]; then [ -d "$OUT/m" ] || { echo "--check-only يحتاج OUT موجوداً" >&2; exit 2; }
+else [ ! -e "$OUT" ] || { echo "OUT موجود: لا يُستبدل تسليمٌ سابق ($OUT)" >&2; exit 2; }; fi
 command -v python3 >/dev/null || { echo "يلزم python3" >&2; exit 2; }
 python3 -c 'import sys; sys.exit(0 if sys.version_info[:2] == (3, 13) else 1)' || { echo "يلزم Python 3.13" >&2; exit 2; }
 for c in "$BASE" "$BR_C" "$OLD_C"; do git -C "$SARF" cat-file -e "$c^{commit}" || { echo "الالتزام $c غير موجود في $SARF" >&2; exit 2; }; done
@@ -52,6 +54,8 @@ wait_all() { local i rc bad=0
 fault() { [ "${REPRO_FAULT:-}" = "$1" ]; }
 VARG=(); [ -n "$VERSES" ] && VARG=(--verses "$VERSES")
 
+V47="$OUT/pinned/hfn/release/release_v47"
+if [ "$CHECK_ONLY" = 0 ]; then
 # ١ تثبيت المصادر، وإعداد 6 نوفمبر من التزاماته المسجّلة
 TOOLS="$(cd "$(dirname "$0")" && pwd)"
 bash "$TOOLS/pin_sources.sh" "$HFN" "$WAZN" "$AMLN" "$MAQ" "$OUT/pinned" >> "$LOG"
@@ -116,6 +120,7 @@ if [ "$SKIP_TESTS" = 0 ]; then
   done
   wait_all
 fi
+fi   # CHECK_ONLY
 # ٦ الثوابت: عدد الآيات المنجزة، ولا تكرار، ولا خلط إصدارات، والحماية، والاختبارات بعدّ فحوصها
 python3 - "$OUT" "$VERSES" "$SKIP_TESTS" "$V36" "$V47" <<'PY'
 import sys, json, glob, os, gzip, pickle, re, hashlib
@@ -149,8 +154,9 @@ if not SKIP:
     for p in glob.glob(os.path.join(O, 'tests', '*.exit')):
         n = os.path.basename(p)[:-5]
         out = open(os.path.join(O, 'tests', n + '.out'), encoding='utf-8', errors='replace').read()
-        T[n] = dict(exit=open(p).read().strip(), checks=len(re.findall(r'^(?:PASS|FAIL|CAUGHT|MISSED)\b', out, re.M)),
-                    failed=len(re.findall(r'^(?:FAIL|MISSED)\b', out, re.M)))
+        T[n] = dict(exit=open(p).read().strip(), checks=len(re.findall(r'^(?:PASS|OK|ok|CAUGHT|FAIL|BAD|MISSED)\b', out, re.M)),
+                    failed=len(re.findall(r'^(?:FAIL|BAD|MISSED)\b', out, re.M)))
+        # صيغ الفحص في ملفات الاختبار: نجاحٌ PASS/OK/ok/CAUGHT، وفشلٌ FAIL/BAD/MISSED؛ وGAP فجوةٌ معلنة لا فحص
     files = glob.glob(os.path.join(O, 'frozen_branch', 'tests', 'test_*.py'))
     assert len(T) == len(files), ('ملف اختبارٍ بلا نتيجة', len(T), len(files))
     assert all(t['exit'] == '0' and t['failed'] == 0 for t in T.values()), {k: v for k, v in T.items() if v['exit'] != '0' or v['failed']}
