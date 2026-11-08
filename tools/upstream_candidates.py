@@ -1,12 +1,16 @@
-"""tools/upstream_candidates.py — دفعة الإضافة (SARF_UPSTREAM_CONSUMPTION_ADDENDUM_01، المسار الأول).
+"""tools/upstream_candidates.py — الاستهلاك المرشّح للمصادر الحديثة (SARF_UPSTREAM_CONSUMPTION_2026_11_08، الوضع «ب»).
 
-يمرّ على المصحف كله بالمحلّل كما هو، ويجمع لكل وقوعٍ فعلي مرشّحه الصرفي (frame.candidate) وجذره ووزنه، واللمّة المشكولة من
-HFN v36 للمرشّح نفسه، ثم يسأل الموارد الخارجية في عمليةٍ فرعية معزولة (tools/upstream/worker.py)، ويكتب السمات المرشّحة في ملفٍّ
-جانبي. لا يغيّر مخرجاً قائماً: المحلّل لا يستورد هذا الملف، ولا تدخل نتائجه قرار التعدية ولا غيره.
+يمرّ على المصحف بالمحلّل كما هو (الأساس: HFN release_v36 كما يقرؤه sarf/root.py)، ويجمع لكل وقوعٍ فعلي وجهه الصرفي وهويته وجذره ووزنه
+ولمّته المشكولة من HFN الأساس، ثم يسأل المصادر الأربع المثبتة في عمليةٍ فرعية معزولة، ويكتب ما يجيب به كل مصدرٍ في حقولٍ جديدة منفصلة
+في ملفٍّ جانبي. لا يغيّر مخرجاً قائماً: المحلّل لا يستورد هذا الملف، ولا يدخل شيءٌ منه اختيار التقسيم أو الصنف أو الجذر أو الوزن أو العامل
+أو التعلّق أو الإغلاق؛ وكل سمةٍ CANDIDATE.
 
-    SARF_UP_AMLN=… SARF_UP_WAZN=… SARF_UP_HFN=… SARF_UP_MAQ=… PYTHONHASHSEED=0 python3 -s tools/upstream_candidates.py OUT.jsonl.gz SUMMARY.json [--verses 2:282,112:3]
+    SARF_HFN=…/release_v36 SARF_UP_PINS=tools/upstream/pins_2026_11_08.json SARF_UP_HFN=… SARF_UP_WAZN=… SARF_UP_AMLN=… SARF_UP_MAQ=… \
+    PYTHONHASHSEED=0 python3 -s tools/upstream_candidates.py OUT.jsonl.gz SUMMARY.json [--verses 2:282,112:3] [--jobs N]
 
-السلسلة لكل سمة: وقوع النص ← المرشّح الصرفي ← اللمّة المشكولة ← صفّ المصدر ← السمة المرشّحة.
+خريطة المسار (من المدخل العام إلى التقرير):
+  frames() المستهلك العام ← lemma_status() بوابة الحماية والأهلية ← هوية التحليل (analysis_id) واللمّة ← client.call() العامل المعزول ←
+  match_class() فحص المطابقة + ROUTES/BLOCKED المسلك ← feature_rows() السمة المرشّحة وأدلّتها ← OUT.jsonl.gz / evidence_records() ← التقرير
 """
 import collections, gzip, itertools, json, math, multiprocessing as mp, os, sys
 
@@ -24,82 +28,79 @@ def wilson(k, n, z=1.959964):
     return round((p + z * z / (2 * n) - z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n))) / d, 3)
 
 
-# سجلّ المسالك: ما يُستهلك وما يُحجب، بقياسه ومصدر القياس. «reported» قيمةٌ منقولة من سجلّ القياس الأصلي، «recomputed» أُعيد حسابها هنا
+H8 = 'HANDOFF_SARF_UPSTREAM_2026-11-08 §3.4'
+H6 = 'HANDOFF_SARF_UPSTREAM_2026-11-06 (أحكامه باقية: 11-08 §1)'
+# سجلّ المسالك المقبولة بقياسها ومصدر القياس. قبول المسلك لا يثبت ملاءمة النتيجة للوقوع: كل مخرجٍ CANDIDATE
 ROUTES = {
-    ('AMLN', 'R1'): dict(status='ACCEPTED_ROUTE', measurement_id='AMLN:qabiliyyat/SCORES_v1.json#R1_MUTAWAA',
-                         precision=0.964, wilson_low=0.877, wilson_source='reported (SCORES_v1.json: wilson_low)',
-                         sanad='كشف الأسرار:9670'),
-    ('AMLN', 'R1W'): dict(status='ACCEPTED_ROUTE', measurement_id='AMLN:ahdath/mutawaa_R1W_gold.tsv (v2)', precision=round(53 / 57, 3),
-                          wilson_low=wilson(53, 57), wilson_source='recomputed from 53/57 (handoff)', sanad='الكليات:27626–27627'),
-    ('AMLN', 'T_JAL'): dict(status='ACCEPTED_ROUTE', measurement_id='AMLN:ahdath T_JAL 25/25', precision=1.0, wilson_low=wilson(25, 25),
-                            wilson_source='recomputed from 25/25 (handoff)', sanad='الكتاب:16451–16455'),
-    ('AMLN', 'J_SAJIYYA'): dict(status='ACCEPTED_ROUTE', measurement_id='AMLN:ahdath/jiha_gold_J_SAJIYYA.tsv', precision=1.0,
-                                wilson_low=0.890, wilson_source='reported (word_tree/ahdath.py JIHA_ROUTES)', sanad='الكتاب:16143–16144'),
-    ('AMLN', 'J_DAA'): dict(status='ACCEPTED_ROUTE', measurement_id='AMLN:ahdath/jiha_gold_J_DAA.tsv', precision=0.975,
-                            wilson_low=0.871, wilson_source='reported (word_tree/ahdath.py JIHA_ROUTES)', sanad='الكتاب:16016؛ 16108'),
-    ('WAZN', 'R1_QABILIYYAT'): dict(status='ACCEPTED_ROUTE', measurement_id='AMLN:qabiliyyat/SCORES_v1.json#R1_MUTAWAA', precision=0.964,
-                                    wilson_low=0.877, wilson_source='reported', sanad='كشف الأسرار:9670'),
-    ('WAZN', 'LEX_FORMULA'): dict(status='ACCEPTED_ROUTE', measurement_id='WAZN:evidence/mutawaa_sample60_judged.tsv', precision=round(56 / 59, 3),
-                                  wilson_low=0.861, wilson_source='reported (HANDOFF_ARABIC_MOTHER_NET.md: R56/W3/?1)', sanad='المعاجم (صيغة «فعلته فانفعل»)'),
-    ('WAZN', 'R1W_WASIT'): dict(status='ACCEPTED_ROUTE', measurement_id='AMLN:ahdath/mutawaa_R1W_gold.tsv (v2)', precision=round(53 / 57, 3),
-                                wilson_low=wilson(53, 57), wilson_source='recomputed from 53/57', sanad='الكليات:27626–27627'),
-    ('WAZN', 'T_JAL'): dict(status='ACCEPTED_ROUTE', measurement_id='AMLN:ahdath T_JAL 25/25', precision=1.0, wilson_low=wilson(25, 25),
-                            wilson_source='recomputed from 25/25', sanad='الكتاب:16451–16455'),
-    ('HFN37', 'MASDAR_WASIT_V37'): dict(status='ACCEPTED_ROUTE', measurement_id='HFN:06_handoff/MASDAR_WASIT_PROPOSE_sample60_judged.tsv',
-                                        precision=round(53 / 59, 3), wilson_low=wilson(53, 59), wilson_source='recomputed from 53/59 (handoff)',
-                                        sanad='المعجم الوسيط (M11)؛ إضافةٌ لا استبدال'),
-    ('HFN37', 'TRANSITIVITY_WASIT_V37'): dict(status='ACCEPTED_ROUTE', measurement_id='WAZN:evidence/transitivity_wasit_sample60_judged.tsv (مصدر FILL)',
-                                              precision=1.0, wilson_low=wilson(44, 44), wilson_source='recomputed from 44/44',
-                                              sanad='المعجم الوسيط (M11)'),
-    ('WAZN', 'TRANSITIVITY_WASIT_V1'): dict(status='ACCEPTED_ROUTE', measurement_id='WAZN:evidence/transitivity_wasit_sample60_judged.tsv',
-                                            precision=1.0, wilson_low=wilson(44, 44), wilson_source='recomputed from 44/44 (handoff)',
-                                            sanad='المعجم الوسيط (M11)'),
+    ('AMLN', 'R1'): dict(status='ACCEPTED_ROUTE', precision=0.964, wilson_low=0.877, source=H8, sanad='كشف الأسرار:9670', file='ahdath/rules_R1.tsv'),
+    ('AMLN', 'R1W'): dict(status='ACCEPTED_ROUTE', precision=0.930, wilson_low=0.833, source=H8, sanad='الكليات:27626–27627', file='ahdath/mutawaa_R1W_pool.tsv'),
+    ('AMLN', 'T_JAL'): dict(status='ACCEPTED_ROUTE', precision=1.0, wilson_low=0.867, source=H8 + ' (25 من 25)', sanad='الكتاب:16451–16455',
+                            file='ahdath/taadiya_T_JAL.tsv'),
+    ('AMLN', 'J_SAJIYYA'): dict(status='ACCEPTED_ROUTE', precision=1.0, wilson_low=0.890, source=H6 + '؛ word_tree/ahdath.py JIHA_ROUTES',
+                                sanad='الكتاب:16143–16144', file='ahdath/jiha_pool.tsv'),
+    ('AMLN', 'J_DAA'): dict(status='ACCEPTED_ROUTE', precision=0.975, wilson_low=0.871, source=H6 + '؛ word_tree/ahdath.py JIHA_ROUTES',
+                            sanad='الكتاب:16016؛ 16108', file='ahdath/jiha_pool.tsv'),
+    ('WAZN', 'R1_QABILIYYAT'): dict(status='ACCEPTED_ROUTE', precision=0.964, wilson_low=0.877, source='engines/mutawaa_engine.py (docstring)',
+                                    sanad='كشف الأسرار:9670', file='data/mutawaa_v7.tsv'),
+    ('WAZN', 'LEX_FORMULA'): dict(status='ACCEPTED_ROUTE', precision=round(56 / 59, 3), wilson_low=0.861, source='engines/mutawaa_engine.py (docstring)',
+                                  sanad='المعاجم (صيغة «فعلته فانفعل»)', file='data/mutawaa_v7.tsv'),
+    ('WAZN', 'R1W_WASIT'): dict(status='ACCEPTED_ROUTE', precision=0.930, wilson_low=0.833, source='engines/mutawaa_engine.py (docstring)',
+                                sanad='الكليات:27626–27627', file='data/mutawaa_v7.tsv'),
+    ('WAZN', 'T_JAL'): dict(status='ACCEPTED_ROUTE', precision=1.0, wilson_low=0.867, source=H8, sanad='الكتاب:16451–16455', file='engines/taadiya_engine.py'),
+    ('WAZN', 'TRANSITIVITY_WASIT_V5'): dict(status='ACCEPTED_ROUTE', precision=None, wilson_low=None,
+                                            source='HANDOFF 11-08 §3.3: v5 = v1 مصحَّحاً حيث اتّفق القارئان (201 تغيير)؛ للمجرّد وحده',
+                                            sanad='المعجم الوسيط (M11)', file='data/transitivity_wasit_v5.tsv', scope='المجرّد وحده'),
+    ('WAZN', 'SIFAT_V2'): dict(status='INFORMATION_CANDIDATE', precision=None, wilson_low=None, source='HANDOFF 11-08 §3.3: على v45، وأحكام التعدّي فيه نفس v1',
+                               sanad='المعجم الوسيط', file='data/sifat_v2.tsv', note='معلومةٌ مرشّحة: لا يُستنتج منها نوع اشتقاقٍ ولا وزنٌ مختار'),
+    ('HFN', 'RELEASE_V47_EVENT'): dict(status='RELEASE_CANDIDATE', precision=None, wilson_low=None, source='HFN release_v47 (verify PASS، الإفسادات 14/14)',
+                                       sanad='HFN-D060…D075', file='release/release_v47/events.csv',
+                                       note='إصدارٌ غير معتمد أساساً للمحلّل (HFN_V47_ADOPTED = NO): سمةٌ مرشّحة بجانب قيمة v36'),
 }
-# المحجوب: لا يُستعمل دليلاً، ويُحفظ في سجلّه بسببه
+# المحجوب: لا يُستعمل، ويُحفظ في سجلّه بسببه
 BLOCKED = {
-    ('AMLN', 'R2'): 'ويلسون 0.422 (24/42)', ('AMLN', 'T'): 'ويلسون 0.488 (33/53)', ('AMLN', 'T_TAD'): 'ويلسون 0.458 (18/28)',
-    ('AMLN', 'J_LAWN'): 'ويلسون 0.742، الحوض 30', ('AMLN', 'J_MUTAWAA'): 'ويلسون 0.656',
-    ('WAZN', 'TRANSITIVITY_WASIT_V1:مشترك'): '«مشترك» محجوب (0.75)', ('WAZN', 'TRANSITIVITY_WASIT_V2'): 'ويلسون 0.763 (OCR)',
-    ('WAZN', 'TRANSITIVITY_WASIT_V3'): 'ويلسون 0.746 (OCR)', ('WAZN', 'MUTAWAA:BASE_UNRESOLVED'): 'أصلٌ غير محسوم',
-    ('HFN', 'v37_side_files'): 'غير معتمدة؛ لا تُستهلك في هذه الدفعة',
+    ('AMLN', 'R2'): 'BLOCK: متعدٍّ بلا مطاوع ← مؤثّر؛ آخر قياس 0.719، ويلسون 0.59 (HANDOFF 11-08 §3.4)',
+    ('AMLN', 'R2w'): 'BLOCK: v3–v5 (HANDOFF 11-08 §3.4)',
+    ('AMLN', 'T'): 'BLOCK: ويلسون 0.488 (11-06)', ('AMLN', 'T_TAD'): 'BLOCK: ويلسون 0.458 (11-06)',
+    ('AMLN', 'J_LAWN'): 'BLOCK: ويلسون 0.742، الحوض 30', ('AMLN', 'J_MUTAWAA'): 'BLOCK: ويلسون 0.656',
+    ('WAZN', 'TRANSITIVITY_WASIT_MAZID'): 'BLOCK: تعدّي المزيد من الوسيط محجوب (0.746) (HANDOFF 11-08 §3.3، §5)',
+    ('WAZN', 'TRANSITIVITY_WASIT_V4'): 'BLOCK: لا يُستعمل للمجرّد (HANDOFF 11-08 §3.3)',
+    ('WAZN', 'TRANSITIVITY_WASIT:مشترك'): 'BLOCK: «مشترك» محجوب (0.75) (11-06)',
+    ('WAZN', 'MUTAWAA:BASE_UNRESOLVED'): 'BLOCK: أصلٌ غير محسوم',
 }
-# يُرفق بالمرشّح المطابقُ التامّ وحده؛ وفرق السكون وحده يبقى مستبعداً بسببه (حكم المالك، 6 نوفمبر)
-ATTACH = ('EXACT_VOCALIZED_MATCH',)
-EXCLUDE_REASON = {'SUKUN_ONLY_DIFFERENCE': 'فرقٌ في السكون وحده: مستبعدٌ بحكم المالك (6 نوفمبر)',
-                  'VOCALIZATION_MISMATCH': 'حروفٌ واحدة وتشكيلٌ مختلف (والشدّة منه)', 'LETTERS_DIFFER': 'حروفٌ مختلفة (ومنها كرسيّ الهمزة)'}
-FEATURE = {('AMLN', 'R1'): 'ahdath_effect', ('AMLN', 'R1W'): 'ahdath_effect', ('AMLN', 'T_JAL'): 'ahdath_effect',
-           ('AMLN', 'J_SAJIYYA'): 'fail_jiha', ('AMLN', 'J_DAA'): 'fail_jiha', ('WAZN', 'T_JAL'): 'taadiya',
-           ('WAZN', 'TRANSITIVITY_WASIT_V1'): 'transitivity_wasit', ('HFN37', 'MASDAR_WASIT_V37'): 'hfn_v37_masdar',
-           ('HFN37', 'TRANSITIVITY_WASIT_V37'): 'hfn_v37_transitivity'}
-RANK_MEASURED = ('EXTERNAL_MEASURED', 'دليل خارجي مقيس')
-RANK_OCR = ('OCR_UNVERIFIED_WITNESS', 'شاهد OCR غير محقّق')
+# حكم الأين (المالك 2026-11-08): يُسجَّل بسنده، ولا يوسَّع إلى المسالك المحجوبة (R2 وأخواته)
+OWNER_RULINGS = [dict(id='AYN_2026_11_08', text='تغيّر الأين في المفعول أثرٌ فيه، فيُعدّ مؤثّراً',
+                      sanad='المناوي، التوقيف، ص68؛ والغزالي، معيار العلم، ص242', source=H8,
+                      scope='معيار «المؤثّر» في المسالك المقبولة (R1، R1W) كما قيست؛ لا يرفع حجب R2/R2w ولا يُنقل إلى مسلكٍ آخر')]
+MUJARRAD_FORMS = ('فَعَلَ', 'فَعِلَ', 'فَعُلَ')
+# الحالات (§٤)
+ST = dict(PROTECTED='PROTECTED_NOT_QUERIED', UNRESOLVED='IDENTITY_OR_LEMMA_UNRESOLVED', NO_RESULT='QUERY_OK_NO_RESULT',
+          MATCH='CANDIDATE_MATCH', NON_MATCH='NON_MATCH', BLOCKED='ROUTE_BLOCKED', WITHDRAWN='WITHDRAWN_RECORD',
+          MISSING='RESOURCE_MISSING', ERROR='INTERFACE_OR_CONFIG_ERROR', UNSUPPORTED='UNSUPPORTED_FORM')
+RANK = ('CANDIDATE', 'مرشّح: لا يدخل الإغلاق ولا الاستدلال')
 
 
-def evidence_records(fr, feats, rm, prov):
-    """سمات المنبع في نظام الأدلّة (مراجعة 036): معرّف UPSTREAM:{الوقوع}:{feature}:{route}:{commit}، ورتبة؛ ولا يُستوفى بها التزام،
-    ولا يُغلق بها وجه، ولا تُعدّ CONDITIONS_MET"""
-    out = []
-    for x in feats:
-        com = (x['repository_commit_or_dataset_version'] or '')[:7]
-        out.append(dict(id=f"UPSTREAM:{fr['unit']}:{x['feature']}:{x['route_id']}:{com}", unit=fr['unit'], feature=x['feature'],
-                        route=x['route_id'], provider=x['provider'], commit=com, rank=RANK_MEASURED[1], rank_code=RANK_MEASURED[0],
-                        value=x.get('value') or x.get('effect') or x.get('pair') or x.get('jiha') or x.get('masdar'),
-                        measurement_id=x['measurement_id'], wilson_low=x['wilson_low'], match_status=x['match_status'],
-                        discharges_obligation=False, closes_face=False, conditions_met=False))
-    mq = (rm or {}).get('maqayis') or {}
-    if mq.get('status') == 'FOUND':
-        com = (prov.get('maq', {}).get('commit') or '')[:7]
-        out.append(dict(id=f"UPSTREAM:{fr['unit']}:root_meaning:MAQAYIS_FALLBACK:{com}", unit=fr['unit'], feature='root_meaning',
-                        route='MAQAYIS_FALLBACK', provider='MAQAYIS', commit=com, rank=RANK_OCR[1], rank_code=RANK_OCR[0],
-                        value=dict(retrieval_key=mq['retrieval_key'], records=[dict(id=r['id'], display=r['display'], axes=r['semantic_axes'])
-                                                                              for r in mq['records']]),
-                        note='معنى الجذر ليس المعنى المختار في السياق؛ والنصّ OCR غير محقّق', discharges_obligation=False,
-                        closes_face=False, conditions_met=False))
-    return out
+def query_key(root):
+    """مفتاح السؤال عن معنى الجذر (K في البنك) من جذر sarf، بتحويلٍ معلوم وحده؛ وجذر sarf نفسه لا يتغيّر.
+    → (المفتاح أو None، القاعدة)"""
+    if not root:
+        return None, 'NO_ROOT'
+    k, rules = root, []
+    seats = str.maketrans({'أ': 'ء', 'إ': 'ء', 'ؤ': 'ء', 'ئ': 'ء', 'آ': 'ء'})
+    if set(k) & set('أإؤئآ'):
+        k = k.translate(seats)
+        rules.append('HAMZA_SEAT→ء')
+    if set(k) & set('اى'):
+        return None, 'AMBIGUOUS_ALIF: لا يُخمَّن واوٌ أو ياء من ألفٍ مبهمة'
+    if len(k) == 2:
+        k = k + k[-1]
+        rules.append('DOUBLED_2→3 (المضاعف بثلاثة أحرف)')
+    if len(k) not in (3, 4):
+        return None, f'LENGTH_{len(k)}'
+    return k, '+'.join(rules) or 'IDENTITY'
 
 
 def frames(items):
-    """→ لكل آية: أطر الفعل بمرشّحها الصرفي وجذرها ووزنها، ولمّاتها المشكولة من HFN v36 (index[(R، P)])"""
+    """→ لكل آية: أطر الفعل بوجهها الصرفي (المرشّح ومعرّف التحليل وحالة اختياره) وجذرها ووزنها، ولمّاتها المشكولة من HFN الأساس"""
     from sarf.catalog import Catalog
     from sarf.analyze import analyze
     from sarf.algebra import Trace, sentence_geo, linguistic_layer
@@ -126,119 +127,189 @@ def frames(items):
             f_ = r.get('frame') or {}
             c_ = f_.get('candidate') or {}
             R_, P_ = f_.get('root'), f_.get('pattern')
+            cid = c_.get('id') or ''
+            wi = int(cid.split('.w')[1].split('.')[0]) if '.w' in cid else None
+            ms = [m for m in a['morph'] if m['word_index'] == wi and m.get('root') == R_ and m.get('form_class') == P_] if wi is not None else []
             ev = [dict(event_id=e['event_id'], verb=e['verb'], form=e.get('form'), transitivity=e.get('transitivity'))
                   for e in H.index.get((R_, P_), [])] if R_ and P_ else []
             pr = protected(r['texts'].get('verb'))
-            out.append(dict(verse=f'{s}:{v}', relation_id=r['relation_id'], unit=r['heads'].get('verb'), text=r['texts'].get('verb'),
+            out.append(dict(verse=f'{s}:{v}', word_index=wi, relation_id=r['relation_id'], unit=r['heads'].get('verb'), text=r['texts'].get('verb'),
                             protected=(dict(cls=pr['cls'], identity=pr['identity'], ambiguous=pr.get('ambiguous', False)) if pr else None),
-                            morph_candidate_id=c_.get('id'), root=R_, pattern=P_, voice=c_.get('voice'), tense=c_.get('tense'),
+                            morph_candidate_id=cid or None, analysis_id=(ms[0].get('analysis_id') if len(ms) == 1 else None),
+                            analysis_selection=((ms[0].get('statuses') or {}).get('analysis_selection_status') if len(ms) == 1 else
+                                                ('NO_MORPH_ENTRY' if not ms else 'MULTIPLE_MORPH_ENTRIES')),
+                            root=R_, pattern=P_, voice=c_.get('voice'), tense=c_.get('tense'), hfn_base_release=os.path.basename(H.path or ''),
                             hfn_events=ev))
     return out
 
 
 def lemma_status(fr):
+    """بوابة الحماية ثم الأهلية: لا يُسأل مصدرٌ عن وحدةٍ محمية؛ ولا تُرفق سمةٌ إلا بوجهٍ مختار ولمّةٍ واحدة"""
     ev = fr['hfn_events']
     if fr.get('protected'):
-        # البوابة الدستورية قبل كل استدعاء: لا تُسأل الموارد عن وحدةٍ محمية، ولا عن بديلها ما دامت الفئة مؤجَّلة
-        return 'PROTECTED_NOT_QUERIED', ('وحدةٌ محمية دستورياً (' + fr['protected']['cls'] + '، ' + fr['protected']['identity'] + ')' +
-                                         ('؛ والفئة مؤجَّلة فلا يُسأل عن البديل' if fr['protected']['ambiguous'] else ''))
+        return ST['PROTECTED'], ('وحدةٌ محمية دستورياً (' + fr['protected']['cls'] + '، ' + fr['protected']['identity'] + ')' +
+                                 ('؛ والفئة مؤجَّلة فلا يُسأل عن البديل' if fr['protected']['ambiguous'] else ''))
     if not fr['root'] or not fr['pattern']:
-        return 'LEMMA_NOT_ESTABLISHED', 'لا جذر ولا وزن مقبولان للمرشّح'
+        return ST['UNRESOLVED'], 'لا جذر ولا وزن مقبولان للمرشّح'
     if not ev:
-        return 'LEMMA_NOT_ESTABLISHED', 'لا حدث في HFN v36 للجذر والوزن'
+        return ST['UNRESOLVED'], f"لا حدث في HFN {fr.get('hfn_base_release')} للجذر والوزن"
     if len({e['verb'] for e in ev}) > 1:
-        return 'LEMMA_NOT_ESTABLISHED', 'أكثر من لمّة مشكولة في HFN للجذر والوزن: ' + '، '.join(sorted({e['verb'] for e in ev}))
-    return 'LEMMA_ESTABLISHED', 'لمّةٌ واحدة في HFN v36 للجذر والوزن'
+        return ST['UNRESOLVED'], 'أكثر من لمّة مشكولة في HFN الأساس للجذر والوزن: ' + '، '.join(sorted({e['verb'] for e in ev}))
+    if fr.get('analysis_selection') != 'SELECTED':
+        return ST['UNRESOLVED'], f"وجه التحليل غير مختار ({fr.get('analysis_selection')}): السمة لا تُنقل إلى الكلمة كلها"
+    return 'LEMMA_ESTABLISHED', 'وجهٌ مختار ولمّةٌ واحدة في HFN الأساس للجذر والوزن'
 
 
-def feature_rows(fr, lem, W, res):
-    """السمات المرشّحة من نتيجة العامل لِلمّةٍ واحدة، بحقولها المطلوبة؛ والمستبعد بسببه"""
-    P = res['provenance']
-    rs = res['resources']
-    keep, drop = [], []
+def _state(match, route_ok):
+    if not route_ok:
+        return ST['BLOCKED']
+    return ST['MATCH'] if match == 'EXACT' else ST['NON_MATCH']
 
-    def base(provider, route, row_id, file_key, form, src_ref, match, scope, extra):
-        meta = ROUTES.get((provider, route))
-        return dict(provider=provider, repository_commit_or_dataset_version=P[{'AMLN': 'amln', 'WAZN': 'wazn', 'HFN37': 'hfn37'}[provider]]['commit'],
-                    file_hash=(rs.get(file_key) or {}).get('file_hash'), file=file_key, row_or_entry_id=row_id, route_id=route,
-                    vocalized_lemma=lem, root=fr['root'], pattern_or_form=form, source_reference=src_ref,
-                    measurement_id=(meta or {}).get('measurement_id'), wilson_low=(meta or {}).get('wilson_low'),
-                    route_status=(meta or {}).get('status', 'UNREGISTERED'), owner_status='CANDIDATE_PENDING_OWNER',
-                    match_status=match, consumer_scope=scope, feature=FEATURE.get((provider, route)) or extra.pop('feature', None),
-                    exclusion_reason=None if match in ATTACH else EXCLUDE_REASON.get(match, match), **extra)
 
-    if isinstance(W['ahdath'], list):
-        for x in W['ahdath']:
-            row = base('AMLN', x['route'], x['event_id'], {'R1': 'AMLN:ahdath/rules_R1.tsv', 'R1W': 'AMLN:ahdath/mutawaa_R1W_pool.tsv',
-                                                           'T_JAL': 'AMLN:ahdath/taadiya_T_JAL.tsv'}[x['route']], None, x['src'], x['match'],
-                       'event_effect (الحدث وأثره على الصفة): candidate, not a syntactic transitivity decision',
-                       dict(effect=dict(fail=x['fail'], maful=x['maful'], mutawi=x['mutawi'], athar=x['athar'], sifa=x['sifa'],
-                                        label=x['label_ar']), upstream_event_id=x['event_id'],
-                            event_id_agrees=x['event_id'] in {e['event_id'] for e in fr['hfn_events']}, upstream_verb=x['verb']))
-            (keep if x['match'] in ATTACH else drop).append(row)
-    if isinstance(W['jiha'], list):
-        for x in W['jiha']:
-            row = base('AMLN', x['route'], x['event_id'], 'AMLN:ahdath/jiha_pool.tsv', None, x['src'], x['match'],
-                       'subject_semantic_side (جهة الفاعل الدلالية): لا يغيّر دوره النحوي ولا يجعله نائب فاعل',
-                       dict(jiha=x['jiha'], musabbib_verb=dict(value=x['musabbib_verb'] or None, route=x['musabbib_route'] or None,
-                                                               note='علاقةٌ معجمية مرشّحة، لا إثبات مسبِّبٍ محذوف في الجملة'),
-                            sifa=x['sifa'], upstream_event_id=x['event_id'], upstream_verb=x['verb'],
-                            event_id_agrees=x['event_id'] in {e['event_id'] for e in fr['hfn_events']}))
-            (keep if x['match'] in ATTACH else drop).append(row)
+def feature_rows(fr, lem, W, res, pins):
+    """→ صفوف السمات لِلمّةٍ واحدة من جواب العامل: كل صفٍّ بحالته (§٤)، مربوطٌ بالوقوع والوجه واللمّة، ومعه النص الأصلي ونص السؤال ونص الجواب"""
+    P, RS = res['provenance'], res['resources']
+    rows = []
+
+    def base(provider, route, source_key, file_key, row_id, row_verb, match, diff, scope, extra, state=None, route_ok=True):
+        meta = ROUTES.get((provider, route)) or {}
+        pv = {'AMLN': 'amln', 'WAZN': 'wazn', 'HFN': 'hfn'}[provider]
+        st = state or _state(match, route_ok)
+        rows.append(dict(occurrence=dict(verse=fr['verse'], word_index=fr['word_index'], unit=fr['unit'], relation_id=fr['relation_id'], text=fr['text']),
+                         face=dict(morph_candidate_id=fr['morph_candidate_id'], analysis_id=fr['analysis_id'], root=fr['root'], pattern=fr['pattern']),
+                         vocalized_lemma=lem, query_text=lem, row_text=row_verb, provider=provider, source_key=source_key, route_id=route,
+                         route_status=meta.get('status') if route_ok else 'BLOCKED', route_measure=dict(precision=meta.get('precision'),
+                                                                                                        wilson_low=meta.get('wilson_low'), source=meta.get('source')),
+                         commit=P[pv]['commit'], file=file_key, file_sha256=(RS.get(file_key) or {}).get('sha256'), row_id=row_id,
+                         match=match, diff=diff, state=st, rank=RANK[0], is_fact=False, consumer_scope=scope,
+                         owner_status='CANDIDATE_PENDING_OWNER' + ('' if match in ('EXACT', None) else f' ({match}: حكمه للمالك)'),
+                         **extra))
+
+    def missing(source_key, d):
+        rows.append(dict(occurrence=dict(verse=fr['verse'], word_index=fr['word_index'], unit=fr['unit'], relation_id=fr['relation_id'], text=fr['text']),
+                         face=dict(morph_candidate_id=fr['morph_candidate_id'], analysis_id=fr['analysis_id'], root=fr['root'], pattern=fr['pattern']),
+                         vocalized_lemma=lem, source_key=source_key,
+                         state={'QUERY_OK_NO_RESULT': ST['NO_RESULT'], 'RESOURCE_MISSING': ST['MISSING']}.get(d.get('status'), ST['ERROR']),
+                         detail=d.get('status') + (': ' + d['detail'] if d.get('detail') else ''), rank=RANK[0]))
+
+    v36 = {e['event_id'] for e in fr['hfn_events']}
+    # ---- HFN v47 ----
+    d = W['hfn47']
+    if d.get('rows'):
+        for x in d['rows']:
+            st = ST['WITHDRAWN'] if x['withdrawn'] else None
+            base('HFN', 'RELEASE_V47_EVENT', 'hfn47', f"HFN:release/{pins['hfn_release']}/events.csv", x['event_id'], x['verb'], x['match'], x['diff'],
+                 'hfn_v47_event: الحدث في الإصدار الحديث بجانب قيمة الأساس (لا تحلّ محلّها)',
+                 dict(value=dict(event_id=x['event_id'], form=x['form'], transitivity=x['transitivity'], masdar=x['masdar']),
+                      event_id_in_base=x['event_id'] in v36, event_review=x['event_review'],
+                      exclusion_reason=('حدثٌ مسحوب (event_review_v36 يبدأ بـWITHDRAWN): لا يُقرأ حدثاً حياً' if x['withdrawn'] else None)), state=st)
+    else:
+        missing('hfn47', d)
+    # ---- wazn: المطاوعة ----
     for key, side in (('mutawaa', 'base'), ('mutawaa_base', 'mutawaa')):
-        if isinstance(W[key], list):
-            for x in W[key]:
-                unresolved = not x['base']
-                row = base('WAZN', x['route'], f"{x['root']}:{x['base']}→{x['mutawaa']}", 'WAZN:data/mutawaa_v3.tsv',
-                           x['base_form'] if side == 'base' else x['mutawaa_form'], x['evidence'] or x['lexicons'], x['match'],
-                           'mutawaa (المطاوعة): ' + ('اللمّة أصلٌ لها مطاوع' if side == 'base' else 'اللمّة مطاوِعٌ لأصل'),
-                           dict(pair=dict(base=x['base'], base_form=x['base_form'], mutawaa=x['mutawaa'], mutawaa_form=x['mutawaa_form'],
-                                          athar=x['athar']), lemma_side=side, feature='mutawaa' if side == 'base' else 'mutawaa_base', upstream_verb=x['base'] if side == 'base' else x['mutawaa']))
-                if unresolved:
-                    row['route_status'] = 'BLOCKED: BASE_UNRESOLVED'
-                    drop.append(row)
-                elif any(r_ not in ('R1_QABILIYYAT', 'LEX_FORMULA', 'R1W_WASIT') for r_ in x['route'].split('+')):
-                    row['route_status'] = 'UNREGISTERED_ROUTE'
-                    drop.append(row)
-                else:
-                    if '+' in x['route']:
-                        row['route_status'] = 'ACCEPTED_ROUTE'
-                        row['measurement_id'] = ' + '.join(ROUTES[('WAZN', r_)]['measurement_id'] for r_ in x['route'].split('+'))
-                    (keep if x['match'] in ATTACH else drop).append(row)
-    if isinstance(W['taadiya_T_JAL'], list):
-        for x in W['taadiya_T_JAL']:
-            row = base('WAZN', 'T_JAL', f"{x['lazim']}→{x['mutaaddi']}", 'WAZN:taadiya_engine.AHDATH', x['form'], x['measure'], x['match'],
-                       'taadiya (التعدية بالهمزة): اللمّة لازمٌ له متعدٍّ مسموع — نتيجة ظلية لا تدخل قرار التعدية',
-                       dict(pair=dict(lazim=x['lazim'], mutaaddi=x['mutaaddi'], sifa=x['sifa'], maful=x['maful']), upstream_verb=x['lazim']))
-            (keep if x['match'] in ATTACH else drop).append(row)
-    if isinstance(W['transitivity_wasit'], list):
-        for x in W['transitivity_wasit']:
-            tv = x['transitivity_wasit']
-            row = base('WAZN', 'TRANSITIVITY_WASIT_V1', x['event_id'], 'WAZN:data/transitivity_wasit.tsv', x['form'],
-                       'المعجم الوسيط: ' + (x['evidence'] or '—'), x['match'],
-                       'transitivity_shadow (تعدّي المجرّد من الوسيط): نتيجة ظلية تُقارن بالحكم القائم ولا تدخله',
-                       dict(value=tv, hfn_transitivity=x['hfn_transitivity'], harf=x['harf'] or None, upstream_event_id=x['event_id'],
-                            upstream_verb=x['verb'],
-                            event_id_agrees=x['event_id'] in {e['event_id'] for e in fr['hfn_events']}))
-            if tv == 'مشترك':
-                row['route_status'] = 'BLOCKED: ' + BLOCKED[('WAZN', 'TRANSITIVITY_WASIT_V1:مشترك')]
-                drop.append(row)
-            elif tv not in ('لازم', 'متعدي'):
-                row['route_status'] = 'NO_VALUE: ' + tv
-                drop.append(row)
-            else:
-                (keep if x['match'] in ATTACH else drop).append(row)
-    if isinstance(W.get('hfn_v37'), list):
-        for x in W['hfn_v37']:
-            for fld, route in (('masdar_wasit_v37', 'MASDAR_WASIT_V37'), ('transitivity_wasit_v37', 'TRANSITIVITY_WASIT_V37')):
-                if not x.get(fld):
-                    continue
-                row = base('HFN37', route, x['event_id'], 'HFN37:release_v37/events.csv', x['form'], 'HFN release_v37 (HFN-D059): ' + fld,
-                           x['match'], 'hfn_v37 (إضافة v37 سمةً جديدة): لا تحلّ محلّ قيمة v36 ولا تدخل قرارها',
-                           dict(value=x[fld], upstream_event_id=x['event_id'], upstream_verb=x['verb'],
-                                event_id_agrees=x['event_id'] in {e['event_id'] for e in fr['hfn_events']}))
-                (keep if x['match'] in ATTACH else drop).append(row)
-    return keep, drop
+        d = W[key]
+        if not d.get('rows'):
+            missing(key, d)
+            continue
+        for x in d['rows']:
+            unresolved = not x['base']
+            routes = x['route'].split('+')
+            ok = not unresolved and all(('WAZN', r_) in ROUTES for r_ in routes)
+            base('WAZN', x['route'], key, 'WAZN:data/' + pins['mutawaa_table'], f"{x['root']}:{x['base']}→{x['mutawaa']}", x['row_verb'], x['match'], x['diff'],
+                 'mutawaa: ' + ('اللمّة أصلٌ له مطاوع' if side == 'base' else 'اللمّة مطاوِعٌ لأصل'),
+                 dict(value=dict(base=x['base'], base_form=x['base_form'], mutawaa=x['mutawaa'], mutawaa_form=x['mutawaa_form'], athar=x['athar']),
+                      lemma_side=side, block_reason=(BLOCKED[('WAZN', 'MUTAWAA:BASE_UNRESOLVED')] if unresolved else
+                                                     None if ok else 'UNREGISTERED_ROUTE: ' + x['route'])), route_ok=ok)
+    # ---- wazn: التعدية بالهمزة ----
+    d = W['taadiya_T_JAL']
+    if d.get('rows'):
+        for x in d['rows']:
+            base('WAZN', 'T_JAL', 'taadiya_T_JAL', 'WAZN:engines/taadiya_engine.py', f"{x.get('lazim')}→{x.get('mutaaddi')}", x['row_verb'], x['match'], x['diff'],
+                 'taadiya: اللمّة لازمٌ له متعدٍّ مسموع — لا يدخل قرار التعدية', dict(value={k: x.get(k) for k in ('lazim', 'mutaaddi', 'sifa', 'maful', 'form')}))
+    else:
+        missing('taadiya_T_JAL', d)
+    # ---- wazn: تعدّي الوسيط v5 (المجرّد وحده) ----
+    d = W['transitivity_wasit_v5']
+    if d.get('rows'):
+        for x in d['rows']:
+            tv, mujarrad = x['transitivity_wasit'], x['form'] in MUJARRAD_FORMS
+            ok = mujarrad and tv != 'مشترك'
+            why = None if ok else (BLOCKED[('WAZN', 'TRANSITIVITY_WASIT_MAZID')] if not mujarrad else BLOCKED[('WAZN', 'TRANSITIVITY_WASIT:مشترك')])
+            st = None if not ok or tv in ('لازم', 'متعدي') else ST['NO_RESULT']
+            base('WAZN', 'TRANSITIVITY_WASIT_V5', 'transitivity_wasit_v5', 'WAZN:data/transitivity_wasit_v5.tsv', x['event_id'], x['verb'], x['match'], x['diff'],
+                 'transitivity_shadow: تعدّي المجرّد من الوسيط v5 — يُقارن بالحكم القائم ولا يدخل قرار التعدّي في algebra.py',
+                 dict(value=tv, harf=x['harf'] or None, basis_v5=x['basis_v5'], transitivity_v1=x['transitivity_v1'], harf_v1=x['harf_v1'] or None,
+                      changed_from_v1=(tv != x['transitivity_v1'] or (x['harf'] or '') != (x['harf_v1'] or '')), hfn_transitivity=x['hfn_transitivity'],
+                      upstream_event_id=x['event_id'], event_id_in_base=x['event_id'] in v36, block_reason=why,
+                      no_value_reason=(None if st is None else f'قيمة الوسيط «{tv}» ليست لازماً ولا متعدياً')), state=st, route_ok=ok)
+    else:
+        missing('transitivity_wasit_v5', d)
+    # ---- wazn: الصفات v2 (معلومة مرشّحة) ----
+    d = W['sifat_v2']
+    if d.get('rows'):
+        for x in d['rows']:
+            base('WAZN', 'SIFAT_V2', 'sifat_v2', 'WAZN:data/sifat_v2.tsv', f"{x['event_id']}:{x['word']}", x['verb'], x['match'], x['diff'],
+                 'sifat (معلومة مرشّحة): لا يُستنتج منها نوع اشتقاقٍ ولا وزنٌ مختار',
+                 dict(value=dict(word=x['word'], template=x['template'], kind=x['kind'], transitivity_wasit=x['transitivity_wasit']),
+                      upstream_event_id=x['event_id'], event_id_in_base=x['event_id'] in v36))
+    else:
+        missing('sifat_v2', d)
+    # ---- AMLN: الحدث وأثره، وجهة الفاعل ----
+    for key in ('ahdath', 'jiha'):
+        d = W[key]
+        if not d.get('rows'):
+            missing(key, d)
+            continue
+        for x in d['rows']:
+            ok = ('AMLN', x['route']) in ROUTES
+            extra = (dict(value=dict(fail=x.get('fail'), maful=x.get('maful'), mutawi=x.get('mutawi'), athar=x.get('athar'), sifa=x.get('sifa'),
+                                     label=x.get('label_ar')))
+                     if key == 'ahdath' else
+                     dict(value=dict(jiha=x.get('jiha'), sifa=x.get('sifa')),
+                          musabbib_verb=dict(value=x.get('musabbib_verb') or None, route=x.get('musabbib_route') or None,
+                                             note='علاقةٌ معجمية مرشّحة، لا إثبات مسبِّبٍ محذوف في الجملة')))
+            base('AMLN', x['route'], key, ROUTES.get(('AMLN', x['route']), {}).get('file') and 'AMLN:' + ROUTES[('AMLN', x['route'])]['file'],
+                 x.get('event_id'), x['row_verb'], x['match'], x['diff'],
+                 'event_effect: الحدث وأثره — ليس حكم تعدٍّ نحوي' if key == 'ahdath' else
+                 'subject_semantic_side: جهة الفاعل الدلالية — لا تغيّر دوره النحوي',
+                 dict(extra, upstream_event_id=x.get('event_id'), event_id_in_base=x.get('event_id') in v36,
+                      upstream_vowel_judgement=dict(match=x.get('upstream_match'), keep=x.get('upstream_keep'),
+                                                    note='حكم الواجهة المتسامح محفوظ للفحص؛ والحالة هنا من إعادة الفحص حرفاً وحركة'),
+                      block_reason=None if ok else BLOCKED.get(('AMLN', x['route']), 'UNREGISTERED_ROUTE')), route_ok=ok)
+    return rows
+
+
+def root_rows(fr, rm):
+    """معنى الجذر: سجلّ sarf كما هو، ومفتاح السؤال وقاعدته؛ والبنك v11 وmaqayis عبر جدول الربط؛ وhost_refs إحالةٌ منفصلة"""
+    if rm is None:
+        return None
+    return dict(sarf_root=fr['root'], query_key=rm['query_key'], key_rule=rm['key_rule'],
+                bank_v11=rm['root_meaning'], maqayis_fallback=rm['maqayis'],
+                host_refs=dict(value=(rm['root_meaning'] or {}).get('host_refs'),
+                               note='شاهد إحالة (مداخل جذرٍ آخر تعالج الكلمة)، لا مادّة الجذر نفسه'),
+                note='معنى الجذر ليس المعنى السياقي المختار للكلمة؛ والنصوص OCR غير محقّق', rank=RANK[0])
+
+
+def evidence_records(fr, feats, rr, prov):
+    """سمات المنبع في نظام الأدلّة (للتقرير وشهادة الإغلاق): تُعرض ولا تستوفي التزاماً ولا تغلق وجهاً"""
+    out = []
+    for x in feats:
+        if x['state'] != ST['MATCH']:
+            continue
+        com = (x.get('commit') or '')[:7]
+        out.append(dict(id=f"UPSTREAM:{fr['unit']}:{x['source_key']}:{x['route_id']}:{com}", unit=fr['unit'], feature=x['source_key'],
+                        route=x['route_id'], provider=x['provider'], commit=com, rank='مرشّح من مصدرٍ خارجي', rank_code='EXTERNAL_CANDIDATE',
+                        value=x.get('value'), face=x['face'], lemma=x['vocalized_lemma'], match=x['match'], route_status=x['route_status'],
+                        wilson_low=x['route_measure']['wilson_low'], discharges_obligation=False, closes_face=False, conditions_met=False))
+    mq = ((rr or {}).get('maqayis_fallback') or {})
+    if mq.get('status') == 'OK':
+        com = (prov.get('maq', {}).get('commit') or '')[:7]
+        out.append(dict(id=f"UPSTREAM:{fr['unit']}:root_meaning:MAQAYIS_CROSSWALK:{com}", unit=fr['unit'], feature='root_meaning',
+                        route='MAQAYIS_CROSSWALK', provider='MAQAYIS', commit=com, rank='شاهد OCR غير محقّق', rank_code='OCR_UNVERIFIED_WITNESS',
+                        value=dict(query_key=rr['query_key'], records=[dict(entry_id=r_['entry_id'], display=r_.get('display'), axes=r_.get('semantic_axes'))
+                                                                        for r_ in mq['records']]),
+                        note='معنى الجذر ليس المعنى المختار في السياق', discharges_obligation=False, closes_face=False, conditions_met=False))
+    return out
 
 
 def load_evidence(path):
@@ -251,10 +322,37 @@ def load_evidence(path):
     return dict(out)
 
 
+def run(FR, pins):
+    """من الأطر إلى الصفوف: البوابة قبل الاستدعاء (لا لمّة ولا جذر من وقوعٍ محمي يصل إلى العامل)، ثم استدعاءٌ واحد للعامل"""
+    import client
+    lemmas = sorted({e['verb'] for fr in FR if lemma_status(fr)[0] != ST['PROTECTED'] for e in fr['hfn_events']})
+    roots = sorted({fr['root'] for fr in FR if fr['root'] and lemma_status(fr)[0] != ST['PROTECTED']})
+    rq = [dict(root=r_, query_key=query_key(r_)[0], key_rule=query_key(r_)[1]) for r_ in roots]
+    res = client.call([dict(lemma=l) for l in lemmas], rq, pins=pins, origin='upstream_candidates.run')
+    out = []
+    for fr in FR:
+        st, why = lemma_status(fr)
+        rows = []
+        if st != ST['PROTECTED']:
+            for lem in sorted({e['verb'] for e in fr['hfn_events']}):
+                for x in feature_rows(fr, lem, res['lemma'][lem], res, pins):
+                    if st != 'LEMMA_ESTABLISHED' and x['state'] in (ST['MATCH'], ST['NON_MATCH']):
+                        x = dict(x, state=ST['UNRESOLVED'], unresolved_reason=why)
+                    rows.append(x)
+        rr = root_rows(fr, res['root'].get(fr['root'])) if fr['root'] and st != ST['PROTECTED'] else None
+        feats = [x for x in rows if x['state'] == ST['MATCH']]
+        out.append(dict(fr, lemma_status=st, lemma_reason=why, query_status=('NOT_QUERIED: ' + why) if st == ST['PROTECTED'] else 'QUERIED',
+                        evidence=evidence_records(fr, feats, rr, res['provenance']),
+                        upstream_candidates=dict(rows=rows, root_meaning=rr)))
+    return out, res, lemmas, rq
+
+
 def main():
     import client
     out_path, sum_path = sys.argv[1], sys.argv[2]
     from sarf import quran_source
+    pins = client.load_pins()
+    client.paths(pins)                                   # يفشل قبل أي تحليل إن غاب التثبيت أو اختلف
     V = quran_source.rows()
     if '--verses' in sys.argv:
         want = set(sys.argv[sys.argv.index('--verses') + 1].split(','))
@@ -263,54 +361,30 @@ def main():
     jobs = int(sys.argv[sys.argv.index('--jobs') + 1]) if '--jobs' in sys.argv else 2
     with mp.get_context('fork').Pool(jobs) as P:
         FR = [x for g in P.map(frames, groups, chunksize=1) for x in g]
-    lemmas = sorted({e['verb'] for fr in FR if not fr.get('protected') for e in fr['hfn_events']})
-    roots = sorted({fr['root'] for fr in FR if fr['root'] and not fr.get('protected')})
-    res = client.call([dict(lemma=l) for l in lemmas], roots)
+    OUT, res, lemmas, rq = run(FR, pins)
     S = collections.Counter()
-    ex = collections.defaultdict(list)
     with gzip.open(out_path, 'wt', encoding='utf-8') as f:
-        for fr in FR:
-            st, why = lemma_status(fr)
+        for r in OUT:
             S['occurrences'] += 1
-            S['lemma:' + st] += 1
-            feats, drops = [], []
-            # كل لمّةٍ بديلة تُفحص وحدها؛ ولا يُرفق بالمرشّح إلا ما كانت لمّته ثابتة
-            for lem in ([] if st == 'PROTECTED_NOT_QUERIED' else sorted({e['verb'] for e in fr['hfn_events']})):
-                k, d = feature_rows(fr, lem, res['lemma'][lem], res)
-                if st != 'LEMMA_ESTABLISHED':
-                    for x in k:
-                        x['attach_status'] = 'NOT_ATTACHED: LEMMA_NOT_ESTABLISHED'
-                    d = d + k
-                    k = []
-                feats += k
-                drops += d
-            for x in feats:
-                S[f"attached:{x['provider']}:{x['route_id']}:{x['match_status']}"] += 1
-            for x in drops:
-                why_ = x.get('attach_status', '').split(': ')[-1] if x.get('attach_status') else x['route_status'].split(':')[0]
-                S[f"excluded:{x['provider']}:{x['route_id']}:{x['match_status']}:{why_}"] += 1
-            rm = res['root'].get(fr['root']) if fr['root'] and st != 'PROTECTED_NOT_QUERIED' else None
-            if rm:
-                S['root_meaning:' + (rm['root_meaning'].get('error') or 'IN_BANK').split(':')[0]] += 1
-                S['maqayis:' + rm['maqayis']['status']] += 1
-            ev_ = evidence_records(fr, feats, rm, res['provenance'])
-            for e in ev_:
-                S[f"evidence:{e['rank_code']}:{e['feature']}"] += 1
-            row = dict(fr, lemma_status=st, lemma_reason=why, evidence=ev_,
-                       upstream_candidates=dict(features=feats, excluded=drops, root_meaning=rm))
-            f.write(json.dumps(row, ensure_ascii=False) + '\n')
-            if feats and len(ex['attached']) < 12:
-                ex['attached'].append(dict(verse=fr['verse'], text=fr['text'], lemma=feats[0]['vocalized_lemma'], route=feats[0]['route_id'],
-                                           provider=feats[0]['provider'], match=feats[0]['match_status']))
-            for x in drops:
-                if x['match_status'] in ('VOCALIZATION_MISMATCH', 'SUKUN_ONLY_DIFFERENCE') and len(ex['mismatch']) < 12:
-                    ex['mismatch'].append(dict(verse=fr['verse'], lemma=x['vocalized_lemma'], upstream=x.get('upstream_verb'), route=x['route_id'],
-                                               match=x['match_status']))
-    summary = dict(counts=dict(sorted(S.items())), examples=ex, resources=res['resources'], provenance=res['provenance'],
-                   isolation=res['isolation'], routes={f'{a}:{b}': v for (a, b), v in ROUTES.items()},
-                   blocked={f'{a}:{b}': v for (a, b), v in BLOCKED.items()}, n_lemmas=len(lemmas), n_roots=len(roots))
+            S['lemma_status:' + r['lemma_status']] += 1
+            for x in r['upstream_candidates']['rows']:
+                S[f"rows:{x['source_key']}:{x['state']}"] += 1
+                if x.get('match'):
+                    S[f"match:{x['source_key']}:{x['match']}"] += 1
+            rr = r['upstream_candidates']['root_meaning']
+            if rr:
+                S['root:key_rule:' + rr['key_rule'].split(':')[0]] += 1
+                S['root:bank_v11:' + (rr['bank_v11'] or {}).get('status', '?')] += 1
+                S['root:maqayis:' + (rr['maqayis_fallback'] or {}).get('status', '?')] += 1
+            f.write(json.dumps(r, ensure_ascii=False) + '\n')
+    summary = dict(counts=dict(sorted(S.items())), resources=res['resources'], interfaces=res['interfaces'], provenance=res['provenance'],
+                   api_sources=res.get('api_sources'), import_origins=res['import_origins'], isolation=res['isolation'],
+                   hfn47_counts=res.get('hfn47_counts'), hfn47_form_support=res.get('hfn47_form_support'),
+                   maqayis_unmapped_entries=res.get('maqayis_unmapped_entries'), pins=pins,
+                   routes={f'{a}:{b}': v for (a, b), v in ROUTES.items()}, blocked={f'{a}:{b}': v for (a, b), v in BLOCKED.items()},
+                   owner_rulings=OWNER_RULINGS, n_lemmas=len(lemmas), n_roots=len(rq), worker_calls=client.CALLS)
     json.dump(summary, open(sum_path, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
-    print(json.dumps(dict(occurrences=S['occurrences'], lemmas=len(lemmas), roots=len(roots),
+    print(json.dumps(dict(occurrences=S['occurrences'], lemmas=len(lemmas), roots=len(rq),
                           writes=res['isolation'].get('resource_writes')), ensure_ascii=False))
 
 

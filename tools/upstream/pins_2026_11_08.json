@@ -1,0 +1,47 @@
+{
+ "task": "SARF_UPSTREAM_CONSUMPTION_2026_11_08",
+ "commits": {
+  "hfn": "22dcb06e21221750b41879f2f598bb28a23f440a",
+  "wazn": "0f647e517268f6408bdfa6dfafebad0918be8048",
+  "amln": "8da48f76185bbabe7cabbfcc99c825635f284aa7",
+  "maq": "6c2c58f1af13f11749b71ce64a3881d8be2e8ca0"
+ },
+ "requested_short": {
+  "hfn": "22dcb06",
+  "wazn": "0f647e5",
+  "amln": "8da48f7",
+  "maq": "6c2c58f"
+ },
+ "hfn_release": "release_v47",
+ "hfn_manifest_sha256": "aca692e38785573f811e93b4e2cab531a239642f3cac5d5225664645e987b919",
+ "hfn_events_schema": [
+  "event_id",
+  "root_K",
+  "form",
+  "verb",
+  "transitivity",
+  "masdar",
+  "event_review_v36"
+ ],
+ "mutawaa_table": "mutawaa_v7.tsv",
+ "root_bank": "HFN_ROOTS_v11.csv",
+ "files": {
+  "HFN:release/release_v47/events.csv": "c62e7232638e6d8bef5be4098b5cd3fc565ac88346e29a2f49fa29fa8ed06680",
+  "HFN:release/release_v47/MANIFEST.json": "aca692e38785573f811e93b4e2cab531a239642f3cac5d5225664645e987b919",
+  "HFN:tools/root_meaning.py": "bc11ce7dd775944594047748ada8a0e7757aee42c4180a8ca1926de9c18957ca",
+  "HFN:02_roots/HFN_ROOTS_v11.csv": "0261edea9bc190133b52b4325c8fd748b4660e60d8b1930d7241dc32eea7e578",
+  "WAZN:engines/mutawaa_engine.py": "887b12cec5be167a3d9b795be754975a93179357c65e06cae6c5e4ab08c009e3",
+  "WAZN:data/mutawaa_v7.tsv": "fca090b4a81ad91ce8117fa3875b38eb936ae2a0a70dee2534514696f16fc63f",
+  "WAZN:engines/taadiya_engine.py": "8de4dc1dea2a11cfa5bafbdd0249d26c898de93c33cbe3cd585bf0834ff8beb4",
+  "WAZN:data/transitivity_wasit_v5.tsv": "91950cec86c2faa5c4dcb3efb78cce4955b5e5bcf329b3a719ab463a73e23ce8",
+  "WAZN:data/sifat_v2.tsv": "98bdd98d7f70108e1e6b7174fbbd1b00b863d69070f25cc3bbaf44ee98532cee",
+  "WAZN:data/hfn_form_crosswalk.tsv": "95e38fdf41fc3b8da62b7af1d1832e4560eec4b3684c079787e6238c69969f84",
+  "AMLN:word_tree/ahdath.py": "4da69291569728ced8235adc880d8445fa58c9512eb4e876387960dc42cad5ee",
+  "AMLN:ahdath/rules_R1.tsv": "b366cc748808685d6b579e78238e32c56846e2236f2702b4c77ac9b42ab65200",
+  "AMLN:ahdath/mutawaa_R1W_pool.tsv": "76ce429679ad999fc89211e2bdb67b4f74868d0c4764bf3a40ce24f91d6503ce",
+  "AMLN:ahdath/taadiya_T_JAL.tsv": "ecda7ca9199c64e22de6a0bf13eb5b9a2393cc2cec94ddcaf086b3953c6a545f",
+  "AMLN:ahdath/jiha_pool.tsv": "67518b672959b803b38b8a4a901754c287f701fd4ea3cd012c98748f57d3275f",
+  "AMLN:data/maqayis_bank_crosswalk.tsv": "47b94ec7026cebd44dccd808587e0dfabc35aca473c13d70fffc5e62e0c32cf3",
+  "MAQ:output/maqayis_all_roots.json": "58c40a95f42a191dfc865dc121dadbbad0b523675b723183fda5ee94dedc6d8c"
+ }
+}
