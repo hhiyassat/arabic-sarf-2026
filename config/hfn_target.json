@@ -1,0 +1,11 @@
+{
+ "doc": "الإصدار المستهدف لـHFN (SARF_FINAL_COMPLETION_AND_ACCEPTANCE_01 §١): أحدث إصدارٍ مجمّد على main HFN، مثبَّتٌ بالتزامه وبصمة MANIFEST. لا رجوع صامت إلى غيره ولا عملَ بلا معجم.",
+ "release": "release_v47",
+ "release_name_in_manifest": "HFN_release_v47",
+ "hfn_repo": "https://github.com/hhiyassat/husseinframenet",
+ "hfn_commit": "22dcb06e21221750b41879f2f598bb28a23f440a",
+ "manifest_sha256": "aca692e38785573f811e93b4e2cab531a239642f3cac5d5225664645e987b919",
+ "checked_newer_release": "main HFN عند 22dcb06 (2026-11-09)؛ لا release_v48",
+ "historical": {"release_v36": {"events_sha256": "941d1cf7bdc3885a58808b245eea4148c769bdb64ed4819bfe84c04491034c3d",
+                                 "note": "خط الأساس السابق (SARF_SEQUENTIAL_COMPLETION_PLAN_01)؛ يُقرأ تاريخياً بطلبٍ صريح SARF_HFN_RELEASE_OK=release_v36"}}
+}

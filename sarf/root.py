@@ -22,12 +22,13 @@ from .affix import stem_info
 from .agreement import signature
 
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-# خط أساس المعجم المعتمد: HFN release_v36 (حكم المالك، SARF_SEQUENTIAL_COMPLETION_PLAN_01، 5 نوفمبر 2026)
-HFN_BASELINE = 'release_v36'
+# إصدار المعجم المستهدف: أحدث إصدارٍ مجمّد مثبَّت (config/hfn_target.json، SARF_FINAL_COMPLETION_AND_ACCEPTANCE_01 §١)؛
+# وv36 خط الأساس السابق يُقرأ تاريخياً بطلبٍ صريح. ولا رجوع صامت إلى إصدارٍ آخر، ولا عملَ بلا معجم
+from .hfn_pin import TARGET as HFN_TARGET, verify_release, HFNPinError
+HFN_BASELINE = HFN_TARGET['release']
 HFN_PATHS = [os.environ.get('SARF_HFN', ''),
-             os.path.join(os.path.dirname(HERE), 'husseinframenet', 'release', 'release_v36'),
-             os.path.expanduser('~/arabic-net/HusseinFrameNet/release/release_v36'),
-             os.path.join(HERE, 'data', 'hfn')]
+             os.path.join(os.path.dirname(HERE), 'husseinframenet', 'release', HFN_BASELINE),
+             os.path.expanduser(f'~/arabic-net/HusseinFrameNet/release/{HFN_BASELINE}')]
 
 MADD = set('اويى')
 HAMZA = {'أ': 'ء', 'إ': 'ء', 'ؤ': 'ء', 'ئ': 'ء', 'ء': 'ء'}
@@ -105,18 +106,18 @@ class HFN:
     def __init__(self, path=None):
         env_ = os.environ.get('SARF_HFN', '')
         if not path and env_ and not os.path.exists(os.path.join(env_, 'events.csv')):
-            # مسارٌ صريحٌ غير موجود لا يُستبدل به غيره صامتاً: كان يرجع إلى release_v36 فيُظنّ التشغيل على إصدارٍ لم يُستعمل
             raise FileNotFoundError(f'SARF_HFN يشير إلى مسارٍ ليس فيه events.csv: {env_} — لا رجوع صامت إلى إصدارٍ آخر')
-        if not path and env_ and os.path.basename(os.path.normpath(env_)) != HFN_BASELINE and \
-                os.environ.get('SARF_HFN_RELEASE_OK', '') != os.path.basename(os.path.normpath(env_)):
-            # إصدارٌ موجودٌ غير خط الأساس (بيئةٌ تحمل release_v19 مثلاً): لا يُقرأ صامتاً؛ ومن أراده يسمّيه صراحةً
-            raise RuntimeError(f'SARF_HFN يشير إلى {os.path.basename(os.path.normpath(env_))}، وخط الأساس المعتمد {HFN_BASELINE}: '
-                               f'لتشغيلٍ مقصود عليه عيّن SARF_HFN_RELEASE_OK={os.path.basename(os.path.normpath(env_))}')
         self.path = path or next((p for p in HFN_PATHS if p and os.path.exists(os.path.join(p, 'events.csv'))), None)
+        if not self.path:
+            raise FileNotFoundError(f'HFN {HFN_BASELINE} غير موجود (SARF_HFN، أو {HFN_PATHS[1]}، أو {HFN_PATHS[2]}): '
+                                    'لا يعمل المحلّل بلا معجم ولا يرجع إلى إصدارٍ آخر')
+        # المسار الصريح (path) للاختبار بمورد اصطناعي وحده؛ وما سواه يُتحقّق من تثبيته قبل القراءة
+        self.pin = verify_release(self.path) if not path else dict(release=os.path.basename(os.path.normpath(path)), mode='EXPLICIT_PATH')
         self.index = defaultdict(list)
         self.roots = set()
         self.meanings = {}                              # الأول لكل حدث (للمستهلكين القدامى)
         self.meanings_all = defaultdict(list)           # §٥: كل المعاني بترتيبها في المورد، لا يُسقط شيءٌ منها
+        self.events_by_id = {}                          # الحدث الحيّ بمعرّفه (لا يُنقل حقلٌ من حدثٍ إلى آخر يشاركه اللمّة)
         self.withdrawn = []                             # §٥: الأحداث المسحوبة بمعرّفها وسببها وإصدارها وبصمة الملف
         self.wasl_converted = 0
         self.release = os.path.basename(os.path.normpath(self.path)) if self.path else None
@@ -127,8 +128,13 @@ class HFN:
         ep = os.path.join(self.path, 'events.csv')
         self.events_sha256 = hashlib.sha256(open(ep, 'rb').read()).hexdigest()
         self.withdrawn_ids = set()
+        # المسحوب: عمود المراجعة في الصفّ، وقائمة MANIFEST المصرَّح بها (events_withdrawn)؛ والاتحاد هو المستبعد، والاختلاف يُسجَّل
+        declared = set((self.pin or {}).get('withdrawn_declared') or [])
+        by_col = set()
         for e in csv.DictReader(open(ep, encoding='utf-8')):
             if hfn_withdrawn(e):
+                by_col.add(e['event_id'])
+            if hfn_withdrawn(e) or e['event_id'] in declared:
                 self.withdrawn.append(dict(event_id=e['event_id'], root=e['root_K'], verb=e['verb'], form=e['form'],
                                            reason=e['event_review_v36'], release=self.release, events_sha256=self.events_sha256))
                 self.withdrawn_ids.add(e['event_id'])
@@ -139,8 +145,11 @@ class HFN:
                 self.wasl_converted += 1
             cls = hfn_class(e['form'])
             self.roots.add(e['root_K'])
+            self.events_by_id[e['event_id']] = e
             if cls:
                 self.index[(e['root_K'], cls)].append(e)
+        self.withdrawn_discrepancy = dict(declared_only=sorted(declared - by_col), column_only=sorted(by_col - declared)) \
+            if declared and declared != by_col else None
         mp = os.path.join(self.path, 'form_meanings.csv')
         if os.path.exists(mp):
             for r in csv.DictReader(open(mp, encoding='utf-8')):

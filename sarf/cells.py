@@ -141,7 +141,7 @@ def lex_index():
         if H.path and os.path.exists(os.path.join(H.path, 'lexical_units.csv')):
             ev_root = {}
             for e in csv.DictReader(open(os.path.join(H.path, 'events.csv'), encoding='utf-8')):
-                if hfn_withdrawn(e):
+                if hfn_withdrawn(e) or e['event_id'] in getattr(H, 'withdrawn_ids', ()):
                     continue                 # §٥: لمّات الحدث المسحوب لا تعود من طريق فهرس الأسماء
                 ev_root[e['event_id']] = e['root_K']
             for x in csv.DictReader(open(os.path.join(H.path, 'lexical_units.csv'), encoding='utf-8')):
