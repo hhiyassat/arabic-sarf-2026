@@ -221,5 +221,21 @@ check('G11.2 المرحلة ١١: أثر «أَنْ» في «يَحْمِلْن�
 check('G11.3 stem_info: نون النسوة بعد ساكن مبنيّ؛ ومقابلٌ: «يَكُونَ» و«يَسْكُنَ» (النون لام الفعل) منصوبان بالفتحة',
       stem_info('يَطْهُرْنَ')['mood'] == 'مبني' and stem_info('يَكُونَ')['mood'] != 'مبني' and stem_info('يَسْكُنَ')['mood'] == 'نصب',
       (stem_info('يَطْهُرْنَ'), stem_info('يَكُونَ'), stem_info('يَسْكُنَ')))
+# §G12 (مقارنة الشهادات FA01→G10): عطفٌ مرخَّص خاطئ ظهر بعد ربط السجلات (G3) — «وَمَا ضَعُفُوا» معطوفاً مفرداً على «لِمَا أَصَابَهُمْ»
+C3146 = run_ref('3:146', None, ['relations_final'])
+co3146 = {r['heads'].get('conj'): r for r in C3146.get('records')['3:146']['records'] if r['type'] == 'COORD'}
+check('G12.1 «وَمَا ضَعُفُوا» و«وَمَا اسْتَكَانُوا» (3:146): «ما» قبل الفعل تحتمل النفي، فعطف الموصول مؤجَّل لا مرخَّص',
+      all(co3146[u]['status'] == 'DEFERRED' for u in ('Q3:146.w14.u0', 'Q3:146.w16.u0')),
+      {u: co3146[u]['status'] for u in ('Q3:146.w14.u0', 'Q3:146.w16.u0') if u in co3146})
+from sarf.coord import _ma_neg_rival, MA_NEG_DEFER
+class _X:
+    def __init__(s, words, verbs):
+        s.feats = [dict(text=w, verb=v) for w, v in zip(words, verbs)]; s.nset = set()
+    def next_stop(s, p): return len(s.feats)
+check('G12.2 الحكم: «وَمَا» يليها فعلٌ وقبلها نظيرٌ منفيّ غير المعطوف عليه ← منافس؛ ومقابلات: لا نظير (2:4)، والنظير هو المعطوف عليه (64:4)، و«وَمَنْ»',
+      _ma_neg_rival(_X(['فَمَا', 'وَهَنُوا', 'لِمَا', 'أَصَابَهُمْ', 'وَمَا', 'ضَعُفُوا'], [0, 1, 0, 1, 0, 1]), 4, 6, 2)
+      and not _ma_neg_rival(_X(['بِمَا', 'أُنْزِلَ', 'وَمَا', 'أُنْزِلَ'], [0, 1, 0, 1]), 2, 4, 0)
+      and not _ma_neg_rival(_X(['مَا', 'تُسِرُّونَ', 'وَمَا', 'تُعْلِنُونَ'], [0, 1, 0, 1]), 2, 4, 0)
+      and not _ma_neg_rival(_X(['فَمَا', 'وَهَنُوا', 'لِمَنْ', 'يَشَاءُ', 'وَمَنْ', 'يَعْمَلْ'], [0, 1, 0, 1, 0, 1]), 4, 6, 2) and MA_NEG_DEFER[0] == 'D9')
 print('ALL OK' if not FAIL else f'FAILED {len(FAIL)}: {FAIL}')
 sys.exit(1 if FAIL else 0)

@@ -263,6 +263,27 @@ def _units_text(X, units):
     return ' '.join(out)
 
 
+def _ma_neg_rival(X, p, limit, a=None):
+    """FA02-G12: «وَمَا» يليها فعلٌ معطوفةً عطف موصولٍ على موصولٍ سابق (a) — وقبلها في الجملة «مَا/فَمَا/وَمَا» أخرى يليها فعل
+    غير الموصول المعطوف عليه (فَمَا وَهَنُوا لِمَا أَصَابَهُمْ … وَمَا ضَعُفُوا، 3:146): «ما» تحتمل النفي، ولها في المكتوب نظيرٌ منفيّ
+    تُعطف عليه جملةً، فعطف الجملة المنفية منافسٌ قائم بدليلٍ مكتوب، ولا يُرخَّص عطف الموصول بالمطابقة اللفظية وحدها.
+    ولا يُقال حين لا نظير (بِمَا أُنْزِلَ إِلَيْكَ وَمَا أُنْزِلَ، 2:4) ولا حين النظير هو المعطوف عليه نفسه (مَا تُسِرُّونَ وَمَا تُعْلِنُونَ، 64:4).
+    و«مَن» لا تكون نافية."""
+    from .algebra import is_form, _madi_like
+    f = X.feats
+
+    def verb_next(j):
+        return j + 1 < len(f) and bool(f[j + 1]['verb'] or j + 1 in X.nset or _madi_like(f[j + 1]['text']) or
+                                       f[j + 1].get('vshape') and not f[j + 1].get('noun'))
+    if not (is_form(f[p]['text'], ('وَمَا',)) and _ma_silah(X, p, limit)):
+        return False
+    return any(j != a and is_form(f[j]['text'], ('مَا', 'فَمَا', 'وَمَا')) and verb_next(j)
+               for j in range(p - 1, max(-1, p - 15), -1))
+
+
+MA_NEG_DEFER = ('D9', '«وَمَا» قبل الفعل تحتمل «ما» النافية: عطف جملةٍ منفية منافسٌ لعطف الموصول', DEFER['D9'][1])
+
+
 def _ma_silah(X, p, limit):
     """«ما» الموصولة في كلمتها (بِمَا، وَمَا) يليها فعل: صلتها إلى أول حدٍّ قبل limit"""
     from .algebra import is_form, _madi_like
@@ -528,6 +549,8 @@ def site_record(c_, X):
                              cont_ok)
                 if not cont_ok[0]:
                     c['deferrals'].append(('D3', cont_ok[1] + ': امتداد التركيب الحاوي غير محسوم', DEFER['D3'][1]))
+                if level == 'مفرد' and (_ma_neg_rival(X, h, n, j) or h != k and _ma_neg_rival(X, k, n, j)):
+                    c['deferrals'].append(MA_NEG_DEFER)
                 if not case_ok[0]:
                     c['barriers'].append(('R2', case_ok[1]))
                 if len(a_list) > 1:
@@ -713,6 +736,8 @@ def site_record(c_, X):
                     am = _member(X, list(range(j, _ma_silah(X, j, k))), j, 'مفرد', ['موصولٌ وصلته'],
                                  skip_jarr=True)
                 c['A'] = am
+                if j != enc and _ma_neg_rival(X, k, n, j):
+                    c['deferrals'].append(MA_NEG_DEFER)
                 coord_checks(c, True, 'موصولٌ على موصولٍ أو على ضمير', (True, 'لا تعارض في الإعراب: الموصول مبنيّ، '
                                                                          'والمحلّ نتيجةٌ للعطف لا دليلٌ عليه'),
                              (True, 'الطرف موصولٌ وصلته'), (True, '—'))
