@@ -6,11 +6,31 @@ verify_release(path) → سجلّ الهوية (الإصدار، التزام HF
 import hashlib, json, os
 
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-TARGET = json.load(open(os.path.join(HERE, 'config', 'hfn_target.json'), encoding='utf-8'))
+PRODUCTION_CONFIG = os.path.join(HERE, 'config', 'hfn_target.json')
 
 
 class HFNPinError(RuntimeError):
     pass
+
+
+def _load_target():
+    """الإعداد الإنتاجي config/hfn_target.json؛ وإعدادٌ تجريبيّ لا يُقرأ إلا بطلبين صريحين معاً (SARF_HFN_V48_COMPARATIVE_VALIDATION_01 §٢):
+    SARF_HFN_TARGET_CONFIG مساره، وSARF_HFN_EXPERIMENTAL_OK اسم إصداره. وأحدهما بلا الآخر، أو اختلافهما، خطأ هويةٍ مسمّى لا رجوعٌ صامت."""
+    cp = os.environ.get('SARF_HFN_TARGET_CONFIG', '')
+    ok = os.environ.get('SARF_HFN_EXPERIMENTAL_OK', '')
+    if not cp:
+        if ok:
+            raise HFNPinError(f'HFN_IDENTITY_MISMATCH: SARF_HFN_EXPERIMENTAL_OK={ok} بلا SARF_HFN_TARGET_CONFIG')
+        return dict(json.load(open(PRODUCTION_CONFIG, encoding='utf-8')), config=PRODUCTION_CONFIG, config_mode='PRODUCTION')
+    cp = cp if os.path.isabs(cp) else os.path.join(HERE, cp)
+    t = json.load(open(cp, encoding='utf-8'))
+    if ok != t.get('release'):
+        raise HFNPinError(f'HFN_IDENTITY_MISMATCH: الإعداد {os.path.basename(cp)} يعلن {t.get("release")}، '
+                          f'والإذن الصريح SARF_HFN_EXPERIMENTAL_OK={ok or "غير معيَّن"}')
+    return dict(t, config=cp, config_mode='EXPERIMENTAL')
+
+
+TARGET = _load_target()
 
 
 def _sha(p):
@@ -36,7 +56,7 @@ def verify_release(path):
         bad = [f for f, h in (m.get('files') or {}).items() if not os.path.exists(os.path.join(path, f)) or _sha(os.path.join(path, f)) != h]
         if bad:
             raise HFNPinError(f'{path}: ملفاتٌ مصرَّح بها مفقودة أو ببصمةٍ أخرى: {bad[:5]}')
-        return dict(release=rel, mode='TARGET', hfn_commit=TARGET['hfn_commit'], manifest_sha256=ms,
+        return dict(release=rel, mode='TARGET', config_mode=TARGET['config_mode'], hfn_commit=TARGET['hfn_commit'], manifest_sha256=ms,
                     files_verified=len(m.get('files') or {}), withdrawn_declared=list(m.get('events_withdrawn') or []))
     hist = (TARGET.get('historical') or {}).get(rel)
     if hist is not None:
