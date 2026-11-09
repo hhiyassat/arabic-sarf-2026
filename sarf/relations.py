@@ -1857,6 +1857,10 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
             while j < fe_ and (toks[j].wi == v.wi or toks[j].k in span_of or toks[j].enclitic):
                 j += 1
             u = toks[j] if j < fe_ else None
+            # مانعٌ مثبت: لا يُنسب المنصوب إلى فعلٍ بينه وبينه فعلٌ آخر مكتوب (أَجِئۡتَنَا لِنَعۡبُدَ ٱللَّهَ: «ٱللَّهَ» لا يُبحث عنه لـ«جئت»
+            # من وراء «نعبد»، ولو عُدّ «لِنَعۡبُدَ» شبه جملة)
+            if u is not None and any(toks[x].pos == 'فعل' and toks[x].wi != v.wi for x in range(i + 1, j)):
+                u = None
             if u is not None and word_start(u) and not u.conj and u.nounish() and u.k not in governed and u.k not in bound \
                     and u.case == 'نصب':
                 df = u.definite()[0]
@@ -1896,6 +1900,9 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                 if is_op and t_.wi in jarr_w:
                     # شبه جملةٍ تُتجاوز: الجار ومجروره (في كلمته أو الكلمة التالية)
                     nxt_ = toks[j_ + 1] if j_ + 1 < fe_ else None
+                    if nxt_ is not None and nxt_.pos == 'فعل' and nxt_.wi != v.wi:
+                        stop = (nxt_, 'فعلٌ آخر')       # «لِ» قبل فعلٍ مكتوب (لِنَعۡبُدَ): ما بعده لفعله لا لهذا الفعل
+                        break
                     j_ += 2 if nxt_ is not None and nxt_.k in governed and governed[nxt_.k][0] is t_ else 1
                     skipped = True
                     continue

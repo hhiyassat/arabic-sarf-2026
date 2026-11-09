@@ -57,5 +57,14 @@ check('K09 كل «بلا عامل» يحمل نوعه: NO_MAHALL للحرف، و
 check('K10 الوسم لا يغيّر الحكم: لا علاقة مرخَّصة جديدة من O03، ولا دور «مفعول به» على مؤجَّل',
       not any(r['status'] == LICENSED and r['rule_id'] == 'O03' for r in R)
       and not any(a_.get('role') and 'مفعول به' in str(a_.get('role')) for u, a_ in ax.items() if u == g28), ax[g28].get('role'))
+# انتقالٌ خاطئ كشفه قياس B3 (7:70): إصلاح علامة لفظ الجلالة كشف بحث O02 من وراء فعلٍ آخر
+C7 = run_ref('7:70')
+R7 = C7.get('records')['7:70']['records']
+fr7 = {r['texts']['verb']: r for r in R7 if r['type'] == 'VERB_FRAME'}
+check('K11 «أَجِئۡتَنَا لِنَعۡبُدَ ٱللَّهَ»: «ٱللَّهَ» ليس مفعولاً لـ«جئت» (لا O02 ولا O03 ولا مرشّح متطلَّبه) — بينهما فعلٌ مكتوب',
+      not any(r['type'] == 'OBJECT' and r['texts'].get('verb') == 'أَجِئْتَ' and r['texts'].get('object') == 'اللَّهَ' for r in R7)
+      and 'اللَّهَ' not in str(fr7['أَجِئْتَ']['frame'].get('object_requirement')), [r['texts'] for r in R7 if r['type'] == 'OBJECT'])
+check('K12 «نَعۡبُدَ ٱللَّهَ»: المرشّح عند الفعل الأقرب، وتعدّيه مؤجَّل في المورد فلا ترخيص', 
+      fr7['نَعْبُدَ']['frame']['object_requirement']['kind'] == 'UNLINKED_CANDIDATE' and 'اللَّهَ' in fr7['نَعْبُدَ']['frame']['object_requirement']['note'])
 print('ALL OK' if not FAIL else f'FAILED {len(FAIL)}: {FAIL}')
 sys.exit(1 if FAIL else 0)
