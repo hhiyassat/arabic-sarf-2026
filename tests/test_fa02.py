@@ -107,5 +107,35 @@ plc2 = next(o for o in cst2['obligations'] if o['name'] == 'موضع كل وقو
 check('G4.3 حذف سجلات MOOD كلها لا يغيّر التزام الموضع ولا أدلّته (الاستيفاء بالهوية، لا بالحالة وحدها)',
       (plc2['status'], plc2['unplaced_by_class'], plc2['discharge_evidence_id'], plc2['satisfied_by'])
       == (plc['status'], plc['unplaced_by_class'], plc['discharge_evidence_id'], plc['satisfied_by']))
+# §G5 بصمة المحرّك بالمحتوى لا بالمعرّف
+from sarf.engine import fingerprint
+
+
+class _O:
+    def __init__(self, id_, O):
+        self.id, self.O = id_, O
+
+
+check('G5.1 كائنان بالمعرّف نفسه ومحتوى مختلف ← بصمتان مختلفتان (كانت «OBJ:معرّف» فتتساويان)',
+      fingerprint(_O('J1', {'a': 1})) != fingerprint(_O('J1', {'a': 2})) and fingerprint(_O('J1', {'a': 1})) == fingerprint(_O('J1', {'a': 1})))
+cyc = _O('J2', {})
+cyc.O['self'] = cyc
+check('G5.2 الدورة تُسمّى ولا تُسقط المحتوى: بصمة كائنٍ يحيل إلى نفسه محسوبة، وتتغيّر بتغيّر حقلٍ فيه', (lambda a: (cyc.O.__setitem__('x', 1),
+      a != fingerprint(cyc))[1])(fingerprint(cyc)))
+C18 = run_ref('18:34')
+C18b = run_ref('18:34')
+check('G5.3 البصمة حتمية: تشغيلان للمدخل نفسه ← بصماتٌ متساوية لكل الخانات', {n: x.fp for n, x in C18.slots.items()} == {n: x.fp for n, x in C18b.slots.items()})
+units2 = copy.copy(C18.get('units'))
+k18 = '18:34'
+U2 = dict(units2[k18]['units'])
+gk = next(iter(U2))
+G2 = copy.copy(U2[gk])
+G2.O = dict(G2.O, _mutation='إفساد اختباري')
+U2[gk] = G2
+units2[k18] = dict(units2[k18], units=U2)
+ENGINE.revise(C18, 'units', units2, 'اختبار البصمة: محتوى وحدةٍ تغيّر ومعرّفها ثابت')
+rv = C18.revisions[-1]
+check('G5.4 المراجعة: تغيّر محتوى وحدةٍ بمعرّفها نفسه يغيّر بصمة الخانة، فيُعاد حساب التابعين', rv['previous'] != rv['new'] and 'features' in rv['recomputed'],
+      rv)
 print('ALL OK' if not FAIL else f'FAILED {len(FAIL)}: {FAIL}')
 sys.exit(1 if FAIL else 0)

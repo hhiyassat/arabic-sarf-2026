@@ -26,22 +26,41 @@ ENGINE_VERSION = 'E05.1'
 
 
 # ---------- البصمة ----------
-def _canon(x, depth=0):
-    if depth > 40:
-        return '…'
-    if isinstance(x, dict):
-        return {str(k): _canon(v, depth + 1) for k, v in sorted(x.items(), key=lambda kv: str(kv[0]))}
-    if isinstance(x, (list, tuple)):
-        return [_canon(v, depth + 1) for v in x]
-    if isinstance(x, (set, frozenset)):
-        return sorted(repr(_canon(v, depth + 1)) for v in x)
+def _canon(x, memo=None, _active=None):
+    """الصورة القانونية للبصمة — بالمحتوى كاملاً (FA02 §٤، مراجعة المالك: كان الكائن ذو المعرّف يُختصر إلى «OBJ:معرّفه» فلا يدخل
+    محتواه البصمة، فتغيّر محتواه بالمعرّف نفسه لا يغيّرها، ولا تكشفه المراجعة). فالكائن يُمثَّل بنوعه ومعرّفه وكل حقوله؛ والمشترك بين
+    مواضع يُحسب مرةً (memo)؛ والدورة تُسمّى بمعرّف موضعها «CYCLE:…» لا تُقطع بصمت؛ ولا حدّ عمقٍ يحذف المحتوى"""
+    memo = {} if memo is None else memo
+    _active = set() if _active is None else _active
     if isinstance(x, (str, int, float, bool)) or x is None:
         return x
-    if hasattr(x, 'id') and isinstance(getattr(x, 'id'), str):
-        return 'OBJ:' + x.id
-    if hasattr(x, 'uid'):
-        return 'OBJ:' + str(x.uid)
-    return 'OBJ:' + type(x).__name__
+    if isinstance(x, dict):
+        return {str(k): _canon(v, memo, _active) for k, v in sorted(x.items(), key=lambda kv: str(kv[0]))}
+    if isinstance(x, (list, tuple)):
+        return [_canon(v, memo, _active) for v in x]
+    if isinstance(x, (set, frozenset)):
+        return sorted((json.dumps(_canon(v, memo, _active), ensure_ascii=False, sort_keys=True) for v in x))
+    k = id(x)
+    label = getattr(x, 'id', None) if isinstance(getattr(x, 'id', None), str) else getattr(x, 'uid', None)
+    if k in memo:
+        return memo[k]
+    if k in _active:
+        return f'CYCLE:{type(x).__name__}:{label}'
+    _active.add(k)
+    fields = {}
+    if hasattr(x, '__dict__'):
+        fields.update(vars(x))
+    for cls in type(x).__mro__:
+        for sl in getattr(cls, '__slots__', ()) or ():
+            if sl not in fields and hasattr(x, sl):
+                fields[sl] = getattr(x, sl)
+    if not fields and not callable(x):
+        fields = {'repr': repr(x)}
+    out = {'__type__': type(x).__name__, '__id__': None if label is None else str(label),
+           'fields': {str(f): _canon(v, memo, _active) for f, v in sorted(fields.items()) if not callable(v)}}
+    _active.discard(k)
+    memo[k] = out
+    return out
 
 
 def fingerprint(x):
