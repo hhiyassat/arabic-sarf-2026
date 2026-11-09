@@ -42,8 +42,10 @@ C2 = run_ref('2:34')
 q = C2.get('units')['2:34']['units'][(1, 0)]
 check('M07 «قُلْنَا» (2:34) مغلقة على قول', q.closed and q.Theta.get('R') == 'قول', (q.Theta.get('R'), q.O.get('deferred')))
 # الأجوف بالضمة في v47 (حيث «قيل» فعلٌ في المورد): الضمة تمنع قيل، والفتحة في «قَالُوا» تبقى ملتبسة
-v47 = os.environ.get('SARF_HFN_V47', '/home/user/ucr/repro03/pinned/hfn/release/release_v47')
-if os.path.exists(os.path.join(v47, 'events.csv')):
+from sarf.root import hfn as _hfn
+_H = _hfn()
+v47 = _H.path if _H.release == 'release_v47' else os.environ.get('SARF_HFN_V47', '')   # المحمَّل إن كان المستهدف، لا مسار بيئةٍ بعينها
+if v47 and os.path.exists(os.path.join(v47, 'events.csv')):
     import subprocess, json
     env = dict(os.environ, SARF_HFN=v47, SARF_HFN_RELEASE_OK='release_v47', PYTHONHASHSEED='0')
     code = (f"import sys,json\nsys.path.insert(0,{ROOT!r})\nfrom sarf.stages import run_ref\nout={{}}\nfor ref,k in (('2:34',(1,0)),('2:11',(7,0))):\n"
@@ -53,7 +55,7 @@ if os.path.exists(os.path.join(v47, 'events.csv')):
     check('M08 v47: «قُلْنَا» قول وحده (الضمة)، و«قَالُوا» ملتبسةٌ بين قول وقيل (لا يُختار بلا دليل)',
           o.get('2:34', [None, None])[1] == 'قول' and o.get('2:11', [True])[0] is False and 'قيل' in str(o.get('2:11')), (o, r.stderr[-300:]))
 else:
-    print('SKIP M08 (v47 غير موجود محلياً)')
+    print('SKIP M08 (v47 غير محمَّل ولا SARF_HFN_V47 معيَّن) — تخطٍّ لا نجاح')
 import sarf.root as R
 src = open(R.__file__, encoding='utf-8').read()
 check('M09 القاعدة مكتوبةٌ بشرطها (الماضي، الثلاثي، الضمة بلا كسرة)، لا بقائمة كلمات',

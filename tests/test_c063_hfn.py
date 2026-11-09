@@ -83,14 +83,15 @@ else:
           H0.release == R.HFN_TARGET['release'] and H0.pin['mode'] == 'TARGET' and H0.pin['hfn_commit'] == R.HFN_TARGET['hfn_commit']
           and H0.pin['files_verified'] >= 40 and {w['event_id'] for w in H0.withdrawn} == set(H0.pin['withdrawn_declared'])
           and H0.withdrawn_discrepancy is None, (H0.release, H0.pin.get('mode'), len(H0.withdrawn), H0.withdrawn_discrepancy))
-v47 = os.environ.get('SARF_HFN_V47', '/home/user/ucr/repro03/pinned/hfn/release/release_v47')
-if os.path.exists(os.path.join(v47, 'events.csv')):
+# v47: المحمَّل نفسه إن كان المستهدف، وإلا SARF_HFN_V47 صريحاً؛ ولا مسار بيئةٍ بعينها (كان الافتراضي مسار بيئة الوكيل فتخطّاه جهاز المالك)
+v47 = H0.path if H0.release == 'release_v47' else os.environ.get('SARF_HFN_V47', '')
+if v47 and os.path.exists(os.path.join(v47, 'events.csv')):
     H47 = R.HFN(v47)
     ids = {w['event_id'] for w in H47.withdrawn}
     check('H10 v47 المثبَّت: كل مسحوبٍ خارج الفهرس، وهمزات الوصل محوّلة كلها',
           ids and not ids & {e['event_id'] for L_ in H47.index.values() for e in L_} and
           not any(e['verb'].startswith('ٱ') for L_ in H47.index.values() for e in L_), (len(ids), H47.wasl_converted))
 else:
-    print('SKIP H10 (v47 غير موجود محلياً)')
+    print('SKIP H10 (v47 غير محمَّل ولا SARF_HFN_V47 معيَّن) — تخطٍّ لا نجاح')
 print('ALL OK' if not FAIL else f'FAILED {len(FAIL)}: {FAIL}')
 sys.exit(1 if FAIL else 0)
