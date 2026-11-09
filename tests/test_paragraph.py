@@ -39,11 +39,12 @@ def build(sura, verses, texts=None):
 
 LT, certs, recs, pc = build(112, [1, 2, 3, 4])
 check('P01 سورة الإخلاص: فقرةٌ مرشّحة بمكوّناتها (جملٌ بهوياتها وأحكامها بالمستويات) وروابطها بأدلّتها، وحدّاها من المصدر شاهدان، '
-      'والحدّ اللغوي مثبتٌ بشروط PB-L1 المولَّدة من أدلّتها (السورة كاملة)، والحكم «غير مكتملة» بأسبابٍ مسمّاة — لا فارغة ولا مكتملة بلا دليل',
+      'والحدّ اللغوي غير مثبت (FA02 §٦: حدّ السورة حدّ مصدرٍ لا دليلٌ لغوي، والسورة ليست فقرة)، والحكم «غير مكتملة» بأسبابٍ مسمّاة — لا فارغة ولا مكتملة بلا دليل',
       pc['components'] and all(c['verdict_by_level'] for c in pc['components']) and pc['links'] and
       all(k['evidence_id'] and k['evidence'] for k in pc['links'] if k['status'] != 'NOT_ESTABLISHED') and
       pc['boundary']['source_start'] == 'SOURCE:sura_start' and pc['boundary']['source_end'] == 'SOURCE:sura_end' and
-      pc['boundary']['linguistic'] == 'PROVEN' and pc['status'] == 'PARAGRAPH_CANDIDATE_INCOMPLETE' and pc['reasons'], pc['status'])
+      pc['boundary']['linguistic'] == 'NOT_PROVEN' and pc['boundary']['segmentation_basis'] == 'SOURCE:surah'
+      and pc['status'] == 'PARAGRAPH_CANDIDATE_INCOMPLETE' and pc['reasons'], pc['status'])
 check('P02 الفاحص المستقل للفقرة لا يجد خطأً في الفقرة المبنية', check_paragraph(pc, LT) == [], check_paragraph(pc, LT))
 check('P03 الإحالة: ضمير «يَلِدۡ» و«يُولَدۡ» المستتر الغائب التزامُ مرجعٍ مؤجَّل (تعيين المرجع غير منفَّذ)، لا مرجعٌ مدّعى',
       pc['references'] and all(x['status'] == 'DEFERRED' and x['signature']['person'] == 3 for x in pc['references']) and
@@ -214,11 +215,13 @@ check('M12b والبصمة وحدها تكشف التغيير بلا تحديث�
       check_paragraph(dict(pc2, status='X'), LT2, c2, r2)))
 check('M13 الفحوص المسمّاة كلها معرَّفة، وكل إفسادٍ غيّر القيمة فعلاً', all(m['changed'] for m in MUT) and
       all(m['expected'] in PARAGRAPH_CHECKS for m in MUT))
-# الحدّ اللغوي ليس ثابتاً «مؤجَّلاً»: شروط PB-L1 كلها مستوفاة → PROVEN بلا خطأ، وشرطٌ غير مفحوص → يُكشف ادّعاء PROVEN
-check('B01 منتِجٌ حقيقي لشروط PB-L1 (لا ختمٌ اصطناعي): لسورة الإخلاص كاملةً تولَّد الشروط الستة MET من أدلّتها (أول السورة، وآخر كلمةٍ فيها، '
-      'ولا جملة قبلها ولا بعدها، ولكل إحالةٍ مرشّحٌ داخلها)؛ ومقابلةً 112:2–4 يفقد دليل البداية فـstart.a NOT_MET والحدّ غير مثبت؛ والمدقّق يقبل الأولى',
-      all(v_.startswith('MET') for side in ('start', 'end') for v_ in pc['boundary']['conditions'][side].values()) and
-      pc['boundary']['linguistic'] == 'PROVEN' and pc24['boundary']['conditions']['start']['a'].startswith('NOT_MET') and
+# FA02 §٦ (مراجعة المالك): شروط PB-L1 مولَّدةٌ من أدلّتها، لكن حدّ المصدر لا يستوفيها — السورة كاملة: (أ) و(ب) SOURCE_ONLY، و(ج) لا
+# يستوفيها مرشّحٌ داخلي؛ فالحدّ اللغوي NOT_PROVEN والمدقّق يقبله؛ ومقابلةً 112:2–4 (أ) NOT_MET
+check('B01 منتِجٌ حقيقي لشروط PB-L1: لسورة الإخلاص كاملةً حدّا السورة SOURCE_ONLY لا MET، و(ج) غير مستوفاة بمرشّحٍ داخلي، فالحدّ NOT_PROVEN '
+      'والمدقّق يقبل؛ ومقابلةً 112:2–4 start.a NOT_MET',
+      all(pc['boundary']['conditions'][side][k_].startswith('SOURCE_ONLY') for side in ('start', 'end') for k_ in ('a', 'b')) and
+      not pc['boundary']['conditions']['start']['c'].startswith('MET') and
+      pc['boundary']['linguistic'] == 'NOT_PROVEN' and pc24['boundary']['conditions']['start']['a'].startswith('NOT_MET') and
       not any(e.startswith('PX10') for e in check_paragraph(pc, LT, certs, recs)), (pc['boundary']['conditions'], pc24['boundary']['conditions']['start']))
 pcs = paragraph_candidates(LT2, c2, r2, vocative_starts={J.id for J in [] })
 check('B02 المرشّحات تُبنى بنقاط البدء المعلنة (A1): لآية الدين مرشّحٌ واحد لأن لا نقطة بدءٍ داخلها', len(pcs) == 1)

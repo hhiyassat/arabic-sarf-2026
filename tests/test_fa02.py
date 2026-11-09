@@ -94,11 +94,13 @@ mood3 = [r for r in recs3 if r['type'] == 'MOOD' and r['status'] == 'LICENSED']
 check('G4.1 علاقة MOOD المرخَّصة ليست موضعية، وإطار الفعل بدورٍ واحد ليس موضعياً، والفاعل بطرفيه موضعي',
       mood3 and not any(positional(r) for r in mood3) and not positional(dict(type='VERB_FRAME', members=dict(verb=['x'])))
       and positional(dict(type='SUBJECT', members=dict(verb=['x'], subject=['y']))))
-u_st = next(u for u, l, t in V3['tokens'] if t == 'يَسْتَطِيعُ')
+# فعلٌ لا يضعه إلا MOOD: مرفوعٌ لتجرّده وليس عضواً في علاقةٍ موضعية مرخَّصة أخرى (يُختار من المخرج لا بالاسم)
+pos_lic = {u for r in recs3 if r['status'] == 'LICENSED' and positional(r) for us in r['members'].values() for u in us}
+u_st = next(u for r in mood3 for u in r['members']['verb'] if u not in pos_lic)
 J_st = next(J for J in _sentences(C3.get('sentences')['LT']) if u_st in sentence_units(J))
 cst = closure_certificate(J_st, recs3)
 plc = next(o for o in cst['obligations'] if o['name'] == 'موضع كل وقوع (14أ)')
-check('G4.2 «يَسْتَطِيعُ» (2:282) لا يضعه في موضعه إلا V-RAF1 ← غير مستوفى الموضع (لا يُحسب MOOD استيفاءً)',
+check(f'G4.2 فعلٌ مرفوعٌ لتجرّده لا يضعه إلا V-RAF1 ({u_st}) ← غير مستوفى الموضع (لا يُحسب MOOD استيفاءً)',
       u_st in plc['occurrences'] and any(u_st in v for v in plc['unplaced_by_class'].values())
       and not any(x['unit'] == u_st for x in plc['satisfied_by']), plc)
 recs_nomood = [r for r in recs3 if r['type'] != 'MOOD']
@@ -137,5 +139,44 @@ ENGINE.revise(C18, 'units', units2, 'اختبار البصمة: محتوى وح�
 rv = C18.revisions[-1]
 check('G5.4 المراجعة: تغيّر محتوى وحدةٍ بمعرّفها نفسه يغيّر بصمة الخانة، فيُعاد حساب التابعين', rv['previous'] != rv['new'] and 'features' in rv['recomputed'],
       rv)
+# §G8 العطف في 14أ (COORD) من سجلّ موضع العطف، وحدّ الفقرة PB-L1 بلا حدّ المصدر
+co = [r for r in V3['records'] if r['type'] == 'COORD']
+lic = [r for r in co if r['status'] == 'LICENSED']
+check('G8.1 «سَفِيهًا أَوْ ضَعِيفًا» (2:282): COORD مرخَّصة بطرفين معيَّنين وحرفها، ومقدّماتها شروط القبول من sarf.coord',
+      any(r['texts'].get('conj') == 'أَوْ' and r['texts'].get('coordinated_on') == 'سَفِيهًا' and r['texts'].get('coordinated') == 'ضَعِيفًا'
+          and any(p_.startswith('A1') for p_ in r['premises']) for r in lic), [(r['status'], r['texts']) for r in co[:10]])
+check('G8.2 الموضع المتعدّد المستوفي (D2) مؤجَّل بمرشّحيه كلهم، ولا طرفٌ سابق معيَّن فيه',
+      any(r['status'] == 'DEFERRED' and 'D2' in (r.get('decision_codes') or []) and len(r['alternatives']) >= 2 and 'coordinated_on' not in r['members']
+          for r in co))
+check('G8.3 كل COORD مرخَّصة: قرارها تثبيتٌ أو ترخيص، ووظيفتها عطف، وأعضاؤها الثلاثة معيَّنون (لا ترخيص بالقرب ولا بالتطابق)',
+      lic and all(r['decision'] in ('تثبيت ضمن النطاق المعلن', 'ترخيص الأول وتأجيل الحسم النهائي') and str(r['coord_function']).startswith('عطف')
+                  and all(r['members'].get(k_) for k_ in ('conj', 'coordinated_on', 'coordinated')) for r in lic))
+from sarf.relations import verse_relations
+cr_mut = copy.deepcopy(C3.get('legacy')['coord'])
+for x in cr_mut:
+    x['decision'] = 'حفظ المستوفيات وتأجيل الانفراد'
+Vx = verse_relations(C3.get('analysis')['2:282'], C3.get('units')['2:282']['units'], C3.get('features_final')['2:282'], '2:282',
+                     legacy_cond=C3.get('legacy')['cond'], legacy_rel=C3.get('legacy')['rel'], F13=C3.get('features')['2:282'], legacy_coord=cr_mut)
+check('G8.4 إفساد: قرار الموضع «تأجيل الانفراد» في كل المواضع ← لا COORD مرخَّصة (الترخيص من القرار لا من وجود مرشّح)',
+      not any(r['type'] == 'COORD' and r['status'] == 'LICENSED' for r in Vx['records']))
+u_aw = next(u for r in lic if r['texts'].get('conj') == 'أَوْ' for u in r['members']['conj'])
+J_aw = next(J for J in _sentences(C3.get('sentences')['LT']) if u_aw in sentence_units(J))
+pl_aw = next(o for o in closure_certificate(J_aw, recs3)['obligations'] if o['name'] == 'موضع كل وقوع (14أ)')
+check('G8.5 حرف العطف المرخَّص «أَوْ» وطرفاه موضوعون في التزام الموضع بعلاقة COORD', any(x['unit'] == u_aw and ':COORD:' in x['relation']
+                                                                                    for x in pl_aw['satisfied_by']), pl_aw['unplaced_by_class'])
+C112 = run_ref('112:3')
+V112 = C112.get('records')['112:3']
+gv = [r for r in V112['records'] if r['type'] == 'GOVERN']
+check('G8.6 «لَمْ يَلِدْ» (112:3): GOVERN مرخَّصة بين «لَمْ» و«يَلِدْ» (عاملٌ مقبول، والجزم في قدرته، والسكون المكتوب يوافقه)',
+      any(r['status'] == 'LICENSED' and r['texts'] == {'operator': 'لَمْ', 'governed': 'يَلِدْ'} for r in gv), [(r['status'], r['texts']) for r in gv])
+c112 = {k: x for k, x in C112.get('certificates').items()}
+pl112 = [o for x in c112.values() for o in x['obligations'] if o['name'] == 'موضع كل وقوع (14أ)']
+check('G8.7 «لَمْ يَلِدْ» كل وقوعاتها موضوعة: «لَمْ» بـGOVERN، و«يَلِدْ» نواةٌ بفاعلٍ مستترٍ مرخَّص في إطاره (لا بـMOOD)',
+      pl112 and pl112[0]['status'] == 'MET' and {x['relation'].split(':')[2] for x in pl112[0]['satisfied_by']} <= {'GOVERN', 'VERB_FRAME', 'COORD'},
+      [(o['status'], o['unplaced_by_class']) for o in pl112])
+from sarf.algebra import inter_clause
+check('G8.8 عطف الجمل رابطٌ بين جمل (لا يمدّ الإسناد المحلي)، وعطف المفرد علاقةٌ محلية',
+      inter_clause(dict(type='COORD', coord_levels=['جملة'])) and not inter_clause(dict(type='COORD', coord_levels=['مفرد']))
+      and not inter_clause(dict(type='COORD', coord_levels=['جملة', 'مفرد'])))
 print('ALL OK' if not FAIL else f'FAILED {len(FAIL)}: {FAIL}')
 sys.exit(1 if FAIL else 0)

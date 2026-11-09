@@ -2017,7 +2017,7 @@ def _is_sura_end(sura, verse):
 
 
 def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف المجمّع)', cross=(), checked_ends=frozenset(), mut_budget=400,
-                     cond_out=None, rel_out=None):
+                     cond_out=None, rel_out=None, coord_out=None):
     """الطبقة اللغوية على تيار الوحدات المتصل عبر حدود الآيات.
     - عند كل حدٍّ محتمل (علامة وقف، أو رأس آية، أو آخر سورة) يُسجَّل B(b | a, q, c) = ⟨F, L, M, W, I, E⟩
     - الوحدة الخطابية: ما بين حدّين أجاز الوقفَ عندهما دليلٌ (م، قلى، ج، صلى) أو آخرُ السورة؛ ورأس الآية وحده ليس حدّاً
@@ -2546,6 +2546,8 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
                                 after=dict(A=c1['A']['head_id'], A_words=c1['A']['words'], B_words=c1['B']['words'],
                                            status=c1['status'], decision=r_['decision'], rules=c1['rules']),
                                 expected='مرفوض: الشهادة لا تخصّ البنية المعدَّلة', caught=caught, why=pr2[:2]))
+            if coord_out is not None:
+                coord_out.append(rec)            # FA02 §٦: سجلّ موضع العطف كاملاً إلى 14أ (sarf.relations: COORD)
             st['coordrec'] += 1
             st[f'coordrec:قرار:{rec["decision"]}'] += 1
             for d_ in rec['decision_codes']:
@@ -2819,6 +2821,15 @@ CLOSURE_LEVEL_AR = {'LOCAL_PREDICATION': 'الإسناد المحلي', 'SENTENC
 # علاقاتٌ تربط جملةً بجملة: عبورها الحدّ لا يمدّ الإسناد المحلي، لكنه ينفي الاستقلال أو يعلّقه
 INTER_CLAUSE_TYPES = ('CONDITION', 'SILAH', 'CONTAINER_RELATIVE', 'RESUMPTIVE')
 
+
+def inter_clause(r):
+    """رابطٌ بين جمل: الأنواع أعلاه، والعطف (COORD) إذا كانت أوجهه القائمة كلها عطف جمل (FA02): فعطف الجملة على الجملة يصل ولا يمدّ
+    الإسناد المحلي، وعطف المفرد يمدّه"""
+    if r.get('type') in INTER_CLAUSE_TYPES:
+        return True
+    lv = r.get('coord_levels') or ([r['coord_level']] if r.get('coord_level') else [])
+    return r.get('type') == 'COORD' and bool(lv) and all(x == 'جملة' for x in lv)
+
 UNMET_STATUSES = ('OPEN', 'CONFLICT', 'SELECTION', 'COVERAGE', 'BOUNDARY')
 
 
@@ -2944,8 +2955,14 @@ NON_POSITIONAL_TYPES = frozenset({'MOOD'})
 
 
 def positional(r):
-    """هل يضع السجلّ أعضاءه في موضعٍ نحوي؟ — نوعٌ غير علامةٍ وحدها، وطرفان فأكثر بوحدات"""
-    return r.get('type') not in NON_POSITIONAL_TYPES and sum(1 for us in (r.get('members') or {}).values() if us) >= 2
+    """هل يضع السجلّ أعضاءه في موضعٍ نحوي؟ — نوعٌ غير علامةٍ وحدها، وطرفان فأكثر بوحدات؛ أو إطار فعلٍ إسناده تامّ بفاعلٍ مستتر
+    مثبتٍ فيه (نواة إسنادٍ: الفعل وفاعله في الوحدة نفسها، فهو موضع الفعل نواةً لا علامةٌ وحدها)"""
+    if r.get('type') in NON_POSITIONAL_TYPES:
+        return False
+    if sum(1 for us in (r.get('members') or {}).values() if us) >= 2:
+        return True
+    sj = ((r.get('frame') or {}).get('subject') or {}) if r.get('type') == 'VERB_FRAME' else {}
+    return bool(sj.get('implicit_subject')) and sj.get('status') == 'LICENSED'
 
 
 def sentence_units(J):
@@ -3008,8 +3025,8 @@ def closure_certificate(J, records, upstream=None):
     local_src = (bool(J.closed) or bnd.get('J') == 'proven') and bool(b_rule)
     touch = [r for r in records if r['status'] != 'REJECTED' and _locs(r) & span]
     cross = [r for r in touch if _locs(r) - span]
-    cross_local = [r for r in cross if r['type'] not in INTER_CLAUSE_TYPES]
-    cross_link = [r for r in cross if r['type'] in INTER_CLAUSE_TYPES]
+    cross_local = [r for r in cross if not inter_clause(r)]
+    cross_link = [r for r in cross if inter_clause(r)]
     stability = dict(status=('PROVEN' if local_src and not cross_local else 'NOT_PROVEN' if local_src else 'NO_LOCAL_BOUNDARY'),
                      checked_relations=len(touch), crossing_local=[r['relation_id'] for r in cross_local],
                      crossing_local_status=[r['status'] for r in cross_local],
@@ -3511,6 +3528,9 @@ def _references(Js, records):
     for x in refs:
         L = loc_of(x['location'])
         x['in_paragraph_candidates'] = sorted(u for u, p_ in noms.items() if L is None or p_ != L)[:12]
+        # المرشّح الداخلي لا ينفي المرجع الخارجي (FA02 §٦): الإحالة عابرةٌ للحدّ ممكنةٌ ما لم يُعيَّن المرجع
+        x['outside_referent_excluded'] = False
+        x['outside_referent_reason'] = 'لا قاعدة تعيينٍ منفّذة تنفي مرجعاً قبل حدّ الفقرة أو بعده'
     for x in refs:
         x.update(status='DEFERRED', candidates_rule='سابقٌ أو لاحقٌ أو خارجيٌّ تجيزه القاعدة؛ والموافقة في العدد والجنس تولّد مرشّحين ولا تثبت المرجع',
                  reason='تعيين المرجع غير منفَّذ (مانعٌ مسمّى: REFERENCE_RESOLUTION)',
@@ -3538,17 +3558,22 @@ def pb_conditions(Js, allJ, refs):
     # (تحليل آيةٍ وحدها): تُستوفيان بحدّ المصدر (بداية السورة/آخرها)، أو تُفحصان بجملةٍ مجاورة في المدخل، وإلا فـ«لم يُفحص»
     src_start = first[1] == 1 and first[2] == 0
     src_end = 'SURA_END' in end_kinds
+    # FA02 §٦ (مراجعة المالك): حدّ المصدر ليس دليلاً لغوياً — بداية السورة وآخرها في المصحف المدخل حدّا مصدر (SOURCE_ONLY)، والسورة
+    # ليست فقرة؛ فلا تُستوفى (أ) ولا (ب) بهما. ومرشّحٌ للإحالة داخل الفقرة لا ينفي مرجعاً خارجها (قبل الحدّ أو في سورةٍ سابقة)، وتعيين
+    # المرجع غير منفّذ؛ فـ(ج) لا تُستوفى بوجود مرشّحٍ داخلي. فلا يثبت PB-L1 إلا بقاعدةٍ لغوية لم تُنفَّذ بعد، والنقص مسمّى
     return dict(
-        start=dict(a=('MET: بداية السورة' if src_start else 'NOT_MET: ليست بداية سورة، ولا قاعدة بدء خطابٍ منفّذة'),
-                   b=('MET: لا جملة قبلها: بداية السورة' if src_start else
+        start=dict(a=('SOURCE_ONLY: بداية السورة حدّ مصدرٍ لا دليلٌ لغوي، ولا قاعدة بدء خطابٍ منفّذة' if src_start else
+                      'NOT_MET: ليست بداية سورة، ولا قاعدة بدء خطابٍ منفّذة'),
+                   b=('SOURCE_ONLY: لا جملة قبلها في السورة، وما قبل السورة في المصحف لم يُفحص رابطه' if src_start else
                       f'NOT_MET: جملةٌ قبلها ({prv})' if prv is not None else
                       'NOT_CHECKED: ما قبلها خارج المدخل المحلَّل، وحدّ المدخل ليس حدّاً لغوياً'),
-                   c=('MET: لكل إحالةٍ مرشّحٌ داخل الفقرة' if not no_cand else 'NOT_MET: إحالاتٌ بلا مرشّحٍ داخلها: ' + '، '.join(no_cand))),
-        end=dict(a=('MET: ' + '، '.join(end_kinds)) if src_end else 'NOT_MET: ليس آخر السورة',
-                 b=('MET: لا جملة بعدها: آخر السورة' if src_end else
+                   c=('NOT_CHECKED: لكل إحالةٍ مرشّحٌ داخل الفقرة، والمرشّح الداخلي لا ينفي مرجعاً خارجها (التعيين غير منفّذ)'
+                      if not no_cand else 'NOT_MET: إحالاتٌ بلا مرشّحٍ داخلها (مرجعها خارج الحدّ أو غير معلوم): ' + '، '.join(no_cand))),
+        end=dict(a=('SOURCE_ONLY: ' + '، '.join(end_kinds) + ' — حدّ مصدرٍ لا دليلٌ لغوي') if src_end else 'NOT_MET: ليس آخر السورة',
+                 b=('SOURCE_ONLY: لا جملة بعدها في السورة، وما بعد السورة في المصحف لم يُفحص رابطه' if src_end else
                     f'NOT_MET: جملةٌ بعدها ({nxt})' if nxt is not None else
                     'NOT_CHECKED: ما بعدها خارج المدخل المحلَّل، وحدّ المدخل ليس حدّاً لغوياً'),
-                 c=('MET: لا جملة بعدها تحيل إليها: آخر السورة' if src_end else
+                 c=('SOURCE_ONLY: لا جملة بعدها في السورة تحيل إليها، وإحالات ما بعد السورة لم تُفحص' if src_end else
                     f'NOT_CHECKED: إحالات ما بعدها ({nxt}) لا تُعيَّن' if nxt is not None else
                     'NOT_CHECKED: ما بعدها خارج المدخل المحلَّل، فإحالاته لم تُفحص')),
         evidence=dict(first=list(first), last=list(last), prev=prv, next=nxt, end_kinds=end_kinds, refs_without_candidate=no_cand))
@@ -3605,7 +3630,11 @@ def _paragraph(Js, LT, certs, records, allJ, competing=None):
     # PB-L1 بشروطه: (أ) حدّ مصدرٍ أو بدء خطابٍ جديد، (ب) لا رابط مرشّح يعبر، (ج) لا إحالة معلّقة تعبر
     cond = pb_conditions(Js, allJ, refs)
     ling = 'PROVEN' if cond and all(v_.startswith('MET') for side in ('start', 'end') for v_ in cond[side].values()) else 'NOT_PROVEN'
-    boundary = dict(source_start=('SOURCE:sura_start' if src_start else None),
+    boundary = dict(segmentation_basis=('SOURCE:surah' if src_start and 'SURA_END' in end_kinds else
+                                        'SOURCE:surah_part' if src_start or 'SURA_END' in end_kinds else 'INPUT_OR_CUE'),
+                    segmentation_note='مرشّح الفقرة من تقطيع المصدر (السورة أو بدايتها/نهايتها) أو من مؤشّر (نداء) أو حدّ المدخل؛ '
+                                      'والسورة ليست فقرة، ولا يثبت الحدّ اللغوي إلا بشروط PB-L1',
+                    source_start=('SOURCE:sura_start' if src_start else None),
                     source_end=('SOURCE:sura_end' if 'SURA_END' in end_kinds else None), source_end_kinds=end_kinds,
                     linguistic=ling, linguistic_rule='PB-L1', conditions=cond,
                     reason=('PB-L1 مستوفاة' if ling == 'PROVEN' else 'PB-L1 غير مستوفاة: ' + '؛ '.join(

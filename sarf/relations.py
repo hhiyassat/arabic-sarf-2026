@@ -887,7 +887,7 @@ def _rec(ref, typ, rule, heads, members, status, reason, premises=(), checked=()
     return out
 
 
-def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None, F13=None):
+def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None, F13=None, legacy_coord=None):
     """→ dict(records=[…], tokens=[(uid، الموضع، النص)]، axes) لآيةٍ واحدة.
     legacy_cond: سجلات الشرط من الطبقة القديمة (sarf.algebra.linguistic_layer(cond_out=…)) لهذه الآية، تُنقل بقاعدة C01 بهوياتها"""
     from .algebra import ZURUF_V, is_form
@@ -2132,6 +2132,63 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None, F13=Non
                           resumptive=dict(status=DEFERRED, note='العائد إن كانت موصولة: مفعولٌ منصوب محذوف بعد «' + n_.text +
                                           '» أو ضمير؛ ولا يُكتب المحذوف')))
 
+    # COORD (جسر، FA02 §٦ — مراجعة المالك: «لا علاقة عطف في 14أ»): سجلّ موضع العطف من sarf.coord (مرشّحاته بشروط القبول A1–A8 والموانع
+    # R1–R7 وأسباب التأجيل D1–D9، وقرار الموضع) يُحمل إلى 14أ علاقةً بحالتها: مرخَّصة إن كان القرار تثبيتاً أو ترخيصاً ومرشّحٌ واحد مستوفٍ
+    # وظيفته العطف بطرفين معيَّنين داخل الآية (المعيار نفسه في الطبقة القديمة)؛ ومرفوضة إن رُفضت المرشّحات كلها بموانعها؛ وإلا مؤجَّلة
+    # بمرشّحيها. ولا يُثبَّت طرفٌ بالقرب ولا بتطابق الحالة (مواصفة 31 أكتوبر)؛ والطرف خارج الآية لا يُعيَّن بهويته هنا فيُؤجَّل
+    from .coord import DECISIONS as _CD
+    by_uid_c = {t.uid: t for t in toks}
+    by_wi_c = {}
+    for t in toks:
+        by_wi_c.setdefault(t.wi, []).append(t)
+
+    def _word_head(word_id):
+        s_, v_, w_ = word_id.split(':')
+        if f'{s_}:{v_}' != ref:
+            return None
+        ts = [t for t in by_wi_c.get(int(w_) - 1, []) if not t.conj and not t.enclitic]
+        stem = [t for t in ts if any(x in t.types for x in ('جذع', 'لفظ الجلالة'))]
+        return (stem or ts or [None])[0]
+
+    for cr in legacy_coord or []:
+        if (cr.get('text_id') or {}).get('verse') != ref or not cr.get('letter_cells'):
+            continue
+        cu = by_uid_c.get(cr['letter_cells'][0]['id'].rsplit('.', 1)[0])
+        if cu is None:
+            continue
+        alts, ok_c = [], []
+        for c in cr.get('candidates') or []:
+            ah = _word_head(c['A']['head_id']) if c.get('A') else None
+            bh = _word_head(c['B']['head_id']) if c.get('B') else None
+            alts.append(f"{c['id']} {c['function']} ({c['level']}): «{(c.get('A') or {}).get('head')}» ← «{(c.get('B') or {}).get('head')}» — "
+                        f"{c['status']}" + (f" ({'، '.join(b_[0] for b_ in c.get('barriers') or [])})" if c.get('barriers') else ''))
+            if c['status'] == 'مستوفٍ':
+                ok_c.append((c, ah, bh))
+        allrej = bool(cr.get('candidates')) and all(c['status'] == 'مرفوض' for c in cr['candidates'])
+        lic = cr['decision'] in (_CD[0], _CD[2]) and len(ok_c) == 1 and ok_c[0][0]['function'].startswith('عطف') and \
+            ok_c[0][1] is not None and ok_c[0][2] is not None
+        sel = ok_c[0] if lic else None
+        heads_ = dict(conj=cu)
+        members_ = dict(conj=[cu])
+        if sel:
+            heads_.update(coordinated_on=sel[1], coordinated=sel[2])
+            members_.update(coordinated_on=[sel[1]], coordinated=[sel[2]])
+        else:
+            bs = {id(x[2]): x[2] for x in ok_c if x[2] is not None}
+            if len(bs) == 1:                              # الطرف اللاحق واحدٌ في المستوفيات كلها، والسابق مختلَفٌ فيه
+                members_['coordinated_candidate'] = list(bs.values())
+        st_c = LICENSED if lic else REJECTED if allrej else DEFERRED
+        why = ('مستوفٍ واحد بوظيفة العطف وطرفين معيَّنين: ' + sel[0]['id'] + '؛ قرار الموضع «' + cr['decision'] + '»' if lic else
+               'رُفضت المرشّحات كلها بموانعها' if allrej else
+               f"قرار الموضع «{cr['decision']}»" + (f" ({'، '.join(cr.get('decision_codes') or [])})" if cr.get('decision_codes') else '') +
+               (f"؛ {cr['reason']}" if cr.get('reason') else '') +
+               ('؛ الطرف السابق خارج الآية: لا تُعيَّن وحدته في سجلّ هذه الآية' if len(ok_c) == 1 and ok_c[0][1] is None and ok_c[0][0].get('A') else ''))
+        prem = ([f'{k_}: {v_[1]}' for k_, v_ in sorted((sel[0].get('checks') or {}).items()) if v_ and v_[0]] if sel else [])
+        R.append(_rec(ref, 'COORD', 'C01', heads_, members_, st_c, why, premises=[f'sarf.coord ({cr.get("gamma")})'] + prem,
+                      alternatives=alts, letter=cr.get('letter'), decision=cr['decision'], decision_codes=cr.get('decision_codes'),
+                      coord_level=(sel[0]['level'] if sel else None), coord_function=(sel[0]['function'] if sel else None),
+                      coord_levels=sorted({c['level'] for c in cr.get('candidates') or [] if c['status'] != 'مرفوض'})))
+
     # R02 (جسر): الصلة الفعلية والاسمية من الطبقة القديمة (sarf.algebra.relative_structs) بنطاقها ودليلها، والعائد التزامٌ يُفحص:
     # المطابقة شرطٌ لا يثبت المرجع وحده، فالعائد مؤجَّل إلا أن يكون فاعلاً مكتوباً للغائب في فعل الصلة الأول ولا ضمير غيره في نطاقها
     for c in legacy_rel or []:
@@ -2482,8 +2539,29 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None, F13=Non
                          and any(t.uid in us for k_, us in r_['members'].items() if k_ not in ('verb', 'relative', 'nasikh', 'operator'))]
     parts_reg = {p_['part_id']: dict(unit=t.uid, text=p_['text'], part=p_['part'], slot=p_.get('slot'))
                  for t in toks for p_ in (getattr(t, 'parts', None) or [])}
-    return dict(records=R, tokens=[(t.uid, t.loc, t.text) for t in toks], parts=parts_reg,
-                axes={t.uid: t.axes(toks[i + 1] if i + 1 < len(toks) else None) for i, t in enumerate(toks)})
+    axes_ = {t.uid: t.axes(toks[i + 1] if i + 1 < len(toks) else None) for i, t in enumerate(toks)}
+    # GOVERN (FA02 §٣ و§٦): العامل المقبول في المرحلة ١١ ومعموله — علاقةٌ موضعية بطرفين (العامل والمعمول)، مرخَّصة إن كان أثره في قدرته
+    # مباشرةً في الجرد، والعلامة المكتوبة توافقه (AGREE)، ولم تحمله علاقةٌ أخصّ (حرف الجر P01، والناسخ، والمصدري) — فلا يُكرَّر الطرفان.
+    # وهي غير MOOD: MOOD تثبت الرفع لتجرّد المضارع من العامل، ولا عامل فيها يضعه
+    owned = {(u1, u2) for r_ in R if r_['type'] in ('PP', 'NASIKH', 'PREDICATIVE_PP', 'MASDAR')
+             for us1 in r_['members'].values() for u1 in us1 for us2 in r_['members'].values() for u2 in us2}
+    for k_, (op_t, o, r) in sorted(governed.items()):
+        t = by_k[k_]
+        inf = (axes_.get(t.uid) or {}).get('inflection') or {}
+        g = inf.get('governor') or {}
+        if g.get('kind') != 'عامل' or g.get('role_name') or (op_t.uid, t.uid) in owned or op_t.uid == t.uid:
+            continue
+        ok_g = g.get('relation') == 'مباشر' and inf.get('agreement') == 'AGREE'
+        R.append(_rec(ref, 'GOVERN', 'G01', dict(operator=op_t, governed=t), dict(operator=[op_t], governed=[t]),
+                      LICENSED if ok_g else DEFERRED,
+                      (f'«{o["operator"]}» عاملٌ مقبول في المرحلة ١١، وأثره «{g.get("expected")}» في قدرته مباشرةً، والعلامة المكتوبة توافقه'
+                       if ok_g else f'العامل «{o["operator"]}» مقبول، و' + ('أثره ليس في قدرته مباشرةً (' + str(g.get('relation')) + ')'
+                                                                          if g.get('relation') != 'مباشر' else
+                                                                          'العلامة المكتوبة لا توافقه (' + str(inf.get('agreement')) + ')')),
+                      premises=[f'المرحلة ١١: «{o["operator"]}» مقبول ({"، ".join(map(str, g.get("operator_proof") or [])) or "حكمه"})',
+                                f'القدرة: {", ".join(g.get("capacity") or [])} ({g.get("capacity_source")})',
+                                f'العلامة: {inf.get("statement")}'], expected=g.get('expected'), group=o.get('group')))
+    return dict(records=R, tokens=[(t.uid, t.loc, t.text) for t in toks], parts=parts_reg, axes=axes_)
 
 
 def _letter_syllables(t, seg):

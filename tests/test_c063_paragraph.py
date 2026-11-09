@@ -24,8 +24,11 @@ fat = [x for x in quran_source.rows() if x[0] == 1]
 C = run(fat, None, ['paragraphs'])
 P1 = C.get('paragraphs')[0]['candidate']
 c1 = P1['boundary']['conditions']
-check('G04 الفاتحة كاملة: بداية السورة وآخرها تستوفيان (أ) و(ب) بحدّ المصدر',
-      c1['start']['a'].startswith('MET') and c1['start']['b'].startswith('MET') and c1['end']['a'].startswith('MET') and c1['end']['b'].startswith('MET'), c1)
+check('G04 الفاتحة كاملة (FA02 §٦): بداية السورة وآخرها حدّا مصدر (SOURCE_ONLY) لا يستوفيان (أ) ولا (ب)، والمرشّح الداخلي لا يستوفي (ج)؛ '
+      'فالحدّ اللغوي NOT_PROVEN، والتقطيع «SOURCE:surah» معلن',
+      all(c1[s_][k_].startswith('SOURCE_ONLY') for s_ in ('start', 'end') for k_ in ('a', 'b')) and not c1['start']['c'].startswith('MET')
+      and P1['boundary']['linguistic'] == 'NOT_PROVEN' and P1['boundary']['segmentation_basis'] == 'SOURCE:surah'
+      and all(x['outside_referent_excluded'] is False for x in P1['references']), (c1, P1['boundary'].get('segmentation_basis')))
 mid = [x for x in quran_source.rows() if x[0] == 2 and 281 <= x[1] <= 283]
 C3 = run(mid, None, ['paragraphs'])
 c3 = [p['candidate']['boundary']['conditions'] for p in C3.get('paragraphs')]

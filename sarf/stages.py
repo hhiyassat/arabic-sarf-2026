@@ -172,9 +172,10 @@ def p_linguistic(ctx, d):
             cross += cross_ayah_links(lambda t_: analyze(_catalog(), t_, d['source']['mode']), prev, cur)
             ends.add((prev['s'], prev['v']))
         prev = cur
-    cond, rels = [], []
-    LT, st, _ = linguistic_layer(items, Trace(), 'engine', cross=cross, checked_ends=frozenset(ends), cond_out=cond, rel_out=rels)
-    return dict(sentences=dict(LT=LT, stats=st, cross=cross), legacy=dict(cond=cond, rel=rels))
+    cond, rels, coords = [], [], []
+    LT, st, _ = linguistic_layer(items, Trace(), 'engine', cross=cross, checked_ends=frozenset(ends), cond_out=cond, rel_out=rels,
+                                 coord_out=coords)
+    return dict(sentences=dict(LT=LT, stats=st, cross=cross), legacy=dict(cond=cond, rel=rels, coord=coords))
 
 
 def p_relations(ctx, d):
@@ -183,7 +184,8 @@ def p_relations(ctx, d):
     for s, v, _ in d['source']['verses']:
         k = _key(s, v)
         out[k] = verse_relations(d['analysis'][k], d['units'][k]['units'], d['features'][k], k,
-                                 legacy_cond=d['legacy']['cond'], legacy_rel=d['legacy']['rel'])
+                                 legacy_cond=d['legacy']['cond'], legacy_rel=d['legacy']['rel'],
+                                 legacy_coord=d['legacy'].get('coord'))
     return dict(records_initial=out)
 
 
@@ -209,7 +211,8 @@ def p_relations_final(ctx, d):
         k = _key(s, v)
         FF = d['features_final'][k]
         out[k] = verse_relations(d['analysis'][k], d['units'][k]['units'], FF, k,
-                                 legacy_cond=d['legacy']['cond'], legacy_rel=d['legacy']['rel'], F13=d['features'][k])
+                                 legacy_cond=d['legacy']['cond'], legacy_rel=d['legacy']['rel'], F13=d['features'][k],
+                                 legacy_coord=d['legacy'].get('coord'))
         recs = out[k]['records']
         F2, _ = reconcile_features(d['features'][k], recs)
         diff = sorted(str(u) for u in set(FF) | set(F2)
