@@ -20,7 +20,7 @@ open(os.path.join(OUT, 'code', 'commits.txt'), 'w', encoding='utf-8').write(G('l
 open(os.path.join(OUT, 'code', f'diff_{BASE[:7]}_{HEAD[:7]}.patch'), 'w', encoding='utf-8').write(G('diff', BASE, HEAD))
 with open(os.path.join(OUT, 'code', 'changed_files.tsv'), 'w', encoding='utf-8') as f:
     f.write('status\tpath\n' + G('diff', '--name-status', BASE, HEAD))
-subprocess.run(['git', '-C', REPO, 'bundle', 'create', os.path.join(OUT, 'code', f'branch_{BASE[:7]}_{HEAD[:7]}.bundle'), f'{BASE}..{HEAD}'],
+subprocess.run(['git', '-C', REPO, 'bundle', 'create', os.path.join(OUT, 'code', f'branch_{BASE[:7]}_{HEAD[:7]}.bundle'), 'completion-from-063', f'^{BASE}'],
                check=True, capture_output=True)
 with open(os.path.join(OUT, 'code', f'source_{HEAD[:7]}.tar.gz'), 'wb') as f:
     f.write(subprocess.run(['git', '-C', REPO, 'archive', '--format=tar.gz', HEAD], capture_output=True, check=True).stdout)
