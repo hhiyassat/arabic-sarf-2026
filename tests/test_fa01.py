@@ -20,16 +20,20 @@ recs = [r for v in C.get('records').values() for r in v['records']]
 Js = _sentences(C.get('sentences')['LT'])
 J0 = next(J for J in Js if any('اتَّقُوا' in str(o.name) for o in J.Omega))
 c0 = closure_certificate(J0, recs)
-pl = [o for o in c0['obligations'] if o['name'] == 'موضع كل كلمة (14أ)']
-check('P01 «اتقوا الله» (2:278): «اللَّهَ» يضعه الرابط القديم وحده و14أ لا ترخّصه ← التزام الموضع من 14أ «تعارض طبقتين»، والإسناد المحلي غير مغلق',
-      pl and pl[0]['status'] == 'CONFLICT' and 'اللَّهَ' in pl[0]['residual_reason']
+pl = [o for o in c0['obligations'] if o['name'] == 'موضع كل وقوع (14أ)']
+tok78 = {u: t for u, l, t in C.get('records')['2:278']['tokens']}
+check('P01 «اتقوا الله» (2:278): «اللَّهَ» يضعه الرابط القديم وحده و14أ لا ترخّصه ← في صنف «تعارض طبقتين» من التزام الموضع (FA02: من وقوعات النصّ)، والإسناد المحلي غير مغلق',
+      pl and pl[0]['status'] in ('CONFLICT', 'COVERAGE') and 'اللَّهَ' in [tok78.get(u) for u in pl[0]['unplaced_by_class'].get('CONFLICT', [])]
       and not str(c0['verdict_by_level']['LOCAL_PREDICATION']).startswith('CLOSED'), (pl, c0['verdict_by_level']))
 J1 = copy.copy(J0)
 J1.O = dict(J0.O, placed_by_legacy_bond_only=[])
 c1 = closure_certificate(J1, recs)
-check('P02 إفساد: بمحو سجلّ «الوضع بالرابط القديم وحده» يختفي التزام الموضع من 14أ (فالفحص P01 هو ما يكشفه)',
-      not any(o['name'] == 'موضع كل كلمة (14أ)' for o in c1['obligations']))
-check('P03 الالتزام يسمّي مقياسه: تغطية أدوارٍ محلية في 14أ مستقلةً عن الطبقة القديمة', pl and 'مستقلةً عن روابط الطبقة القديمة' in pl[0]['measure'])
+pl1 = [o for o in c1['obligations'] if o['name'] == 'موضع كل وقوع (14أ)']
+check('P02 إفساد: بمحو سجلّ الطبقة القديمة يبقى التزام الموضع (يولَّد من الوقوعات لا من القائمة)، و«اللَّهَ» فيه بلا موضعٍ مرخَّص (عضوٌ في علاقةٍ مؤجَّلة: اختيار، بدل التعارض)',
+      pl1 and 'اللَّهَ' in [tok78.get(u) for u in pl1[0]['unplaced_by_class'].get('SELECTION', [])]
+      and not pl1[0]['unplaced_by_class'].get('CONFLICT'), pl1 and pl1[0]['unplaced_by_class'])
+check('P03 الالتزام يسمّي مقياسه: تغطية أدوارٍ محلية من وقوعات النصّ في 14أ مستقلةً عن الطبقة القديمة، وMOOD لا يضع', pl and 'مستقلةً عن روابط الطبقة القديمة' in pl[0]['measure']
+      and 'MOOD' in pl[0]['measure'] and set(pl[0]['occurrences']) >= {u for u, t in tok78.items() if t in ('اتَّقُوا', 'اللَّهَ')})
 lic_place = [x for J in Js for x in (J.O.get('placed_by_legacy_bond_only') or [])]
 check('P04 كل وقوعٍ وُضع بالرابط القديم وحده مسجَّلٌ بموضعه ووحداته ونوع رابطه', lic_place and all(x['units'] and x['bonds'] and x['location'] for x in lic_place),
       lic_place[:2])

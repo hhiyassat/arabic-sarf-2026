@@ -86,5 +86,26 @@ Vm = p_relations_final(None, d)['records']['2:282']
 check('G3.3 إفساد: تغيير صنف «يَسْتَطِيعُ» في features_final وحدها يغيّر العلاقات النهائية (تسقط V-RAF1 عنه) — فهي مستهلَكة فعلاً',
       any(r['type'] == 'MOOD' and r['texts'].get('verb') == 'يَسْتَطِيعُ' for r in V3['records'])
       and not any(r['type'] == 'MOOD' and r['texts'].get('verb') == 'يَسْتَطِيعُ' for r in Vm['records']))
+# §G4 إثبات العلامة غير إثبات الموضع: MOOD لا يدخل by_member، والموضع من وقوعات النصّ
+from sarf.algebra import positional, closure_certificate, sentence_units
+from sarf.stages import _sentences
+recs3 = [r for v in C3.get('records').values() for r in v['records']]
+mood3 = [r for r in recs3 if r['type'] == 'MOOD' and r['status'] == 'LICENSED']
+check('G4.1 علاقة MOOD المرخَّصة ليست موضعية، وإطار الفعل بدورٍ واحد ليس موضعياً، والفاعل بطرفيه موضعي',
+      mood3 and not any(positional(r) for r in mood3) and not positional(dict(type='VERB_FRAME', members=dict(verb=['x'])))
+      and positional(dict(type='SUBJECT', members=dict(verb=['x'], subject=['y']))))
+u_st = next(u for u, l, t in V3['tokens'] if t == 'يَسْتَطِيعُ')
+J_st = next(J for J in _sentences(C3.get('sentences')['LT']) if u_st in sentence_units(J))
+cst = closure_certificate(J_st, recs3)
+plc = next(o for o in cst['obligations'] if o['name'] == 'موضع كل وقوع (14أ)')
+check('G4.2 «يَسْتَطِيعُ» (2:282) لا يضعه في موضعه إلا V-RAF1 ← غير مستوفى الموضع (لا يُحسب MOOD استيفاءً)',
+      u_st in plc['occurrences'] and any(u_st in v for v in plc['unplaced_by_class'].values())
+      and not any(x['unit'] == u_st for x in plc['satisfied_by']), plc)
+recs_nomood = [r for r in recs3 if r['type'] != 'MOOD']
+cst2 = closure_certificate(J_st, recs_nomood)
+plc2 = next(o for o in cst2['obligations'] if o['name'] == 'موضع كل وقوع (14أ)')
+check('G4.3 حذف سجلات MOOD كلها لا يغيّر التزام الموضع ولا أدلّته (الاستيفاء بالهوية، لا بالحالة وحدها)',
+      (plc2['status'], plc2['unplaced_by_class'], plc2['discharge_evidence_id'], plc2['satisfied_by'])
+      == (plc['status'], plc['unplaced_by_class'], plc['discharge_evidence_id'], plc['satisfied_by']))
 print('ALL OK' if not FAIL else f'FAILED {len(FAIL)}: {FAIL}')
 sys.exit(1 if FAIL else 0)

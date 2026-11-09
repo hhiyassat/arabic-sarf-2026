@@ -17,6 +17,7 @@ sarf.algebra — الجبر اللساني: هندسة ذات أنواع، تُ�
 بل يبقى معلَّقاً في O['pending'] بسبب تأجيله، فلا يضيع وقوعٌ (المبرهنة الأولى).
 """
 
+import re
 from .chars import (FATHA, DAMMA, KASRA, SUKUN, SHADDA, FATHATAN, DAMMATAN, KASRATAN,
                     DAGGER_ALIF, letters)
 from .cells import (HAMZA, Cell, cells_of, _lex_key, lex_index, _verb_ilal, participle_analyses,
@@ -2936,6 +2937,29 @@ def _face_cover(faces, rels):
     return out
 
 
+# FA02 §٣ (مراجعة المالك): إثبات العلامة المكتوبة غير إثبات الموضع النحوي. فعلاقة MOOD (V-RAF1: مرفوعٌ لتجرّده) تثبت حكم الإعراب
+# من علامته، ولا تجعل الفعل طرفاً في بنية؛ وكذلك كل سجلٍّ ليس فيه إلا دورٌ واحد (إطار الفعل بلا معمول). فالموضع لا يُستوفى إلا بعلاقةٍ
+# مرخَّصة بين وحدتين فأكثر من غير هذه الأنواع
+NON_POSITIONAL_TYPES = frozenset({'MOOD'})
+
+
+def positional(r):
+    """هل يضع السجلّ أعضاءه في موضعٍ نحوي؟ — نوعٌ غير علامةٍ وحدها، وطرفان فأكثر بوحدات"""
+    return r.get('type') not in NON_POSITIONAL_TYPES and sum(1 for us in (r.get('members') or {}).values() if us) >= 2
+
+
+def sentence_units(J):
+    """وقوعات الجملة من نصّها: كل وحدةٍ لفظية في مداها (من خاناتها في البناء، ومنها المعلّق في pending)، بهويتها"""
+    out, stack = set(), [J]
+    while stack:
+        x = stack.pop()
+        kids = list(getattr(x, 'A', None) or []) + list((getattr(x, 'O', None) or {}).get('pending') or [])
+        if not kids:
+            out.add(x.id.rsplit('.', 1)[0] if re.search(r'\.u\d+\.\d+$', x.id or '') else x.id)
+        stack += kids
+    return sorted(u for u in out if re.search(r'\.w\d+\.u\d+$', u or ''))
+
+
 def closure_certificate(J, records, upstream=None):
     """→ dict: الجملة ومداها، ودليل حدّها، والتزاماتها بسجلّاتها (obligations)، وعناصر 14أ المؤجَّلة داخل المدى مصنَّفةً (residuals)،
     والأوجه الممنوعة بمانعها، والحكم (verdict) من CLOSURE_AR. records: سجلات 14أ لآيات مدى الجملة"""
@@ -2944,7 +2968,7 @@ def closure_certificate(J, records, upstream=None):
     frames = {r['heads'].get('verb'): r for r in inside if r['type'] == 'VERB_FRAME'}
     by_member = {}
     for r in inside:
-        if r['status'] == 'LICENSED':
+        if r['status'] == 'LICENSED' and positional(r):
             for us in r['members'].values():
                 for u in us:
                     by_member.setdefault(u, []).append(r['relation_id'])
@@ -3268,22 +3292,36 @@ def closure_certificate(J, records, upstream=None):
             sel_ = all('غير محسوم' in x for x in op_)
             residuals.append(dict(relation=r['relation_id'], type=r['type'], rule=r['rule_id'], status='OPEN_OBLIGATION',
                                   kind='SELECTION' if sel_ else 'REQUIRED', why='؛ '.join(op_), outside=[]))
-    # §٨: الكلمة التي لا يضعها في موضعها إلا رابطٌ من الطبقة القديمة، ولا تجعلها علاقةٌ مرخَّصة في 14أ طرفاً — ولو لم تُنشئ الطبقة القديمة
-    # التزام «موضع كل كلمة» — تعارض طبقتين لا استيفاء: لا تسقط ضرورة موضعها بدورٍ غير مرخَّص
-    bo = [x for x in (J.O.get('placed_by_legacy_bond_only') or []) if not any(u in by_member for u in x['units'])]
-    if bo:
-        pend_bo = {u for r in inside if r['status'] != 'LICENSED' for us in r['members'].values() for u in us}
-        obls.append(dict(obligation_id=f'{J.id}/O{len(obls)}#14a-placement', owner=bo[0]['units'][0], name='موضع كل كلمة (14أ)', face_id=None,
-                         face_label='—', morph_candidate_id=None, face_map=None, requirement_kind='PLACEMENT',
-                         requirement_evidence='14أ: لكل وقوعٍ دورٌ في علاقةٍ مرخَّصة', required=True, legacy_met=True, status='CONFLICT',
-                         discharge_relation_id=None, discharge_evidence_id=None,
-                         residual_reason=f'{len(bo)} وقوعاً تضعها الطبقة القديمة برابطها وحده (' +
-                                         '؛ '.join(f"{x['location']} «{x['text']}» ← {'، '.join(x['bonds'])}" for x in bo) +
-                                         ')، و14أ لا ترخّص لها دوراً' + ('؛ منها في علاقةٍ مؤجَّلة: ' + '، '.join(
-                                             x['text'] for x in bo if any(u in pend_bo for u in x['units'])) if any(
-                                             u in pend_bo for x in bo for u in x['units']) else ''),
-                         satisfied_by=None, candidates=None, met=False, external_evidence=None, source=None,
-                         status_ar=OBL_STATUS_AR.get('CONFLICT', 'تعارض'), measure='تغطية الأدوار المحلية: لكل وقوعٍ دورٌ في علاقةٍ مرخَّصة في 14أ، مستقلةً عن روابط الطبقة القديمة؛ ولا يشهد هذا باتصال الوحدة بالبنية الأعلى ولا باكتمال الجملة وحدّها',
+    # FA02 §٣: التزام «موضع كل وقوع (14أ)» يُولَّد من وقوعات النصّ في مدى الجملة، لا من قائمة الطبقة القديمة: لكل وقوعٍ علاقةٌ موضعية
+    # مرخَّصة (positional) في 14أ. وما بقي يُصنَّف بوقوعه: SELECTION (عضوٌ في علاقةٍ موضعية مؤجَّلة)، أو CONFLICT (تضعه الطبقة القديمة
+    # برابطها و14أ لا ترخّص له دوراً)، أو COVERAGE (لا قاعدة في 14أ أنتجت له علاقةً موضعية). والحكم أشدّها: COVERAGE ثم CONFLICT ثم SELECTION
+    occ = sentence_units(J)
+    if occ:
+        pend_pos = {u for r in inside if r['status'] != 'LICENSED' and positional(r) for us in r['members'].values() for u in us}
+        legacy_bond = {u for x in (J.O.get('placed_by_legacy_bond_only') or []) for u in x['units']}
+        legacy_unplaced = {u_.strip() for x in (J.O.get('unplaced') or []) for m_ in re.findall(r'\[([^\]]+)\]', str(x))
+                           for u_ in re.split(r'[،,]', m_) if u_.strip()}
+        cls = {}
+        for u in occ:
+            if u in by_member:
+                continue
+            cls[u] = 'CONFLICT' if u in legacy_bond else 'SELECTION' if u in pend_pos else 'COVERAGE'
+        st_ = 'MET' if not cls else next(k for k in ('COVERAGE', 'CONFLICT', 'SELECTION') if k in cls.values())
+        obls.append(dict(obligation_id=f'{J.id}/O{len(obls)}#14a-placement', owner=occ[0], name='موضع كل وقوع (14أ)', face_id=None,
+                         face_label='—', morph_candidate_id=None, face_map=None, requirement_kind='PLACEMENT_14A',
+                         requirement_evidence=f'وقوعات النصّ في مدى الجملة ({len(occ)})، ولكلٍّ علاقةٌ موضعية مرخَّصة في 14أ',
+                         required=True, legacy_met=not (set(cls) & legacy_unplaced), status=st_,
+                         occurrences=occ, unplaced_by_class={k: sorted(u for u, c in cls.items() if c == k)
+                                                             for k in ('SELECTION', 'CONFLICT', 'COVERAGE') if k in cls.values()},
+                         discharge_relation_id=None if cls else by_member[occ[0]][0],
+                         discharge_evidence_id=None if cls else 'PLACEMENT_14A:' + '؛ '.join(f'{u}←{by_member[u][0]}' for u in occ),
+                         satisfied_by=[dict(relation=by_member[u][0], status='LICENSED', rule='14أ', unit=u) for u in occ if u in by_member],
+                         residual_reason='' if not cls else f'{len(cls)} من {len(occ)} وقوعاً بلا علاقةٍ موضعية مرخَّصة في 14أ: ' + '؛ '.join(
+                             f"{k} {len([1 for c in cls.values() if c == k])}" for k in ('COVERAGE', 'CONFLICT', 'SELECTION') if k in cls.values()),
+                         candidates=None, met=not cls, external_evidence=None, source=None,
+                         status_ar=OBL_STATUS_AR.get(st_, st_),
+                         measure='تغطية الأدوار المحلية من وقوعات النصّ: لكل وقوعٍ علاقةٌ موضعية مرخَّصة في 14أ (MOOD وما كان بدورٍ واحد لا يضع)، '
+                                 'مستقلةً عن روابط الطبقة القديمة؛ ولا يشهد هذا باتصال الوحدة بالبنية الأعلى ولا باكتمال الجملة وحدّها',
                          note=''))
         obls[-1]['note'] = obls[-1]['residual_reason']
     req = [o for o in obls if o['required']]
