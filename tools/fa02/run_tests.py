@@ -1,5 +1,5 @@
 """tools/fa02/run_tests.py [--out RES.tsv] [ملفات…] — مشغّل الاختبارات بعدٍّ منفصل (FA02، مراجعة المالك: «ALL OK» مع تخطٍّ لا يُعدّ نجاحاً).
-يشغّل كل ملف tests/test_*.py (أو المسمّاة) بـ python3 -P -s، ويعدّ من مخرجه سطور PASS وFAIL وSKIP (والتخطّي بأي صيغةٍ تبدأ بـSKIP)،
+يشغّل كل ملف tests/*.py إلا المساعدات المبدوءة بـ«_» (أو المسمّاة) بـ python3 -P -s، ويعدّ من مخرجه سطور PASS وFAIL وSKIP (والتخطّي بأي صيغةٍ تبدأ بـSKIP)،
 ويحكم للملف: FAIL إن خرج بغير صفر أو فيه FAIL، وإلا SKIP إن فيه تخطٍّ، وإلا PASS. والملخّص يطبع العدّين (فحوصاً وملفات) منفصلين،
 ولا يطبع «ALL OK» إلا إذا كان التخطّي والإخفاق صفراً."""
 import os, subprocess, sys, time
@@ -11,12 +11,17 @@ if '--out' in args:
     i = args.index('--out')
     out = args[i + 1]
     del args[i:i + 2]
-files = args or sorted(os.path.join('tests', f) for f in os.listdir(os.path.join(ROOT, 'tests')) if f.startswith('test_') and f.endswith('.py'))
+# كل ملفات tests/*.py كما في مشغّل الجولات السابقة (ومنها regress.py ومسابير العقد)، إلا المساعدات المبدوءة بـ«_»
+files = args or sorted(os.path.join('tests', f) for f in os.listdir(os.path.join(ROOT, 'tests')) if f.endswith('.py') and not f.startswith('_'))
 rows = []
 tot = dict(PASS=0, FAIL=0, SKIP=0)
 for f in files:
     t0 = time.time()
-    p = subprocess.run([sys.executable, '-P', '-s', f], cwd=ROOT, capture_output=True, text=True)
+    try:
+        p = subprocess.run([sys.executable, '-P', '-s', f], cwd=ROOT, capture_output=True, text=True, timeout=3600)
+    except subprocess.TimeoutExpired as e:
+        p = subprocess.CompletedProcess(e.cmd, 124, (e.stdout or b'').decode() if isinstance(e.stdout, bytes) else (e.stdout or ''),
+                                        'FAIL TIMEOUT 3600s')
     lines = (p.stdout + '\n' + p.stderr).splitlines()
     n = {k: sum(1 for l in lines if l.lstrip().startswith(k)) for k in ('PASS', 'FAIL', 'SKIP')}
     st = 'FAIL' if p.returncode != 0 or n['FAIL'] else 'SKIP' if n['SKIP'] else 'PASS'
@@ -30,6 +35,7 @@ summary = (f'SUMMARY files={len(rows)} files_pass={fs["PASS"]} files_fail={fs["F
            f'checks_pass={tot["PASS"]} checks_fail={tot["FAIL"]} checks_skip={tot["SKIP"]}')
 print(summary)
 print('ALL OK' if not fs['FAIL'] and not fs['SKIP'] else ('FAILED' if fs['FAIL'] else 'NOT ALL OK: تخطٍّ لا نجاح'))
+subprocess.run(['git', '-C', ROOT, 'checkout', '-q', '--', 'reports/nominal_nucleus_02/tests.json'], capture_output=True)
 if out:
     with open(out, 'w', encoding='utf-8') as fh:
         fh.write('file\tstatus\trc\tpass\tfail\tskip\tseconds\tskips\n')
