@@ -207,6 +207,7 @@ class _Tok:
         self.case_written = self.case
         self.roles = []                                 # مصادر العمل فيه: عاملٌ مقبول، أو دورٌ في علاقةٍ مرخَّصة
         self.adverb = None
+        self.pending = None                             # العلاقات المؤجَّلة التي ترشّحه لدور (المعرب بلا دور مرخَّص)
         self.mabni_state = None                         # حالة المبني بلا دور: NO_MAHALL، MAHALL_UNRESOLVED، ROLE_RULE_NOT_IMPLEMENTED، EVIDENCE_NOT_ADOPTED
         self.usage = None                               # استعمال العامل في هذا التحليل (للوحدة العاملة)
         self.frame_cands = None                         # مرشّحات إطار الفعل القائمة والممنوعة (F01)
@@ -669,6 +670,14 @@ def _inflection(t, nxt=None):
         else:
             out['state'] = (None, f'{ev}؛ ولا عامل مقبول ولا دور مرخَّص')
         out['agreement'] = 'UNGOVERNED'
+        # نوع «بلا عامل» (§١ من SARF_COMPLETION_FROM_REPORT_063): وسمٌ يفصل الأسباب، ولا يغيّر الحكم
+        if out['build'][0] == 'مبني':
+            out['ungoverned_kind'] = (t.mabni_state or {}).get('code') or 'ROLE_RULE_NOT_IMPLEMENTED'
+        elif t.pending:
+            out['ungoverned_kind'] = 'ROLE_DEFERRED'
+            out['pending_relations'] = [x['relation_id'] for x in t.pending]
+        else:
+            out['ungoverned_kind'] = 'ROLE_RULE_NOT_IMPLEMENTED'
         return out
     if src['src'] == 'operator':
         o, r, op = src['o'], src['r'], src['op']
@@ -1838,7 +1847,10 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
         objs = [r_ for r_ in R if r_['type'] == 'OBJECT' and r_['heads'].get('verb') == v.uid]
         obj2 = None
         obj_req = None
-        if not nas and trf.get('st') == 'مثبت' and trf.get('v') == 'متعدٍّ' and not any(o_['status'] == LICENSED for o_ in objs):
+        trf_ok = trf.get('st') == 'مثبت'
+        # O03 (SARF_COMPLETION_FROM_REPORT_063 §٦): التعدّي مرشّحٌ غير مثبت (مدخلٌ غير مقرّ): المنصوب بعده مفعولٌ مرشّح مؤجَّل، لا مرخَّص،
+        # ولا يُترك بلا دور؛ وتبقى البدائل التي لم يمنعها مانعٌ مثبت
+        if not nas and trf.get('st') in ('مثبت', 'مرشّح') and trf.get('v') == 'متعدٍّ' and not any(o_['status'] == LICENSED for o_ in objs):
             j = i + 1
             start = idx[subj['unit'].k] + 1 if subj and subj.get('unit') else i + 1
             j = start
@@ -1848,15 +1860,20 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
             if u is not None and word_start(u) and not u.conj and u.nounish() and u.k not in governed and u.k not in bound \
                     and u.case == 'نصب':
                 df = u.definite()[0]
-                obj2 = _rec(ref, 'OBJECT', 'O02', {'verb': v, 'object': u}, {'verb': [v], 'object': [u]},
-                            LICENSED if df is True else DEFERRED,
-                            f'«{u.text}» معرفةٌ منصوبة كتابةً بعد فعلٍ مثبت التعدّي: مفعولٌ به' if df is True else
-                            f'«{u.text}» نكرةٌ منصوبة أو تعريفها غير مثبت: مفعولٌ به أو حالٌ أو تمييزٌ أو مفعولٌ مطلق',
+                if trf_ok:
+                    rule_o, st_o = 'O02', LICENSED if df is True else DEFERRED
+                    why_o = (f'«{u.text}» معرفةٌ منصوبة كتابةً بعد فعلٍ مثبت التعدّي: مفعولٌ به' if df is True else
+                             f'«{u.text}» نكرةٌ منصوبة أو تعريفها غير مثبت: مفعولٌ به أو حالٌ أو تمييزٌ أو مفعولٌ مطلق')
+                else:
+                    rule_o, st_o = 'O03', DEFERRED
+                    why_o = (f'«{u.text}» منصوبٌ كتابةً بعد فعلٍ تعدّيه مرشّحٌ غير مثبت ({trf.get("ev")}): مفعولٌ به مرشّح؛ '
+                             'ولا يُرخَّص حتى يثبت التعدّي' + ('' if df is True else '، أو حالٌ أو تمييزٌ أو مفعولٌ مطلق'))
+                obj2 = _rec(ref, 'OBJECT', rule_o, {'verb': v, 'object': u}, {'verb': [v], 'object': [u]}, st_o, why_o,
                             premises=[f'«{v.text}»: التعدّي {trf.get("v")} {trf.get("st")} — {trf.get("ev")}',
                                       f'«{u.text}»: النصب مكتوب ({_written_mark(u)[0]})', f'«{u.text}»: {u.definite()[1]}'],
                             checked=['الفعل ناسخ', 'مفعولٌ متصل قبله', 'العامل المقبول في المنصوب'],
                             alternatives=[] if df is True else ['حال', 'تمييز', 'مفعول مطلق'],
-                            mark_fact=dict(uid=u.uid, mark=_written_mark(u)[0]), edges=[('OBJECT', v.uid, u.uid)])
+                            mark_fact=dict(uid=u.uid, mark=_written_mark(u)[0]), edges=[('OBJECT', v.uid, u.uid)] if st_o == LICENSED or trf_ok else [])
                 R.append(obj2)
         if not nas and not any(o_['status'] == LICENSED for o_ in objs) and not (obj2 and obj2['status'] == LICENSED) \
                 and trf.get('v') != 'لازم':
@@ -1896,6 +1913,12 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                                note=f'«{v.text}» من صيغ «{vb}» (VERBAL): ناقصٌ أو تامّ غير محسوم' +
                                     (f'؛ و«{first.text}» ({first.loc}) خبرٌ مرشّح في وجه الناقص، لا مفعول' if first else '') +
                                     '؛ والتامّ منه لا يطلب مفعولاً')
+            elif first is not None and obj2 is not None and obj2['heads'].get('object') == first.uid:
+                # المنصوب له سجلّ مفعولٍ مؤجَّل (O02 نكرةً، أو O03 بتعدٍّ مرشّح): المتطلَّب مرشّحٌ في ذلك السجل ببدائله، لا مفقود
+                obj_req = dict(kind='OBJECT_CANDIDATE_DEFERRED', status='مفعولٌ مرشّح مؤجَّل',
+                               note=f'«{first.text}» ({first.loc}) مفعولٌ به مرشّح في {obj2["relation_id"]} ({obj2["rule_id"]}، مؤجَّل): '
+                                    f'{obj2["reason"]}؛ و{trs}: لا ترخيص بلا دليل التعدّي، ولا يُحكم بلزومٍ ولا بحذف',
+                               relation_id=obj2['relation_id'])
             elif first is not None and first.nounish() and (first.case == 'نصب' or 'نصب' in (_written_mark(first)[1] or ()) and
                                                              'رفع' not in (_written_mark(first)[1] or ())) \
                     and first.k not in governed and first.k not in bound and not (obj2 and obj2['heads'].get('object') == first.uid):
@@ -2448,6 +2471,12 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
         else:
             t.mabni_state = dict(code='ROLE_RULE_NOT_IMPLEMENTED',
                                  text=f'{kw} مبني؛ دوره ومحلّه في هذا التركيب لم يُرخَّصا بعد في النظام (قاعدة الدور غير منفّذة)', evidence=None)
+    # المعرب بلا دورٍ مرخَّص: تُسمّى العلاقات المؤجَّلة التي ترشّحه لدور (لا تمنحه دوراً)، ليفصل المحور «الدور مؤجَّل» عن «لا قاعدة»
+    for t in toks:
+        if not t.roles:
+            t.pending = [dict(relation_id=r_['relation_id'], type=r_['type'], rule=r_['rule_id'], status=r_['status'])
+                         for r_ in R if r_['status'] != LICENSED and r_['type'] in ROLE_BEARING + ('VOCATIVE', 'TAWABI')
+                         and any(t.uid in us for k_, us in r_['members'].items() if k_ not in ('verb', 'relative', 'nasikh', 'operator'))]
     parts_reg = {p_['part_id']: dict(unit=t.uid, text=p_['text'], part=p_['part'], slot=p_.get('slot'))
                  for t in toks for p_ in (getattr(t, 'parts', None) or [])}
     return dict(records=R, tokens=[(t.uid, t.loc, t.text) for t in toks], parts=parts_reg,

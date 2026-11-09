@@ -194,8 +194,9 @@ check('R02 «فَلْيُمْلِلْ وَلِيُّهُ»: «وليّ» و«ه�
       'Q2:282.w49.u0' not in pl6['residual_reason'] and 'Q2:282.w49.u1' not in pl6['residual_reason'] and 'Q2:282.w47.u0' in pl6['residual_reason'],
       pl6['residual_reason'])
 ob5 = next(o_ for o_ in cv['L2.d5.J']['obligations'] if o_['name'].startswith('مفعول «يَبْخَسْ'))
-check('R03 مفعول «يبخس»: 14أ لا تسجّل مفعولاً («شيئاً» مرشّحٌ غير مربوط)، فلا يُعلن مستوفى بنصّ «مفعول به» القديم: تعارض طبقتين',
-      ob5['status'] == 'CONFLICT' and not ob5['met'] and 'UNLINKED_CANDIDATE' in ob5['residual_reason'], ob5)
+# C063 (§٦): «شيئاً» صار مفعولاً مرشّحاً في سجلّ O03 مؤجَّل؛ والمقصد باقٍ: لا يُستوفى المتطلَّب بنصّ الطبقة القديمة
+check('R03 مفعول «يبخس»: 14أ تؤجّل «شيئاً» مفعولاً مرشّحاً (O03)، فلا يُعلن مستوفى بنصّ «مفعول به» القديم: تعارض طبقتين',
+      ob5['status'] == 'CONFLICT' and not ob5['met'] and any(c_['rule'] == 'O03' and c_['status'] == 'DEFERRED' for c_ in ob5['candidates']), ob5)
 check('R03b كل مستوفى بالطبقة القديمة يحمل معرّف دليلٍ قابلاً للتتبّع (المصدر والالتزام والوحدات والرتبة)',
       all(o_['discharge_evidence_id'] and (o_['discharge_relation_id'] or str(o_['discharge_evidence_id']).startswith('LEGACY:') and
           all(x.get('rank') and 'units' in x for x in o_['satisfied_by'] if x['status'] == 'LEGACY'))

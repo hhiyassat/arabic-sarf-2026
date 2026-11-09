@@ -429,8 +429,11 @@ check('X57 «يكونا رجلين» و«تكون تجارةً»: خبرٌ مر�
       q58.get('kind') == q98.get('kind') == 'KHABAR_CANDIDATE' and 'رَجُلَيْنِ' in q58['note'] and 'تِجَٰرَةً' in q98['note'], (q58, q98))
 check('X58 «يستطيع أن يُملّ»: مكمّلٌ غير محلَّل مُعلَن، لا «لا مفعول مكتوب»؛ و«ترضون من الشهداء أن تضلّ»: الحدّ بعد شبه الجملة لا يُنسب إليه',
       q45.get('kind') == 'UNANALYZED_COMPLEMENT' and q63.get('kind') == 'NOT_FOUND_IN_SCOPE' and 'لا يُنسب' in q63['note'], (q45, q63))
-check('X59 «يتق الله»: مرشّح مكمّلٍ غير مربوط ببدائله، بلا ترخيص؛ ولا «لازم» ولا «محذوف» في أيّ تشخيص',
-      q28.get('kind') == 'UNLINKED_CANDIDATE' and 'اللَّهَ' in q28['note'] and 'حال' in q28['note'] and 'لم تُفحص بعد' in q28['note']
+# C063 (§٦): «اللَّهَ» بعد «يتق» مفعولٌ مرشّح في سجلّ O03 مؤجَّل (التعدّي مرشّح غير مثبت)، لا «غير مربوط» ولا مرخَّص
+o28 = next((r for r in o['records'] if r['type'] == 'OBJECT' and r['rule_id'] == 'O03' and r['texts'].get('verb') == 'يَتَّقِ'), None)
+check('X59 «يتق الله»: مفعولٌ مرشّح مؤجَّل (O03) بلا ترخيص؛ ولا «لازم» ولا «محذوف» في أيّ تشخيص',
+      q28.get('kind') == 'OBJECT_CANDIDATE_DEFERRED' and 'اللَّهَ' in q28['note'] and o28 is not None and o28['status'] == 'DEFERRED'
+      and q28.get('relation_id') == o28['relation_id'] and 'تعدّيه مرشّحٌ غير مثبت' in o28['reason']
       and 'مرشّحٌ للمكمّلية' in q45['note'] and 'موجودٌ' not in q45['note']
       and not any('لازمٌ في هذا الاستعمال' in str((r['frame'].get('object_requirement') or {}).get('note')) for r in o['records'] if r['type'] == 'VERB_FRAME'),
       q28)

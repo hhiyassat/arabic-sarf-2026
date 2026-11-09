@@ -442,8 +442,9 @@ def word_case(a, wi, verbs=()):
         return None                                   # الظرف: حالته لا تخصّ هذه القواعد
     # الممنوع من الصرف يُجرّ بالفتحة: فتحةٌ بلا تنوين ولا «أل» ولا لاحقة جرٌّ أو نصب (إِسۡرَٰٓءِيلَ، إِبۡرَٰهِيمَ)،
     # إلا أن يكون مضافاً يليه معرَّف (كِتَٰبَ ٱللَّهِ)
+    # ولفظ الجلالة «ٱللَّه» مكتوبٌ بلامه في خانته نفسها (لا خانة «أل» مستقلة): معرَّفٌ رسماً، فلا يُجرّ بالفتحة
     if c == 'نصب' and st and FATHA in st[-1][1] and not st[-1][1] & {FATHATAN} and \
-            not any(sl['type'] == 'أل' for sl in seg['slots']) and seg['slots'][-1] is stem[-1]:
+            not any(sl['type'] in ('أل', 'لفظ الجلالة') for sl in seg['slots']) and seg['slots'][-1] is stem[-1]:
         nxt = a['segments'][wi + 1] if wi + 1 < len(a['segments']) else None
         mudaf = nxt is not None and any(sl['type'] in ('أل', 'لفظ الجلالة') or
                                         sl['type'] == 'مبني' and is_form(sl['text'], RELATIVES_V) for sl in nxt['slots'])
