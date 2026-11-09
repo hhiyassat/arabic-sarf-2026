@@ -17,6 +17,10 @@ import json
 import re
 
 FIELDS = ('tense', 'voice', 'subject')
+# هوية الوجه (FA02 §١، مراجعة المالك: قول/E1 حيّ وقيل/E2 مرفوض بالسمات الثلاث نفسها كانا يُدمجان فيسري الرفض): المرشّح كاملاً — كل
+# حقوله الوصفية (الجذر، والحدث، والتحقيق، والدور، ووحدة الفاعل، والسمات) — إلا حالته وسببه ومعرّفه المحلي في إطاره. فالسمات المشتركة
+# تُحسب بين الأوجه، ولا تُدمج هوياتها؛ والمانع يخصّ الوجه الذي ثبت عليه
+NON_IDENTITY = frozenset({'status', 'reason', 'id'})
 LIVE_STATUSES = frozenset({'DEFERRED', 'LICENSED', 'CANDIDATE'})
 DEAD_STATUSES = frozenset({'REJECTED'})
 SUPERSEDED = 'مخرج مرحلي تجاوزه الدليل اللاحق (أوجه إطار الفعل في العلاقات)'
@@ -57,9 +61,9 @@ def unit_faces(records):
         U['frames'].append(r['relation_id'])
         for c in cands:
             live = _status_live(c.get('status'))
-            sig = _canon({f: c.get(f) for f in FIELDS})
-            f_ = U['faces'].setdefault(sig, dict(values={f: c.get(f) for f in FIELDS}, ids=[], frames=[], live=True, reasons=[],
-                                                 roles=[]))
+            sig = _canon({k: v for k, v in c.items() if k not in NON_IDENTITY})
+            f_ = U['faces'].setdefault(sig, dict(values={f: c.get(f) for f in FIELDS}, identity=json.loads(sig), ids=[], frames=[],
+                                                 live=True, reasons=[], roles=[]))
             f_['ids'].append(c.get('id'))
             f_['frames'].append(r['relation_id'])
             if c.get('subject_role'):
@@ -86,9 +90,9 @@ def reconcile_features(features, records):
         fr_ids = sorted(set(U['frames']))
         F['_faces'] = dict(frames=fr_ids, state='ALL_FACES_REJECTED' if not live else 'LIVE_FACES',
                            live=[dict(faces=sorted(set(map(str, f['ids']))), frames=sorted(set(f['frames'])), roles=sorted(set(f['roles'])),
-                                      **f['values']) for f in live],
+                                      identity=f['identity'], **f['values']) for f in live],
                            rejected=[dict(faces=sorted(set(map(str, f['ids']))), frames=sorted(set(f['frames'])),
-                                          reasons=sorted(set(map(str, f['reasons']))), **f['values']) for f in dead])
+                                          reasons=sorted(set(map(str, f['reasons']))), identity=f['identity'], **f['values']) for f in dead])
         for fk in FIELDS:
             if fk not in F or not isinstance(F[fk], dict):
                 continue
@@ -148,13 +152,16 @@ def check_consistency(features_final, records):
             if st not in LIVE_STATUSES and st not in DEAD_STATUSES:
                 errs.append(('UNKNOWN_FACE_STATUS', key, None, st))
                 continue
-            sig = tuple(json.dumps(c.get(f), ensure_ascii=False, sort_keys=True) for f in FIELDS)
-            d[sig] = d.get(sig, True) and st in LIVE_STATUSES
+            # الهوية الكاملة (كل الحقول الوصفية) مفتاحاً، والقيم الثلاث للمطابقة: لا يُدمج وجهان مختلفا الجذر أو الحدث
+            ident = json.dumps({k: v for k, v in c.items() if k not in ('status', 'reason', 'id')}, ensure_ascii=False, sort_keys=True)
+            vals = tuple(json.dumps(c.get(f), ensure_ascii=False, sort_keys=True) for f in FIELDS)
+            ok_, _ = d.get(ident, (True, vals))
+            d[ident] = (ok_ and st in LIVE_STATUSES, vals)
     for key, d in sorted(per.items()):
         F = features_final.get(key)
         if not F:
             continue
-        live = [s for s, ok in d.items() if ok]
+        live = [vals for ok, vals in d.values() if ok]
         assigned = {i: json.dumps((F.get(f) or {}).get('v'), ensure_ascii=False, sort_keys=True)
                     for i, f in enumerate(FIELDS) if (F.get(f) or {}).get('v') is not None}
         if not live:

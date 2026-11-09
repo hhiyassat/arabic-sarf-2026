@@ -179,7 +179,7 @@ def _fv(F, k, key):
 
 class _Tok:
     """وحدةٌ تحليلية بهويتها وما يلزم القواعد منها، من الطبقات القائمة (لا يُحسب هنا شيءٌ جديد عنها)"""
-    def __init__(self, a, G, k, F, seg, ref):
+    def __init__(self, a, G, k, F, seg, ref, F13=None):
         from .algebra import word_case
         self.k, self.G, self.wi, self.ui = k, G, k[0], k[1]
         self.uid = G.id
@@ -204,6 +204,10 @@ class _Tok:
         tl = letters(self.text)
         self.tanwin = bool(tl) and bool(tl[-1][1] & {FATHATAN, DAMMATAN, KASRATAN})
         self.feats = F.get(k) or {}
+        # FA02 §٢: مخرج المرحلة ١٣ كما هو — مصدر توليد أوجه إطار الفعل وحده (فالإطار يفحص قيم المرحلة ١٣ ويمنع منها ما يمنعه؛ ولو
+        # وُلّدت من السمات المصالَحة لسقط الوجه الممنوع وسببه من السجلّ النهائي، وتبدّلت هويات الأوجه F01.cN بين الطبقتين). وما سوى
+        # ذلك يقرأ السمات النهائية self.feats
+        self.feats13 = (F13 if F13 is not None else F).get(k) or {}
         self.case_written = self.case
         self.roles = []                                 # مصادر العمل فيه: عاملٌ مقبول، أو دورٌ في علاقةٍ مرخَّصة
         self.adverb = None
@@ -237,40 +241,11 @@ class _Tok:
             bool(self.elative_proof())
 
     def elative_proof(self):
-        """E01 v1 (مقترحة): «أَفْعَلُ» مختومٌ بضمة أو كسرة بلا تنوين ولا «أل» اسمٌ بنفي البدائل الثلاثة في مجالٍ معلن:
-        الماضي (الآخر غير مفتوح)، ومضارع المتكلم من أَفْعَلَ (الهمزة مفتوحة لا مضمومة)، ومضارع المتكلم من الثلاثي:
-        فَعَلَ لا يكون مضارعه يَفْعَلُ إلا وعينه أو لامه حرف حلق (سيبويه)، وفَعُلَ يُضمّ مضارعه، والأجوف لا يُكتب هكذا؛
-        والماضي من HFN. → نصّ الدليل أو None"""
-        if self._elative is not None:
-            return self._elative or None
-        self._elative = ''
-        t = letters(self.text)
-        from .chars import DAGGER_ALIF
-        if len(t) != 4 or t[0][0] != 'أ' or FATHA not in t[0][1] or SUKUN not in t[1][1] or FATHA not in t[2][1] or \
-                DAGGER_ALIF in t[2][1]:
-            return None                                 # والخنجرية بعد العين مدٌّ: أَفۡعَال (أَيۡمَٰن)، لا أَفۡعَل
-        last = t[3][1]
-        if last & {FATHATAN, DAMMATAN, KASRATAN} or not last & {DAMMA, KASRA}:
-            return None
-        R = ''.join('ء' if c in 'أإؤئ' else c for c in (t[1][0], t[2][0], t[3][0]))
-        from .root import hfn
-        H = hfn()
-        if H is None or R not in H.roots:
-            return None
-        pasts = [e['verb'] for e in H.index.get((R, 'I'), [])]
-        if R[1] in 'وي':
-            why = 'الأجوف لا يأتي مضارعه على أَفْعَلُ بعينٍ مفتوحة بعد ساكن'
-        else:
-            vs = set()
-            for pv in pasts:
-                pt = letters(pv)
-                if len(pt) >= 2:
-                    vs |= {x for x in (FATHA, DAMMA, KASRA) if x in pt[1][1]}
-            if not vs or KASRA in vs or (FATHA in vs and set(R[1:]) & set('ءهعحغخ')):
-                return None                             # فَعِلَ يَفْعَلُ، أو حرف حلق، أو لا ماضٍ في HFN: مضارع المتكلم باقٍ
-            why = 'ماضيه في HFN «' + '، '.join(pasts) + '» فَعَلَ أو فَعُلَ، ولا حرف حلق في عينه ولامه: فلا يكون مضارعه أَفْعَلُ'
-        self._elative = f'E01 (مقترحة): «{self.text}» آخره غير مفتوح فلا يكون ماضياً، وهمزته مفتوحة فلا يكون مضارع أَفْعَلَ، و{why}'
-        return self._elative
+        """E01 — من features.elative_evidence نفسها (طبقةٌ واحدة للصنف بين السمات والعلاقات) → نصّ الدليل أو None"""
+        if self._elative is None:
+            from .features import elative_evidence
+            self._elative = elative_evidence(self.text) or ''
+        return self._elative or None
 
     def axes(self, nxt=None):
         """محاور مستقلة لا يُغني أحدها عن الآخر، كلٌّ بدليله أو «غير محسوم»:
@@ -912,11 +887,11 @@ def _rec(ref, typ, rule, heads, members, status, reason, premises=(), checked=()
     return out
 
 
-def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
+def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None, F13=None):
     """→ dict(records=[…], tokens=[(uid، الموضع، النص)]، axes) لآيةٍ واحدة.
     legacy_cond: سجلات الشرط من الطبقة القديمة (sarf.algebra.linguistic_layer(cond_out=…)) لهذه الآية، تُنقل بقاعدة C01 بهوياتها"""
     from .algebra import ZURUF_V, is_form
-    toks = [_Tok(a, units[k], k, F, a['segments'][k[0]], ref) for k in sorted(units)]
+    toks = [_Tok(a, units[k], k, F, a['segments'][k[0]], ref, F13) for k in sorted(units)]
     idx = {t.k: i for i, t in enumerate(toks)}
     by_k = {t.k: t for t in toks}
     R = []
@@ -1590,7 +1565,7 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
         if v.pos != 'فعل' or v.pos_st != 'مثبت':
             continue
         fe_ = frame_end(i)
-        tf, vf, sf, trf = (v.feats.get(k) or {} for k in ('tense', 'voice', 'subject', 'transitivity'))
+        tf, vf, sf, trf = (v.feats13.get(k) or {} for k in ('tense', 'voice', 'subject', 'transitivity'))
         nas = next((o_ for o_ in a['operators'] if o_['word_index'] == v.wi and str(o_['group']) == NASIKH_KANA and
                     o_.get('status') == 'accepted' and (o_.get('slot') or {}).get('unit') == v.ui), None)
         from .protected import VERBAL

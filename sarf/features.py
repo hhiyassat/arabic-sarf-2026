@@ -231,6 +231,60 @@ AMBIG_SIG = {'وا', 'ون', 'و'}
 MUDARI_ONLY = {'لَمْ', 'لَنْ', 'كَيْ', 'لِكَيْ', 'لِ', 'لْ'}
 
 
+_ELATIVE = {}
+
+
+def elative_evidence(text):
+    """E01 v1 (مقترحة، مشتركة بين السمات والعلاقات — FA02، مراجعة 18:34 «أَكْثَرُ»: كانت العلاقات تثبت الاسم بها والسمات تثبت الفعل):
+    «أَفْعَلُ» مختومٌ بضمة أو كسرة بلا تنوين ولا «أل» اسمٌ بنفي البدائل الثلاثة في مجالٍ معلن: الماضي (الآخر غير مفتوح)، ومضارع
+    المتكلم من أَفْعَلَ (الهمزة مفتوحة لا مضمومة)، ومضارع المتكلم من الثلاثي: فَعَلَ لا يكون مضارعه يَفْعَلُ إلا وعينه أو لامه حرف حلق
+    (سيبويه)، وفَعُلَ يُضمّ مضارعه، والأجوف لا يُكتب هكذا؛ والماضي من HFN. → نصّ الدليل أو None"""
+    if text in _ELATIVE:
+        return _ELATIVE[text]
+    _ELATIVE[text] = out = _elative_evidence(text)
+    return out
+
+
+def _elative_evidence(text):
+    t = letters(text)
+    if len(t) != 4 or t[0][0] != 'أ' or FATHA not in t[0][1] or SUKUN not in t[1][1] or FATHA not in t[2][1] or \
+            DAGGER_ALIF in t[2][1]:
+        return None                                 # والخنجرية بعد العين مدٌّ: أَفۡعَال (أَيۡمَٰن)، لا أَفۡعَل
+    last = t[3][1]
+    if last & {FATHATAN, DAMMATAN, KASRATAN} or not last & {DAMMA, KASRA}:
+        return None
+    R = ''.join('ء' if c in 'أإؤئ' else c for c in (t[1][0], t[2][0], t[3][0]))
+    from .root import hfn
+    H = hfn()
+    if H is None or R not in H.roots:
+        return None
+    pasts = [e['verb'] for e in H.index.get((R, 'I'), [])]
+    if R[1] in 'وي':
+        why = 'الأجوف لا يأتي مضارعه على أَفْعَلُ بعينٍ مفتوحة بعد ساكن'
+    else:
+        vs = set()
+        for pv in pasts:
+            pt = letters(pv)
+            if len(pt) >= 2:
+                vs |= {x for x in (FATHA, DAMMA, KASRA) if x in pt[1][1]}
+        if not vs or KASRA in vs or (FATHA in vs and set(R[1:]) & set('ءهعحغخ')):
+            return None                             # فَعِلَ يَفْعَلُ، أو حرف حلق، أو لا ماضٍ في HFN: مضارع المتكلم باقٍ
+        why = 'ماضيه في HFN «' + '، '.join(pasts) + '» فَعَلَ أو فَعُلَ، ولا حرف حلق في عينه ولامه: فلا يكون مضارعه أَفْعَلُ'
+    return f'E01 (مقترحة): «{text}» آخره غير مفتوح فلا يكون ماضياً، وهمزته مفتوحة فلا يكون مضارع أَفْعَلَ، و{why}'
+
+
+def _afalu_contested(text, agr, governor):
+    """صورة «أَفْعَلُ»: همزةٌ مفتوحة، فأصلٌ ساكن، فأصلٌ مفتوح، فأصلٌ عليه ضمة أو كسرة، ولا لاحقة إسناد،
+    ولا عامل مكتوب يحكمه (لَمْ، لَنْ…)، ولا ضمير متصل مكتوب في الوحدة. وهي صورة مضارع المتكلم وصورة أفعل التفضيل معاً"""
+    if governor or (agr or {}).get('kind') != 'mudari' or (agr or {}).get('signature'):
+        return False
+    t = letters(text)
+    # مجال E01 نفسه (آخرٌ مضموم أو مكسور). والمفتوح الآخر (أَنْ أَعْمَلَ، لَأَسْمَعَهُمْ) خارج هذه القاعدة: كان فعلاً صحيحاً في 7 مواضع
+    # (قياس FA02)، وتأجيله إتلافٌ للصحيح؛ وبقاؤه بدليل التوافق وحده نقصٌ معلن (لا ينفي أفعل التفضيل الممنوع من الصرف بالكتابة)
+    return len(t) == 4 and t[0][0] in 'أ' and t[0][1] == {FATHA} and t[1][1] == {SUKUN} and t[2][1] == {FATHA} \
+        and bool(set(t[3][1]) & {DAMMA, KASRA}) and not set(t[3][1]) & {FATHATAN, DAMMATAN, KASRATAN, SHADDA}
+
+
 def verb_features(G, agr, morph, obj_pron, governor=None):
     """سمات الفعل: agr سجلّ التوافق (T18)، وmorph سجلّ الجذر، وobj_pron الضمير المتصل بعد الفعل في كلمته،
     وgovernor عاملٌ مكتوب قبله يقتضي النصب أو الجزم (فلا يكون إلا مضارعاً)"""
@@ -501,7 +555,7 @@ def noun_features(G, seg, stem_slot, has_al, enclitic):
         if r_ and licence_strength(list(stem_licence(r_))) >= 1:
             marks.append(f'اللاحقة «{sfx0[3]}» ورخصة البقية «{r_}»')
     if not marks:
-        e = host_case_vowel_proof(stem, enclitic) or initial_hamza_kasra_proof(stem)
+        e = host_case_vowel_proof(stem, enclitic) or initial_hamza_kasra_proof(stem) or (None if enclitic or has_al else elative_evidence(stem))
         if e:
             marks.append(e)
     if marks:
@@ -707,7 +761,17 @@ def unit_features(a, units):
             if stem_i is not None and (wi, stem_i) in agr:
                 rec = verb_features(G, agr[(wi, stem_i)], morph.get((wi, stem_i)), encl, gov.get((wi, stem_i)))
                 mrec = morph.get((wi, stem_i)) or {}
-                if mrec.get('noun_template_rivals'):
+                if _afalu_contested(G.O['text'], agr[(wi, stem_i)], gov.get((wi, stem_i))) and elative_evidence(G.O['text']):
+                    # FA02 (المالك، مراجعة 18:34 «أَكْثَرُ»): الكتابة تنفي الفعل (E01: عين الماضي في HFN وحركة العين المكتوبة)، فالصنف
+                    # اسمٌ بدليله في السمات كما في العلاقات — طبقةٌ واحدة للصنف، لا فعلٌ هنا واسمٌ هناك
+                    rec = noun_features(G, seg, stem, False, encl)
+                elif _afalu_contested(G.O['text'], agr[(wi, stem_i)], gov.get((wi, stem_i))):
+                    # «أَفْعَلُ» بحركة إعرابٍ في الآخر، بلا لاحقةٍ ولا عاملٍ يحكمه، ولا ينفي E01 الفعل (حرف حلق، أو فَعِلَ، أو آخرٌ مفتوح):
+                    # صورةُ مضارع المتكلم وصورةُ أفعل التفضيل معاً (أَعْلَمُ: أنا أعلم، أو أكثر علماً). فالصنف مؤجَّل بالوجهين، لا مثبتٌ
+                    # من حرف المضارعة وحده؛ ولا تُبنى على وجه الفعل سماتٌ مثبتة (V-RAF1 تطلب الصنف مثبتاً)
+                    rec = {'pos': feat(None, DEFER, '«أَفْعَلُ» بحركة إعرابٍ بلا لاحقة ولا عامل: مضارع المتكلم أو أفعل التفضيل، '
+                                                   'والكتابة لا تفرّق بينهما', alt=['فعل', 'اسم'])}
+                elif mrec.get('noun_template_rivals'):
                     # AR02 §١٥: وجهٌ اسمي حيّ ينازع الفعل (§٨): لا تبقى سمات الوجه الفعلي مختارةً على الوقوع
                     rec = {'pos': feat(None, DEFER, 'فعلٌ أو اسم: بناءٌ اسمي (' + '، '.join(
                         f"{r['root']} {r['pattern']}" for r in mrec['noun_template_rivals'][:2]) + ') ينازع دليل الفعل (حرف المضارعة وسكون الآخر)')}
