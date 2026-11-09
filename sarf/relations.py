@@ -459,7 +459,11 @@ def _written_mark(t, nxt=None):
     if t.pos == 'فعل':
         sv = (t.feats.get('subject') or {}).get('v')
         sv = sv if isinstance(sv, dict) else {}
-        five = sv.get('person') in (2, 3) and sv.get('number') in ('plural', 'dual') or sv.get('person') == 2 and sv.get('number') == 'singular' and sv.get('gender') == 'fem'
+        # FA02 (تقييم V-RAF1): نون النسوة ليست من الأفعال الخمسة؛ والمضارع المسند إليها مبنيٌّ على السكون، فلا علامة إعرابٍ على آخره
+        niswa = sv.get('number') == 'plural' and sv.get('gender') == 'fem' and sv.get('person') in (2, 3)
+        if niswa and L == 'ن' and tl[0][0] in 'يت':
+            return 'نون النسوة', frozenset(), f"المضارع المسند إلى نون النسوة ({_pron_ar(sv)}) مبنيٌّ على السكون: لا علامة إعراب"
+        five = not niswa and (sv.get('person') in (2, 3) and sv.get('number') in ('plural', 'dual') or sv.get('person') == 2 and sv.get('number') == 'singular' and sv.get('gender') == 'fem')
         five_ev = f"ضمير الصيغة ({_pron_ar(sv)})"
         if five and tl[0][0] in 'يتأن':
             if L == 'ن' and p[0] in 'اوي' and (FATHA in m or KASRA in m):
@@ -2429,6 +2433,11 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None, F13=Non
         tf_ = t.feats.get('tense') or {}
         if t.pos != 'فعل' or t.pos_st != 'مثبت' or tf_.get('v') != 'مضارع' or tf_.get('st') != 'مثبت' or \
                 any(r_['src'] == 'operator' for r_ in t.roles):
+            continue
+        # FA02 (تقييم V-RAF1): حرفٌ ساكن يليه مثله مشدَّداً (يُدْرِكْكُّمُ، يُوَجِّهْهُّ) إدغامٌ عبر حدّ الكلمة، لا يقع داخل جذع الفعل: فآخر الفعل
+        # الحرفُ الساكن، وما بعده ضميرٌ متصل لم يُفصل في الوحدة؛ فالعلامة المقروءة على آخر الوحدة علامة الضمير لا الفعل
+        tl_ = letters(t.text)
+        if any(SUKUN in tl_[i][1] and tl_[i + 1][0] == tl_[i][0] and SHADDA in tl_[i + 1][1] for i in range(len(tl_) - 1)):
             continue
         mk_, cases_, ev_ = _written_mark(t)
         if not mk_ or set(cases_) != {'رفع'}:

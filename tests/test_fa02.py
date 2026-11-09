@@ -195,5 +195,16 @@ r2277x = [dict(r, status='DEFERRED') if r['type'] == 'COORD' else r for r in r22
 pl_sjx = next(o for o in closure_certificate(J_sj, r2277x)['obligations'] if o['name'] == 'موضع كل وقوع (14أ)')
 check('G8.11 إفساد: العطف العابر نفسه مؤجَّلاً ← الواو غير موضوعة (SELECTION)، فالعابر لا يضع إلا مرخَّصاً',
       pl_sjx['status'] != 'MET' and 'Q22:77.w4.u0' in (pl_sjx['unplaced_by_class'].get('SELECTION') or []) and not pl_sjx['placed_outward'], pl_sjx)
+# §V-RAF1 (تقييم 3826 سجلاً مقابل QAC): خطآن مثبتان بالكتابة — نون النسوة، والضمير الملتصق بإدغامٍ عبر الحدّ
+def _mood(ref):
+    V_ = run_ref(ref, None, ['relations_final']).get('records')[ref]
+    return {r['texts']['verb'] for r in V_['records'] if r['type'] == 'MOOD' and r['status'] == 'LICENSED'}
+m478, m1676, m3359 = _mood('4:78'), _mood('16:76'), _mood('33:59')
+check('G10.1 «يُدْرِكْكُّمُ» (4:78) و«يُوَجِّهْهُّ» (16:76): الحرف الساكن يليه مثله مشدَّداً إدغامٌ عبر الحدّ، فالضمة للضمير ولا V-RAF1',
+      'يُدْرِكْكُّمُ' not in m478 and 'يُوَجِّهْهُّ' not in m1676, (m478, m1676))
+check('G10.2 «يُؤْذَيْنَ» (33:59): المسند إلى نون النسوة مبنيّ، لا «ثبوت النون» ولا V-RAF1', 'يُؤْذَيْنَ' not in m3359, m3359)
+m244, m2113 = _mood('2:44'), _mood('2:113')
+check('G10.3 مقابل: «تَنْسَوْنَ» (2:44، واو الجماعة) و«يَحْكُمُ» (2:113، ميمٌ أصلية بلا إدغامٍ عبر الحدّ) باقيان مرفوعين لتجرّدهما',
+      'تَنْسَوْنَ' in m244 and 'يَحْكُمُ' in m2113, (m244, m2113))
 print('ALL OK' if not FAIL else f'FAILED {len(FAIL)}: {FAIL}')
 sys.exit(1 if FAIL else 0)
