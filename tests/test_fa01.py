@@ -48,5 +48,16 @@ CAT = Catalog([os.path.join(ROOT, 'operators_catalog.jsonl'), os.path.join(ROOT,
 for w in ('أَمِنَ', 'أَبِ'):
     check(f'P07 مقابل: «{w}» لا يُعدّ استفهاماً بهذه القاعدة (فعلٌ بحركته، أو حرفٌ واحد خارج الجرد المعتمد)',
           clause_start(analyze(CAT, w), 0) is None, clause_start(analyze(CAT, w), 0))
+# §٦ المرحلة ١٢: المضارع المرفوع لتجرّده (V-RAF1) — بعلامته المكتوبة وحدها، لا من غياب الاكتشاف
+C2 = run_ref('2:282')
+V2 = C2.get('records')['2:282']
+tok2 = {u: t for u, l, t in V2['tokens']}
+mood = {r['texts']['verb']: r for r in V2['records'] if r['type'] == 'MOOD'}
+check('P08 «يَسْتَطِيعُ» (الضمة) و«تُدِيرُونَ» (ثبوت النون) مرفوعان لتجرّدهما بعلاقةٍ مرخَّصة بمقدّماتها، ومحورهما AGREE بعبارةٍ تذكر الدور',
+      {'يَسْتَطِيعُ', 'تُدِيرُونَ'} <= set(mood) and all(mood[v]['status'] == 'LICENSED' and len(mood[v]['premises']) == 2 for v in ('يَسْتَطِيعُ', 'تُدِيرُونَ'))
+      and all(a['inflection']['agreement'] == 'AGREE' and 'لتجرّده' in a['inflection']['statement'] for u, a in V2['axes'].items()
+              if tok2[u] in ('يَسْتَطِيعُ', 'تُدِيرُونَ')), sorted(mood))
+check('P09 مقابل: «يَأْبَ» (علامته حذف حرف العلة، تحتمل الجزم) لا يُحكم له بالتجرّد', 'يَأْبَ' not in mood)
+check('P10 مقابل: الماضي والأمر لا يدخلان («دُعُوا»، «اكْتُبُو»)', not ({'دُعُوا', 'اكْتُبُو'} & set(mood)))
 print('ALL OK' if not FAIL else f'FAILED {len(FAIL)}: {FAIL}')
 sys.exit(1 if FAIL else 0)

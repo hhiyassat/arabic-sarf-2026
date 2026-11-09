@@ -439,7 +439,7 @@ def _mark_dims(name, cap=None):
     return dict(carrier=None, visibility=None, originality=None, reason='العلامة غير معيَّنة')
 
 
-ROLE_AR = {'ibtida': 'الابتداء', 'khabar': 'الخبرية للمبتدأ', 'nasikh': 'الخبرية للناسخ', 'idafa': 'الإضافة', 'object': 'المفعولية',
+ROLE_AR = {'tajarrud': 'التجرّد من الناصب والجازم', 'ibtida': 'الابتداء', 'khabar': 'الخبرية للمبتدأ', 'nasikh': 'الخبرية للناسخ', 'idafa': 'الإضافة', 'object': 'المفعولية',
            'subject': 'الفاعلية', 'zarf': 'الظرفية', 'voc_follower': 'التبعية في النداء'}
 HARAKA_OF = {'رفع': 'الضمة', 'نصب': 'الفتحة', 'جر': 'الكسرة'}
 BUILD_VOWEL = {FATHA: 'الفتح', DAMMA: 'الضم', KASRA: 'الكسر', SUKUN: 'السكون'}
@@ -786,7 +786,8 @@ def _inflection(t, nxt=None):
     elif rn and src['src'] == 'operator':
         out['statement'] = f'{rn} {STATE_ADJ[cap]} وعلامة {STATE_NOUN[cap]} {mp}'
     elif rn:
-        lead = {'ibtida': f'{rn} {STATE_ADJ[cap]} بالابتداء', 'zarf': f'{rn} {STATE_ADJ[cap]} على الظرفية'}.get(
+        lead = {'ibtida': f'{rn} {STATE_ADJ[cap]} بالابتداء', 'zarf': f'{rn} {STATE_ADJ[cap]} على الظرفية',
+                'tajarrud': f'فعل مضارع {STATE_ADJ[cap]} لتجرّده من الناصب والجازم'}.get(
             src['src'], f'{rn} {STATE_ADJ[cap]}')
         tail = {'khabar': f'، والمبتدأ «{src.get("of")}»', 'idafa': f'، والمضاف «{src.get("of")}»',
                 'object': f'، والفعل «{src.get("of")}»', 'subject': f'، والفعل «{src.get("of")}»',
@@ -810,9 +811,9 @@ CAT_AR = {'relative': 'اسم موصول', 'conditional_noun': 'اسم شرط', 
           'verb_name': 'اسم فعل'}
 MCAT_KW = {'relative': 'اسم موصول', 'demonstrative': 'اسم إشارة', 'separate_pronoun': 'ضمير منفصل', 'attached_pronoun': 'ضمير متصل'}
 COND_PART_AR = {'tool': 'الأداة', 'condition_verb': 'فعل الشرط', 'answer': 'الجواب', 'linker': 'الرابط'}
-ROLE_NAME = {'ibtida': 'مبتدأ', 'khabar': 'خبر', 'idafa': 'مضاف إليه', 'object': 'مفعول به', 'subject': 'فاعل',
+ROLE_NAME = {'tajarrud': 'مرفوع لتجرّده من الناصب والجازم', 'ibtida': 'مبتدأ', 'khabar': 'خبر', 'idafa': 'مضاف إليه', 'object': 'مفعول به', 'subject': 'فاعل',
              'zarf': 'ظرف', 'voc_follower': 'تابعٌ لـ«أيّ» في النداء (نعتٌ أو عطف بيانٍ أو بدل)'}
-ROLE_REL = {'ibtida': 'معنوي (الابتداء)', 'khabar': 'بالمبتدأ', 'nasikh': 'بالناسخ', 'idafa': 'بالمضاف', 'object': 'بالفعل',
+ROLE_REL = {'tajarrud': 'معنوي (التجرّد)', 'ibtida': 'معنوي (الابتداء)', 'khabar': 'بالمبتدأ', 'nasikh': 'بالناسخ', 'idafa': 'بالمضاف', 'object': 'بالفعل',
             'subject': 'بالفعل', 'zarf': 'على الظرفية (ومتعلَّقه غير مثبت)', 'voc_follower': 'بالتبعية للفظ «أيّ»'}
 
 
@@ -2389,6 +2390,23 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
                                             f'ما بعد الأعضاء المرخَّصة إلى حدّ إطار الفعل ({cand[0].loc}–{cand[-1].loc}) امتدادٌ مرشّح لم تثبت '
                                             f'علاقاتُه بالفعل؛ وحدّ الإطار {fe_why}'))
 
+    # V-RAF1 (SARF_FINAL_COMPLETION_AND_ACCEPTANCE_01 §٦، المرحلة ١٢): المضارع المرفوع لتجرّده من الناصب والجازم. الدليل مكتوب:
+    # الزمن مضارعٌ مثبت، والعلامة المكتوبة لا تحتمل إلا الرفع (الضمة، أو ثبوت النون في الأفعال الخمسة)، ولا عامل مقبول فيه؛ فلو عمل فيه
+    # ناصبٌ أو جازم لكُتبت علامته. ولا يُحكم به من غياب الاكتشاف: علامةٌ تحتمل غير الرفع، أو زمنٌ غير مثبت، لا يدخلان
+    for t in toks:
+        tf_ = t.feats.get('tense') or {}
+        if t.pos != 'فعل' or t.pos_st != 'مثبت' or tf_.get('v') != 'مضارع' or tf_.get('st') != 'مثبت' or \
+                any(r_['src'] == 'operator' for r_ in t.roles):
+            continue
+        mk_, cases_, ev_ = _written_mark(t)
+        if not mk_ or set(cases_) != {'رفع'}:
+            continue
+        R.append(_rec(ref, 'MOOD', 'V-RAF1', {'verb': t}, {'verb': [t]}, LICENSED,
+                      f'«{t.text}» مضارعٌ مرفوعٌ لتجرّده من الناصب والجازم: علامته المكتوبة «{mk_}» لا تحتمل إلا الرفع، ولا عامل مقبول فيه',
+                      premises=[f'«{t.text}»: الزمن مضارع (مثبت) — {tf_.get("ev")}', f'«{t.text}»: العلامة «{mk_}» ({ev_})'],
+                      checked=['عاملٌ مقبول فيه (المرحلة ١١)', 'علامةٌ تحتمل النصب أو الجزم'], alternatives=[],
+                      mark_fact=dict(uid=t.uid, mark=mk_), edges=[]))
+
     # أدوار العمل من العلاقات المرخَّصة وحدها (لا من المؤجَّل)
     by_uid = {t.uid: t for t in toks}
     for rec in R:
@@ -2414,6 +2432,9 @@ def verse_relations(a, units, F, ref, legacy_cond=None, legacy_rel=None):
         if rec['type'] == 'IDAFA' and hd.get('mudaf_ilayh') in by_uid:
             by_uid[hd['mudaf_ilayh']].roles.append(dict(src='idafa', expected='جر', rid=rid, role_name='مضاف إليه', rule=rec['rule_id'],
                                                         of=by_uid[hd['mudaf']].text))
+        if rec['type'] == 'MOOD' and hd.get('verb') in by_uid:
+            by_uid[hd['verb']].roles.append(dict(src='tajarrud', expected='رفع', rid=rid, role_name='مرفوع لتجرّده من الناصب والجازم',
+                                                 rule=rec['rule_id']))
         if rec['type'] == 'OBJECT' and hd.get('object') in by_uid:
             by_uid[hd['object']].roles.append(dict(src='object', expected='نصب', rid=rid, role_name='مفعول به', rule=rec['rule_id'],
                                                    of=by_uid[hd['verb']].text))
