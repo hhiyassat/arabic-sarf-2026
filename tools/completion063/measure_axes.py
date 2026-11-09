@@ -11,7 +11,7 @@ def one(items):
     sys.path.insert(0, _ROOT[0])
     os.chdir(_ROOT[0])
     from sarf.stages import run
-    C = run(items, None, ['relations'])
+    C = run(items, None, ['relations_final'])
     out = []
     for k, V in C.get('records').items():
         tok = {u: (loc, t) for u, loc, t in V['tokens']}

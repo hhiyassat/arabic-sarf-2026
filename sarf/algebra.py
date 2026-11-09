@@ -2961,8 +2961,11 @@ def positional(r):
         return False
     if sum(1 for us in (r.get('members') or {}).values() if us) >= 2:
         return True
+    # FA02 (قياس G8): الفاعل الضمير المتصل المكتوب (واو الجماعة، «نَا»، ألف الاثنين…) نواة إسنادٍ في الوحدة نفسها كالمستتر سواءً؛
+    # وقصرُها على المستتر أسقط موضع «اسْجُدُوا» و«مِتْنَا» و«ضَعُفُوا». ولا يدخل هنا فاعلٌ له وحدةٌ مستقلة (فذلك سجلّ SUBJECT بطرفين)
     sj = ((r.get('frame') or {}).get('subject') or {}) if r.get('type') == 'VERB_FRAME' else {}
-    return bool(sj.get('implicit_subject')) and sj.get('status') == 'LICENSED'
+    in_unit = bool(sj.get('implicit_subject')) or (not sj.get('unit') and str(sj.get('kind') or '').startswith('ضمير متصل'))
+    return in_unit and sj.get('status') == 'LICENSED'
 
 
 def sentence_units(J):
@@ -2989,6 +2992,15 @@ def closure_certificate(J, records, upstream=None):
             for us in r['members'].values():
                 for u in us:
                     by_member.setdefault(u, []).append(r['relation_id'])
+    # FA02 (قياس G8): علاقةٌ موضعية مرخَّصة يقع بعض أطرافها في المدى وبعضها خارجه (عطفٌ على ما قبل الجملة) تضع طرفها الداخلي في موضعٍ
+    # يتجه إلى خارج المدى؛ فلا يُعدّ «بلا قاعدة». ويُسجَّل منفصلاً (placed_outward) لأنه لا يشهد باكتمالٍ داخل المدى
+    outward = {}
+    for r in records:
+        ls = _locs(r)
+        if r['status'] == 'LICENSED' and positional(r) and ls and (ls & span) and not ls <= span:
+            for us in r['members'].values():
+                for u in us:
+                    outward.setdefault(u, []).append(r['relation_id'])
     bnd = J.O.get('boundary') or {}
     # حدّ المصدر (موضعٌ في المدخل: آخر آية، أو آخر المدخل) غير الحدّ اللغوي (استقلال الجملة لفظاً ودليله)؛ والحدّ اللغوي لا يثبت
     # والتزام «استقلال الحدّ لفظاً» غير مستوفى
@@ -3314,13 +3326,16 @@ def closure_certificate(J, records, upstream=None):
     # برابطها و14أ لا ترخّص له دوراً)، أو COVERAGE (لا قاعدة في 14أ أنتجت له علاقةً موضعية). والحكم أشدّها: COVERAGE ثم CONFLICT ثم SELECTION
     occ = sentence_units(J)
     if occ:
-        pend_pos = {u for r in inside if r['status'] != 'LICENSED' and positional(r) for us in r['members'].values() for u in us}
+        # العضو في علاقةٍ موضعية غير مرخَّصة اختيارٌ مؤجَّل، داخل المدى كانت أو عابرةً لحدّه (عطفٌ مؤجَّل طرفه خارج الجملة)
+        pend_pos = {u for r in records if r['status'] != 'LICENSED' and positional(r) and (_locs(r) & span)
+                    for us in r['members'].values() for u in us}
         legacy_bond = {u for x in (J.O.get('placed_by_legacy_bond_only') or []) for u in x['units']}
         legacy_unplaced = {u_.strip() for x in (J.O.get('unplaced') or []) for m_ in re.findall(r'\[([^\]]+)\]', str(x))
                            for u_ in re.split(r'[،,]', m_) if u_.strip()}
         cls = {}
+        out_ = {u: outward[u][0] for u in occ if u not in by_member and u in outward}
         for u in occ:
-            if u in by_member:
+            if u in by_member or u in out_:
                 continue
             cls[u] = 'CONFLICT' if u in legacy_bond else 'SELECTION' if u in pend_pos else 'COVERAGE'
         st_ = 'MET' if not cls else next(k for k in ('COVERAGE', 'CONFLICT', 'SELECTION') if k in cls.values())
@@ -3330,9 +3345,12 @@ def closure_certificate(J, records, upstream=None):
                          required=True, legacy_met=not (set(cls) & legacy_unplaced), status=st_,
                          occurrences=occ, unplaced_by_class={k: sorted(u for u, c in cls.items() if c == k)
                                                              for k in ('SELECTION', 'CONFLICT', 'COVERAGE') if k in cls.values()},
-                         discharge_relation_id=None if cls else by_member[occ[0]][0],
-                         discharge_evidence_id=None if cls else 'PLACEMENT_14A:' + '؛ '.join(f'{u}←{by_member[u][0]}' for u in occ),
-                         satisfied_by=[dict(relation=by_member[u][0], status='LICENSED', rule='14أ', unit=u) for u in occ if u in by_member],
+                         discharge_relation_id=None if cls else (by_member.get(occ[0]) or [out_.get(occ[0])])[0],
+                         discharge_evidence_id=None if cls else 'PLACEMENT_14A:' + '؛ '.join(
+                             f'{u}←{by_member[u][0]}' if u in by_member else f'{u}←{out_[u]} (خارج المدى)' for u in occ),
+                         satisfied_by=[dict(relation=by_member[u][0], status='LICENSED', rule='14أ', unit=u) for u in occ if u in by_member]
+                         + [dict(relation=r_, status='LICENSED', rule='14أ', unit=u, scope='OUTWARD') for u, r_ in sorted(out_.items())],
+                         placed_outward=[dict(unit=u, relation=r_) for u, r_ in sorted(out_.items())],
                          residual_reason='' if not cls else f'{len(cls)} من {len(occ)} وقوعاً بلا علاقةٍ موضعية مرخَّصة في 14أ: ' + '؛ '.join(
                              f"{k} {len([1 for c in cls.values() if c == k])}" for k in ('COVERAGE', 'CONFLICT', 'SELECTION') if k in cls.values()),
                          candidates=None, met=not cls, external_evidence=None, source=None,

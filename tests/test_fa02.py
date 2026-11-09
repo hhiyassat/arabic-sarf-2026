@@ -94,16 +94,17 @@ mood3 = [r for r in recs3 if r['type'] == 'MOOD' and r['status'] == 'LICENSED']
 check('G4.1 علاقة MOOD المرخَّصة ليست موضعية، وإطار الفعل بدورٍ واحد ليس موضعياً، والفاعل بطرفيه موضعي',
       mood3 and not any(positional(r) for r in mood3) and not positional(dict(type='VERB_FRAME', members=dict(verb=['x'])))
       and positional(dict(type='SUBJECT', members=dict(verb=['x'], subject=['y']))))
-# فعلٌ لا يضعه إلا MOOD: مرفوعٌ لتجرّده وليس عضواً في علاقةٍ موضعية مرخَّصة أخرى (يُختار من المخرج لا بالاسم)
-pos_lic = {u for r in recs3 if r['status'] == 'LICENSED' and positional(r) for us in r['members'].values() for u in us}
-u_st = next(u for r in mood3 for u in r['members']['verb'] if u not in pos_lic)
+# فعلٌ مرفوعٌ لتجرّده تُحذف كل علاقةٍ موضعية مرخَّصة تضعه (إفساد) ويبقى سجلّ MOOD وحده: فلا يضعه MOOD
+u_st = mood3[0]['members']['verb'][0]
+recs3m = [r for r in recs3 if r['type'] == 'MOOD' or not (r['status'] == 'LICENSED' and positional(r)
+                                                         and any(u_st in us for us in r['members'].values()))]
 J_st = next(J for J in _sentences(C3.get('sentences')['LT']) if u_st in sentence_units(J))
-cst = closure_certificate(J_st, recs3)
+cst = closure_certificate(J_st, recs3m)
 plc = next(o for o in cst['obligations'] if o['name'] == 'موضع كل وقوع (14أ)')
-check(f'G4.2 فعلٌ مرفوعٌ لتجرّده لا يضعه إلا V-RAF1 ({u_st}) ← غير مستوفى الموضع (لا يُحسب MOOD استيفاءً)',
+check(f'G4.2 فعلٌ مرفوعٌ لتجرّده ({u_st}) لا يبقى له إلا V-RAF1 ← غير مستوفى الموضع (لا يُحسب MOOD استيفاءً)',
       u_st in plc['occurrences'] and any(u_st in v for v in plc['unplaced_by_class'].values())
       and not any(x['unit'] == u_st for x in plc['satisfied_by']), plc)
-recs_nomood = [r for r in recs3 if r['type'] != 'MOOD']
+recs_nomood = [r for r in recs3m if r['type'] != 'MOOD']
 cst2 = closure_certificate(J_st, recs_nomood)
 plc2 = next(o for o in cst2['obligations'] if o['name'] == 'موضع كل وقوع (14أ)')
 check('G4.3 حذف سجلات MOOD كلها لا يغيّر التزام الموضع ولا أدلّته (الاستيفاء بالهوية، لا بالحالة وحدها)',
@@ -178,5 +179,21 @@ from sarf.algebra import inter_clause
 check('G8.8 عطف الجمل رابطٌ بين جمل (لا يمدّ الإسناد المحلي)، وعطف المفرد علاقةٌ محلية',
       inter_clause(dict(type='COORD', coord_levels=['جملة'])) and not inter_clause(dict(type='COORD', coord_levels=['مفرد']))
       and not inter_clause(dict(type='COORD', coord_levels=['جملة', 'مفرد'])))
+# §G8 (قياس G8 على المصحف): الفاعل الضمير المتصل المكتوب نواةٌ كالمستتر، والعلاقة المرخَّصة العابرة لحدّ الجملة تضع طرفها الداخلي
+check('G8.9 إطار فعلٍ فاعله ضميرٌ متصل مكتوب مرخَّص موضعيٌّ كالمستتر؛ وغير المرخَّص، وما لفاعله وحدةٌ مستقلة، لا',
+      positional(dict(type='VERB_FRAME', members=dict(verb=['x']), frame=dict(subject=dict(kind='ضمير متصل مكتوب', status='LICENSED', unit=None))))
+      and not positional(dict(type='VERB_FRAME', members=dict(verb=['x']), frame=dict(subject=dict(kind='ضمير متصل مكتوب', status='DEFERRED', unit=None))))
+      and not positional(dict(type='VERB_FRAME', members=dict(verb=['x']), frame=dict(subject=dict(kind='ضمير متصل مكتوب', status='LICENSED', unit='y')))))
+C2277 = run_ref('22:77')
+r2277 = [r for v in C2277.get('records').values() for r in v['records']]
+J_sj = next(J for J in _sentences(C2277.get('sentences')['LT']) if 'Q22:77.w4.u1' in sentence_units(J))
+pl_sj = next(o for o in closure_certificate(J_sj, r2277)['obligations'] if o['name'] == 'موضع كل وقوع (14أ)')
+check('G8.10 «وَاسْجُدُوا» (22:77): الفعل موضوعٌ بإطاره (واو الجماعة)، والواو موضوعةٌ بعطفٍ مرخَّص طرفه الأول «ارْكَعُوا» خارج المدى (placed_outward)',
+      pl_sj['status'] == 'MET' and any(x['unit'] == 'Q22:77.w4.u1' and ':VERB_FRAME:' in x['relation'] for x in pl_sj['satisfied_by'])
+      and any(x['unit'] == 'Q22:77.w4.u0' and ':COORD:' in x['relation'] for x in pl_sj['placed_outward']), pl_sj)
+r2277x = [dict(r, status='DEFERRED') if r['type'] == 'COORD' else r for r in r2277]
+pl_sjx = next(o for o in closure_certificate(J_sj, r2277x)['obligations'] if o['name'] == 'موضع كل وقوع (14أ)')
+check('G8.11 إفساد: العطف العابر نفسه مؤجَّلاً ← الواو غير موضوعة (SELECTION)، فالعابر لا يضع إلا مرخَّصاً',
+      pl_sjx['status'] != 'MET' and 'Q22:77.w4.u0' in (pl_sjx['unplaced_by_class'].get('SELECTION') or []) and not pl_sjx['placed_outward'], pl_sjx)
 print('ALL OK' if not FAIL else f'FAILED {len(FAIL)}: {FAIL}')
 sys.exit(1 if FAIL else 0)
