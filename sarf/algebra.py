@@ -2661,12 +2661,17 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
             # كل كلمة موضعها مرخَّص: طرفُ رابطٍ ثابت، أو دورٌ في بنية (صلة، شرط، عطف)، أو نواةٌ، أو نفيٌ/«قد» قبل فعل
             placed_ids = {x for b in my_bonds for x in (b[1], b[2]) if isinstance(x, str)}
             unplaced = []
+            bond_only = []                          # §٨ (SARF_FINAL_COMPLETION_AND_ACCEPTANCE_01): ما لا يضعه إلا رابطٌ من هذه الطبقة
             for p in range(p0, p1 + 1):
                 ids_p = {G.id for G in wunits[p]}
-                ok_p = any(i in placed_ids or any(x.startswith(i + '.s') for x in placed_ids) for i in ids_p) or \
-                    p in roles or p in bound or p in nset or starts[p] or \
+                by_bond = any(i in placed_ids or any(x.startswith(i + '.s') for x in placed_ids) for i in ids_p)
+                other = p in roles or p in bound or p in nset or starts[p] or \
                     any(G.Theta.get('lex') == 'حروف مقطّعة' for G in wunits[p]) or \
                     (feats[p].get('neg') or feats[p].get('qad')) and p + 1 < n and (feats[p + 1]['verb'] or p + 1 in nset)
+                ok_p = by_bond or other
+                if by_bond and not other:
+                    bond_only.append(dict(location=words_text(words, p), units=sorted(ids_p), text=wtext[p],
+                                          bonds=sorted({b[0] for b in my_bonds if any(i in (b[1], b[2]) for i in ids_p)})))
                 if not ok_p:
                     # الوقوع بهويته لا بصيغته (تساوي المحتوى لا يعني تساوي الوقوع): الموضع، والوحدة، والنص، والناقص
                     # جهتان منفصلتان (مراجعة ملفات الجمل ٨): الموضع النحوي (دورٌ في بنية، أو نواة، أو معمولٌ لعاملٍ مقبول)،
@@ -2675,6 +2680,7 @@ def linguistic_layer(items, T, a_id='', q='حفص عن عاصم (مصحف الم
                                     'الموضع النحوي غير مرخَّص (لا دورَ في بنية، ولا نواة، ولا معمولَ عاملٍ مقبول)؛ '
                                     'وليس طرفاً في علاقةٍ مسجَّلة')
             J.O['unplaced'] = unplaced
+            J.O['placed_by_legacy_bond_only'] = bond_only
             if unplaced:
                 J.Omega.append(Obligation('موضع كل كلمة', reason=f'{len(unplaced)} وقوعاً بلا موضعٍ مرخَّص في البناء '
                                           '(التتابع وحده لا يكفي)؛ وهي بهوياتها في عمود «وقوعات بلا موضع»'))
@@ -3255,6 +3261,24 @@ def closure_certificate(J, records, upstream=None):
             sel_ = all('غير محسوم' in x for x in op_)
             residuals.append(dict(relation=r['relation_id'], type=r['type'], rule=r['rule_id'], status='OPEN_OBLIGATION',
                                   kind='SELECTION' if sel_ else 'REQUIRED', why='؛ '.join(op_), outside=[]))
+    # §٨: الكلمة التي لا يضعها في موضعها إلا رابطٌ من الطبقة القديمة، ولا تجعلها علاقةٌ مرخَّصة في 14أ طرفاً — ولو لم تُنشئ الطبقة القديمة
+    # التزام «موضع كل كلمة» — تعارض طبقتين لا استيفاء: لا تسقط ضرورة موضعها بدورٍ غير مرخَّص
+    bo = [x for x in (J.O.get('placed_by_legacy_bond_only') or []) if not any(u in by_member for u in x['units'])]
+    if bo:
+        pend_bo = {u for r in inside if r['status'] != 'LICENSED' for us in r['members'].values() for u in us}
+        obls.append(dict(obligation_id=f'{J.id}/O{len(obls)}#14a-placement', owner=bo[0]['units'][0], name='موضع كل كلمة (14أ)', face_id=None,
+                         face_label='—', morph_candidate_id=None, face_map=None, requirement_kind='PLACEMENT',
+                         requirement_evidence='14أ: لكل وقوعٍ دورٌ في علاقةٍ مرخَّصة', required=True, legacy_met=True, status='CONFLICT',
+                         discharge_relation_id=None, discharge_evidence_id=None,
+                         residual_reason=f'{len(bo)} وقوعاً تضعها الطبقة القديمة برابطها وحده (' +
+                                         '؛ '.join(f"{x['location']} «{x['text']}» ← {'، '.join(x['bonds'])}" for x in bo) +
+                                         ')، و14أ لا ترخّص لها دوراً' + ('؛ منها في علاقةٍ مؤجَّلة: ' + '، '.join(
+                                             x['text'] for x in bo if any(u in pend_bo for u in x['units'])) if any(
+                                             u in pend_bo for x in bo for u in x['units']) else ''),
+                         satisfied_by=None, candidates=None, met=False, external_evidence=None, source=None,
+                         status_ar=OBL_STATUS_AR.get('CONFLICT', 'تعارض'), measure='تغطية الأدوار المحلية: لكل وقوعٍ دورٌ في علاقةٍ مرخَّصة في 14أ، مستقلةً عن روابط الطبقة القديمة؛ ولا يشهد هذا باتصال الوحدة بالبنية الأعلى ولا باكتمال الجملة وحدّها',
+                         note=''))
+        obls[-1]['note'] = obls[-1]['residual_reason']
     req = [o for o in obls if o['required']]
 
     def _verdict(level):
