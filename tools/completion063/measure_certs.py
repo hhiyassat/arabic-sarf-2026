@@ -46,7 +46,7 @@ def load(p):
 
 def cmp(a, b, out):
     A, B = load(a), load(b)
-    vt, ot = collections.Counter(), collections.Counter()
+    vt, ot, lt = collections.Counter(), collections.Counter(), collections.Counter()
     ex = collections.defaultdict(list)
     lost = []
     for k, x in A.items():
@@ -54,6 +54,11 @@ def cmp(a, b, out):
         if y is None:
             vt[('GONE', x['verdict'], None)] += 1
             continue
+        for lv in sorted(set(x.get('by_level') or {}) | set(y.get('by_level') or {})):
+            a_, b_ = (x.get('by_level') or {}).get(lv), (y.get('by_level') or {}).get(lv)
+            if a_ != b_:
+                lt[(lv, a_, b_)] += 1
+                ex[f'level {lv}: {a_}→{b_}'].append(k)
         if (x['verdict'], x['level']) != (y['verdict'], y['level']):
             vt[(x['level'], x['verdict'], y['verdict'])] += 1
             ex[f'verdict {x["verdict"]}→{y["verdict"]}'].append(k)
@@ -80,10 +85,11 @@ def cmp(a, b, out):
     new = [k for k in B if k not in A]
     res = dict(sentences_before=len(A), sentences_after=len(B), new_sentences=len(new),
                verdict_transitions=[dict(level=a_, before=b_, after=c_, n=n) for (a_, b_, c_), n in vt.most_common()],
+               by_level_transitions=[dict(level=a_, before=b_, after=c_, n=n) for (a_, b_, c_), n in lt.most_common()],
                obligation_transitions=[dict(before=a_, after=b_, legacy_before=c_, legacy_after=d_, n=n) for (a_, b_, c_, d_), n in ot.most_common()],
                closed_lost=lost, examples={k_: v_[:30] for k_, v_ in ex.items()}, example_counts={k_: len(v_) for k_, v_ in ex.items()})
     json.dump(res, open(out, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
-    print(json.dumps({k_: res[k_] for k_ in ('verdict_transitions', 'obligation_transitions')}, ensure_ascii=False)[:3000],
+    print(json.dumps({k_: res[k_] for k_ in ('verdict_transitions', 'by_level_transitions', 'obligation_transitions')}, ensure_ascii=False)[:3000],
           'closed_lost', len(lost))
 
 

@@ -3270,7 +3270,9 @@ def closure_certificate(J, records, upstream=None):
             return 'DEFERRED_BOUNDARY'
         if any(o['status'] == 'COVERAGE' for o in req) or any(x['kind'] == 'COVERAGE' for x in residuals):
             return 'INCOMPLETE_RULE_COVERAGE'
-        if any(o['status'] in ('SELECTION', 'CONFLICT') for o in req):
+        # وتعارض الطبقتين في التزامٍ اختياري (مفعولٌ تستوفيه القديمة و14أ تؤجّله) يمنع الإغلاق أيضاً: الطبقة القديمة تضع الكلمة في
+        # موضعها برابطها، و14أ لا ترخّصه؛ فالإغلاق عليه إغلاقٌ بمرشّح (SARF_COMPLETION_FROM_REPORT_063، قياس B3: 8 جمل)
+        if any(o['status'] in ('SELECTION', 'CONFLICT') for o in req) or any(o['status'] == 'CONFLICT' for o in obls):
             return 'DEFERRED_ANALYSIS_SELECTION'
         if any(o['status'] == 'MET_IN_ALL_FACES' for o in req) or residuals:
             return 'CLOSED_WITH_SHARED_STRUCTURE'

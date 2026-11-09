@@ -66,5 +66,11 @@ check('K11 «أَجِئۡتَنَا لِنَعۡبُدَ ٱللَّهَ»: «ٱ�
       and 'اللَّهَ' not in str(fr7['أَجِئْتَ']['frame'].get('object_requirement')), [r['texts'] for r in R7 if r['type'] == 'OBJECT'])
 check('K12 «نَعۡبُدَ ٱللَّهَ»: المرشّح عند الفعل الأقرب، وتعدّيه مؤجَّل في المورد فلا ترخيص', 
       fr7['نَعْبُدَ']['frame']['object_requirement']['kind'] == 'UNLINKED_CANDIDATE' and 'اللَّهَ' in fr7['نَعْبُدَ']['frame']['object_requirement']['note'])
+# انتقالٌ ثانٍ كشفه قياس B3 (الشهادات): 8 جمل أُغلق إسنادها المحلي ومفعولها «تعارض طبقتين» (القديمة تضعه بربطها، و14أ تؤجّله)
+C8 = run_ref('2:278')
+cf = [c for c in C8.get('certificates').values() if any(o['status'] == 'CONFLICT' for o in c['obligations'])]
+check('K13 «اتقوا الله» (2:278): التزامٌ في تعارض الطبقتين يمنع إغلاق الإسناد المحلي ولو كان اختيارياً (لا إغلاق بمرشّح)',
+      cf and all(not str(c['verdict_by_level']['LOCAL_PREDICATION']).startswith('CLOSED') for c in cf),
+      [(c['sentence'], c['verdict_by_level']) for c in cf])
 print('ALL OK' if not FAIL else f'FAILED {len(FAIL)}: {FAIL}')
 sys.exit(1 if FAIL else 0)
