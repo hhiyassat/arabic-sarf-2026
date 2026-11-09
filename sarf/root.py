@@ -472,8 +472,11 @@ def _candidates_kind(text, info):
                         after & {KASRA, FATHA}:
                     ws = ['و']                          # المثال: يَلِدۡ، عِدۡ ← و ل د
                 elif j == ridx[1] and _short(before) and after is not None and SUKUN in after:
-                    # الأجوف: قُلۡ ← و، بِعۡ ← ي؛ وفي الماضي مع ضمير متحرك لا تعيّن الحركةُ الحرف (خِفۡتُمۡ ← خوف)
-                    ws = list(WEAK) if kind == 'madi' or cls != 'I' else ['و'] if DAMMA in before else \
+                    # الأجوف: قُلۡ ← و، بِعۡ ← ي؛ وفي الماضي مع ضمير متحرك لا تعيّن الكسرةُ الحرف (خِفۡتُمۡ ← خوف، بِعۡتُمۡ ← بيع)،
+                    # أما الضمة فلا تقع على فاء الثلاثي الأجوف مع الضمير المتحرك إلا في الواوي من فَعَلَ يَفۡعُلُ (قُلۡنَا، كُنتُمۡ):
+                    # اليائي يُكسر (بِعۡتُ، قِلۡتُ من قيل)، ومجهول الأجوف يُكسر (قِلۡتُ) — §٥ من SARF_COMPLETION_FROM_REPORT_063
+                    ws = (['و'] if kind == 'madi' and cls == 'I' and DAMMA in before and KASRA not in before else list(WEAK)) \
+                        if kind == 'madi' or cls != 'I' else ['و'] if DAMMA in before else \
                         ['ي'] if KASRA in before else list(WEAK)     # والمزيد: يُصِبۡ، يَسۡتَطِعۡ (صوب، طوع)
                 elif j == ridx[-1] and after is None and _short(before) and \
                         (kind == 'mudari' and not text.endswith('نَّ') or     # ولا حذف مع نون التوكيد (تَجِدَنَّ)

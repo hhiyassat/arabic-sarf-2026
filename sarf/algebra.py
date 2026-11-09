@@ -264,6 +264,14 @@ def unit_geo(a, wi, ui, base_id, T, governed_info=None):
             return G
         hits = lex_index().get(_lex_key(stem[0]['text']), [])
         stem_cells = [c for c in cells if c.O['slot'] == 'جذع']
+        # تحقيقٌ أمامي مكتوب (§٤ من SARF_COMPLETION_FROM_REPORT_063): مدخلٌ جذره معتلّ اللام لا يحقّق كلمةً آخرها عينٌ مشدَّدة
+        # (حَقّ ← حقو): الخلية الأخيرة مشغولة بتضعيف العين، والواو/الياء لا تُدغم في غير جنسها؛ إلا أن تكون اللام هي العين (حَيّ ← حيي)
+        barred_hits = [(h, f'«{h[4]}» تحت {h[0]}: آخر الكلمة عينٌ مشدَّدة ({h[0][1]}ّ) ولا لام معتلّة مكتوبة؛ '
+                           f'و«{h[0][2]}» لا تُدغم في «{h[0][1]}»') for h in hits if _weak_lam_barred(stem_cells, h[0])]
+        if barred_hits and len(barred_hits) < len(hits):
+            hits = [h for h in hits if h not in [b for b, _ in barred_hits]]
+        else:
+            barred_hits = []
         parts = participle_analyses(stem_cells)
         roots = sorted({h[0] for h in hits} | {p[0] for p in parts})
         if len(roots) == 1 and not hits:
@@ -287,11 +295,14 @@ def unit_geo(a, wi, ui, base_id, T, governed_info=None):
             alpha, ops = align_radicals(stem_cells, roots[0])
             if alpha:
                 alpha = ['أل'] * (len(cells) - len(stem_cells)) + alpha
-                G.Theta.update(R=roots[0], P=f'{h[1]} ({h[2]})', F=dict(kind='اسم', pos=h[1]), alpha=alpha, ops=ops,
-                               lex=h[4])
+                # مداخل الجذر نفسه بأحداثٍ مختلفة (حَقّ: مصدر فَعَلَ ومصدر فَعِلَ): لا يُختار أولها، وتُعرض كلها
+                hp_ = sorted({f'{x[1]} ({x[2]})' for x in hits})
+                G.Theta.update(R=roots[0], P=' أو '.join(hp_), F=dict(kind='اسم', pos=h[1] if len({x[1] for x in hits}) == 1 else None),
+                               alpha=alpha, ops=ops, lex=h[4], lex_entries=[x[3] for x in hits])
                 ev = Evidence(f'بناء معجمي مرخَّص: {h[1]} «{h[4]}» في HFN ({h[3]})',
                               [f'الاسمية: {noun_proof}', f'الجذر {" ".join(roots[0])}', f'α = ⟨{", ".join(alpha)}⟩'] + ops,
-                              [('جذرٌ آخر للمدخل نفسه', 'مدخل واحد الجذر')])
+                              [('جذرٌ آخر للمدخل نفسه', 'مدخل واحد الجذر' if not barred_hits else
+                                'ممنوعٌ بالتحقيق المكتوب: ' + '؛ '.join(w for _, w in barred_hits))])
                 G.Omega[0].met, G.Omega[0].ev = True, ev
                 close(G, ev, Evidence('حدّ الخانة', ['من المقشِّر: ' + '+'.join(sl['type'] for sl in slots)]), T)
                 return G
@@ -363,6 +374,14 @@ def unit_geo(a, wi, ui, base_id, T, governed_info=None):
     return G
 
 
+def _weak_lam_barred(cells, root):
+    """الجذر الثلاثي معتلّ اللام (و/ي) غير مضعَّفها، والكلمة تنتهي بعينه مشدَّدةً بلا لامٍ مكتوبة: لا يحقّقها (حَقّ ← حقو ممنوع)"""
+    if len(root) != 3 or root[2] not in WEAK or HAMZA.get(root[1], root[1]) == root[2]:
+        return False
+    alpha, ops = align_radicals(cells, root)
+    return bool(alpha) and len(alpha) >= 2 and alpha[-1] == alpha[-2] == 'r2' and any('إعلال r3' in o for o in ops)
+
+
 def align_radicals(cells, root):
     """α للبناء المعجمي: الأصول بترتيبها في الخلايا، والمعتل منها يجوز إعلاله؛ وما سواها زائد"""
     alpha = ['زائد'] * len(cells)
@@ -370,6 +389,11 @@ def align_radicals(cells, root):
     for k, r in enumerate(root):
         r = HAMZA.get(r, r)
         j = next((x for x in range(i, len(cells)) if cells[x].C == r), None)
+        if j is None and k > 0 and HAMZA.get(root[k - 1], root[k - 1]) == r and i >= 2 and alpha[i - 1] == alpha[i - 2] == f'r{k}':
+            # المضعَّف: الشدة حرفان، أولهما العين وثانيهما اللام (حَقّ ← ح ق ق، رَبّ ← ر ب ب) — §٤ من SARF_COMPLETION_FROM_REPORT_063
+            alpha[i - 1] = f'r{k + 1}'
+            ops.append(f'إدغام r{k} في r{k + 1} (الشدة)')
+            continue
         if j is None:
             if r in WEAK:
                 ops.append(f'إعلال r{k + 1} ({r})')
