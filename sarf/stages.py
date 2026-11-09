@@ -184,17 +184,42 @@ def p_relations(ctx, d):
         k = _key(s, v)
         out[k] = verse_relations(d['analysis'][k], d['units'][k]['units'], d['features'][k], k,
                                  legacy_cond=d['legacy']['cond'], legacy_rel=d['legacy']['rel'])
-    return dict(records=out)
+    return dict(records_initial=out)
 
 
 def p_face_reconciliation(ctx, d):
     from .reconcile import reconcile_features, check_consistency
     out, log, errs = {}, {}, {}
     for k in d['features']:
-        recs = d['records'][k]['records']
+        recs = d['records_initial'][k]['records']
         out[k], log[k] = reconcile_features(d['features'][k], recs)
         errs[k] = check_consistency(out[k], recs)
     return dict(features_final=out, reconciliation=dict(log=log, errors=errs))
+
+
+def p_relations_final(ctx, d):
+    """FA02 §٢ (مراجعة المالك: features_final لا يستهلكها أحد): العلاقات النهائية تُبنى من السمات المصالَحة، بلا دورة — فالمصالحة
+    تقرأ العلاقات الأولية (من مخرج المرحلة ١٣)، وهذه المرحلة تقرأ ناتج المصالحة. ثم مراجعةٌ مضبوطة واحدة: تُعاد المصالحة على
+    العلاقات النهائية؛ فإن خرجت سماتٌ غير التي بُنيت عليها فالحالة NOT_CONVERGED مسمّاةً بوحداتها (لا تُكرَّر بلا حدّ، ولا يُخفى
+    الفرق)، والفاحص المستقل يُشغَّل على الناتج النهائي"""
+    from .relations import verse_relations
+    from .reconcile import reconcile_features, check_consistency, _canon
+    out, conv, errs = {}, {}, {}
+    for s, v, _ in d['source']['verses']:
+        k = _key(s, v)
+        FF = d['features_final'][k]
+        out[k] = verse_relations(d['analysis'][k], d['units'][k]['units'], FF, k,
+                                 legacy_cond=d['legacy']['cond'], legacy_rel=d['legacy']['rel'], F13=d['features'][k])
+        recs = out[k]['records']
+        F2, _ = reconcile_features(d['features'][k], recs)
+        diff = sorted(str(u) for u in set(FF) | set(F2)
+                      if _canon({f: (FF.get(u) or {}).get(f, {}).get('v') if isinstance((FF.get(u) or {}).get(f), dict) else None
+                                 for f in ('pos', 'tense', 'voice', 'subject')}) !=
+                      _canon({f: (F2.get(u) or {}).get(f, {}).get('v') if isinstance((F2.get(u) or {}).get(f), dict) else None
+                              for f in ('pos', 'tense', 'voice', 'subject')}))
+        conv[k] = dict(state='CONVERGED' if not diff else 'NOT_CONVERGED', units=diff)
+        errs[k] = check_consistency(FF, recs)
+    return dict(records=out, revision=dict(convergence=conv, errors_final=errs))
 
 
 def p_evidence_audit(ctx, d):
@@ -264,13 +289,17 @@ STAGES = [
                                                                   'المدخل المعجمي ليس معنىً سياقياً')),
     _stage('linguistic', p_linguistic, ('source', 'analysis', 'units'), ('sentences', 'legacy'), (17, 19),
            doc='الجمل وحدودها (الطبقة اللغوية)', producers=('sarf.algebra.linguistic_layer', 'sarf.algebra.cross_ayah_links')),
-    _stage('relations', p_relations, ('source', 'analysis', 'units', 'features', 'legacy'), ('records',), (12, 13, 14, 15, 16),
-           {'records': _sch_records}, doc='الإسناد والمعمولات والعلاقات والتعلّق، ومحاور الإعراب',
+    _stage('relations', p_relations, ('source', 'analysis', 'units', 'features', 'legacy'), ('records_initial',), (12, 13, 14, 15, 16),
+           {'records_initial': _sch_records}, doc='العلاقات الأولية من مخرج المرحلة ١٣ (مدخل المصالحة وحدها)',
            producers=('sarf.relations.verse_relations',),
            known_gaps=('التوابع والمكمّلات (B03)', 'قواعد الأدوات PC.* (B05)')),
-    _stage('face_reconciliation', p_face_reconciliation, ('features', 'records'), ('features_final', 'reconciliation'), (9, 10),
+    _stage('face_reconciliation', p_face_reconciliation, ('features', 'records_initial'), ('features_final', 'reconciliation'), (9, 10),
            doc='وحدة الحقيقة بين المراحل: السمات النهائية من أوجه إطار الفعل الحيّة، ومخرج المرحلة ١٣ موسومٌ بما تجاوزه',
            producers=('sarf.reconcile.reconcile_features', 'sarf.reconcile.check_consistency')),
+    _stage('relations_final', p_relations_final, ('source', 'analysis', 'units', 'features', 'features_final', 'legacy'),
+           ('records', 'revision'), (12, 13, 14, 15, 16), {'records': _sch_records},
+           doc='العلاقات النهائية من السمات المصالَحة، ومراجعةٌ مضبوطة واحدة بحالة الثبات؛ وهي ما تستهلكه الشهادات والفقرات والإحالات',
+           producers=('sarf.relations.verse_relations', 'sarf.reconcile.reconcile_features')),
     _stage('evidence_audit', p_evidence_audit, ('records',), ('evidence_audit',), (19,), doc='كشف دورات المقدّمات',
            producers=('sarf.engine.evidence_cycles',)),
     _stage('certificates', p_certificates, ('sentences', 'records', 'evidence_audit'), ('certificates',), (19,),

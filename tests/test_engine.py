@@ -52,12 +52,13 @@ re_run = [t['stage'] for t in c2.trace[n_trace:]]
 ob_after = next(o for o in c2.get('certificates')[cert_before['sentence']]['obligations'] if o['obligation_id'] == ob_before['obligation_id'])
 check('E06 مراجعة راجعة: نقض علاقة فاعلٍ يعيد حساب المستهلكين وحدهم (التدقيق، الشهادات، الفقرة، الإحالات) ولا يعيد التطبيع ولا التحليل؛ '
       'والالتزام لم يعد مستوفى بها؛ والقيمة السابقة محفوظةٌ بسببها',
-      # face_reconciliation (SARF_COMPLETION_FROM_REPORT_063 §٢) مستهلكٌ للسجلات: يُعاد حسابه معها، فلا تبقى السمات النهائية على أوجهٍ قديمة
-      set(re_run) == {'face_reconciliation', 'evidence_audit', 'certificates', 'paragraphs', 'references', 'contextual_meaning', 'discourse_semantics'} and
+      # FA02 §٢: المصالحة تقرأ العلاقات الأولية (records_initial)، والسجلات النهائية (records) ناتج relations_final من السمات المصالَحة؛
+      # فمراجعة السجلات النهائية تعيد مستهلكيها وحدهم، ولا تعيد المصالحة (لا دورة)
+      set(re_run) == {'evidence_audit', 'certificates', 'paragraphs', 'references', 'contextual_meaning', 'discourse_semantics'} and
       'normalization' not in re_run and 'verse_analysis' not in re_run and
       all(c2.status[n_][0] == NOT_IMPLEMENTED for n_ in ('contextual_meaning', 'discourse_semantics')) and
       ob_after.get('discharge_relation_id') != subj['relation_id'] and c2.slots['records'].history and
-      c2.revisions[-1]['recomputed'][:5] == ['face_reconciliation', 'evidence_audit', 'certificates', 'paragraphs', 'references'], (re_run, ob_after['status']))
+      c2.revisions[-1]['recomputed'][:4] == ['evidence_audit', 'certificates', 'paragraphs', 'references'], (re_run, ob_after['status']))
 recs2 = copy.deepcopy(c2.get('records'))
 before_v = {k_: c['verdict_by_level'] for k_, c in c2.get('certificates').items()}
 recs2[k2]['records'] = list(reversed(recs2[k2]['records']))

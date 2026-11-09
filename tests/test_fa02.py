@@ -66,5 +66,25 @@ R2 = [dict(R[0], frame=dict(candidates=[A, B2]))]
 o2, _ = reconcile_features(FX, R2)
 check('G2.4 والوجه نفسه (الهوية كاملةً) ممنوعاً في موضعٍ آخر ممنوعٌ كلّه: ALL_FACES_REJECTED', o2[(5, 0)]['_faces']['state'] == 'ALL_FACES_REJECTED'
       and not check_consistency(o2, R2), o2[(5, 0)]['_faces'])
+# §G3 السمات النهائية يستهلكها مسار العلاقات (المرحلة relations_final)، والشهادات تقرأ ناتجها؛ بلا دورة، وبمراجعةٍ مضبوطة
+import copy
+from sarf.stages import ENGINE, p_relations_final
+C3 = run_ref('2:282')
+check('G3.1 الشهادات والفقرات تقرأ «records» من relations_final، وهي تقرأ features_final؛ والمصالحة تقرأ records_initial (لا دورة)',
+      ENGINE.producer_of['records'] == 'relations_final' and 'features_final' in ENGINE.stages['relations_final'].requires
+      and 'records_initial' in ENGINE.stages['face_reconciliation'].requires and 'records' in ENGINE.stages['certificates'].requires)
+check('G3.2 المراجعة المضبوطة: حالة الثبات معلنةٌ لكل آية، والفاحص المستقل سليمٌ على الناتج النهائي في 2:282',
+      C3.get('revision')['convergence']['2:282']['state'] == 'CONVERGED' and not C3.get('revision')['errors_final']['2:282'],
+      C3.get('revision'))
+d = {k: C3.get(k) for k in ENGINE.stages['relations_final'].requires}
+d['features_final'] = copy.deepcopy(d['features_final'])
+V3 = C3.get('records')['2:282']
+u76 = next(u for u, l, t in V3['tokens'] if t == 'يَسْتَطِيعُ')
+k76 = tuple(int(x) for x in u76.rsplit('.w', 1)[1].split('.u'))
+d['features_final']['2:282'][k76]['pos'] = dict(v=None, st='مؤجَّل', ev='إفساد اختباري', alt=['فعل', 'اسم'])
+Vm = p_relations_final(None, d)['records']['2:282']
+check('G3.3 إفساد: تغيير صنف «يَسْتَطِيعُ» في features_final وحدها يغيّر العلاقات النهائية (تسقط V-RAF1 عنه) — فهي مستهلَكة فعلاً',
+      any(r['type'] == 'MOOD' and r['texts'].get('verb') == 'يَسْتَطِيعُ' for r in V3['records'])
+      and not any(r['type'] == 'MOOD' and r['texts'].get('verb') == 'يَسْتَطِيعُ' for r in Vm['records']))
 print('ALL OK' if not FAIL else f'FAILED {len(FAIL)}: {FAIL}')
 sys.exit(1 if FAIL else 0)
