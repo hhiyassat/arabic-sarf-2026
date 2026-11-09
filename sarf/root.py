@@ -82,6 +82,24 @@ def hfn_class(form):
     return None
 
 
+# تمثيل همزة الوصل في مدخلات HFN (SARF_COMPLETION_FROM_REPORT_063 §٥): v36 يكتبها «ا»، وv47 يكتبها «ٱ» (U+0671) في أوزان
+# انفعل وافتعل وافعلّ واستفعل وأشباهها ومصادرها. والتمثيل المعلن في المستهلك «ا» (تمثيل خط الأساس الذي بُنيت عليه القوالب والمطابقة)،
+# ويُحفظ المكتوب في المورد بعينه (verb_written / lemma_written). وهو تحويلٌ مسمّى للحرف الأول وحده، لا تجريدٌ للحركات
+WASL_SOURCE, WASL_REPRESENTATION = '\u0671', 'ا'
+
+
+def hfn_wasl(text):
+    """→ (النص بالتمثيل المعلن، هل حُوِّل)؛ همزة الوصل في أول الكلمة وحدها"""
+    if text and text[0] == WASL_SOURCE:
+        return WASL_REPRESENTATION + text[1:], True
+    return text, False
+
+
+def hfn_withdrawn(e):
+    """الحدث المسحوب في الإصدار (event_review_v36 يبدأ بـ WITHDRAWN): لا يُقرأ حدثاً حياً في أي فهرس"""
+    return (e.get('event_review_v36') or '').startswith('WITHDRAWN')
+
+
 class HFN:
     """فهرس الأحداث: (الجذر، الوزن) ← الأحداث، ومعنى الصيغة لكل حدث"""
     def __init__(self, path=None):
@@ -97,10 +115,28 @@ class HFN:
         self.path = path or next((p for p in HFN_PATHS if p and os.path.exists(os.path.join(p, 'events.csv'))), None)
         self.index = defaultdict(list)
         self.roots = set()
-        self.meanings = {}
+        self.meanings = {}                              # الأول لكل حدث (للمستهلكين القدامى)
+        self.meanings_all = defaultdict(list)           # §٥: كل المعاني بترتيبها في المورد، لا يُسقط شيءٌ منها
+        self.withdrawn = []                             # §٥: الأحداث المسحوبة بمعرّفها وسببها وإصدارها وبصمة الملف
+        self.wasl_converted = 0
+        self.release = os.path.basename(os.path.normpath(self.path)) if self.path else None
+        self.events_sha256 = None
         if not self.path:
             return
-        for e in csv.DictReader(open(os.path.join(self.path, 'events.csv'), encoding='utf-8')):
+        import hashlib
+        ep = os.path.join(self.path, 'events.csv')
+        self.events_sha256 = hashlib.sha256(open(ep, 'rb').read()).hexdigest()
+        self.withdrawn_ids = set()
+        for e in csv.DictReader(open(ep, encoding='utf-8')):
+            if hfn_withdrawn(e):
+                self.withdrawn.append(dict(event_id=e['event_id'], root=e['root_K'], verb=e['verb'], form=e['form'],
+                                           reason=e['event_review_v36'], release=self.release, events_sha256=self.events_sha256))
+                self.withdrawn_ids.add(e['event_id'])
+                continue
+            v_, conv = hfn_wasl(e['verb'])
+            if conv:
+                e['verb_written'], e['verb'] = e['verb'], v_
+                self.wasl_converted += 1
             cls = hfn_class(e['form'])
             self.roots.add(e['root_K'])
             if cls:
@@ -108,7 +144,11 @@ class HFN:
         mp = os.path.join(self.path, 'form_meanings.csv')
         if os.path.exists(mp):
             for r in csv.DictReader(open(mp, encoding='utf-8')):
+                if r['event_id'] in self.withdrawn_ids:
+                    continue
                 self.meanings.setdefault(r['event_id'], r['meaning'])
+                self.meanings_all[r['event_id']].append(dict(meaning=r['meaning'], concept_id=r.get('concept_id'),
+                                                             status=r.get('status'), rank=r.get('rank')))
 
     def __bool__(self):
         return bool(self.index)

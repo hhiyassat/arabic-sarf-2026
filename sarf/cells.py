@@ -135,16 +135,19 @@ def lex_index():
     global _LEX
     if _LEX is None:
         import csv, os
-        from .root import hfn
+        from .root import hfn, hfn_withdrawn, hfn_wasl
         _LEX = {}
         H = hfn()
         if H.path and os.path.exists(os.path.join(H.path, 'lexical_units.csv')):
             ev_root = {}
             for e in csv.DictReader(open(os.path.join(H.path, 'events.csv'), encoding='utf-8')):
+                if hfn_withdrawn(e):
+                    continue                 # §٥: لمّات الحدث المسحوب لا تعود من طريق فهرس الأسماء
                 ev_root[e['event_id']] = e['root_K']
             for x in csv.DictReader(open(os.path.join(H.path, 'lexical_units.csv'), encoding='utf-8')):
                 if x['pos_ar'] in NOUN_POS and x['event_id'] in ev_root:
-                    _LEX.setdefault(_lex_key(x['lemma']), []).append(
+                    lem, _ = hfn_wasl(x['lemma'])   # §٥: تمثيل همزة الوصل المعلن، والمكتوب في المورد يبقى في آخر الصفّ
+                    _LEX.setdefault(_lex_key(lem), []).append(
                         (ev_root[x['event_id']], x['pos_ar'], x['pattern'], x['lu_id'], x['lemma']))
     return _LEX
 
