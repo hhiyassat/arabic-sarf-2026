@@ -59,15 +59,22 @@ def cmp(a, b, out):
             ex[f'verdict {x["verdict"]}→{y["verdict"]}'].append(k)
             if str(x['verdict']).startswith('CLOSED') and not str(y['verdict']).startswith('CLOSED'):
                 lost.append(dict(sentence=k, before=x['verdict'], after=y['verdict']))
-        ob = {o['id']: o for o in y['obligations']}
-        for o in x['obligations']:
-            o2 = ob.get(o['id'])
+        # المفتاح اسم الالتزام وترتيب وروده باسمه في الجملة: معرّف O<n> يُزاح إذا أُدخل التزامٌ قبله، فلا يُقابَل به
+        def keyed(L):
+            seen, out_ = collections.Counter(), {}
+            for o_ in L:
+                seen[o_['name']] += 1
+                out_[(o_['name'], seen[o_['name']])] = o_
+            return out_
+        kx, ob = keyed(x['obligations']), keyed(y['obligations'])
+        for kk, o in kx.items():
+            o2 = ob.get(kk)
             s2 = o2['status'] if o2 else 'GONE'
             if o['status'] != s2 or bool(o['legacy']) != bool((o2 or {}).get('legacy')):
                 ot[(o['status'], s2, bool(o['legacy']), bool((o2 or {}).get('legacy')))] += 1
                 ex[f'obligation {o["status"]}→{s2} legacy {bool(o["legacy"])}→{bool((o2 or {}).get("legacy"))}'].append(f'{k} {o["name"]}')
         for oid, o2 in ob.items():
-            if oid not in {o['id'] for o in x['obligations']}:
+            if oid not in kx:
                 ot[('NEW', o2['status'], None, bool(o2['legacy']))] += 1
                 ex[f'obligation NEW {o2["status"]}'].append(f'{k} {o2["name"]}')
     new = [k for k in B if k not in A]
