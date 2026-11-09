@@ -18,7 +18,9 @@ while [ $# -gt 0 ]; do
   esac; shift 2
 done
 for v in SARF DATA V36 FINAL OUT; do [ -n "${!v:-}" ] || { echo "ناقص: --$v" >&2; exit 2; }; done
-[ ! -e "$OUT" ] || { echo "OUT موجود: لا يُستبدل ($OUT)" >&2; exit 2; }
+# RESUME=1: يكمل تشغيلاً سابقاً في OUT نفسه للخطوات التي لم تنتهِ بالرمز 0 (لا يعيد النسخ ولا الاختبارات ولا ما انتهى)
+if [ "${RESUME:-0}" = 1 ]; then [ -f "$OUT/reproduce_steps.log" ] || { echo "RESUME يحتاج OUT سابقاً" >&2; exit 2; }
+else [ ! -e "$OUT" ] || { echo "OUT موجود: لا يُستبدل ($OUT)" >&2; exit 2; }; fi
 python3 -c 'import sys; sys.exit(0 if sys.version_info[:2] == (3, 13) else 1)' || { echo "يلزم Python 3.13" >&2; exit 2; }
 for c in "$BASE" "$FINAL"; do git -C "$SARF" cat-file -e "$c^{commit}" || { echo "الالتزام $c غير موجود في $SARF" >&2; exit 2; }; done
 for f in "$DATA/quran_hafs.tsv" "$DATA/quran-morphology.txt" "$V36/events.csv"; do [ -f "$f" ] || { echo "مفقود: $f" >&2; exit 2; }; done
@@ -26,22 +28,22 @@ sha() { python3 -c 'import hashlib,sys; print(hashlib.sha256(open(sys.argv[1],"r
 s36=$(sha "$V36/events.csv"); [ "${s36:0:12}" = "$V36_SHA" ] || { echo "بصمة v36 لا تطابق: $s36" >&2; exit 2; }
 if [ -n "$V47" ]; then s47=$(sha "$V47/events.csv"); [ "${s47:0:12}" = "$V47_SHA" ] || { echo "بصمة v47 لا تطابق: $s47" >&2; exit 2; }; fi
 mkdir -p "$OUT/m" "$OUT/tests"
-LOG="$OUT/reproduce_steps.log"; : > "$LOG"
+LOG="$OUT/reproduce_steps.log"; [ "${RESUME:-0}" = 1 ] && echo "resume $(date -u +%FT%TZ) script=$(sha "$0")" >> "$LOG" || : > "$LOG"
 export PYTHONHASHSEED=0 SARF_DEP_SALT=c063-repro-no-cache
 FINAL_FULL=$(git -C "$SARF" rev-parse "$FINAL")
 echo "base $BASE final $FINAL_FULL v36 $s36 v47 ${s47:-NOT_RUN}" >> "$LOG"
 # ١ نسختان نظيفتان من git (لا worktree ولا ملفات غير ملتزم بها)
-for n in base final; do
+[ "${RESUME:-0}" = 1 ] || for n in base final; do
   c=$BASE; [ $n = final ] && c=$FINAL_FULL
   mkdir -p "$OUT/$n"; git -C "$SARF" archive "$c" | tar -x -C "$OUT/$n"; ln -s "$(cd "$DATA" && pwd)" "$OUT/$n/data"
 done
 T="$OUT/final/tools/completion063"
-step() { local name="$1"; shift; echo "start $name" >> "$LOG"; if "$@" > "$OUT/m/$name.stdout" 2>&1; then echo "exit $name rc=0" >> "$LOG";
+step() { local name="$1"; shift; if [ "${RESUME:-0}" = 1 ] && grep -qx "exit $name rc=0" "$LOG"; then return 0; fi; echo "start $name" >> "$LOG"; if "$@" > "$OUT/m/$name.stdout" 2>&1; then echo "exit $name rc=0" >> "$LOG";
          else rc=$?; echo "exit $name rc=$rc" >> "$LOG"; echo "فشلت الخطوة $name ($rc): $OUT/m/$name.stdout" >&2; exit 3; fi; }
 in36() { local d="$1"; shift; (cd "$OUT/$d" && SARF_HFN="$V36" "$@"); }
 in47() { local d="$1"; shift; (cd "$OUT/$d" && SARF_HFN="$V47" SARF_HFN_RELEASE_OK=release_v47 "$@"); }
 # ٢ الاختبارات كلها في النسخة النهائية (كلٌّ بـ python3 -P -s، ورمزه وزمنه)
-if [ "$SKIP_TESTS" = 0 ]; then
+if [ "$SKIP_TESTS" = 0 ] && [ "${RESUME:-0}" != 1 ]; then
   : > "$OUT/tests/results.tsv"
   for t in "$OUT"/final/tests/*.py; do
     s=$(date +%s); if in36 final env SARF_HFN_V47="${V47:-/nonexistent}" python3 -P -s "$t" > "$OUT/tests/$(basename "$t").log" 2>&1; then rc=0; else rc=$?; fi
@@ -56,7 +58,9 @@ for n in base final; do
   step evalroot_$n in36 $n env SARF_ROOT_DUMP="$OUT/m/rootdump_$n.jsonl" python3 -s tools/eval_root.py
 done
 step recon_final in36 final python3 -s "$T/measure_reconciliation.py" "$OUT/m/recon_final.json" --jobs "$JOBS"
-step cmp_snap python3 -s "$OUT/final/tools/snapshot_outputs.py" cmp "$OUT/m/snap_base.pkl.gz" "$OUT/m/snap_final.pkl.gz" --json "$OUT/m/cmp_snap.json" || true
+# أداة اللقطة تخرج بالرمز 1 حين توجد فروق (متوقَّعة في الإصلاح التحليلي)، وبغيره عند الخطأ
+cmp_ok() { "$@"; rc=$?; [ $rc -le 1 ]; }
+step cmp_snap cmp_ok python3 -s "$OUT/final/tools/snapshot_outputs.py" cmp "$OUT/m/snap_base.pkl.gz" "$OUT/m/snap_final.pkl.gz" --json "$OUT/m/cmp_snap.json"
 step cmp_axes python3 -s "$T/measure_axes.py" cmp "$OUT/m/axes_base.jsonl.gz" "$OUT/m/axes_final.jsonl.gz" "$OUT/m/cmp_axes.json"
 step cmp_certs python3 -s "$T/measure_certs.py" cmp "$OUT/m/certs_base.jsonl.gz" "$OUT/m/certs_final.jsonl.gz" "$OUT/m/cmp_certs.json"
 step cmp_roots python3 -s "$T/compare_rootdumps.py" "$OUT/m/rootdump_base.jsonl" "$OUT/m/rootdump_final.jsonl" "$OUT/m/cmp_roots.json"
@@ -70,7 +74,7 @@ step matrix in36 final python3 -s "$T/stage_matrix.py" . "$OUT/m/stage_matrix.js
 if [ -n "$V47" ]; then
   step snap_final_v47 in47 final python3 -s "$OUT/final/tools/snapshot_outputs.py" dump . "$OUT/m/snap_final_v47.pkl.gz" --jobs "$JOBS"
   step evalroot_final_v47 in47 final env SARF_ROOT_DUMP="$OUT/m/rootdump_final_v47.jsonl" python3 -s tools/eval_root.py
-  step cmp_snap_v47 python3 -s "$OUT/final/tools/snapshot_outputs.py" cmp "$OUT/m/snap_final.pkl.gz" "$OUT/m/snap_final_v47.pkl.gz" --json "$OUT/m/cmp_snap_v47.json" || true
+  step cmp_snap_v47 cmp_ok python3 -s "$OUT/final/tools/snapshot_outputs.py" cmp "$OUT/m/snap_final.pkl.gz" "$OUT/m/snap_final_v47.pkl.gz" --json "$OUT/m/cmp_snap_v47.json"
   step cmp_roots_v47 python3 -s "$T/compare_rootdumps.py" "$OUT/m/rootdump_final.jsonl" "$OUT/m/rootdump_final_v47.jsonl" "$OUT/m/cmp_roots_v47.json"
   step cmp_units_v47 python3 -s "$T/compare_units.py" "$OUT/m/snap_final.pkl.gz" "$OUT/m/snap_final_v47.pkl.gz" "$DATA/quran-morphology.txt" "$OUT/m/cmp_units_v47.json"
 else echo "v47 NOT_RUN: --hfn-v47 غير معطى" >> "$LOG"; fi
