@@ -38,6 +38,12 @@ def lines(verse):
     return out
 
 
+# النسخة المحفوظة بحسب إصدار HFN: tests/golden لـv36 التاريخي، وtests/golden_<الإصدار> للمستهدف؛ وفروق ما بينهما مسجّلةٌ بسببها
+# في tests/golden_<الإصدار>/DIFF_FROM_v36.md (SARF_FINAL_COMPLETION_AND_ACCEPTANCE_01 §٣)
+from sarf.root import hfn as _hfn
+GOLDEN = 'golden' if _hfn().release == 'release_v36' else 'golden_' + _hfn().release
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('-f', '--files', nargs='*')
@@ -47,7 +53,7 @@ def main():
     changed = 0
     for fn in files:
         name = os.path.splitext(os.path.basename(fn))[0]
-        gold = os.path.join(HERE, 'tests', 'golden', name + '.tsv')
+        gold = os.path.join(HERE, 'tests', GOLDEN, name + '.tsv')
         now = []
         for v in open(fn, encoding='utf-8'):
             if v.strip():

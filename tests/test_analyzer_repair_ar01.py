@@ -69,7 +69,8 @@ check('R6 موجب: نَاقِه لا يُقبل له «وقي»؛ ومنافس�
       any(r['root'] == 'نقه' for x in p for r in x.get('whole_word_rivals') or []), p)
 p = pub('فَتَبَرَّكَ')
 check('R6 موجب: فَتَبَرَّكَ (بعد السابقة) مؤجَّل بمنافسه «برك»', p and p[0]['status'] == 'deferred', p)
-for w, r in (('وَقَالَتْ', 'قول'), ('كَتَبْتُهُ', 'كتب')):
+from tests._release import QAWL_WITNESS
+for w, r in ((QAWL_WITNESS, 'قول'), ('كَتَبْتُهُ', 'كتب')):
     p = pub(w)
     check(f'R6 مقابل: {w} يبقى {r} مقبولاً', any(x['status'] == 'accepted' and x['root'] == r for x in p), p)
 # R7 الحماية لا تنتقل من البقية المقشورة إلى الكلمة كلها

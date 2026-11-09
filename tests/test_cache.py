@@ -22,7 +22,7 @@ def check(name, ok, got=''):
 
 
 tmp = tempfile.mkdtemp(prefix='sarf_cache_')
-for d in ('sarf', 'tools', 'lexicon'):
+for d in ('sarf', 'tools', 'lexicon', 'config'):
     shutil.copytree(os.path.join(H, d), os.path.join(tmp, d), ignore=shutil.ignore_patterns('__pycache__'))
 for f in ('operators_catalog.jsonl', 'operators_catalog_split_vocalized.csv'):
     shutil.copy(os.path.join(H, f), tmp)

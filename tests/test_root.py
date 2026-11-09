@@ -56,9 +56,19 @@ else:
         got = (m['status'], m.get('level'), m.get('root'), m.get('form_class')) if m else None
         check(f'Morph({w})', got == (st, lv, root, cls), got)
     # لا يتسرّب حكم كلمة إلى ما بعدها: «قَالُوا» بعد «قُلْ» كما هي وحدها
+    from tests._release import RELEASE, DATA_REASONS
+    alone = morph('قَالُوا')
     morph('قُلْ')
     m = morph('قَالُوا')
-    check('قَالُوا بعد قُلْ: مقبول (لا حالة مشتركة بين الكلمات)', m['status'] == 'accepted' and m['root'] == 'قول', m.get('reason'))
+    if RELEASE == 'release_v36':
+        check('قَالُوا بعد قُلْ: مقبول (لا حالة مشتركة بين الكلمات)', m['status'] == 'accepted' and m['root'] == 'قول', m.get('reason'))
+    else:
+        # الإصدار المستهدف: DATA_REASONS['QAWL_QAYL'] — «قَالُوا» ملتبسةٌ بين قول وقيل بلا اختيار، والحكم بعد «قُلْ» هو حكمها وحدها
+        check('قَالُوا بعد قُلْ: حكمها وحدها (لا حالة مشتركة)، وهو التباسٌ صحيح بين قول وقيل (v47)',
+              (m['status'], m.get('reason')) == (alone['status'], alone.get('reason')) and m['status'] == 'deferred'
+              and 'قول' in (m.get('reason') or '') and 'قيل' in (m.get('reason') or ''), m.get('reason'))
+        q = morph('قُلْنَا')
+        check('قُلْنَا بعد قُلْ: مقبول قول (ضمة الفاء)', q['status'] == 'accepted' and q['root'] == 'قول', q.get('reason'))
     # الفعلية بالعامل المقبول: لَنۡ نَّبۡرَحَ
     from sarf.analyze import analyze
     from sarf.catalog import Catalog

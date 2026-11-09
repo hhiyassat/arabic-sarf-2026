@@ -72,11 +72,17 @@ try:
     check('H08 إفساد: تعطيل الاستبعاد يُدخل المسحوب في الفهرس (فالفحص H01 يكشف)', any(e['event_id'] == 'E2' for L_ in Hm.index.values() for e in L_))
 finally:
     R.hfn_withdrawn = orig
-# خط الأساس: v36 بلا مسحوب ولا تحويل، والإصدار والبصمة مسجّلان
-H36 = R.hfn()
-check('H09 خط الأساس v36: لا مسحوب ولا تحويل همزة وصل، والإصدار والبصمة مسجّلان',
-      H36.release == 'release_v36' and not H36.withdrawn and H36.wasl_converted == 0 and len(H36.events_sha256 or '') == 64,
-      (H36.release, len(H36.withdrawn), H36.wasl_converted))
+# الإصدار المحمَّل: v36 التاريخي بلا مسحوب ولا تحويل؛ والمستهدف مثبَّتٌ ومتحقَّق (MANIFEST وملفاته والمسحوب المصرَّح به)
+H0 = R.hfn()
+if H0.release == 'release_v36':
+    check('H09 التاريخي v36: لا مسحوب ولا تحويل همزة وصل، والإصدار والبصمة مسجّلان',
+          not H0.withdrawn and H0.wasl_converted == 0 and len(H0.events_sha256 or '') == 64 and H0.pin['mode'] == 'HISTORICAL',
+          (H0.release, len(H0.withdrawn), H0.wasl_converted))
+else:
+    check('H09 المستهدف: مثبَّتٌ بالتزام HFN وبصمة MANIFEST، وكل ملفٍّ مصرَّح به متحقَّق، والمسحوب = المصرَّح به بلا اختلاف',
+          H0.release == R.HFN_TARGET['release'] and H0.pin['mode'] == 'TARGET' and H0.pin['hfn_commit'] == R.HFN_TARGET['hfn_commit']
+          and H0.pin['files_verified'] >= 40 and {w['event_id'] for w in H0.withdrawn} == set(H0.pin['withdrawn_declared'])
+          and H0.withdrawn_discrepancy is None, (H0.release, H0.pin.get('mode'), len(H0.withdrawn), H0.withdrawn_discrepancy))
 v47 = os.environ.get('SARF_HFN_V47', '/home/user/ucr/repro03/pinned/hfn/release/release_v47')
 if os.path.exists(os.path.join(v47, 'events.csv')):
     H47 = R.HFN(v47)

@@ -269,10 +269,11 @@ def layers(w):
     return a, U, unit_features(a, U)
 
 
-a, U, F = layers('وَقَالَتْ')
+from tests._release import QAWL_WITNESS
+a, U, F = layers(QAWL_WITNESS)
 x = a['morph'][0]
 th = U[(0, 1)].Theta.get('analysis_selection') or {}
-check('X1 وَقَالَتْ: هوية التحليل المختار نفسها في morph والإغلاق، والوزن من الوجه المختار', x['statuses']['analysis_selection_status'] == 'SELECTED'
+check(f'X1 {QAWL_WITNESS}: هوية التحليل المختار نفسها في morph والإغلاق، والوزن من الوجه المختار', x['statuses']['analysis_selection_status'] == 'SELECTED'
       and x['analysis_id'] and th.get('analysis_id') == x['analysis_id'] and th.get('status') == 'SELECTED' and x['pattern']['lemma_pattern'] == 'فَعَلَ', (x, th))
 a, U, F = layers('تَبَرَّكَ')
 x = a['morph'][0]

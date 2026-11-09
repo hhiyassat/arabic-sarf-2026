@@ -195,9 +195,10 @@ a = analyze(CAT, 'تَبَرَّكَ', 'auto')
 x = a['morph'][0]
 check('X1 analyze: تَبَرَّكَ مؤجَّل، ووجه القطع محفوظاً «مرخَّصاً غير مختار»، والمنافس بهويته', x['status'] == 'deferred' and
       x['peeled_face']['status'] == 'LICENSED_NOT_SELECTED' and x['whole_word_rivals'][0]['analysis_id'].startswith('A') and x.get('analysis_id') is None)
-a = analyze(CAT, 'وَقَالَتْ', 'auto')
+from tests._release import QAWL_WITNESS
+a = analyze(CAT, QAWL_WITNESS, 'auto')
 x = a['morph'][0]
-check('X2 analyze: وَقَالَتْ مقبول بوجهٍ واحد ذي هوية، بلا منافس', x['status'] == 'accepted' and x['analysis_id'] and not x.get('whole_word_rivals'))
+check(f'X2 analyze: {QAWL_WITNESS} مقبول بوجهٍ واحد ذي هوية، بلا منافس', x['status'] == 'accepted' and x['analysis_id'] and not x.get('whole_word_rivals'))
 
 # ---------- C: المستهلكون (الدفعة ٥) ----------
 from sarf.algebra import sentence_geo, Trace
@@ -217,8 +218,8 @@ check('C2 مقابل: «لَمْ يَكْتُبْ» الصنف فعلٌ مثبت
 a, U, F = layers('تَبَرَّكَ')
 check('C3 الإغلاق: «تَبَرَّكَ» لا تُغلق بجذر وجهٍ مؤجَّل، ولا وزن على مستوى الوقوع', not U[(0, 0)].closed and U[(0, 0)].Theta.get('root') is None and
       a['morph'][0].get('pattern') is None)
-a, U, F = layers('وَقَالَتْ')
-check('C4 مقابل: «وَقَالَتْ» تُغلق، وسمتها من وجهها المختار', U[(0, 1)].closed and F[(0, 1)]['pos']['v'] == 'فعل' and
+a, U, F = layers(QAWL_WITNESS)
+check(f'C4 مقابل: «{QAWL_WITNESS}» تُغلق، وسمتها من وجهها المختار', U[(0, 1)].closed and F[(0, 1)]['pos']['v'] == 'فعل' and
       a['morph'][0]['analysis_id'] and a['morph'][0]['pattern']['lemma_pattern'] == 'فَعَلَ')
 a, U, F = layers('ادَّخَرَ')
 check('C5 حدٌّ مسمّى: «ادَّخَرَ» مقبولٌ في morph (ذخر) والوحدة لا تُغلق لأن Realize في algebra بلا إدغام افتعل — مفتوحةٌ لا مغلقةٌ خطأً',
