@@ -3463,13 +3463,23 @@ def pb_conditions(Js, allJ, refs):
     nxt = next((J.id for J in allJ if min(J.O.get('location') or [(0, 0, 0)]) > last), None)
     prv = next((J.id for J in reversed(allJ) if max(J.O.get('location') or [(0, 0, 0)]) < first), None)
     no_cand = [x['ref_id'] for x in refs if not x.get('in_paragraph_candidates')]
+    # §١٠ من SARF_COMPLETION_FROM_REPORT_063: غياب جملةٍ في المدخل المحلَّل ليس دليل حدّ. فـ(ب) و(ج) لا تُستوفيان بأثر قصّ المدخل
+    # (تحليل آيةٍ وحدها): تُستوفيان بحدّ المصدر (بداية السورة/آخرها)، أو تُفحصان بجملةٍ مجاورة في المدخل، وإلا فـ«لم يُفحص»
+    src_start = first[1] == 1 and first[2] == 0
+    src_end = 'SURA_END' in end_kinds
     return dict(
-        start=dict(a=('MET: بداية السورة' if first[1] == 1 and first[2] == 0 else 'NOT_MET: ليست بداية سورة'),
-                   b=('MET: لا جملة قبلها في المدخل' if prv is None else f'NOT_MET: جملةٌ قبلها ({prv})'),
+        start=dict(a=('MET: بداية السورة' if src_start else 'NOT_MET: ليست بداية سورة، ولا قاعدة بدء خطابٍ منفّذة'),
+                   b=('MET: لا جملة قبلها: بداية السورة' if src_start else
+                      f'NOT_MET: جملةٌ قبلها ({prv})' if prv is not None else
+                      'NOT_CHECKED: ما قبلها خارج المدخل المحلَّل، وحدّ المدخل ليس حدّاً لغوياً'),
                    c=('MET: لكل إحالةٍ مرشّحٌ داخل الفقرة' if not no_cand else 'NOT_MET: إحالاتٌ بلا مرشّحٍ داخلها: ' + '، '.join(no_cand))),
-        end=dict(a=('MET: ' + '، '.join(end_kinds)) if 'SURA_END' in end_kinds else 'NOT_MET: ليس آخر السورة',
-                 b=('MET: لا جملة بعدها في المدخل' if nxt is None else f'NOT_MET: جملةٌ بعدها ({nxt})'),
-                 c=('MET: لا جملة بعدها في المدخل تحيل إليها' if nxt is None else f'NOT_CHECKED: إحالات ما بعدها ({nxt}) لا تُعيَّن')),
+        end=dict(a=('MET: ' + '، '.join(end_kinds)) if src_end else 'NOT_MET: ليس آخر السورة',
+                 b=('MET: لا جملة بعدها: آخر السورة' if src_end else
+                    f'NOT_MET: جملةٌ بعدها ({nxt})' if nxt is not None else
+                    'NOT_CHECKED: ما بعدها خارج المدخل المحلَّل، وحدّ المدخل ليس حدّاً لغوياً'),
+                 c=('MET: لا جملة بعدها تحيل إليها: آخر السورة' if src_end else
+                    f'NOT_CHECKED: إحالات ما بعدها ({nxt}) لا تُعيَّن' if nxt is not None else
+                    'NOT_CHECKED: ما بعدها خارج المدخل المحلَّل، فإحالاته لم تُفحص')),
         evidence=dict(first=list(first), last=list(last), prev=prv, next=nxt, end_kinds=end_kinds, refs_without_candidate=no_cand))
 
 
