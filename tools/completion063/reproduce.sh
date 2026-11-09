@@ -60,6 +60,7 @@ step cmp_snap python3 -s "$OUT/final/tools/snapshot_outputs.py" cmp "$OUT/m/snap
 step cmp_axes python3 -s "$T/measure_axes.py" cmp "$OUT/m/axes_base.jsonl.gz" "$OUT/m/axes_final.jsonl.gz" "$OUT/m/cmp_axes.json"
 step cmp_certs python3 -s "$T/measure_certs.py" cmp "$OUT/m/certs_base.jsonl.gz" "$OUT/m/certs_final.jsonl.gz" "$OUT/m/cmp_certs.json"
 step cmp_roots python3 -s "$T/compare_rootdumps.py" "$OUT/m/rootdump_base.jsonl" "$OUT/m/rootdump_final.jsonl" "$OUT/m/cmp_roots.json"
+step cmp_units python3 -s "$T/compare_units.py" "$OUT/m/snap_base.pkl.gz" "$OUT/m/snap_final.pkl.gz" "$DATA/quran-morphology.txt" "$OUT/m/cmp_units.json"
 # ٤ سجلّ القضايا ومصفوفة المراحل (2:282)
 step reg_base in36 final python3 -s "$T/issue_registry.py" "$OUT/base" "$OUT/m/registry_base.json"
 step reg_final in36 final python3 -s "$T/issue_registry.py" "$OUT/final" "$OUT/m/registry_final.json"
@@ -71,5 +72,6 @@ if [ -n "$V47" ]; then
   step evalroot_final_v47 in47 final env SARF_ROOT_DUMP="$OUT/m/rootdump_final_v47.jsonl" python3 -s tools/eval_root.py
   step cmp_snap_v47 python3 -s "$OUT/final/tools/snapshot_outputs.py" cmp "$OUT/m/snap_final.pkl.gz" "$OUT/m/snap_final_v47.pkl.gz" --json "$OUT/m/cmp_snap_v47.json" || true
   step cmp_roots_v47 python3 -s "$T/compare_rootdumps.py" "$OUT/m/rootdump_final.jsonl" "$OUT/m/rootdump_final_v47.jsonl" "$OUT/m/cmp_roots_v47.json"
+  step cmp_units_v47 python3 -s "$T/compare_units.py" "$OUT/m/snap_final.pkl.gz" "$OUT/m/snap_final_v47.pkl.gz" "$DATA/quran-morphology.txt" "$OUT/m/cmp_units_v47.json"
 else echo "v47 NOT_RUN: --hfn-v47 غير معطى" >> "$LOG"; fi
 touch "$OUT/REPRODUCED"; echo "تمّ: $OUT"
