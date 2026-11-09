@@ -666,7 +666,8 @@ for pv in per_verse:
         notes = ''.join(f'<br><sub>{h(n)}</sub>' for n in inf.get('notes') or [])
         mk = inf.get('mark')
         if len(tl_x) < N:
-            tl_x.append(f"{loc_:<10} {txt:<14} {inf['agreement']:<10} " + (inf['statement'] or (inf['state'][1] or '')[:70]))
+            tl_x.append(f"{loc_:<10} {txt:<14} {inf['agreement']:<10} " + (f"[{inf['ungoverned_kind']}] " if inf.get('ungoverned_kind') else '') +
+                        (inf['statement'] or (inf['state'][1] or '')[:70]))
         rl = ax.get('role') or (None, '')
         role_cell = (f"{h(rl[0])} [{h(ax.get('role_status') or '—')}]<br><sub>{h(str(rl[1] or ''))}</sub>" if rl[0] else
                      f"غير مرخَّص<br><sub>{h(str(rl[1] or ''))}</sub>") + \
@@ -692,7 +693,10 @@ for pv in per_verse:
         rows_x.append([h(loc_), f"<span class='ar'>{h(txt)}</span>", wcell, cell(inf['build']), role_cell, gov,
                        cell(inf['state']) + f'<br><sub>الأثر: {eff}</sub>', (f"{h(mk[0])}" if mk else h(inf.get('mark_kind') or '—')) +
                        f'<br><sub>{dims}</sub>', h(inf.get('cause') or (mk[1] if mk else '') or '—'),
-                       f"<b>{h(inf['agreement'])}</b>" + ''.join(f'<br>{h(c)}' for c in inf['conflicts']) + nat + notes,
+                       f"<b>{h(inf['agreement'])}</b>" + (f"<br><sub>نوعه: {h(inf['ungoverned_kind'])}" +
+                                                          (f" ← {h('، '.join(inf.get('pending_relations') or []))}" if inf.get('pending_relations') else '') +
+                                                          '</sub>' if inf.get('ungoverned_kind') else '') +
+                       ''.join(f'<br>{h(c)}' for c in inf['conflicts']) + nat + notes,
                        h(inf['statement'] or '—'), pcell, ucell])
     rows_x.append(['—', '—', '—', '—', '—', '—', '—', '—', '—',
                    f'الفاحص المستقل للإعراب: {"سليم" if not ierrs else h("؛ ".join(ierrs))} (يفحص محاور الإعراب وحدها: لا يشهد لشهادة الإغلاق ولا لاكتمال التغطية)', '', '', ''])
