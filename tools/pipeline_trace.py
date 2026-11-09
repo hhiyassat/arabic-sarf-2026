@@ -98,11 +98,12 @@ _bad = {n: st for n, st in CTX.status.items() if st[0] not in ('EXECUTED', 'NOT_
 if _bad:
     raise SystemExit('المحرّك لم يُكمل: ' + '؛ '.join(f'{n}: {st[0]} — {st[1]}' for n, st in _bad.items()))
 _AN, _LOGS, _UN, _FE = CTX.get('analysis'), CTX.get('verse_logs'), CTX.get('units'), CTX.get('features')
+_FF = CTX.get('features_final')          # السمات بعد المصالحة مع أوجه إطار الفعل (sarf.reconcile)
 per_verse = []
 for s, v, text in VERSES:
     k_ = f'{s}:{v}'
     per_verse.append(dict(s=s, v=v, text=text, ctx=None, a=_AN[k_], snaps=_LOGS[k_]['snaps'], logs=_LOGS[k_]['logs'],
-                          units=_UN[k_]['units'], S=_UN[k_]['S'], F=_FE[k_], key=k_))
+                          units=_UN[k_]['units'], S=_UN[k_]['S'], F=_FE[k_], FF=_FF[k_], key=k_))
 _SENT = CTX.get('sentences')
 LT, lstats, cross = _SENT['LT'], _SENT['stats'], _SENT['cross']
 COND, RELS = CTX.get('legacy')['cond'], CTX.get('legacy')['rel']
@@ -317,6 +318,10 @@ for pv in per_verse:
         tst = fr.get('tense', {}).get('st', '—')
         sst = fr.get('subject', {}).get('st', '—')
         vst = fr.get('voice', {}).get('st', '—')
+        ff = pv['FF'].get((g['word_index'], ui), {})
+        over = [e for f_ in ('tense', 'voice', 'subject') for e in ((ff.get(f_) or {}).get('excluded') or [])]
+        if over:
+            tst = tst + '؛ ' + h(f"مخرج مرحلي تجاوزه الدليل اللاحق: مستبعدٌ في {over[0]['relation_id'].split(':')[3]} ({over[0]['face'] or 'لا وجه حيّ'})")
         rows.append([loc(pv, g['word_index']), f"<span class='ar'>{h(txt)}</span>", f"{esc(g.get('kind'))} <span class='mut'>({tst})</span>",
                      f"{esc(g.get('voice'))} <span class='mut'>({vst})</span>",
                      f"<span class='ar'>{h(' أو '.join(g.get('pronouns') or []))}</span> <span class='mut'>({sst})</span>",
@@ -445,18 +450,23 @@ def fv(v):
 
 rows, tl = [], []
 for pv in per_verse:
-    for (wi, ui), rec in sorted(pv['F'].items()):
-        shown = [(LBL.get(f, f), r) for f, r in rec.items() if f in LBL and r['st'] in ('مثبت', 'مرشّح')]
+    for (wi, ui), rec in sorted(pv['FF'].items()):
+        shown = [(LBL.get(f, f), r) for f, r in rec.items() if f in LBL and isinstance(r, dict) and r.get('st') in ('مثبت', 'مرشّح', 'مؤجَّل') and
+                 (r.get('st') != 'مؤجَّل' or r.get('excluded'))]
         cells = '؛ '.join(f"{n}: {h(fv(r['v']))} <span class='st {'p' if r['st'] == 'مثبت' else 'c'}'>{r['st']}</span>" +
                          (f" <span class='mut'>[البدائل: {h('، '.join(fv(x) for x in r['alt']))}]</span>"
-                          if r['st'] == 'مرشّح' and r.get('alt') else '') for n, r in shown)
+                          if r['st'] == 'مرشّح' and r.get('alt') else '') +
+                         (f" <span class='mut'>[مستبعد بأوجه الإطار: " + h('؛ '.join(f"{fv(e['value'])} ({e['face'] or 'لا وجه حيّ'}): {e['reason'][:80]}"
+                                                                        for e in r['excluded'])) +
+                          f"؛ وكانت في المرحلة ١٣: {h(fv(r['stage13']['v']))}]</span>" if r.get('excluded') else '') for n, r in shown)
         rows.append([loc(pv, wi), f"<span class='ar'>{h(pv['units'][(wi, ui)].O['text'])}</span>", cells or '<span class="mut">مؤجَّل كله</span>'])
         if len(tl) < N:
             tl.append(f"{loc(pv, wi):<10} {pv['units'][(wi, ui)].O['text']:<16} " +
                       '؛ '.join(f"{n}={fv(r['v'])}({r['st'][0]})" for n, r in shown if n != 'الصنف' or True)[:150])
 section(13, 'السمات الصرفية', 'لكل سمةٍ حالتها: مثبت أو مرشّح (يُعرضان هنا)، والمؤجَّل وغير المنطبق في tools/features_verse.py (sarf.features). '
         '«ضمير الصيغة» سمة الفعل لا فاعل الجملة؛ و«البناء الصرفي» قالبٌ من أبنية سيبويه لا نوع اشتقاق؛ و«المدلول» مدخلٌ معجميٌّ بمعرّفه في HFN '
-        'تطابقه الكلمة، لا اختيارٌ لمعناه السياقي', rows,
+        'تطابقه الكلمة، لا اختيارٌ لمعناه السياقي. والسمات هنا بعد المصالحة مع أوجه إطار الفعل (sarf.reconcile): ما حمله وجهٌ ممنوع مستبعدٌ بسببه، '
+        'ومخرج المرحلة ١٣ قبلها محفوظٌ بجانبه', rows,
         ['الموضع', 'الوحدة', 'السمات'], tl)
 
 # ١٤ الجملة و١٥ الوحدة الخطابية

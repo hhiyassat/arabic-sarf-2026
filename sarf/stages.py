@@ -187,6 +187,16 @@ def p_relations(ctx, d):
     return dict(records=out)
 
 
+def p_face_reconciliation(ctx, d):
+    from .reconcile import reconcile_features, check_consistency
+    out, log, errs = {}, {}, {}
+    for k in d['features']:
+        recs = d['records'][k]['records']
+        out[k], log[k] = reconcile_features(d['features'][k], recs)
+        errs[k] = check_consistency(out[k], recs)
+    return dict(features_final=out, reconciliation=dict(log=log, errors=errs))
+
+
 def p_evidence_audit(ctx, d):
     from .engine import evidence_cycles
     recs = [r for v in d['records'].values() for r in v['records']]
@@ -258,6 +268,9 @@ STAGES = [
            {'records': _sch_records}, doc='الإسناد والمعمولات والعلاقات والتعلّق، ومحاور الإعراب',
            producers=('sarf.relations.verse_relations',),
            known_gaps=('التوابع والمكمّلات (B03)', 'قواعد الأدوات PC.* (B05)')),
+    _stage('face_reconciliation', p_face_reconciliation, ('features', 'records'), ('features_final', 'reconciliation'), (9, 10),
+           doc='وحدة الحقيقة بين المراحل: السمات النهائية من أوجه إطار الفعل الحيّة، ومخرج المرحلة ١٣ موسومٌ بما تجاوزه',
+           producers=('sarf.reconcile.reconcile_features', 'sarf.reconcile.check_consistency')),
     _stage('evidence_audit', p_evidence_audit, ('records',), ('evidence_audit',), (19,), doc='كشف دورات المقدّمات',
            producers=('sarf.engine.evidence_cycles',)),
     _stage('certificates', p_certificates, ('sentences', 'records', 'evidence_audit'), ('certificates',), (19,),
