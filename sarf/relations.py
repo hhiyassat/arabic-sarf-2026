@@ -447,6 +447,18 @@ def _build_vowel(t):
     return next((v for c, v in BUILD_VOWEL.items() if tl and c in tl[-1][1]), None)
 
 
+def _niswa(t):
+    """المضارع المسند إلى نون النسوة المكتوبة: ضمير الصيغة جمع مؤنث (غائب أو مخاطب)، وآخره نون، وأوله حرف مضارعة ي أو ت.
+    مبنيٌّ على السكون، فلا علامة إعراب على آخره (FA02-G10/G11)"""
+    if t.pos != 'فعل':
+        return False
+    tl = letters(t.text)
+    sv = (t.feats.get('subject') or {}).get('v')
+    sv = sv if isinstance(sv, dict) else {}
+    return bool(tl) and sv.get('number') == 'plural' and sv.get('gender') == 'fem' and sv.get('person') in (2, 3) and \
+        tl[-1][0] == 'ن' and tl[0][0] in 'يت'
+
+
 def _written_mark(t, nxt=None):
     """العلامة المكتوبة على آخر الوحدة مقروءةً بصنفها (لا بالحركة وحدها) → (اسم العلامة، الحالات التي تدلّ عليها، الدليل)؛
     والحالات frozenset، وفارغةٌ إن لم تدلّ العلامة على حالةٍ في هذا الصنف"""
@@ -461,7 +473,7 @@ def _written_mark(t, nxt=None):
         sv = sv if isinstance(sv, dict) else {}
         # FA02 (تقييم V-RAF1): نون النسوة ليست من الأفعال الخمسة؛ والمضارع المسند إليها مبنيٌّ على السكون، فلا علامة إعرابٍ على آخره
         niswa = sv.get('number') == 'plural' and sv.get('gender') == 'fem' and sv.get('person') in (2, 3)
-        if niswa and L == 'ن' and tl[0][0] in 'يت':
+        if _niswa(t):
             return 'نون النسوة', frozenset(), f"المضارع المسند إلى نون النسوة ({_pron_ar(sv)}) مبنيٌّ على السكون: لا علامة إعراب"
         five = not niswa and (sv.get('person') in (2, 3) and sv.get('number') in ('plural', 'dual') or sv.get('person') == 2 and sv.get('number') == 'singular' and sv.get('gender') == 'fem')
         five_ev = f"ضمير الصيغة ({_pron_ar(sv)})"
@@ -615,6 +627,8 @@ def _inflection(t, nxt=None):
             out['build'] = ('مبني', 'فعل أمر: مبني على ما يُجزم به مضارعه')
             out['agreement'] = 'MABNI'
             return out
+        elif _niswa(t):
+            out['build'] = ('مبني', 'فعلٌ مضارع مسندٌ إلى نون النسوة المكتوبة: مبني على السكون')
         else:
             out['build'] = ('معرب', 'فعلٌ مضارع (الزمن مثبت): معرب، ولا نون نسوة ولا توكيد مكتوبة في هذه القراءة')
     elif t.divine or t.golden:
@@ -710,9 +724,10 @@ def _inflection(t, nxt=None):
                    'nasikh': f'خبراً لـ«{src.get("of")}»', 'idafa': f'مضافاً إليه لـ«{src.get("of")}»'}.get(src['src'], '')
     g = out['governor']
     if out['build'][0] == 'مبني':
-        kw = MCAT_KW.get('attached_pronoun' if t.enclitic else t.mcat, 'اسم')
-        # حركة البناء تُذكر للضمير والموصول المختصّ وحدهما: آخر الوحدة في غيرهما قد يكون لاحقةً لا آخر المبني (ذَٰلِكُمْ: الميم حرف خطاب)
-        bv = _build_vowel(t) if kw.startswith('ضمير') or t.text in REL_AGR else None
+        kw = 'فعل مضارع' if t.pos == 'فعل' else MCAT_KW.get('attached_pronoun' if t.enclitic else t.mcat, 'اسم')
+        # حركة البناء تُذكر للضمير والموصول المختصّ وحدهما: آخر الوحدة في غيرهما قد يكون لاحقةً لا آخر المبني (ذَٰلِكُمْ: الميم حرف خطاب)؛
+        # والمضارع المسند إلى نون النسوة مبنيٌّ على السكون (الفتحة على النون حركة الضمير)
+        bv = 'السكون لاتصاله بنون النسوة' if t.pos == 'فعل' else _build_vowel(t) if kw.startswith('ضمير') or t.text in REL_AGR else None
         out['state'] = (f'في محلّ {cap}', f'مبني، ومحلّه ' + (f'بالعامل {gov_txt}' if g.get('kind') == 'عامل' or not g.get('role_name')
                                                             else f'بدوره «{g["role_name"]}» في علاقةٍ مرخَّصة ({g.get("role_rule")})'))
         out['mark_kind'] = 'محلّي'

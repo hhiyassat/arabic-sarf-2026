@@ -465,6 +465,9 @@ def relate(segs, cands):
                     r['observed'] = 'جزم (حذف حرف العلة)' if jf['rule'] == 'M01.2' else 'نصب أو جزم'
                     r['consistent'] = None
                     r['note'] = f"{jf['rule']}: {jf['why']}؛ والأوجه: {'، '.join(jf['faces'])}"
+                elif m['kind'] == 'mudari' and m.get('suffix') == 'نون النسوة' and c['group'] in VERB_CHECKED and r['expected']:
+                    # المسند إلى نون النسوة مبني: لا علامة على آخره تُقرأ أثراً، والأثر محلّي
+                    r.update(observed='محلاً', consistent=None, note='المضارع المسند إلى نون النسوة مبنيٌّ على السكون')
                 elif m['kind'] == 'mudari' and c['group'] in VERB_CHECKED and r['expected']:
                     r['observed'] = m['mood']
                     if m['mood'] == 'حذف النون':

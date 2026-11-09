@@ -30,6 +30,8 @@ MABNI_KIND = {'relative': 'اسم موصول مبني', 'attached_pronoun': 'ض�
 def _mabni_kind(segs, r):
     """نوع المعمول المبني من ملف المبنيات (الَّذِي: اسم موصول، هِ: ضمير متصل)، لا «ضمير» على الإطلاق"""
     t = r.get('target') or {}
+    if t.get('pos') == 'verb':
+        return 'فعلٌ مضارع مسندٌ إلى نون النسوة مبنيٌّ على السكون'
     try:
         sl = segs[t['word_index']]['slots'][t['slot']]
     except (KeyError, IndexError, TypeError):

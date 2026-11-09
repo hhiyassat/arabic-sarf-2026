@@ -206,5 +206,20 @@ check('G10.2 «يُؤْذَيْنَ» (33:59): المسند إلى نون الن
 m244, m2113 = _mood('2:44'), _mood('2:113')
 check('G10.3 مقابل: «تَنْسَوْنَ» (2:44، واو الجماعة) و«يَحْكُمُ» (2:113، ميمٌ أصلية بلا إدغامٍ عبر الحدّ) باقيان مرفوعين لتجرّدهما',
       'تَنْسَوْنَ' in m244 and 'يَحْكُمُ' in m2113, (m244, m2113))
+# §G11 (قياس G10 على المصحف): تسعة أفعالٍ مسندةٍ إلى نون النسوة كانت «منصوبة وعلامة نصبها الفتحة» — والفتحة حركة الضمير
+from sarf.affix import stem_info
+def _inf(ref, txt):
+    V_ = run_ref(ref, None, ['relations_final']).get('records')[ref]
+    u = next(u for u, loc, t in V_['tokens'] if t == txt)
+    return V_['axes'][u].get('inflection') or {}
+i2222, i3372 = _inf('2:222', 'يَطْهُرْنَ'), _inf('33:72', 'يَحْمِلْنَ')
+check('G11.1 «يَطْهُرْنَ» (2:222) و«يَحْمِلْنَ» (33:72): مضارعٌ مبنيٌّ على السكون في محلّ نصب، والإعراب محلّي لا «الفتحة الظاهرة»',
+      all(i['build'][0] == 'مبني' and i['mark_kind'] == 'محلّي' and i['state'][0] == 'في محلّ نصب' and i['agreement'] == 'AGREE'
+          and 'نون النسوة' in i['statement'] and 'الفتحة' not in i['statement'] for i in (i2222, i3372)), (i2222.get('statement'), i3372.get('statement')))
+check('G11.2 المرحلة ١١: أثر «أَنْ» في «يَحْمِلْنَ» محلّي (observed=محلاً)، لا «نصب» مقروءاً من الفتحة',
+      i3372['governor'].get('observed') == 'محلاً' and i3372['governor'].get('level') == 'محلّي', i3372['governor'])
+check('G11.3 stem_info: نون النسوة بعد ساكن مبنيّ؛ ومقابلٌ: «يَكُونَ» و«يَسْكُنَ» (النون لام الفعل) منصوبان بالفتحة',
+      stem_info('يَطْهُرْنَ')['mood'] == 'مبني' and stem_info('يَكُونَ')['mood'] != 'مبني' and stem_info('يَسْكُنَ')['mood'] == 'نصب',
+      (stem_info('يَطْهُرْنَ'), stem_info('يَكُونَ'), stem_info('يَسْكُنَ')))
 print('ALL OK' if not FAIL else f'FAILED {len(FAIL)}: {FAIL}')
 sys.exit(1 if FAIL else 0)
