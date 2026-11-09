@@ -59,6 +59,7 @@ def brief(d, keys):
 meas = dict(
     mandate='SARF_COMPLETION_FROM_REPORT_063', base_commit=BASE, final_commit=HEAD, branch='completion-from-063',
     default_hfn_release='release_v36', push='NO', merge='NO',
+    clean_run_commit=next((l.split()[3] for l in open(os.path.join(REPRO, 'reproduce_steps.log'), encoding='utf-8') if l.startswith('base ')), None),
     final=dict(
         snapshot=brief(fin.get('cmp_snap', {}), ('verses', 'violations')),
         units_vs_qac=brief(fin.get('cmp_units', {}), ('before', 'after', 'transitions', 'correct_to_not_correct', 'not_correct_to_correct')),
@@ -118,9 +119,13 @@ def manifest():
             rel = os.path.relpath(p, OUT)
             if rel != 'MANIFEST.json':
                 files[rel] = dict(sha256=sha(p), bytes=os.path.getsize(p))
-    json.dump(dict(mandate='SARF_COMPLETION_FROM_REPORT_063', base_commit=BASE, final_commit=HEAD, files=files),
+    json.dump(dict(mandate='SARF_COMPLETION_FROM_REPORT_063', base_commit=BASE, final_commit=HEAD, clean_run_commit=meas['clean_run_commit'],
+                   clean_run_note='التشغيل النظيف للتحليل عند clean_run_commit (آخر التزامٍ يمسّ sarf/ أو tests/ أو الصفحة)؛ وما بعده أدوات تسليمٍ '
+                                  'وإعادة إنتاج في tools/completion063؛ وأُكمل التشغيل بوضع RESUME بعد إصلاح خروج cmp_snap', files=files),
               open(os.path.join(OUT, 'MANIFEST.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 
 
 manifest()
+if len(sys.argv) > 6 and sys.argv[6] == '--manifest-only':
+    pass
 print(json.dumps(dict(out=OUT, head=HEAD, files=sum(len(f) for _, _, f in os.walk(OUT))), ensure_ascii=False))

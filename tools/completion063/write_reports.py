@@ -154,7 +154,7 @@ open(os.path.join(OUT, 'technical_report.md'), 'w', encoding='utf-8').write(tech
 cust = f"""# تقرير صاحب النظرية — إكمال التحليل من صفحة 063
 
 **الخلاصة:** سبع دفعاتٍ محلية على الفرع `completion-from-063` (حتى `{H}`)، كلٌّ مقيسةٌ على المصحف كله في نسخةٍ مجمّدة، وأعيد القياس كله من نسختين نظيفتين.
-لا دفع ولا دمج، والإصدار الافتراضي باقٍ v36.
+لا دفع ولا دمج، والإصدار الافتراضي باقٍ v36. التشغيل النظيف للتحليل عند `{M.get('clean_run_commit', '2de9975')[:7]}` (آخر التزامٍ يمسّ التحليل أو الصفحة)، وما بعده أدوات تسليم.
 
 - **الوحدات المغلقة بجذر QAC نفسه** (للقياس وحده): {n(u.get('not_correct_to_correct'))} وحدةً جديدة، و**صحيحٌ صار غير صحيح: {n(u.get('correct_to_not_correct'))}**.
 - **«دُعُوا»**: لم يعد يُعرض أمراً مبنياً للمعلوم؛ السمات النهائية من وجه الماضي المجهول الحيّ، والأمر مستبعدٌ بمانعه ومحفوظ.
@@ -163,6 +163,9 @@ cust = f"""# تقرير صاحب النظرية — إكمال التحليل م
 - **انتقالان خاطئان كشفهما القياس فأُصلحا قبل التسليم**: 7:70 (مفعولٌ من وراء فعلٍ آخر)، و8 إغلاقاتٍ محلية بمرشّح.
 - **انتقالٌ معلن**: {n(amr_none)} موضعاً (أكثرها «كُلُوا/خُذُوا») من «أمر (مرشّح)» إلى «غير محسوم»، لأن وجه الماضي المجهول لا يمنعه مانعٌ مثبت.
 - **v47**: الشيفرة تقرأه سليماً؛ والفرق الباقي التباسٌ جاء به المورد (قول/قيل في «قالوا»، طوف/طيف…)، فالقرار لكم.
+
+## ما انتقل من مثبتٍ إلى غيره (معلَن)
+""" + '\n'.join(f'- {x}' for x in SECTIONS['REGRESSIONS_DECLARED']) + """
 
 ## ما ينتظر حكمكم
 """ + '\n'.join(f'- {x}' for x in SECTIONS['RESOURCE_OR_OWNER_BLOCKERS'][:9]) + f"""
@@ -197,3 +200,11 @@ table{{border-collapse:collapse;width:100%;font-size:13px;margin:8px 0}}td,th{{b
 </body></html>"""
 open(os.path.join(OUT, 'audit.html'), 'w', encoding='utf-8').write(audit)
 print('written', OUT)
+# MANIFEST بعد التقارير: بصمة كل ملفٍّ في التسليم
+import hashlib
+_m = J('MANIFEST.json')
+_m['files'] = {os.path.relpath(os.path.join(r, f), OUT): dict(sha256=hashlib.sha256(open(os.path.join(r, f), 'rb').read()).hexdigest(),
+                                                           bytes=os.path.getsize(os.path.join(r, f)))
+               for r, _, fs in os.walk(OUT) for f in fs if os.path.relpath(os.path.join(r, f), OUT) != 'MANIFEST.json'}
+json.dump(_m, open(os.path.join(OUT, 'MANIFEST.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+print('manifest', len(_m['files']))
