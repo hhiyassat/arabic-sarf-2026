@@ -33,5 +33,20 @@ check('P03 الالتزام يسمّي مقياسه: تغطية أدوارٍ م�
 lic_place = [x for J in Js for x in (J.O.get('placed_by_legacy_bond_only') or [])]
 check('P04 كل وقوعٍ وُضع بالرابط القديم وحده مسجَّلٌ بموضعه ووحداته ونوع رابطه', lic_place and all(x['units'] and x['bonds'] and x['location'] for x in lic_place),
       lic_place[:2])
+# §٧ حدّ الإطار عند همزة الاستفهام قبل حرف جرّ (14:10 «قَالَتۡ رُسُلُهُمۡ أَفِي ٱللَّهِ شَكٌّ»)
+from sarf.algebra import clause_start
+from sarf.analyze import analyze
+from sarf.catalog import Catalog
+C14 = run_ref('14:10')
+a14 = C14.get('analysis')['14:10']
+R14 = C14.get('records')['14:10']['records']
+check('P05 «أَفِي» تبدأ كلاماً له الصدارة (استفهام)', (clause_start(a14, 2) or (None,))[0] == 'استفهام', clause_start(a14, 2))
+s14 = [r for r in R14 if r['type'] == 'SUBJECT' and r['texts'].get('verb') == 'قَالَتْ']
+check('P06 فاعل «قَالَتْ» «رُسُلُ» مرخَّص، و«شَكٌّ» (في جملة الاستفهام) لا ينافسه', s14 and s14[0]['status'] == 'LICENSED'
+      and 'شَكٌّ' not in str(s14[0]['texts']), [(r['status'], r['texts']) for r in s14])
+CAT = Catalog([os.path.join(ROOT, 'operators_catalog.jsonl'), os.path.join(ROOT, 'operators_catalog_split_vocalized.csv')])
+for w in ('أَمِنَ', 'أَبِ'):
+    check(f'P07 مقابل: «{w}» لا يُعدّ استفهاماً بهذه القاعدة (فعلٌ بحركته، أو حرفٌ واحد خارج الجرد المعتمد)',
+          clause_start(analyze(CAT, w), 0) is None, clause_start(analyze(CAT, w), 0))
 print('ALL OK' if not FAIL else f'FAILED {len(FAIL)}: {FAIL}')
 sys.exit(1 if FAIL else 0)

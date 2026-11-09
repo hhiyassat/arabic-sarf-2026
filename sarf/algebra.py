@@ -1338,6 +1338,13 @@ def clause_start(a, wi):
             return ('استفهام', conj)
         if L1 == 'ل' and FATHA in m1 and SHADDA not in m1 and toks[2][0] == 'ا' and len(toks) <= 4:
             return ('تنبيه', conj)
+    # همزة الاستفهام قبل حرف جرٍّ تامّ الكلمة من الجرد المغلق JARR_V (أَفِي ٱللَّهِ شَكٌّ، أَمِنْ…، أَعَلَى…): الكلام بعدها له الصدارة
+    # (SARF_FINAL_COMPLETION_AND_ACCEPTANCE_01 §٧، 14:10). والحروف ذات الحرف الواحد (بِ، لِ، كَ) خارجها: تلتبس ببدء الجذع
+    if L0 in 'أء' and m0 == {FATHA} and len(toks) >= 3:
+        rest_h = rest[len(toks[0][0]) + sum(1 for _ in toks[0][1]):]
+        # الصيغة المكتوبة نفسها حرفاً وحركة (بلا حركة التقاء الساكنين التي يقبلها is_form): «أَمِنَ» محتملٌ للفعل، فلا يُحكم به هنا
+        if any(vtoks(rest_h) == vtoks(x) for x in JARR_V if len(letters(x)) >= 2):
+            return ('استفهام', conj)
     if L0 == 'ي' and len(toks) > 2 and (DAGGER_ALIF in m0 or toks[1][0] == 'ا'):
         return ('نداء', conj)
     return None
