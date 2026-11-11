@@ -1,5 +1,5 @@
 """verify_package.py — تحقق مستقل من حزمة V48C03 (SARF_HFN_V48_TARGETED_REPAIR_AND_CLOSURE_03 §٦).
-يُشغَّل من داخل الحزمة: python3 -I verify_package.py   (واختيارياً HFN_V48_DIR=<release_v48> لفحص العقد مقابل CSV)
+يُشغَّل من داخل الحزمة: python3 -I verify_package.py   (واختيارياً HFN_V48_DIR=<release_v48> وSARF_ROOT=<نسخة SARF> لفحص العقد كاملاً مقابل CSV)
 
 لا يكتفي ببصمات الملفات ولا بالملخّصات:
  V01 بصمة كل ملفٍّ في MANIFEST.json، ولا ملفّ خارجه.
@@ -192,7 +192,8 @@ check(f'V07a عقد v3 على كل إرفاقٍ في C ({n_att}): صفر مخا�
 check('V07b صفر مخالفات هوية المحرّك، وصفر تسرّب، والسياق بعد الإرفاق متطابق في 114', eng == 0 and leak == 0 and not post_bad, (eng, leak, post_bad[:3]))
 check('V07c تقرير العقد يطابق إعادة العدّ (الإرفاقات وصفر مخالفات)', rep['attachments'] == n_att and rep['field_violations'] == 0 and rep['all_ok'],
       (rep['attachments'], n_att))
-if os.environ.get('HFN_V48_DIR'):
+if os.environ.get('HFN_V48_DIR') and os.environ.get('SARF_ROOT'):
+    sys.path.insert(0, os.environ['SARF_ROOT'])
     sys.path.insert(0, os.path.join(D, 'repro'))
     try:
         import sidecar_contract as K
