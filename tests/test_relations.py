@@ -442,8 +442,10 @@ for tid, inp, exp, fn in [
         ('T36', 'وهو عند الله عظيم (24:15)', 'A02 موجب ثانٍ: ظرفٌ قبل الخبر', t36)]:
     case(tid, inp, exp, fn)
 
-os.makedirs(H + 'reports/nominal_nucleus_02', exist_ok=True)
-json.dump(RESULTS, open(H + 'reports/nominal_nucleus_02/tests.json', 'w', encoding='utf-8'), ensure_ascii=False, indent=1, default=str)
+# مجلّد النتائج: SARF_TEST_OUT إن عيّنه المشغّل (فلا يُكتب فوق تعديل المالك في reports/)، وإلا المسار المعتاد (V48C02 §١١)
+_RD = os.path.join(os.environ['SARF_TEST_OUT'], 'nominal_nucleus_02') if os.environ.get('SARF_TEST_OUT') else H + 'reports/nominal_nucleus_02'
+os.makedirs(_RD, exist_ok=True)
+json.dump(RESULTS, open(os.path.join(_RD, 'tests.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1, default=str)
 n = {k: sum(r['result'] == k for r in RESULTS) for k in ('PASS', 'DIFFERS', 'FAIL')}
 print(n)
 print('ALL OK' if not n['FAIL'] else f'FAILED {n["FAIL"]}')

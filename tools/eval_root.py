@@ -97,7 +97,7 @@ for l in open(H + 'data/quran_hafs.tsv', encoding='utf-8'):
 for k, n in sorted(C.items()): print(k, n)
 # المقاييس تُحفظ ليعرضها تقرير HTML (reports/quran_metrics.json)
 if (lo, hi) == (1, 114):
-    P = H + 'reports/quran_metrics.json'
+    P = os.environ.get('SARF_METRICS_OUT') or H + 'reports/quran_metrics.json'   # V48C02: مسارٌ للجولة بدل ملفّ المالك
     M = json.load(open(P, encoding='utf-8')) if os.path.exists(P) else {}
     M['root'] = dict(C)
     json.dump(M, open(P, 'w', encoding='utf-8'), ensure_ascii=False, indent=1, sort_keys=True)

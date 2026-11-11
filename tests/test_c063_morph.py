@@ -47,7 +47,8 @@ _H = _hfn()
 v47 = _H.path if _H.release == 'release_v47' else os.environ.get('SARF_HFN_V47', '')   # المحمَّل إن كان المستهدف، لا مسار بيئةٍ بعينها
 if v47 and os.path.exists(os.path.join(v47, 'events.csv')):
     import subprocess, json
-    env = dict(os.environ, SARF_HFN=v47, SARF_HFN_RELEASE_OK='release_v47', PYTHONHASHSEED='0')
+    env = {k: v for k, v in os.environ.items() if k not in ('SARF_HFN_TARGET_CONFIG', 'SARF_HFN_EXPERIMENTAL_OK')}   # V48C02: لا يرث الطفل إعداد v48 التجريبي
+    env.update(SARF_HFN=v47, SARF_HFN_RELEASE_OK='release_v47', PYTHONHASHSEED='0')
     code = (f"import sys,json\nsys.path.insert(0,{ROOT!r})\nfrom sarf.stages import run_ref\nout={{}}\nfor ref,k in (('2:34',(1,0)),('2:11',(7,0))):\n"
             "    G=run_ref(ref).get('units')[ref]['units'][k]; out[ref]=[G.closed, G.Theta.get('R'), G.O.get('deferred')]\nprint(json.dumps(out,ensure_ascii=False))")
     r = subprocess.run([sys.executable, '-P', '-s', '-c', code], env=env, capture_output=True, text=True, cwd=ROOT)

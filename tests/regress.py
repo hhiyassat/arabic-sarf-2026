@@ -42,6 +42,11 @@ def lines(verse):
 # في tests/golden_<الإصدار>/DIFF_FROM_v36.md (SARF_FINAL_COMPLETION_AND_ACCEPTANCE_01 §٣)
 from sarf.root import hfn as _hfn
 GOLDEN = 'golden' if _hfn().release == 'release_v36' else 'golden_' + _hfn().release
+# مقارنةٌ معلنة بنسخة إصدارٍ آخر (V48C02 §١١): SARF_REGRESS_AGAINST=release_v47 حين تكون بيانات التحليل المستهلكة متطابقة؛
+# ولا تُنشأ نسخةٌ ذهبية جديدة إلا بـ --update صريح، فغيابها «لم يُشغَّل» (رمز 2) لا كتابةٌ صامتة
+if os.environ.get('SARF_REGRESS_AGAINST'):
+    GOLDEN = 'golden_' + os.environ['SARF_REGRESS_AGAINST']
+    print(f'COMPARE_AGAINST {GOLDEN} (معلن: SARF_REGRESS_AGAINST؛ الإصدار المحمَّل {_hfn().release})')
 
 
 def main():
@@ -58,7 +63,10 @@ def main():
         for v in open(fn, encoding='utf-8'):
             if v.strip():
                 now += lines(v.strip())
-        if args.update or not os.path.exists(gold):
+        if not args.update and not os.path.exists(gold):
+            print(f'NOT_RUN: لا نسخة ذهبية {gold} للإصدار المحمَّل؛ لا تُنشأ إلا بـ --update صريح')
+            sys.exit(2)
+        if args.update:
             open(gold, 'w', encoding='utf-8').write('\n'.join(now) + '\n')
             print(f'حُفظ {gold}')
             continue
