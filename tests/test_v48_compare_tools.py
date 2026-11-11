@@ -16,7 +16,8 @@ os.environ.update(SARF_HFN=V48, SARF_HFN_TARGET_CONFIG='config/hfn_target_v48_ex
 sys.path.insert(0, H); os.chdir(H)
 sys.path.insert(0, os.path.join(H, 'tools', 'v48c2'))
 import engine_dump2 as D
-import ajnas_sidecar as S
+sys.path.insert(0, os.path.join(H, 'tools', 'v48c3'))
+import ajnas_sidecar as S   # الإرفاق الحيّ: عقد v3 (V48C03)
 from sarf.stages import run
 from sarf import quran_source
 FAIL, N = [], [0]
@@ -86,9 +87,9 @@ sc = S.attach(C)
 P9, S9, T9 = D.fingerprint(C)
 check('T09 الإرفاق المرشّح لا يغيّر شيئاً في السياق (كل البصمات والجمل والاستقرار)', P9 == P0 and S9 == S0 and T9 == T0)
 links = [l for occ in sc['sidecar'].values() for r in occ for l in (r.get('event_side') or {}).get('links') or []]
-check('T10 كل رابطٍ مرفق: CANDIDATE، وis_fact=False، وحكم المالك غير صادر، والدور «دلالي» لا نحوي، وقيود المطابقة محفوظة',
-      len(links) > 0 and all(l['status'] == 'CANDIDATE' and l['is_fact'] == 'False' and l['owner_ruling'].startswith('NONE') and 'semantic_role' in l
-          and 'role' not in l and l['match_constraints']['event_id'] == l['event_id'] for l in links), len(links))
+check('T10 كل رابطٍ مرفق: CANDIDATE، وis_fact قيمةٌ منطقية false (V48C03: لا نصّ «False»)، وحكم المالك غير صادر، والدور «دلالي» لا نحوي، وقيود المطابقة محفوظة',
+      len(links) > 0 and all(l['status'] == 'CANDIDATE' and l['is_fact'] is False and l.get('is_fact_raw') == 'False' and l['owner_ruling'].startswith('NONE') and 'semantic_role' in l
+          and 'role' not in l and l['match_constraints']['event_id']['value'] == l['event_id'] for l in links), len(links))
 check('T11 فاحص التسرّب على السياق السليم: لا أثر للروابط في منتجات المحرّك', not S.leak_scan(C, D.PRODUCTS))
 # T12 إفساد: رابطٌ مرشّح يُستعمل حقيقةً في شهادة
 C12 = copy.deepcopy(C)
