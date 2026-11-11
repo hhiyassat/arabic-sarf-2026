@@ -23,9 +23,14 @@ class AjnasIdentityError(RuntimeError):
 
 
 def _api(api_dir):
+    """يستورد واجهة HFN من مجلّدها المثبّت دون كتابة __pycache__ فيه (V50C01: المورد المجمّد لا يُكتب فيه)"""
     if api_dir not in sys.path:
         sys.path.insert(0, api_dir)
-    import hfn_api
+    old, sys.dont_write_bytecode = sys.dont_write_bytecode, True
+    try:
+        import hfn_api
+    finally:
+        sys.dont_write_bytecode = old
     return hfn_api
 
 
