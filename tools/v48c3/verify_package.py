@@ -11,7 +11,8 @@
  V06 المقارنة يعاد حسابها من التفريغات: B=C في كل بصمة منتَج وكل مفتاح وكل جملة واستقرار؛ وA=B كذلك؛ وتُقابَل بملخّصات transitions/.
  V07 الإرفاق في C: عقد v3 لكل إرفاق (هوية تحليلٍ من المحرّك، وقيودٌ بمصادرها، وis_fact منطقية false، وCANDIDATE، ولا مسحوب)،
      وهوية التحليل لا تُشترك بين تحليلين، وصفر مخالفات هوية المحرّك، وصفر تسرّب، والسياق بعد الإرفاق متطابق.
- V08 ملخّص العزل يُعاد حسابه من سجلات الفتح الخام، وصفر مخالفات."""
+ V08 (V48C04) العزل من كل سجلٍّ خام: البنية، والمسار المحلول ضمن جذر الإصدار المتوقَّع (الجذور من هوية التشغيل في التفريغات)، والعبور الرمزي،
+     والغرض، ونسبة العمليات إلى خطواتها؛ ثم يُقابَل الملخّص بإعادة الحساب. (كان يعدّ السطور ويثق بـ violations=0 المحفوظة)"""
 import base64, gzip, hashlib, json, os, re, sys, zlib
 sys.dont_write_bytecode = True   # لا يكتب المدقّق في الحزمة شيئاً (ولا __pycache__ حين يستورد أداة العقد)
 from collections import Counter
@@ -204,13 +205,108 @@ if os.environ.get('HFN_V48_DIR') and os.environ.get('SARF_ROOT'):
     except ImportError as e:
         check('V07d (مع CSV) أداة العقد متاحة', False, e)
 
-# V08
+# V08 (V48C04): العزل يُعاد حسابه من كل سجلّ فتحٍ خام، لا من الملخّص ولا من عدّ السطور وحده
+# الجذور المثبّتة من هوية التشغيل المسجّلة في التفريغات نفسها (hfn.path/release/manifest لكل سورة)، لا من اسم الملف ولا من نصّ الملخّص،
+# ولا يُشترط وجود هذه المسارات على جهاز المراجع: تُقارن نصوص المسارات المطلقة المسجّلة.
+V08_PURPOSE = [(('sarf/hfn_pin.py', '_sha'), 'HASH_VERIFY'), (('sarf/hfn_pin.py', 'verify_release'), 'MANIFEST_READ'), (('sarf/root.py', '__init__'), None),
+               (('sarf/cells.py', 'lex_index'), 'LOAD_ROWS'), (('sarf/analyze_cache.py', None), 'HASH_VERIFY'), (('hfn_api.py', '_sha'), 'HASH_VERIFY'),
+               (('hfn_api.py', '__init__'), 'MANIFEST_READ'), (('hfn_api.py', '_rows'), 'CONSUMER_LOAD'),
+               (('v48c3/sidecar_contract.py', 'load_release'), 'AUDIT_LOAD')]
+V08_FIELDS = dict(requested=str, abspath=str, realpath=str, mode=str, pid=int, caller=str)
+
+
+def v08_purpose(r):
+    parts = r['caller'].rsplit(':', 2)
+    fn, func = (parts[0], parts[1]) if len(parts) == 3 else (r['caller'], '')
+    for (suf, fu), p in V08_PURPOSE:
+        if fn.endswith(suf) and (fu is None or fu == func):
+            return p if p else ('HASH_VERIFY' if 'b' in r['mode'] else 'LOAD_ROWS')
+    return 'UNCLASSIFIED'
+
+
+def v08_roots():
+    ids = {k: {(x['hfn'].get('release'), os.path.normpath(x['hfn'].get('path') or ''), x['hfn'].get('manifest_sha256')) for x in dumps[k].values()} for k in dumps}
+    probs = []
+    if len(ids['A']) != 1 or next(iter(ids['A']))[0] != 'release_v47':
+        probs.append(('A', sorted(ids['A'])))
+    if len(ids['B']) != 1 or next(iter(ids['B']))[0] != 'release_v48' or ids['C'] != ids['B']:
+        probs.append(('B/C', sorted(ids['B']), sorted(ids['C'])))
+    roots = {next(iter(ids['A']))[0]: next(iter(ids['A']))[1], next(iter(ids['B']))[0]: next(iter(ids['B']))[1]} if not probs else {}
+    return roots, ids, probs
+
+
+def v08_release(path, roots):
+    for rel, root in roots.items():
+        if path == root or path.startswith(root + '/'):
+            return rel
+    return None
+
+
+roots, run_ids, root_probs = v08_roots()
+check('V08a جذرا الإصدارين من هوية التشغيل في التفريغات: A على release_v47 وB وC على release_v48 بمسارٍ واحدٍ لكلٍّ',
+      not root_probs and len(roots) == 2 and roots['release_v47'] != roots['release_v48'], root_probs or roots)
 iso = J('isolation/isolation_report.json')
-sys_ok = True; got = {}
+EXPECT = dict(A='release_v47', B='release_v48', C='release_v48')
+v08 = {}
 for t in ('A', 'B', 'C'):
-    raw = [l for f in sorted(os.listdir('isolation/raw')) if f.startswith(f'open_{t}.') for l in open(f'isolation/raw/{f}', encoding='utf-8')]
-    got[t] = len(raw)
-    sys_ok &= iso[t]['raw_lines'] == len(raw) and iso[t]['violations'] == 0 and sum(iso[t]['by_step'].values()) == len(raw)
-check('V08 ملخّص العزل = عدّ السجلات الخام (لكل تشغيل)، وصفر مخالفات', sys_ok, (got, {t: iso[t]['raw_lines'] for t in 'ABC'}))
+    files = sorted(f for f in os.listdir('isolation/raw') if f.startswith(f'open_{t}.'))
+    viol, recs_by, n = [], {}, 0
+    if not files:
+        viol.append(dict(file=None, line=None, reason='NO_RAW_LOGS_FOR_RUN'))
+    for f in files:
+        try:
+            pid_f = int(f.rsplit('.', 1)[1])
+        except ValueError:
+            viol.append(dict(file=f, line=None, reason='FILE_NAME_WITHOUT_PID')); continue
+        recs = []
+        for i, line in enumerate(open(f'isolation/raw/{f}', encoding='utf-8'), 1):
+            n += 1
+            try:
+                r = json.loads(line)
+            except ValueError:
+                viol.append(dict(file=f, line=i, reason='INVALID_JSON')); continue
+            bad = [k for k, ty in V08_FIELDS.items() if not isinstance(r.get(k), ty)]
+            if bad:
+                viol.append(dict(file=f, line=i, reason='FIELD_MISSING_OR_INVALID:' + ','.join(bad))); continue
+            if not (r['abspath'].startswith('/') and r['realpath'].startswith('/')) or os.path.normpath(r['realpath']) != r['realpath']:
+                viol.append(dict(file=f, line=i, reason='PATH_NOT_ABSOLUTE_OR_NOT_NORMALIZED', realpath=r['realpath'])); continue
+            if r['pid'] != pid_f:
+                viol.append(dict(file=f, line=i, reason=f'PID_MISMATCH:{r["pid"]}')); continue
+            rel_real = v08_release(r['realpath'], roots)
+            rel_abs = v08_release(os.path.normpath(r['abspath']), roots)
+            if rel_real is None:
+                viol.append(dict(file=f, line=i, reason='OUTSIDE_PINNED_RELEASES', realpath=r['realpath']))
+            elif rel_real != EXPECT[t]:
+                viol.append(dict(file=f, line=i, reason=f'READ_FROM_OTHER_RELEASE:{rel_real}', realpath=r['realpath']))
+            if rel_abs is not None and rel_abs != rel_real:
+                viol.append(dict(file=f, line=i, reason=f'SYMLINK_CROSS:{rel_abs}->{rel_real}', abspath=r['abspath'], realpath=r['realpath']))
+            if v08_purpose(r) == 'UNCLASSIFIED':
+                viol.append(dict(file=f, line=i, reason='PURPOSE_UNCLASSIFIED', caller=r['caller']))
+            recs.append(r)
+        recs_by[f] = recs
+    # نسبة العمليات إلى خطواتها من السجلات (القاعدة نفسها المعلنة في isolation_report.py)
+    steps, ev_p = {}, [int(f.rsplit('.', 1)[1]) for f, rs in recs_by.items() if any('analyze_cache.py' in r['caller'] for r in rs)]
+    for f, rs in recs_by.items():
+        pid_f = int(f.rsplit('.', 1)[1])
+        if t == 'C':
+            s_ = 'contract_C' if any('sidecar_contract.py' in r['caller'] for r in rs) else 'dump_C'
+        elif pid_f in ev_p:
+            s_ = f'eval_{t}'
+        elif ev_p and pid_f < min(ev_p):
+            s_ = f'dump_{t}'
+        elif ev_p:
+            s_ = f'axes_{t}'
+        else:
+            s_ = 'UNATTRIBUTED'
+        steps[s_] = steps.get(s_, 0) + len(rs)
+    summ = iso.get(t) or {}
+    mism = {k: (summ.get(k), v) for k, v in (('raw_lines', n), ('processes', len(files)), ('by_step', steps), ('violations', len(viol))) if summ.get(k) != v}
+    v08[t] = dict(records=n, processes=len(files), by_step=steps, violations=len(viol), violation_kinds=dict(Counter(v['reason'].split(':')[0] for v in viol)),
+                  other_release=sum(1 for v in viol if v['reason'].startswith('READ_FROM_OTHER_RELEASE')), summary_mismatch=mism, examples=viol[:5])
+    check(f'V08 {t}: كل سجلٍّ خام صالح البنية، ومساره المحلول داخل {EXPECT[t]}، وبلا عبورٍ رمزي ولا غرضٍ غير مصنّف، والملخّص = إعادة الحساب',
+          not viol and not mism and n > 0, dict(violations=viol[:3], summary_mismatch=mism))
+if os.environ.get('V08_REPORT'):
+    json.dump(dict(roots=roots, run_identity={k: sorted(map(list, v)) for k, v in run_ids.items()}, runs=v08), open(os.environ['V08_REPORT'], 'w'),
+              ensure_ascii=False, indent=1)
 print('ALL OK' if not FAIL else f'FAILED {len(FAIL)}: {FAIL}')
 sys.exit(1 if FAIL else 0)
