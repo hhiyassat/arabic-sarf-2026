@@ -15,6 +15,8 @@ PURPOSE = [  # (لاحقة الملف، الدالة) ← الغرض
     (('hfn_api.py', '_rows'), 'CONSUMER_LOAD'),
     (('hfn_isolation/sitecustomize.py', '<lambda>'), 'INJECTED'),
     (('v48c3/sidecar_contract.py', 'load_release'), 'AUDIT_LOAD'),   # فاحص عقد الإرفاق يقرأ الملف للتحقق، لا للتحليل (V48C03)
+    (('v50/sidecar_contract.py', 'load_release'), 'AUDIT_LOAD'),     # فاحص عقد الإرفاق v4 (V50C01)
+    (('ajnas/source_contract.py', 'measurements'), 'MANIFEST_READ'),  # قياس كل جولةٍ من MANIFEST الإصدار نفسه (V50C01)
 ]
 
 
