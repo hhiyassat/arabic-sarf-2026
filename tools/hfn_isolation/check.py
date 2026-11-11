@@ -47,11 +47,15 @@ def release_of(path, roots):
 
 def check(records, roots, expected, allow_purposes=None):
     """→ dict(records=[…مع release وpurpose], violations=[…]). roots: {اسم: مسار} (يُحلّ هنا)."""
+    # الجذر بصورتيه: كما أُعطي (مطلقاً مطبَّعاً) ومحلولاً. فالمسار المطلق يُنسب بأيّهما (على macOS ‎/var رابطٌ إلى ‎/private/var،
+    # فمقارنة المسار المطلق بالجذر المحلول وحده تُفقد نسبة الإصدار ويضيع SYMLINK_CROSS)، والمسار المحلول يُنسب بالجذر المحلول
+    given = {k: os.path.normpath(os.path.abspath(v)) for k, v in roots.items()}
     roots = {k: os.path.realpath(v) for k, v in roots.items()}
     rows, viol = [], []
     for r in records:
         rel_real = release_of(r['realpath'], roots)
-        rel_abs = release_of(os.path.normpath(r['abspath']), {k: v for k, v in roots.items()}) or release_of(r['abspath'], roots)
+        ab = os.path.normpath(r['abspath'])
+        rel_abs = release_of(ab, given) or release_of(ab, roots)
         p = purpose(r)
         x = dict(r, release=rel_real, release_by_path=rel_abs, purpose=p)
         rows.append(x)
