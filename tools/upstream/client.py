@@ -38,7 +38,19 @@ def load_pins():
         raise UpstreamError('PIN_MISSING: SARF_UP_PINS غير معيَّن — لا تحميل لأحدث إصدار تلقائياً')
     if not os.path.isfile(pf):
         raise UpstreamError(f'PIN_MISSING: ملفّ التثبيت غير موجود: {pf}')
-    return json.load(open(pf, encoding='utf-8'))
+    pins = json.load(open(pf, encoding='utf-8'))
+    check_sarf_release(pins)
+    return pins
+
+
+def check_sarf_release(pins):
+    """§٤ (SARF_HFN_V48_VALIDATION_COMPLETION_02): إصدار HFN في العامل يطابق إصدار SARF المستهدف (الإعداد الإنتاجي أو التجريبي المأذون)،
+    وإلا فإخفاق هويةٍ مسمّى؛ ولا يُقبل اختلافهما إلا بإذنٍ صريح بالظلّ: SARF_UP_HFN_SHADOW_OK=<إصدار العامل>."""
+    sys.path.insert(0, os.path.dirname(os.path.dirname(HERE)))
+    from sarf.hfn_pin import TARGET
+    if pins.get('hfn_release') != TARGET['release'] and os.environ.get('SARF_UP_HFN_SHADOW_OK', '') != pins.get('hfn_release'):
+        raise UpstreamError(f'HFN_IDENTITY_MISMATCH: العامل مثبَّت على {pins.get("hfn_release")}، وSARF يستهدف {TARGET["release"]} '
+                            f'({TARGET.get("config_mode")})؛ لظلٍّ مقصود عيّن SARF_UP_HFN_SHADOW_OK={pins.get("hfn_release")}')
 
 
 def paths(pins=None):
