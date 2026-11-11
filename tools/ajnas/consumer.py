@@ -9,8 +9,13 @@
 - مدخلٌ فارغ أو غير نصّي: INVALID_QUERY دون سؤال الواجهة.
 - HttpBackend: الواجهة نفسها عبر خادم HFN (api/server.py)، بالفحوص نفسها."""
 import json, os, sys, urllib.parse, urllib.request
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import source_contract as SC
 
 WITHDRAWN_REASON = 'EVENT_WITHDRAWN_IN_HFN: حدثٌ مسحوب في الإصدار؛ لا يظهر في استهلاكٍ حيّ ويُحفظ في سجلّ التدقيق'
+META_REASON = 'META_CITATION: الشاهد يصف فعل اللغوي (نقلاً أو حكماً) لا استعمال الحدث؛ يُستبعد من الحيّ ويُحفظ بدليله (source_contract.py)'
+SCOPE_NOTE = ('RESIDUAL_SCOPE_NOTE (SARF): تحفّظ الواجهة «AJNAS_YES_ROW_AGREEMENT_0.768_BELOW_GATE_0.78» قياسُ الجولة الأولى (المخصّص) '
+              'بمقامها 11943/15412 وحدها، ولا يصف روابط الجولتين الثانية والثالثة؛ وقياس كل رابطٍ بجولته في link_meta[*].measurement')
 
 
 class AjnasIdentityError(RuntimeError):
@@ -62,7 +67,9 @@ class HttpBackend:
 
 
 class AjnasConsumer:
-    def __init__(self, backend, expect_release, expect_manifest_sha256, withdrawn_ids=None):
+    """meta_citation_policy: EXCLUDE (عقد v4، الافتراضي) أو NONE (لاختبارات الاسترجاع الخام وحدها، معلنٌ في الاختبار).
+    release_dir: لقراءة قياس كل جولة من MANIFEST الإصدار نفسه (link_meta)؛ ويُشتقّ من الخلفية المباشرة إن لم يُعطَ."""
+    def __init__(self, backend, expect_release, expect_manifest_sha256, withdrawn_ids=None, meta_citation_policy='EXCLUDE', release_dir=None):
         self.b = backend
         self.expect = (expect_release, expect_manifest_sha256)
         if (backend.release, backend.manifest_sha256) != self.expect:
@@ -70,6 +77,11 @@ class AjnasConsumer:
                                      f'والمخدوم {backend.release} ({(backend.manifest_sha256 or "")[:12]})')
         self.withdrawn = set(withdrawn_ids if withdrawn_ids is not None else (backend.withdrawn or ()))
         self.audit_log = []
+        if meta_citation_policy not in ('EXCLUDE', 'NONE'):
+            raise ValueError(meta_citation_policy)
+        self.meta_policy = meta_citation_policy
+        rd = release_dir or getattr(getattr(backend, 'h', None), 'dir', None)
+        self.measurements = SC.measurements(rd) if rd else {}
 
     def transforms(self, iface, q):
         K = self.b.api.K
@@ -85,7 +97,7 @@ class AjnasConsumer:
     def query(self, iface, q, role=None):
         if iface not in ('event', 'root', 'dhat'):
             raise ValueError(iface)
-        out = dict(interface=iface, query=q, role=role, transforms=None, status=None, links=[], excluded=[], residuals=[],
+        out = dict(interface=iface, query=q, role=role, transforms=None, status=None, links=[], excluded=[], residuals=[], link_meta={}, notes=[],
                    served_by_release=None, manifest_sha256=None, note='CANDIDATE: الرابط لمعنى بابه؛ لا حقيقة ولا اختيار حدث')
         if not isinstance(q, str) or not q.strip():
             out.update(status='INVALID_QUERY'); return out
@@ -97,15 +109,25 @@ class AjnasConsumer:
                    residuals=list(r.get('residuals') or []), rank=r.get('rank'), is_fact=r.get('is_fact'))
         links = ((r.get('payload') or {}).get('links') or [])
         for l in links:
+            meta = SC.describe(l, self.measurements)
             if l.get('event_withdrawn') == 'True' or l.get('event_id') in self.withdrawn:
                 rec = dict(interface=iface, query=q, link_id=l['link_id'], event_id=l['event_id'], reason=WITHDRAWN_REASON)
                 out['excluded'].append(rec); self.audit_log.append(rec)
             elif role and l.get('role') != role:
                 continue
+            elif self.meta_policy == 'EXCLUDE' and (meta.get('meta_citation') or {}).get('decision') == 'EXCLUDE':
+                rec = dict(interface=iface, query=q, link_id=l['link_id'], event_id=l['event_id'], reason=META_REASON, evidence=meta['meta_citation'])
+                out['excluded'].append(rec); self.audit_log.append(rec)
             else:
                 out['links'].append(l)
-        if out['excluded']:
-            out['residuals'].append(f'CONSUMER_EXCLUDED_WITHDRAWN:{len(out["excluded"])}')
+                out['link_meta'][l['link_id']] = meta
+        nw = sum(1 for x in out['excluded'] if x['reason'] == WITHDRAWN_REASON)
+        if nw:
+            out['residuals'].append(f'CONSUMER_EXCLUDED_WITHDRAWN:{nw}')
+        if len(out['excluded']) - nw:
+            out['residuals'].append(f'CONSUMER_EXCLUDED_META_CITATION:{len(out["excluded"]) - nw}')
+        if any('0.768' in x for x in out['residuals']):
+            out['notes'].append(SCOPE_NOTE)
         out['status'] = ('NO_RESULT (not a negative)' if not out['links'] and r.get('payload') is not None
                          else 'NOT_SERVED' if r.get('payload') is None else 'CANDIDATES')
         out['events'] = sorted({l['event_id'] for l in out['links']})

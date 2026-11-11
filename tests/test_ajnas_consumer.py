@@ -53,12 +53,12 @@ check('F01 الملف: 11943 صفّاً بمعرّفاتٍ فريدة، والم
       len(rows) == 11943 and len(by_id) == len(rows) and len(wd_rows) == 5 and len({r['event_id'] for r in wd_rows}) == 2,
       (len(rows), len(by_id), len(wd_rows)))
 d48 = AC.DirectBackend(V48, API)
-C = AC.AjnasConsumer(d48, 'HFN_release_v48', M48, WD)
+C = AC.AjnasConsumer(d48, 'HFN_release_v48', M48, WD, meta_citation_policy='NONE')   # V50C01: اختبار استرجاعٍ خام
 srv48, url48 = serve(V48)
 srv47, url47 = serve(V47)
 try:
     h48 = AC.HttpBackend(url48, API)
-    CH = AC.AjnasConsumer(h48, 'HFN_release_v48', M48, WD)
+    CH = AC.AjnasConsumer(h48, 'HFN_release_v48', M48, WD, meta_citation_policy='NONE', release_dir=V48)
     stats = dict(direct_http_compared=0, mismatches=[], residual_dropped=[])
 
     def both(iface, q, role=None):

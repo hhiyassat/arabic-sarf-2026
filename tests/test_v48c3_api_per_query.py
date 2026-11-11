@@ -142,7 +142,7 @@ def judge(res, res_http=None):
 
 
 d48 = AC.DirectBackend(V48, API)
-C = AC.AjnasConsumer(d48, 'HFN_release_v48', M48, WD)
+C = AC.AjnasConsumer(d48, 'HFN_release_v48', M48, WD, meta_citation_policy='NONE')   # V50C01: اختبار استرجاعٍ خام
 roots = sorted({e['root_K'] for e in events})
 words = sorted({w for r in rows for w in r['dhat'].split('·') if w.strip()})
 keys = sorted({p for r in rows for p in r['dhat_K'].split('·') if p})
@@ -153,7 +153,7 @@ ev_with = sorted({r['event_id'] for r in rows})
 Q += [('dhat', w, ro) for w in words for ro in ROLES] + [('event', e, ro) for e in ev_with for ro in ROLES] + [('root', r, ro) for r in sorted({r['root_K'] for r in rows}) for ro in ROLES]
 srv48, url48 = serve(V48)
 try:
-    CH = AC.AjnasConsumer(AC.HttpBackend(url48, API), 'HFN_release_v48', M48, WD)
+    CH = AC.AjnasConsumer(AC.HttpBackend(url48, API), 'HFN_release_v48', M48, WD, meta_citation_policy='NONE', release_dir=V48)
     t0 = time.time()
     res = run_queries(C, Q)
     res_h = run_queries(CH, Q)
@@ -179,7 +179,7 @@ try:
         + [('root', 'حلب', None), ('dhat', 'الفرس', 'فاعل')]
     def fault(mode, arg=None, http=False):
         b = Faulty(d48, mode, arg)
-        c = AC.AjnasConsumer(b, 'HFN_release_v48', M48, WD)
+        c = AC.AjnasConsumer(b, 'HFN_release_v48', M48, WD, meta_citation_policy='NONE', release_dir=V48)
         r = run_queries(c, sample)
         return r
     r = fault('swap', {e1: e2, e2: e1})
@@ -194,7 +194,7 @@ try:
     j = judge(fault('missing', e1))
     check('P04 صفٌّ ناقص: يسقط PER_QUERY_COMPLETENESS', any(x['query'][1] == e1 for x in j['PER_QUERY_COMPLETENESS']))
     b = Faulty(d48, 'norole')
-    craw = AC.AjnasConsumer(b, 'HFN_release_v48', M48, WD)
+    craw = AC.AjnasConsumer(b, 'HFN_release_v48', M48, WD, meta_citation_policy='NONE', release_dir=V48)
     # المستهلك يصفّي الدور بنفسه أيضاً؛ فيُفسَد المستهلك هنا بتعطيل تصفيته لاختبار أن الحكم يسقط
     orig_q = craw.query
     def noflt(iface, q, role=None):
@@ -205,8 +205,8 @@ try:
     srvA, urlA = serve(V48)
     try:
         bh = AC.HttpBackend(urlA, API)
-        cd = AC.AjnasConsumer(Faulty(d48, 'swap', {e1: e2, e2: e1}), 'HFN_release_v48', M48, WD)
-        ch = AC.AjnasConsumer(Faulty(bh, 'swap', {e1: e2, e2: e1}), 'HFN_release_v48', M48, WD)
+        cd = AC.AjnasConsumer(Faulty(d48, 'swap', {e1: e2, e2: e1}), 'HFN_release_v48', M48, WD, meta_citation_policy='NONE', release_dir=V48)
+        ch = AC.AjnasConsumer(Faulty(bh, 'swap', {e1: e2, e2: e1}), 'HFN_release_v48', M48, WD, meta_citation_policy='NONE', release_dir=V48)
         s2 = [('event', e1, None), ('event', e2, None)]
         rd, rh = run_queries(cd, s2), run_queries(ch, s2)
         j = judge(rd, rh)
