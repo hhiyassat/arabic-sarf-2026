@@ -1,0 +1,11 @@
+{
+ "doc": "إعدادٌ تجريبي لـ HFN release_v50 (SARF_HFN_V50_COMPATIBILITY_01): لا يُقرأ إلا مع SARF_HFN_EXPERIMENTAL_OK=release_v50؛ والإنتاجي config/hfn_target.json باقٍ على release_v47. الالتزام ad33d99 (دمج main، والإصدار أُنشئ في 380001f ولم يتغيّر بعده)",
+ "status": "EXPERIMENTAL_ISOLATED",
+ "release": "release_v50",
+ "release_name_in_manifest": "HFN_release_v50",
+ "hfn_repo": "https://github.com/hhiyassat/husseinframenet",
+ "hfn_branch": "main",
+ "hfn_commit": "ad33d99210b4e16a591bbdd76713f08be1e683cb",
+ "manifest_sha256": "7e5dc7ad6244339f5a260aca2833eb0979e348cdb78ef86784ece3b0301033fb",
+ "historical": {}
+}
