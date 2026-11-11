@@ -125,6 +125,37 @@ def check_record(rec, l, rows, ev, wd):
     return v
 
 
+SCOPE_PREFIX = 'RESIDUAL_SCOPE_NOTE (SARF)'
+RAW_0768 = 'AJNAS_YES_ROW_AGREEMENT_0.768_BELOW_GATE_0.78'
+
+
+def event_side_checks(es, rows, wd):
+    """جانب الحدث كله (لا الرابط وحده): المجموعة الحية = صفوف الحدث في الملف ناقص المسحوب ناقص المستبعد بالاستشهاد الوصفي ناقص المؤجَّل
+    بالعقد (لا حذف صامت ولا زيادة)؛ وكل استبعادٍ وصفي مبرَّرٌ بالقاعدة من الصف نفسه وبدليله؛ وتحفّظ الواجهة الخام محفوظ، ومعه ملاحظة المقام."""
+    v = []
+    ev_rows = [r for r in rows.values() if r['event_id'] == es.get('event_id')]
+    meta = {x.get('link_id') for x in es.get('excluded_meta_citation') or []}
+    cex = {x.get('link_id') for x in es.get('excluded_contract') or []}
+    expect = {r['link_id'] for r in ev_rows if r['event_id'] not in wd and r['event_withdrawn'] != 'True'
+              and (SC.meta_citation(r) or {}).get('decision') != 'EXCLUDE'} - cex
+    if {l.get('link_id') for l in es.get('links') or []} != expect:
+        v.append('LIVE_SET_NOT_FILE_MINUS_DECLARED_EXCLUSIONS')
+    for x in es.get('excluded_meta_citation') or []:
+        r = rows.get(x.get('link_id'))
+        mc = SC.meta_citation(r) if r else None
+        if not mc or mc['decision'] != 'EXCLUDE' or x.get('evidence') != mc:
+            v.append('META_EXCLUSION_UNJUSTIFIED')
+    if {r['link_id'] for r in ev_rows if (SC.meta_citation(r) or {}).get('decision') == 'EXCLUDE'
+            and r['event_id'] not in wd and r['event_withdrawn'] != 'True'} != meta:
+        v.append('META_EXCLUSION_NOT_RECORDED')
+    res = es.get('api_residuals') or []
+    if ev_rows and any(r['event_id'] not in wd for r in ev_rows) and es.get('links') and RAW_0768 not in res:
+        v.append('API_RAW_RESIDUAL_ALTERED')
+    if RAW_0768 in res and not any(str(n).startswith(SCOPE_PREFIX) for n in es.get('api_notes') or []):
+        v.append('SCOPE_NOTE_MISSING')
+    return v
+
+
 def check_corpus(sidecars, rows, ev, wd):
     """sidecars: [(سورة، مخرج attach)] → تقرير"""
     viol = Counter(); bad = []; n_att = 0; n_occ = 0; ident = defaultdict(set); dec = Counter(); defer_bad = []
@@ -142,6 +173,10 @@ def check_corpus(sidecars, rows, ev, wd):
                     viol['ATTACHED_WITHOUT_LINKS'] += 1
                 if es.get('links'):
                     n_occ += 1
+                if 'served_by' in es:
+                    for x in event_side_checks(es, rows, wd):
+                        viol[x] += 1
+                        bad.append(dict(occurrence=rec['occurrence'], link_id=None, violations=[x]))
                 for l in es.get('links') or []:
                     n_att += 1
                     w = check_record(rec, l, rows, ev, wd)
