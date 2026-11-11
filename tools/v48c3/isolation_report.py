@@ -3,7 +3,7 @@
 وحدة العدّ الخام: سطرٌ واحد لكل استدعاء open() لملفٍّ تحت جذرٍ مثبَّت، في كل عملية (ملفّ open_<T>.<pid>).
 وتُنسب كل عمليةٍ إلى خطوتها بقاعدةٍ من السجلات نفسها (لا بوقت الملف، فنهاية eval وبداية axes في الثانية نفسها):
 عملية eval_root وحدها يفتح فيها analyze_cache.py؛ والخطوات متتابعة (dump ثم eval ثم axes)، فما رقمه أصغر من رقمها لـ dump وما أكبر لـ axes.
-وفي C خطوةٌ واحدة (dump_C).
+وفي C: عمليات dump_C، وعملية contract_C (فاحص العقد: ما فتح فيه sidecar_contract.py) — بالبادئة نفسها.
 والمشتقّ: العدد لكل خطوة، والفتحات المتمايزة (realpath، النمط، الغرض)، والمخالفات بالمسار المحلول (tools/hfn_isolation/check.py).
 سبب الفرق عن ملخّص C02 (165/171): ذاك لُخّص بعد انتهاء dump وفي أثناء eval_root، قبل أن يكتب عاملا measure_axes (بالبادئة نفسها)."""
 import datetime, glob, json, os, sys
@@ -40,7 +40,7 @@ def main(d, steps, outp, day):
         ev_p = [pid(f) for f, rs in recs_by.items() if any('analyze_cache.py' in r['caller'] for r in rs)]
         for f, recs in recs_by.items():
             if t == 'C':
-                step = 'dump_C'
+                step = 'contract_C' if any('sidecar_contract.py' in r['caller'] for r in recs) else 'dump_C'
             elif pid(f) in ev_p:
                 step = f'eval_{t}'
             elif ev_p and pid(f) < min(ev_p):

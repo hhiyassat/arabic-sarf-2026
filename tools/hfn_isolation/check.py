@@ -1,6 +1,6 @@
 """فاحص العزل (§٣): يقرأ سجلات sitecustomize المنظَّمة، وينسب كل فتحٍ إلى إصداره بمساره المحلول، ويصنّف غرضه بالإطار الذي فتحه.
 الإصدار يُعيَّن بالجذور المحلولة المعطاة (اسم ← مجلّد)، لا بالبحث النصي في الأسماء. والفتح عبر رابطٍ رمزي من إصدارٍ إلى آخر مخالفة.
-الغرض: HASH_VERIFY (حساب البصمة)، MANIFEST_READ، LOAD_ROWS (تحميل صفوف)، CONSUMER_LOAD (مستهلك الروابط)، INJECTED، UNCLASSIFIED.
+الغرض: HASH_VERIFY (حساب البصمة)، MANIFEST_READ، LOAD_ROWS (تحميل صفوف)، CONSUMER_LOAD (مستهلك الروابط)، AUDIT_LOAD (فاحص العقد)، INJECTED، UNCLASSIFIED.
 ونمط rb وحده لا يُعدّ دليلاً على الغرض."""
 import glob, json, os
 
@@ -14,6 +14,7 @@ PURPOSE = [  # (لاحقة الملف، الدالة) ← الغرض
     (('hfn_api.py', '__init__'), 'MANIFEST_READ'),
     (('hfn_api.py', '_rows'), 'CONSUMER_LOAD'),
     (('hfn_isolation/sitecustomize.py', '<lambda>'), 'INJECTED'),
+    (('v48c3/sidecar_contract.py', 'load_release'), 'AUDIT_LOAD'),   # فاحص عقد الإرفاق يقرأ الملف للتحقق، لا للتحليل (V48C03)
 ]
 
 
