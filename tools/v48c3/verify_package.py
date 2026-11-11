@@ -13,6 +13,7 @@
      وهوية التحليل لا تُشترك بين تحليلين، وصفر مخالفات هوية المحرّك، وصفر تسرّب، والسياق بعد الإرفاق متطابق.
  V08 ملخّص العزل يُعاد حسابه من سجلات الفتح الخام، وصفر مخالفات."""
 import base64, gzip, hashlib, json, os, re, sys, zlib
+sys.dont_write_bytecode = True   # لا يكتب المدقّق في الحزمة شيئاً (ولا __pycache__ حين يستورد أداة العقد)
 from collections import Counter
 D = os.path.dirname(os.path.abspath(__file__))
 os.chdir(D)
