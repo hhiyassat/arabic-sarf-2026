@@ -95,6 +95,15 @@ def _wasl_next(tok):
     return not tok[1] or SUKUN in tok[1] or SHADDA in tok[1] or tok[0] == 'ل'
 
 
+SUN_LETTERS = set('تثدذرزسشصضطظلن')
+
+
+def _not_article(toks, i):
+    """MORPH-P1: لامٌ عليها سكونٌ مكتوب وبعدها حرفٌ شمسي غير مشدَّد ليست لام «أل»: «أل» قبل الشمسي لامها عارية وما بعدها مشدَّد
+    (ٱلتَّقۡوَىٰ)، فالكتابة دليلٌ على أن الألف واللام من الكلمة (ٱلۡتَقَى، فَٱلۡتَمِسُوا: افتعل من لقي ولمس)"""
+    return i + 1 < len(toks) and SUKUN in toks[i][1] and toks[i + 1][0] in SUN_LETTERS and SHADDA not in toks[i + 1][1]
+
+
 def _host(word, toks, offs, a, b, lex, at_word_start):
     """خانات ما ليس عاملاً: مبني من المعجم كاملاً، أو [أل][جذع][ضمير متصل]"""
     text = word[offs[a][0]:offs[b - 1][1]]
@@ -116,14 +125,31 @@ def _host(word, toks, offs, a, b, lex, at_word_start):
         # أو لام «أل». فإن تحرّك ما بعد الألف فهي ألف مدٍّ من الكلمة (فَاطِرُ، فَارِضٌ، وَابِلٌ)
         slots.append(_slot(word, offs, a, a + 1, MABNI, 'conj', note='حرف عطف'))
         return slots + _host(word, toks, offs, a + 1, b, lex, False)
-    if at_word_start and b - a > 3 and toks[a][0] in ('و', 'ف') and toks[a][1] == {FATHA} and \
-            toks[a + 1][0] != 'ا':
+    pro_entry = lex.attested(word[offs[a][0]:offs[a][1]]) if (lex and b - a > 3 and toks[a][0] in ('أ', 'ل')
+                                                                and toks[a][1] == {FATHA}) else None
+    if at_word_start and b - a > 3 and toks[a][1] == {FATHA} and \
+            (toks[a][0] in ('و', 'ف') and toks[a + 1][0] != 'ا' or pro_entry and pro_entry['category'] == 'particle'):
         # وَ/فَ ملتصقة بما بعدها: تُفصل إن رُخِّصت البقية (فعلاً أو اسماً ببنائه أو مبنياً في الملف) ولم تُرخَّص
         #   الكلمة كلها (فَجَعَلۡتُمۡ = فَ + جَعَلۡتُمۡ، فَرِهَٰنٌ = فَ + رِهَٰنٌ، فَهُمۡ = فَ + هُمۡ؛ أما وَعَدَ فلا تُفصل)
+        # MORPH-P1: وبالقاعدة نفسها «أَ» و«لَ» (حرفان في ملف المبنيات) قبل فعلٍ مرخَّص لم تُرخَّص الكلمة كلها
+        #   (أَتَجۡعَلُ = أَ + تَجۡعَلُ، لَتَجِدَنَّ = لَ + تَجِدَنَّ؛ أما أَنۡعَمۡتَ وأَمَرَ ولَعِبَ فالكلمة كلها شاهدها)؛ ولا يُفصلان عن اسم
         from .cells import stem_licence, licence_strength
         rest = word[offs[a + 1][0]:offs[b - 1][1]]
         rest_lic = list(stem_licence(rest)) if _moving(toks[a + 1]) else []
-        rest_mabni = bool(lex and lex.lookup(rest))
+        wasl_dropped = False
+        if not rest_lic and toks[a][0] in ('و', 'ف') and SUKUN in toks[a + 1][1]:
+            # MORPH-P1: البقية تبدأ بساكن، ولا تُبتدأ كلمةٌ بساكن: همزة وصلها حُذفت خطاً بعد الحرف (وَسۡـَٔلُوا، فَأۡتُوا)؛
+            #   فتُرخَّص البقية بهمزة الوصل مردودةً، فعلاً وحده
+            rest_lic = [x for x in list(stem_licence(rest)) + list(stem_licence('ا' + rest))
+                        if x[0] in ('فعل', 'فعل محتمل', 'فعل بالكتابة')]
+            wasl_dropped = bool(rest_lic)
+        if pro_entry and toks[a][0] == 'أ' and toks[a + 1][0] in ('و', 'ف') and toks[a + 1][1] == {FATHA}:
+            # MORPH-P1: «أَ» ثم حرف عطف: تُرخَّص البقية بما بعد حرف العطف وحده، فعلاً (أَفَتَطۡمَعُونَ، أَوَعَجِبۡتُمۡ)؛
+            #   ولا يُعتدّ برخصة «فَلَا»/«وَلَمۡ» كلمةً (أَفَلَا، أَوَلَمۡ: عاملٌ بعد حرف العطف، ليس فعلاً)
+            rest_lic = list(stem_licence(word[offs[a + 2][0]:offs[b - 1][1]])) if b - a > 4 and _moving(toks[a + 2]) else []
+        if pro_entry:
+            rest_lic = [x for x in rest_lic if x[0] in ('فعل', 'فعل محتمل', 'فعل بالكتابة')]
+        rest_mabni = bool(lex and lex.lookup(rest)) and not pro_entry
         # لا يُفصل ما للكلمة كلها فيه شهادة معجمية: فَشِلۡتُمۡ ماضٍ من «فشل» (يطابق فَشِلَ في HFN)
         # وتُفصل إن ساوت رخصةُ البقية رخصةَ الكلمة كلها ولم تكن للكلمة شهادة معجمية (فَلَعۡنَةُ: «فلع» و«لعن» قالبان)
         whole_lic = stem_licence(text)
@@ -133,14 +159,20 @@ def _host(word, toks, offs, a, b, lex, at_word_start):
         if rest_mabni or licence_strength(rest_lic) >= max(1, licence_strength(whole_lic)) and \
                 licence_strength(whole_lic) < 2:
             why = f'البقية مرخَّصة ({rest_lic[0][0]}: {rest_lic[0][1]})' if rest_lic else 'البقية مبنيٌّ في الملف'
+            if wasl_dropped:
+                why += '، وهمزة وصلها محذوفة خطاً بعد الحرف'
+            if pro_entry:
+                slots.append(_slot(word, offs, a, a + 1, MABNI, 'proclitic', lexicon=[pro_entry['entry_id']],
+                                   note=f'حرفٌ في الملف قبل فعل: {why}، والكلمة كلها بلا رخصة'))
+                return slots + _host(word, toks, offs, a + 1, b, lex, True)      # أَفَتَطۡمَعُونَ: ثم فَ
             slots.append(_slot(word, offs, a, a + 1, MABNI, 'conj', note=f'حرف عطف: {why}، والكلمة كلها بلا رخصة'))
             return slots + _host(word, toks, offs, a + 1, b, lex, False)
     if b - a > 2 and toks[a][0] == 'ا' and toks[a + 1][0] == 'ل' and \
-            (not toks[a + 1][1] or toks[a + 1][1] == {SUKUN}):
+            (not toks[a + 1][1] or toks[a + 1][1] == {SUKUN}) and not _not_article(toks, a + 1):
         slots.append(_slot(word, offs, a, a + 2, ARTICLE, 'article', note='أل التعريف: ليست في ملف المبنيات'))
         a += 2
     elif b - a > 2 and a > 0 and toks[a - 1][0] == 'ل' and toks[a][0] == 'ل' and \
-            (not toks[a][1] or toks[a][1] == {SUKUN}):
+            (not toks[a][1] or toks[a][1] == {SUKUN}) and not _not_article(toks, a):
         # بعد لام الجر تُحذف ألف «أل» خطاً وتبقى لامها: لِّلۡمُطَفِّفِينَ، لِلنَّاسِ
         slots.append(_slot(word, offs, a, a + 1, ARTICLE, 'article', note='لام «أل» بعد لام الجر'))
         a += 1
@@ -150,6 +182,9 @@ def _host(word, toks, offs, a, b, lex, at_word_start):
         k = len(stoks)
         if suf == 'نَا' and b - k - 1 >= a and SUKUN in toks[b - k - 1][1]:
             continue                                # «نَا» بعد ساكن ضمير الفاعل في الماضي (جَعَلۡنَا) لا يُفصل كالتاء
+        if suf == 'نَا' and b - k - 1 >= a and SHADDA in toks[b - k][1] and toks[b - k - 1][1] & MOVING:
+            continue                                # MORPH-P1: وكذلك «نَّا» المدغمة في لام الفعل النونية (ءَامَنَّا = ءَامَنۡ + نَا،
+                                                    #   بَيَّنَّا): ضمير الفاعل بعد ساكنٍ أُدغم، فلا يُفصل
         if (b - k - a < MIN_STEM and not short_host(toks[a:b - k])) or radical_nun(toks[a:b], suf) or \
                 hollow_radical_nun(toks[a:b], suf) or \
                 toks[b - k][0] == 'ة' or not ha_kasra_ok(toks[a:b], suf):   # التاء المربوطة ليست هاء الضمير (ٱلۡجِنَّةِ)
