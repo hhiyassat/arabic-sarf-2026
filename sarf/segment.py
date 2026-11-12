@@ -104,6 +104,19 @@ def _not_article(toks, i):
     return i + 1 < len(toks) and SUKUN in toks[i][1] and toks[i + 1][0] in SUN_LETTERS and SHADDA not in toks[i + 1][1]
 
 
+def _whole_licences(word, toks, offs, a, b):
+    """رخص الكلمة كلها، وبعد نزع ضميرٍ متصلٍ من آخرها بصورته (أَتَمَّهَا ← أَتَمَّ)"""
+    from .cells import stem_licence
+    out = list(stem_licence(word[offs[a][0]:offs[b - 1][1]]))
+    for suf in sorted(STEM_SUFFIXES, key=lambda s: -len(letters(s))):
+        stoks = match_letters(suf)
+        k = len(stoks)
+        if b - k - a >= 2 and plain([(L, frozenset(m)) for L, m in toks[b - k:b]], True) == plain(stoks, True):
+            out += list(stem_licence(word[offs[a][0]:offs[b - k - 1][1]]))
+            break
+    return out
+
+
 def _host(word, toks, offs, a, b, lex, at_word_start):
     """خانات ما ليس عاملاً: مبني من المعجم كاملاً، أو [أل][جذع][ضمير متصل]"""
     text = word[offs[a][0]:offs[b - 1][1]]
@@ -152,9 +165,15 @@ def _host(word, toks, offs, a, b, lex, at_word_start):
             #   وأَصَابِعَ (جمع) ولَقِينَا كلماتٌ لم تُرخَّص كلها، وبقيتها «فعل محتمل». فيُشترط دليلٌ مكتوب: أن تبدأ البقية بحرف
             #   مضارعةٍ مفتوحٍ أو مضموم (أَتَجۡعَلُ، أَنُؤۡمِنُ، لَتَجِدَنَّ؛ والكسر في تِمُّوا ينفيه)، أو أن تشهد لها مطابقةٌ معجمية (2)
             j = a + 2 if (toks[a][0] == 'أ' and toks[a + 1][0] in ('و', 'ف') and toks[a + 1][1] == {FATHA}) else a + 1
-            mudari_start = j < b and toks[j][0] in ('ي', 'ت', 'ن', 'أ') and bool(toks[j][1] & {FATHA, DAMMA})
+            # وحرف المضارعة لا يُشدَّد (أَتَّبِعُ، أَيُّهَا: الشدة تنفي أن يكون حرف مضارعة)
+            mudari_start = j < b and toks[j][0] in ('ي', 'ت', 'ن', 'أ') and bool(toks[j][1] & {FATHA, DAMMA}) and SHADDA not in toks[j][1]
             rest_lic = [x for x in rest_lic if x[0] in ('فعل', 'فعل محتمل', 'فعل بالكتابة')]
             if not mudari_start and licence_strength(rest_lic) < 2:
+                rest_lic = []
+            # ورخصة الكلمة كلها تُحسب بعد نزع الضمير المتصل أيضاً (أَتَمَّهَا ← أَتَمَّ: شاهدٌ معجمي)، ولا تُفصل إلا إن رجحت
+            #   رخصةُ البقية رخصةَ الكلمة كلها (أَتَتۡهُمۡ، أَتَىٰهَا: تساوتا فلا فصل)
+            whole_best = licence_strength(_whole_licences(word, toks, offs, a, b))
+            if licence_strength(rest_lic) <= whole_best:
                 rest_lic = []
         rest_mabni = bool(lex and lex.lookup(rest)) and not pro_entry
         # لا يُفصل ما للكلمة كلها فيه شهادة معجمية: فَشِلۡتُمۡ ماضٍ من «فشل» (يطابق فَشِلَ في HFN)
@@ -189,7 +208,8 @@ def _host(word, toks, offs, a, b, lex, at_word_start):
         k = len(stoks)
         if suf == 'نَا' and b - k - 1 >= a and SUKUN in toks[b - k - 1][1]:
             continue                                # «نَا» بعد ساكن ضمير الفاعل في الماضي (جَعَلۡنَا) لا يُفصل كالتاء
-        if suf == 'نَا' and b - k - 1 >= a and SHADDA in toks[b - k][1] and toks[b - k - 1][1] & MOVING:
+        if suf == 'نَا' and b - k - 1 >= a and SHADDA in toks[b - k][1] and toks[b - k - 1][1] & MOVING and \
+                not (toks[a][0] in ('ي', 'ت', 'ن', 'أ') and toks[a][1] & {FATHA, DAMMA}):   # بعد المضارع ضمير مفعول (تَأۡمَنَّا)
             continue                                # MORPH-P1: وكذلك «نَّا» المدغمة في لام الفعل النونية (ءَامَنَّا = ءَامَنۡ + نَا،
                                                     #   بَيَّنَّا): ضمير الفاعل بعد ساكنٍ أُدغم، فلا يُفصل
         if (b - k - a < MIN_STEM and not short_host(toks[a:b - k])) or radical_nun(toks[a:b], suf) or \
