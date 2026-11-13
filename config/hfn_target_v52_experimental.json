@@ -1,0 +1,11 @@
+{
+ "doc": "إعدادٌ تجريبي لـ HFN release_v52 (صفحة تجريبية بطلب المالك، 2026-11-13): لا يُقرأ إلا مع SARF_HFN_EXPERIMENTAL_OK=release_v52؛ والإنتاجي config/hfn_target.json باقٍ على release_v47. الالتزام cf97e15 (دمج main ‏HFN، «v52-taj-lexica»). ولم تُجرَ له جولة توافق؛ وملفات التحليل الستة مطابقة بايتاً لـ v50، والفرق في ahdath_ajnas.csv وحده (+836 رابطاً).",
+ "status": "EXPERIMENTAL_ISOLATED",
+ "release": "release_v52",
+ "release_name_in_manifest": "HFN_release_v52",
+ "hfn_repo": "https://github.com/hhiyassat/husseinframenet",
+ "hfn_branch": "main",
+ "hfn_commit": "cf97e15eebc63e45fbe91fdfaec4340320a51bcd",
+ "manifest_sha256": "15adf7732ce649640b6538c247f4a3baef2e93aaa8e6469eb62fa8300f7456a4",
+ "historical": {}
+}
