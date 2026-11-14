@@ -1053,6 +1053,31 @@ def soundness(root):
     return 'salim'
 
 
+def _candidate_faces(m):
+    """E1: تصدير بنيويّ للأوجه المؤجّلة من m['licensed']/m['candidates'] (لا من نص السبب).
+    مقاماتٌ منفصلة معرّفة؛ ولكل وجه هويته وجذره ووزنه وشكله وحالته، أو سبب غياب حقلٍ غائب."""
+    lic = m.get('licensed') or []; cand = m.get('candidates') or []
+    lic_pairs = {(x['root'], x['form_class']) for x in lic}
+    sel = (m.get('root'), m.get('form_class')); accepted = m.get('status') == 'accepted'
+    faces = []
+    for i, x in enumerate(lic):
+        is_sel = accepted and (x['root'], x['form_class']) == sel
+        faces.append(dict(face_id=x.get('analysis_id') or ('L%d' % i), root=x['root'], form_class=x['form_class'],
+                          door=x['form_class'], pattern=x.get('hfn_form'),
+                          pattern_absence_reason=(None if x.get('hfn_form') else 'لا شكل متحقّق hfn_form لهذا الوجه'),
+                          lemma=x.get('verb'), hfn_event=x.get('event_id'),
+                          status='SELECTED' if is_sel else 'LICENSED_NOT_SELECTED'))
+    for i, pc in enumerate(cand):
+        r, c = pc if isinstance(pc, (list, tuple)) else (pc, None)
+        if (r, c) in lic_pairs: continue
+        faces.append(dict(face_id='G%d' % i, root=r, form_class=c, door=c, pattern=None,
+                          pattern_absence_reason='مرشّحٌ مولَّدٌ غير مرخّص (لم يرد في HFN)', lemma=None,
+                          lemma_absence_reason='غير مرخّص', status='GENERATED_REJECTED'))
+    return dict(generated=len(cand), licensed=len(lic),
+                rejected=sum(1 for pc in cand if (pc if isinstance(pc, (list, tuple)) else (pc, None)) not in lic_pairs),
+                selected=(1 if accepted else 0), distinct_pairs=len(lic_pairs), faces=faces)
+
+
 def verse_morph(segs, governed=None, nouns=()):
     """لكل جذع في الآية: (رقم الكلمة، رقم الخانة) ← Morph مختصراً.
     governed: الجذوع التي ثبتت فعليتها بعاملٍ مقبول فيها، فتُعامَل معاملة الفعل الثابت.
@@ -1123,7 +1148,7 @@ def verse_morph(segs, governed=None, nouns=()):
                             peeled_face=m.get('peeled_face'), shared_root=m.get('shared_root'),
                             noun_template_rivals=m.get('noun_template_rivals'),
                             shared_root_status=m.get('shared_root_status'),
-                            reason=m.get('reason'), n_candidates=len(m['candidates']),
+                            reason=m.get('reason'), n_candidates=len(m['candidates']), candidate_faces=_candidate_faces(m),
                             event=({k: top[k] for k in ('event_id', 'verb', 'masdar', 'hfn_form', 'source',
                                                          'sibawayh', 'meaning')}
                                    if top and m['status'] == 'accepted' and m.get('level') == 'event' else None)))
