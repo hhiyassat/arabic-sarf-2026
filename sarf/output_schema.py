@@ -276,7 +276,11 @@ def _operator_segment(cand, slot, cat, role):
             eff = 'raf_ism_nasb_khabar' if vform_match(op, ['مَا']) else 'nasb_ism_raf_khabar'
         if vform_match(op, PARTICLES_IN_7):
             eff = 'none'
-        p['effect'] = eff
+        if len(ids) > 1:          # E4: ambiguous meaning — effect is a CANDIDATE of its face, not enacted
+            p['effect'] = 'none'
+            p['candidate_effect'] = dict(effect=eff, status='CANDIDATE')
+        else:
+            p['effect'] = eff
         if cand.get('kaffa'):
             p.update(kaffa=True, governing=False, effect='none')
         seg.update(pos='particle', particle=p)
@@ -473,7 +477,8 @@ def to_schema(a, cat=None, ref=None, original=None):
         if t and r['consistent'] is True and t.get('pos') != 'verb' and r['group'] in ('1', '2') and \
                 status.get((r['word_index'], r['operator'], r['group'])) == ACCEPTED:
             ids = _operator_ids(cat, r['operator'], r['group'])
-            governed[(t['word_index'], t['slot'])] = (ids[0] if ids else r['operator'], CASE[r['expected']])
+            # E4: no first-meaning choice when ambiguous — single id only; else None (relation kept, candidates kept in the segment particle)
+            governed[(t['word_index'], t['slot'])] = (ids[0] if len(ids) == 1 else (None if ids else r['operator']), CASE[r['expected']])
     for seg in a['segments']:
         tok, choice = _word(a, seg, cat, governed)
         if len(surfaces) == len(a['segments']):
@@ -496,8 +501,10 @@ def to_schema(a, cat=None, ref=None, original=None):
                  dependent=dict(token=t['word_index'], analysis=0, segment=t['slot']),
                  expected={key: table[r['expected']]})
         ids = _operator_ids(cat, r['operator'], r['group'])
-        if ids:
+        if len(ids) == 1:                 # E4: assign a meaning only when unambiguous
             d['operator_id'] = ids[0]
+        elif ids:                          # ambiguous: keep candidates with identities, choose none
+            d['operator_candidates'] = ids
         if r['observed'] in table:
             d['observed'] = {key: table[r['observed']]}
             mk = _observed(t['text'])
