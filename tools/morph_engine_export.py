@@ -24,9 +24,10 @@ def one(items):
         for seg in a['segments']:
             wi = seg['word_index']
             for sl in seg['slots']:
-                k = (wi, sl['index'])
-                m = M.get(k) or {}
-                u = UU.get(repr(k)) or {}
+                mk = (wi, sl['index'])          # morph keyed by cell index (engine morph.slot == cell index)
+                uk = (wi, sl['unit'])           # FIX (E0): units/features keyed by UNIT index slot['unit'], not cell index
+                m = M.get(mk) or {}
+                u = UU.get(repr(uk)) or {}
                 th = u.get('Theta') or {}
                 out.append(dict(verse=vk, wi=wi, si=sl['index'], word=seg['word'], type=sl['type'], role=sl.get('role'), text=sl['text'],
                                 lexicon=sl.get('lexicon'),
@@ -34,7 +35,7 @@ def one(items):
                                            reason=m.get('reason'), analysis_id=m.get('analysis_id'), statuses=m.get('statuses'),
                                            event=(m.get('event') or {}).get('event_id'), n_candidates=m.get('n_candidates')) if m else None,
                                 unit=dict(id=u.get('id'), closed=u.get('closed'), R=th.get('R'), P=th.get('P'), F=th.get('F'), alpha=th.get('alpha')) if u else None,
-                                features=F.get(repr(k))))
+                                features=F.get(repr(uk))))
     return out
 
 
