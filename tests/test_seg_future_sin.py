@@ -192,6 +192,23 @@ def run_sanna_contrast():
         print(('PASS' if (no_split and tiles(seg)) else 'FAIL'),'SANNA-',ref,skel,'->',sl); ok&=(no_split and tiles(seg))
     return ok
 
+def run_protected_particle():
+    # MASAQ-SEG-07: a word that wholly matches a mabniyat 'particle' is protected (kept whole),
+    # not over-peeled: كَلَّا is not [كَ, لَّا]. Contrast: فَلَا/أَلَا (not whole-particles) stay segmented.
+    ok=True
+    for ref,skel in [('19:79','كلا'),('2:260','بلى')]:     # protected particles -> whole
+        seg=seg_of(ref,skel)
+        if seg is None: print('FAIL PART+',ref,skel,'-> WITNESS NOT FOUND'); ok=False; continue
+        whole = len(seg['slots'])==1 and tiles(seg)
+        print(('PASS' if whole else 'FAIL'),'PART+',ref,skel,'->',[(x['text'],x['role']) for x in seg['slots']]); ok&=whole
+    for ref,skel in [('2:22','فلا'),('6:84','كلا')]:      # فَلَا (ف+لا) and كُلًّا (كل+tanwin) NOT protected-whole-particle
+        seg=seg_of(ref,skel)
+        if seg is None: print('FAIL PART-',ref,skel,'-> WITNESS NOT FOUND'); ok=False; continue
+        # must NOT be tagged the protected-particle note
+        notprot = not any(x.get('note')=='مبنيٌّ محميٌّ كاملاً: لا يُقشَّر منه عامل' for x in seg['slots'])
+        print(('PASS' if (notprot and tiles(seg)) else 'FAIL'),'PART-',ref,skel,'->',[(x['text'],x['role']) for x in seg['slots']]); ok&=(notprot and tiles(seg))
+    return ok
+
 def run_detector_no_competitor():
     # SIGNAL, not proof: among words matching the strengthened شكل, the engine's licensor finds NO
     # whole-word non-verb reading. This reports "detector found no competitor"; it does NOT claim a
@@ -217,5 +234,5 @@ if __name__=='__main__':
     ok = (run_positive() & run_negative() & run_fasa_positive() & run_fasa_contrast()
           & run_lam_positive() & run_lam_contrast()
           & run_fa_pronoun_positive() & run_fa_pronoun_unit(WT) & run_fa_pronoun_contrast()
-          & run_sanna_positive() & run_sanna_contrast() & run_detector_no_competitor())
+          & run_sanna_positive() & run_sanna_contrast() & run_protected_particle() & run_detector_no_competitor())
     print('ALL_PASS:',ok); sys.exit(0 if ok else 1)
