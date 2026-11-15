@@ -86,6 +86,37 @@ def run_fasa_contrast():
         ok&=passed
     return ok
 
+def run_lam_positive():
+    # MASAQ-SEG-04: فصل اللام السابقة للفعل — لِ(kasra) before a مضارع, peeled as a function-NEUTRAL
+    # proclitic (role 'proclitic', note 'لام سابقة للفعل'); no grammatical function assigned.
+    ok=True
+    for ref,skel,suf in [('2:185','ولتكملوا',False),('19:21','ولنجعله',True),('3:50','ولأحل',False)]:
+        seg=seg_of(ref,skel)
+        if seg is None: print('FAIL LAM+',ref,skel,'-> WITNESS NOT FOUND'); ok=False; continue
+        sl=[(x['text'],x['role']) for x in seg['slots']]
+        lam_peeled = any(sk(tx)=='ل' and ro=='proclitic' for tx,ro in sl)   # our neutral lam peel fired
+        tiled = tiles(seg)
+        suf_ok = (not suf) or (sl[-1][1]=='enclitic' and len(sl[-1][0])>0)
+        passed = lam_peeled and tiled and suf_ok
+        print(('PASS' if passed else 'FAIL'),'LAM+',ref,skel,'| lam_proclitic=%s tile=%s suffix=%s'%(lam_peeled,tiled,suf_ok),'->',sl)
+        ok&=passed
+    return ok
+
+def run_lam_contrast():
+    # our neutral lam peel must NOT fire on: divine لِلَّهِ (protected), lam of amr لْ (sukun), and
+    # lam-of-jar before a NOUN (لِكُلِّ, لِيَوۡمِ — those are the operator layer's لِ, role 'operator').
+    ok=True
+    for ref,skel in [('2:115','ولله'),('2:186','فليستجيبوا'),('4:12','فلكل'),('21:47','ليوم')]:
+        seg=seg_of(ref,skel)
+        if seg is None: print('FAIL LAM-',ref,skel,'-> WITNESS NOT FOUND'); ok=False; continue
+        sl=[(x['text'],x['role']) for x in seg['slots']]
+        no_neutral_lam = not any(sk(tx)=='ل' and ro=='proclitic' for tx,ro in sl)   # MASAQ-SEG-04 did NOT fire
+        tiled = tiles(seg)
+        passed = no_neutral_lam and tiled
+        print(('PASS' if passed else 'FAIL'),'LAM-',ref,skel,'| no_neutral_lam=%s tile=%s'%(no_neutral_lam,tiled),'->',sl)
+        ok&=passed
+    return ok
+
 def run_detector_no_competitor():
     # SIGNAL, not proof: among words matching the strengthened شكل, the engine's licensor finds NO
     # whole-word non-verb reading. This reports "detector found no competitor"; it does NOT claim a
@@ -108,5 +139,6 @@ def run_detector_no_competitor():
     return passed
 
 if __name__=='__main__':
-    ok = run_positive() & run_negative() & run_fasa_positive() & run_fasa_contrast() & run_detector_no_competitor()
+    ok = (run_positive() & run_negative() & run_fasa_positive() & run_fasa_contrast()
+          & run_lam_positive() & run_lam_contrast() & run_detector_no_competitor())
     print('ALL_PASS:',ok); sys.exit(0 if ok else 1)

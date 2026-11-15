@@ -164,6 +164,17 @@ def _host(word, toks, offs, a, b, lex, at_word_start):
             slots.append(_slot(word, offs, a, a + 1, MABNI, 'conj', note='حرف عطف'))
             slots.append(_slot(word, offs, a + 1, a + 2, MABNI, 'proclitic', note='سين الاستقبال'))
             return slots + _host(word, toks, offs, a + 2, b, lex, False)
+    if b - a > 2 and toks[a][0] == 'ل' and toks[a][1] == {KASRA} and \
+            toks[a + 1][0] in ('ي', 'ت', 'ن', 'أ') and SHADDA not in toks[a + 1][1] and toks[a + 1][1] & {FATHA, DAMMA}:
+        # MASAQ-SEG-04: فصل اللام السابقة للفعل — لامٌ مكسورة تلي عاملاً/عطفاً مقشوراً ثم مضارعٌ مرخَّص، تُقشَّر
+        #   سابقةً (وَلِتُكۡمِلُوا ← وَ + لِ + تُكۡمِلُوا). هذا وصفُ تقشيرٍ فقط: لا تُسنَد وظيفةٌ نحوية (ليست «لام جرّ»)
+        #   لأنّ الباقي فعل. الدليل الكافي = توقيع المضارع: لامٌ مكسورة + حرفُ مضارعةٍ (ي/ت/ن/أ) يحمل حركةَ المضارعة
+        #   غيرَ مشدَّد + بقيّةٌ تُرخَّص فعلاً. محميّةٌ: لِلَّهِ لا تُفصل (ثانيها لامٌ لا حرفُ مضارعة؛ والدستور يحميها).
+        from .cells import stem_licence as _sl
+        _rest = word[offs[a + 1][0]:offs[b - 1][1]]
+        if any(x[0] in ('فعل', 'فعل محتمل', 'فعل بالكتابة') for x in _sl(_rest)):
+            slots.append(_slot(word, offs, a, a + 1, MABNI, 'proclitic', note='لام سابقة للفعل'))
+            return slots + _host(word, toks, offs, a + 1, b, lex, False)
     pro_entry = lex.attested(word[offs[a][0]:offs[a][1]]) if (lex and b - a > 3 and toks[a][0] in ('أ', 'ل')
                                                                 and toks[a][1] == {FATHA}) else None
     if at_word_start and b - a > 3 and toks[a][1] == {FATHA} and \
