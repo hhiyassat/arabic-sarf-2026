@@ -175,6 +175,19 @@ def _host(word, toks, offs, a, b, lex, at_word_start):
         if any(x[0] in ('فعل', 'فعل محتمل', 'فعل بالكتابة') for x in _sl(_rest)):
             slots.append(_slot(word, offs, a, a + 1, MABNI, 'proclitic', note='لام سابقة للفعل'))
             return slots + _host(word, toks, offs, a + 1, b, lex, False)
+    if at_word_start and b - a > 1 and toks[a][0] in ('ف', 'و') and toks[a][1] == {FATHA} and lex:
+        # MASAQ-SEG-05: فَ/وَ قبل ضميرٍ منفصل (فَهُمۡ، فَهُوَ، فَهِيَ، فَأَنتُمۡ) — حرفُ عطفٍ ثم ضميرٌ منفصلٌ مبني.
+        #   يسدّ عدمَ التماثل مع وَهُمۡ (التي تُقشَّر أصلاً): المجموعة مغلقةٌ، والمطابقة تامّةٌ لصورة الضمير في ملف
+        #   المبنيات (separate_pronoun)، مع تطبيع السكون القرآني (هُمۡ ← هُم). فَهِمَ (جذر فهم): هِمَ ليست ضميراً فلا تُفصل.
+        _rest = word[offs[a + 1][0]:offs[b - 1][1]]
+        _strip = ''.join(c for c in _rest if c not in (SUKUN, 'ۡ'))   # نزع السكون (العادي والقرآني ۡ) للمطابقة
+        _hit = lex.lookup(_rest) or (lex.lookup(_strip) if _strip != _rest else None)
+        _sep = [h for h in (_hit or []) if h.get('category') == 'separate_pronoun']
+        if _sep:
+            slots.append(_slot(word, offs, a, a + 1, MABNI, 'conj', note='حرف عطف'))
+            slots.append(_slot(word, offs, a + 1, b, MABNI, 'lexicon',
+                              lexicon=[h['entry_id'] for h in _sep], note='ضمير منفصل'))
+            return slots
     pro_entry = lex.attested(word[offs[a][0]:offs[a][1]]) if (lex and b - a > 3 and toks[a][0] in ('أ', 'ل')
                                                                 and toks[a][1] == {FATHA}) else None
     if at_word_start and b - a > 3 and toks[a][1] == {FATHA} and \

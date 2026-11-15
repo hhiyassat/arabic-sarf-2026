@@ -117,6 +117,29 @@ def run_lam_contrast():
         ok&=passed
     return ok
 
+def run_fa_pronoun_positive():
+    # MASAQ-SEG-05: فَ/وَ before a detached pronoun -> [conj, separate_pronoun]
+    ok=True
+    for ref,skel in [('2:18','فهم'),('2:184','فهو'),('2:74','فهي')]:
+        seg=seg_of(ref,skel)
+        if seg is None: print('FAIL FPRON+',ref,skel,'-> WITNESS NOT FOUND'); ok=False; continue
+        sl=[(x['text'],x['role']) for x in seg['slots']]
+        passed = len(sl)==2 and sk(sl[0][0])=='ف' and sl[0][1]=='conj' and sl[1][1]=='lexicon' and tiles(seg)
+        print(('PASS' if passed else 'FAIL'),'FPRON+',ref,skel,'->',sl); ok&=passed
+    return ok
+
+def run_fa_pronoun_contrast():
+    # فَ + non-pronoun must NOT get the detached-pronoun peel: فَقَالُوا (verb), فَمَن (particle, peeled by another path)
+    ok=True
+    for ref,skel in [('4:153','فقالوا'),('2:38','فمن')]:
+        seg=seg_of(ref,skel)
+        if seg is None: print('FAIL FPRON-',ref,skel,'-> WITNESS NOT FOUND'); ok=False; continue
+        sl=[(x['text'],x['role']) for x in seg['slots']]
+        # no slot should be a separate-pronoun lexicon piece from SEG-05 (note 'ضمير منفصل')
+        no_pron = not any(x.get('note')=='ضمير منفصل' for x in seg['slots'])
+        print(('PASS' if (no_pron and tiles(seg)) else 'FAIL'),'FPRON-',ref,skel,'->',sl); ok&=(no_pron and tiles(seg))
+    return ok
+
 def run_detector_no_competitor():
     # SIGNAL, not proof: among words matching the strengthened شكل, the engine's licensor finds NO
     # whole-word non-verb reading. This reports "detector found no competitor"; it does NOT claim a
@@ -140,5 +163,6 @@ def run_detector_no_competitor():
 
 if __name__=='__main__':
     ok = (run_positive() & run_negative() & run_fasa_positive() & run_fasa_contrast()
-          & run_lam_positive() & run_lam_contrast() & run_detector_no_competitor())
+          & run_lam_positive() & run_lam_contrast()
+          & run_fa_pronoun_positive() & run_fa_pronoun_contrast() & run_detector_no_competitor())
     print('ALL_PASS:',ok); sys.exit(0 if ok else 1)
