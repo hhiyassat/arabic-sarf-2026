@@ -54,6 +54,38 @@ def run_negative():
         ok&=passed
     return ok
 
+def run_fasa_positive():
+    # MASAQ-SEG-03: فَسَ/وَسَ — conj (ف/و) + future سَ + مضارع. First piece = conj, second = lone سَ proclitic.
+    ok=True
+    for ref,skel,suf in [('10:31','فسيقولون',False),('3:144','وسيجزي',False),('8:36','فسينفقونها',True)]:
+        seg=seg_of(ref,skel)
+        if seg is None: print('FAIL FASA+',ref,skel,'-> WITNESS NOT FOUND'); ok=False; continue
+        sl=[(x['text'],x['role']) for x in seg['slots']]
+        head = len(sl)>=3 and sk(sl[0][0]) in ('ف','و') and sl[1][1]=='proclitic' and sl[1][0]=='سَ' and sl[2][1]=='stem'
+        tiled = tiles(seg)
+        suf_ok = (not suf) or (sl[-1][1]=='enclitic' and len(sl[-1][0])>0)
+        passed = head and tiled and suf_ok
+        print(('PASS' if passed else 'FAIL'),'FASA+',ref,skel,'| head=%s tile=%s suffix=%s'%(head,tiled,suf_ok),'->',sl)
+        ok&=passed
+    return ok
+
+def run_fasa_contrast():
+    # MUST NOT split the سَ after ف/و: roots (فَسَجَدُوا, فَسَوَّىٰ, وَسَعَىٰ), the particle فَسَوۡفَ (3rd letter و),
+    # and سَنَ futures (وَسَنَزِيدُ, وَسَنَجۡزِي) — ن restricted, deferred to a later family. Here the piece after
+    # the conj must NOT be a lone سَ proclitic.
+    ok=True
+    for ref,skel in [('2:34','فسجدوا'),('2:29','فسوىهن'),('2:114','وسعى'),('4:30','فسوف'),('2:58','وسنزيد'),('3:145','وسنجزي')]:
+        seg=seg_of(ref,skel)
+        if seg is None: print('FAIL FASA-',ref,skel,'-> WITNESS NOT FOUND'); ok=False; continue
+        sl=[(x['text'],x['role']) for x in seg['slots']]
+        # if a conj was peeled, the NEXT piece must not be a lone سَ; otherwise the whole stem keeps سَ
+        after_conj_not_sin = not (len(sl)>=2 and sk(sl[0][0]) in ('ف','و') and sl[1][1]=='proclitic' and sk(sl[1][0])=='س')
+        tiled = tiles(seg)
+        passed = after_conj_not_sin and tiled
+        print(('PASS' if passed else 'FAIL'),'FASA-',ref,skel,'| no_sin_split=%s tile=%s'%(after_conj_not_sin,tiled),'->',sl)
+        ok&=passed
+    return ok
+
 def run_detector_no_competitor():
     # SIGNAL, not proof: among words matching the strengthened شكل, the engine's licensor finds NO
     # whole-word non-verb reading. This reports "detector found no competitor"; it does NOT claim a
@@ -76,5 +108,5 @@ def run_detector_no_competitor():
     return passed
 
 if __name__=='__main__':
-    ok = run_positive() & run_negative() & run_detector_no_competitor()
+    ok = run_positive() & run_negative() & run_fasa_positive() & run_fasa_contrast() & run_detector_no_competitor()
     print('ALL_PASS:',ok); sys.exit(0 if ok else 1)

@@ -138,17 +138,32 @@ def _host(word, toks, offs, a, b, lex, at_word_start):
         # أو لام «أل». فإن تحرّك ما بعد الألف فهي ألف مدٍّ من الكلمة (فَاطِرُ، فَارِضٌ، وَابِلٌ)
         slots.append(_slot(word, offs, a, a + 1, MABNI, 'conj', note='حرف عطف'))
         return slots + _host(word, toks, offs, a + 1, b, lex, False)
-    if at_word_start and b - a > 2 and toks[a][0] == 'س' and toks[a][1] == {FATHA} and \
+    if b - a > 2 and toks[a][0] == 'س' and toks[a][1] == {FATHA} and \
             toks[a + 1][0] in ('ي', 'ت') and SHADDA not in toks[a + 1][1] and toks[a + 1][1] & {FATHA, DAMMA}:
         # MASAQ-SEG-02: سين الاستقبال سابقةٌ على المضارع المرخَّص (سَيَقُولُ ← سَ + يَقُولُ، سَتُدۡعَوۡنَ ← سَ + تُدۡعَوۡنَ).
         #   الدليل الكافي = توقيعُ المضارع كاملاً: سينٌ مفتوحة + حرفُ مضارعةٍ (ي/ت) يحمل حركةَ المضارعة (فتحة أو ضمة)
         #   غيرَ مشدَّد + بقيّةٌ تُرخَّص فعلاً. فتُمنع السينُ الجذرية (سَأَلَ، سَنَابِل: ليست ي/ت؛ سَيِّد: مشدَّدة بكسر)،
         #   والمضمومة (سُورَةٌ، سُبۡحَٰنَ)، والاسمُ الساكنُ ثانيه (سَيۡف). لا تمسّ القاعدةُ صيغةَ الفعل، إنما تفصل سابقتَه.
+        # MASAQ-SEG-03: لا تُشترط بداية الكلمة؛ فالسين تُفصل أيضاً حين تلي عاملاً مقشوراً قبلها (وَسَيَجۡزِي ←
+        #   وَ عاملٌ، ثم سَ + يَجۡزِي). الدليل نفسه، والفصل عند أيّ حدٍّ صرفيٍّ بلغه التقشير، لا بدء الكلمة وحده.
         from .cells import stem_licence as _sl
         _rest = word[offs[a + 1][0]:offs[b - 1][1]]
         if any(x[0] in ('فعل', 'فعل محتمل', 'فعل بالكتابة') for x in _sl(_rest)):
             slots.append(_slot(word, offs, a, a + 1, MABNI, 'proclitic', note='سين الاستقبال'))
             return slots + _host(word, toks, offs, a + 1, b, lex, False)
+    if at_word_start and b - a > 3 and toks[a][0] in ('ف', 'و') and toks[a][1] == {FATHA} and \
+            toks[a + 1][0] == 'س' and toks[a + 1][1] == {FATHA} and \
+            toks[a + 2][0] in ('ي', 'ت') and SHADDA not in toks[a + 2][1] and toks[a + 2][1] & {FATHA, DAMMA}:
+        # MASAQ-SEG-03: فَسَ/وَسَ — حرفُ عطفٍ (ف/و مفتوح) ثم سينُ استقبالٍ ثم مضارعٌ مرخَّص (فَسَيَقُولُونَ ←
+        #   فَ + سَ + يَقُولُونَ). تُعالَج الكلمةُ كاملةً هنا حتى حين لا يُقشَّر العطفُ وحده (لأنّ بقيّته سَ+فعل لا
+        #   تُرخَّص فعلاً مباشرةً). الدليل = توقيع المضارع كاملاً بعد السين. تُمنع فَسَاد/وَسَط (ثالثها ليس ي/ت)،
+        #   ووَسِيلة/وَسِطَ (سِين مكسورة)، وما شُدّ ثالثه.
+        from .cells import stem_licence as _sl
+        _rest = word[offs[a + 2][0]:offs[b - 1][1]]
+        if any(x[0] in ('فعل', 'فعل محتمل', 'فعل بالكتابة') for x in _sl(_rest)):
+            slots.append(_slot(word, offs, a, a + 1, MABNI, 'conj', note='حرف عطف'))
+            slots.append(_slot(word, offs, a + 1, a + 2, MABNI, 'proclitic', note='سين الاستقبال'))
+            return slots + _host(word, toks, offs, a + 2, b, lex, False)
     pro_entry = lex.attested(word[offs[a][0]:offs[a][1]]) if (lex and b - a > 3 and toks[a][0] in ('أ', 'ل')
                                                                 and toks[a][1] == {FATHA}) else None
     if at_word_start and b - a > 3 and toks[a][1] == {FATHA} and \
