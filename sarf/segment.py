@@ -46,6 +46,15 @@ QURAN_SUKUN = 'ۡ'                                           # U+06E1 السكو
 _FINAL_CONNECTIVE = {FATHA, DAMMA, KASRA, SUKUN}            # الحركة الوصليّة/السكون النهائي، غير مميِّزٍ لهوية الضمير
 
 
+def _verb_licensed(text):
+    """هل تُرخَّص البقيّة فعلاً؟ يُوحَّد السكون القرآني ۡ (U+06E1) إلى القياسي ْ قبل الكاشف، فالمرخِّص
+    (stem_licence) حسّاسٌ لرسم السكون: يُرخّص نُدْخِل ولا يُرخّص نُدۡخِل، وهما سواءٌ نطقاً. التطبيع تمثيليٌّ
+    في التقشير، لا تغييرَ في قواعد الصرف. يشمل الفعل الصريح والمحتمل والثابت بالكتابة."""
+    from .cells import stem_licence
+    norm = text.replace(QURAN_SUKUN, SUKUN)
+    return any(x[0] in ('فعل', 'فعل محتمل', 'فعل بالكتابة') for x in stem_licence(norm))
+
+
 def _separate_pronoun(rest, lex):
     """مطابقةٌ مشكولةٌ موثَّقةٌ لضميرٍ منفصلٍ تامّ: (1) توحيد السكون القرآني ۡ → القياسي ْ (تحويلٌ لا حذف)؛
     (2) مطابقة صورة المدخل (form) تامّةً بالحركات، أو مع تطبيع الحركة الوصليّة النهائية وحدها (هُمُ ↔ هُمْ)؛
@@ -169,9 +178,21 @@ def _host(word, toks, offs, a, b, lex, at_word_start):
         #   والمضمومة (سُورَةٌ، سُبۡحَٰنَ)، والاسمُ الساكنُ ثانيه (سَيۡف). لا تمسّ القاعدةُ صيغةَ الفعل، إنما تفصل سابقتَه.
         # MASAQ-SEG-03: لا تُشترط بداية الكلمة؛ فالسين تُفصل أيضاً حين تلي عاملاً مقشوراً قبلها (وَسَيَجۡزِي ←
         #   وَ عاملٌ، ثم سَ + يَجۡزِي). الدليل نفسه، والفصل عند أيّ حدٍّ صرفيٍّ بلغه التقشير، لا بدء الكلمة وحده.
-        from .cells import stem_licence as _sl
         _rest = word[offs[a + 1][0]:offs[b - 1][1]]
-        if any(x[0] in ('فعل', 'فعل محتمل', 'فعل بالكتابة') for x in _sl(_rest)):
+        if _verb_licensed(_rest):
+            slots.append(_slot(word, offs, a, a + 1, MABNI, 'proclitic', note='سين الاستقبال'))
+            return slots + _host(word, toks, offs, a + 1, b, lex, False)
+    if b - a > 3 and toks[a][0] == 'س' and toks[a][1] == {FATHA} and \
+            toks[a + 1][0] == 'ن' and SHADDA not in toks[a + 1][1] and toks[a + 1][1] & {FATHA, DAMMA} and \
+            toks[a + 2][0] != 'ا':
+        # MASAQ-SEG-06: سين الاستقبال قبل مضارعِ المتكلّمين (نون المضارعة): سَنُدۡخِلُهُمۡ ← سَ + نُدۡخِلُهُمۡ.
+        #   «ن» تلتبس بالجذر (سَنَابِل جذره سنبل، سَنَة، سَنَا)، فيُشترط مع توقيع المضارعة دليلان مانعان للالتباس:
+        #   (1) أن يكون ما بعد النون حرفاً لا ألفَ مدٍّ (سَنَابِل: نَ + ابِل ألفٌ، فتُمنع)؛ (2) ألّا تُرخَّص الكلمةُ كلها
+        #   بشيء (سَنَا = بناء/فعل، سَنَة = اسمٌ ناقص: كلتاهما مرخَّصة فتُمنع)؛ (3) أن تُرخَّص البقيّةُ فعلاً بعد التطبيع.
+        from .cells import stem_licence as _sl2
+        _whole = word[offs[a][0]:offs[b - 1][1]].replace(QURAN_SUKUN, SUKUN)
+        _rest = word[offs[a + 1][0]:offs[b - 1][1]]
+        if not list(_sl2(_whole)) and _verb_licensed(_rest):
             slots.append(_slot(word, offs, a, a + 1, MABNI, 'proclitic', note='سين الاستقبال'))
             return slots + _host(word, toks, offs, a + 1, b, lex, False)
     if at_word_start and b - a > 3 and toks[a][0] in ('ف', 'و') and toks[a][1] == {FATHA} and \
@@ -181,9 +202,8 @@ def _host(word, toks, offs, a, b, lex, at_word_start):
         #   فَ + سَ + يَقُولُونَ). تُعالَج الكلمةُ كاملةً هنا حتى حين لا يُقشَّر العطفُ وحده (لأنّ بقيّته سَ+فعل لا
         #   تُرخَّص فعلاً مباشرةً). الدليل = توقيع المضارع كاملاً بعد السين. تُمنع فَسَاد/وَسَط (ثالثها ليس ي/ت)،
         #   ووَسِيلة/وَسِطَ (سِين مكسورة)، وما شُدّ ثالثه.
-        from .cells import stem_licence as _sl
         _rest = word[offs[a + 2][0]:offs[b - 1][1]]
-        if any(x[0] in ('فعل', 'فعل محتمل', 'فعل بالكتابة') for x in _sl(_rest)):
+        if _verb_licensed(_rest):
             slots.append(_slot(word, offs, a, a + 1, MABNI, 'conj', note='حرف عطف'))
             slots.append(_slot(word, offs, a + 1, a + 2, MABNI, 'proclitic', note='سين الاستقبال'))
             return slots + _host(word, toks, offs, a + 2, b, lex, False)
@@ -193,9 +213,8 @@ def _host(word, toks, offs, a, b, lex, at_word_start):
         #   سابقةً (وَلِتُكۡمِلُوا ← وَ + لِ + تُكۡمِلُوا). هذا وصفُ تقشيرٍ فقط: لا تُسنَد وظيفةٌ نحوية (ليست «لام جرّ»)
         #   لأنّ الباقي فعل. الدليل الكافي = توقيع المضارع: لامٌ مكسورة + حرفُ مضارعةٍ (ي/ت/ن/أ) يحمل حركةَ المضارعة
         #   غيرَ مشدَّد + بقيّةٌ تُرخَّص فعلاً. محميّةٌ: لِلَّهِ لا تُفصل (ثانيها لامٌ لا حرفُ مضارعة؛ والدستور يحميها).
-        from .cells import stem_licence as _sl
         _rest = word[offs[a + 1][0]:offs[b - 1][1]]
-        if any(x[0] in ('فعل', 'فعل محتمل', 'فعل بالكتابة') for x in _sl(_rest)):
+        if _verb_licensed(_rest):
             slots.append(_slot(word, offs, a, a + 1, MABNI, 'proclitic', note='لام سابقة للفعل'))
             return slots + _host(word, toks, offs, a + 1, b, lex, False)
     if at_word_start and b - a > 1 and toks[a][0] in ('ف', 'و') and toks[a][1] == {FATHA} and lex:

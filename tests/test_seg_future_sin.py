@@ -74,7 +74,7 @@ def run_fasa_contrast():
     # and سَنَ futures (وَسَنَزِيدُ, وَسَنَجۡزِي) — ن restricted, deferred to a later family. Here the piece after
     # the conj must NOT be a lone سَ proclitic.
     ok=True
-    for ref,skel in [('2:34','فسجدوا'),('2:29','فسوىهن'),('2:114','وسعى'),('4:30','فسوف'),('2:58','وسنزيد'),('3:145','وسنجزي')]:
+    for ref,skel in [('2:34','فسجدوا'),('2:29','فسوىهن'),('2:114','وسعى'),('4:30','فسوف')]:
         seg=seg_of(ref,skel)
         if seg is None: print('FAIL FASA-',ref,skel,'-> WITNESS NOT FOUND'); ok=False; continue
         sl=[(x['text'],x['role']) for x in seg['slots']]
@@ -169,6 +169,29 @@ def run_fa_pronoun_contrast():
         print(('PASS' if (no_pron and tiles(seg)) else 'FAIL'),'FPRON-',ref,skel,'->',sl); ok&=(no_pron and tiles(seg))
     return ok
 
+def run_sanna_positive():
+    # MASAQ-SEG-06: سَ before نون المضارعة (future سَنَ) -> [سَ proclitic, verb]
+    ok=True
+    for ref,skel in [('4:57','سندخلهم'),('3:181','سنكتب'),('7:161','سنزيد'),('2:58','وسنزيد')]:
+        seg=seg_of(ref,skel)
+        if seg is None: print('FAIL SANNA+',ref,skel,'-> WITNESS NOT FOUND'); ok=False; continue
+        sl=[(x['text'],x['role']) for x in seg['slots']]
+        has_sin = any(x['text']=='سَ' and x['role']=='proclitic' and x.get('note')=='سين الاستقبال' for x in seg['slots'])
+        passed = has_sin and tiles(seg)
+        print(('PASS' if passed else 'FAIL'),'SANNA+',ref,skel,'->',sl); ok&=passed
+    return ok
+
+def run_sanna_contrast():
+    # root/noun سَنَ must NOT split: سَنَابِل (نَ+ابِل alif), سَنَا (whole licensed); also سُنَّة (not سَ fatha)
+    ok=True
+    for ref,skel in [('2:261','سنابل'),('24:43','سنا'),('15:13','سنة')]:
+        seg=seg_of(ref,skel)
+        if seg is None: print('FAIL SANNA-',ref,skel,'-> WITNESS NOT FOUND'); ok=False; continue
+        sl=[(x['text'],x['role']) for x in seg['slots']]
+        no_split = not any(x.get('note')=='سين الاستقبال' for x in seg['slots'])
+        print(('PASS' if (no_split and tiles(seg)) else 'FAIL'),'SANNA-',ref,skel,'->',sl); ok&=(no_split and tiles(seg))
+    return ok
+
 def run_detector_no_competitor():
     # SIGNAL, not proof: among words matching the strengthened شكل, the engine's licensor finds NO
     # whole-word non-verb reading. This reports "detector found no competitor"; it does NOT claim a
@@ -194,5 +217,5 @@ if __name__=='__main__':
     ok = (run_positive() & run_negative() & run_fasa_positive() & run_fasa_contrast()
           & run_lam_positive() & run_lam_contrast()
           & run_fa_pronoun_positive() & run_fa_pronoun_unit(WT) & run_fa_pronoun_contrast()
-          & run_detector_no_competitor())
+          & run_sanna_positive() & run_sanna_contrast() & run_detector_no_competitor())
     print('ALL_PASS:',ok); sys.exit(0 if ok else 1)
