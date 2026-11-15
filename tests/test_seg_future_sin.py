@@ -209,6 +209,39 @@ def run_protected_particle():
         print(('PASS' if (notprot and tiles(seg)) else 'FAIL'),'PART-',ref,skel,'->',[(x['text'],x['role']) for x in seg['slots']]); ok&=(notprot and tiles(seg))
     return ok
 
+def run_syllable_guard(WT):
+    # MASAQ-SEG-08: a face that creates a non-first piece starting with an UN-decomposed shadda (CCVV),
+    # with no coda in the previous piece, is blocked — by a STRUCTURAL constraint, not a word list.
+    import sarf.segment as S
+    from sarf.stages import run_ref as _rr
+    ok=True
+    # structural merge: كَلَّمَ (a verb, NOT a lexicon particle) kept whole, not [كَ, لَّمَ]
+    for ref,skel in [('2:253','كلم'),('93:3','ودعك')]:
+        seg=seg_of(ref,skel)
+        if seg is None: print('FAIL SYL+',ref,skel,'-> WITNESS NOT FOUND'); ok=False; continue
+        merged = len(seg['slots'])==1 and tiles(seg)
+        print(('PASS' if merged else 'FAIL'),'SYL+',ref,skel,'->',[(x['text'],x['role']) for x in seg['slots']]); ok&=merged
+    # the block is recorded with the schema; كَلَّمَ is not a particle (so this is structural, not SEG-07 lexicon)
+    S.BLOCKED_FACES.clear(); _rr('2:253')
+    logged = any(b.get('word')=='كَلَّمَ' and b.get('rule_id')=='MASAQ-SEG-08' and 'source_cells' in b for b in S.BLOCKED_FACES)
+    print(('PASS' if logged else 'FAIL'),'SYL-log كَلَّمَ face recorded with schema'); ok&=logged
+    # CONTRAST (licensed, NOT merged): لام شمسية (ٱلنَّاس), sukun-start (بِسۡمِ), nun-wiqaya enclitic (مَكَّنِّي)
+    for ref,skel in [('48:20','الناس'),('1:1','بسم'),('18:95','مكني')]:
+        seg=seg_of(ref,skel)
+        if seg is None: print('FAIL SYL-',ref,skel,'-> WITNESS NOT FOUND'); ok=False; continue
+        not_merged = not any((x.get('note') or '').startswith('حارس مقطعي') for x in seg['slots']) and len(seg['slots'])>=2 and tiles(seg)
+        print(('PASS' if not_merged else 'FAIL'),'SYL-',ref,skel,'->',[(x['text'],x['role']) for x in seg['slots']]); ok&=not_merged
+    # CORRUPTION: no engine output may contain a non-first piece beginning with a bare shadda consonant
+    cap={}; orig=S._host
+    def spy(w,t,o,a,b,lex,aws): cap['lex']=lex; return orig(w,t,o,a,b,lex,aws)
+    S._host=spy; _rr('2:18'); lex=cap['lex']; S._host=orig
+    r=S.segment_word('كَلَّمَ',0,[],lex)
+    def starts_shadda(txt):
+        tk=[(L,set(m)) for L,m in S.letters(txt)]; return bool(tk) and 'ّ' in tk[0][1]
+    bad=any(i>0 and starts_shadda(sl['text']) and sl.get('role') not in ('enclitic',) for i,sl in enumerate(r['slots']))
+    print(('PASS' if not bad else 'FAIL'),'SYL-corruption synthetic كَلَّمَ ->',[(x['text'],x['role']) for x in r['slots']]); ok&=(not bad)
+    return ok
+
 def run_detector_no_competitor():
     # SIGNAL, not proof: among words matching the strengthened شكل, the engine's licensor finds NO
     # whole-word non-verb reading. This reports "detector found no competitor"; it does NOT claim a
@@ -234,5 +267,5 @@ if __name__=='__main__':
     ok = (run_positive() & run_negative() & run_fasa_positive() & run_fasa_contrast()
           & run_lam_positive() & run_lam_contrast()
           & run_fa_pronoun_positive() & run_fa_pronoun_unit(WT) & run_fa_pronoun_contrast()
-          & run_sanna_positive() & run_sanna_contrast() & run_protected_particle() & run_detector_no_competitor())
+          & run_sanna_positive() & run_sanna_contrast() & run_protected_particle() & run_syllable_guard(WT) & run_detector_no_competitor())
     print('ALL_PASS:',ok); sys.exit(0 if ok else 1)

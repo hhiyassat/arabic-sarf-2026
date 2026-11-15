@@ -42,6 +42,7 @@ MOVING = {FATHA, DAMMA, KASRA, FATHATAN, DAMMATAN, KASRATAN}
 STEM_SUFFIXES = [s for s in PRON_SUFFIXES if s != 'ي']      # ياء المتكلم وحدها ملتبسة بياء المدّ
 MIN_STEM = 3                                                # أقلّ حروف الجذع بعد نزع الضمير
 
+BLOCKED_FACES = []                                          # سجلّ أوجه الفصل الممنوعة بالحارس المقطعي (SEG-08)
 QURAN_SUKUN = 'ۡ'                                           # U+06E1 السكون القرآني؛ يُوحَّد إلى U+0652 القياسي
 _FINAL_CONNECTIVE = {FATHA, DAMMA, KASRA, SUKUN}            # الحركة الوصليّة/السكون النهائي، غير مميِّزٍ لهوية الضمير
 
@@ -431,6 +432,35 @@ def segment_word(word, wi, cands, lex):
             else:
                 s['type'] = STEM
                 s['note'] = (s.get('note') or '') + ': ليس في ملف المبنيات'
+    # 3ب. حارس السلامة المقطعية (MASAQ-SEG-08): يُمنع وجهُ فصلٍ يُنشئ جزءاً غير أوّلَ يبدأ بشدّةٍ غير مفكوكة
+    #   (CCVV) بلا ترخيص إدغام. فالشدّة على الحدّ مرخَّصةٌ إن وفّر السابقُ قدَّها (ال الشمسيّة: ٱلنَّاس؛ أو جزءٌ
+    #   ينتهي بساكن)، أو كان الجزءُ محميًّا/معجميًّا، أو لفظَ الجلالة. وإلّا فالقدُّ (نصفُ الشدّة الأول) ضائعٌ،
+    #   والقصُّ غيرُ صالح (كَلَّمَ ليست كَ+لَّمَ؛ وَدَّعَكَ ليست وَ+دَّعَكَ)، فيُدمَج الجزءُ في سابقه (وجهٌ صحيحٌ كامل).
+    #   هذا شرطٌ لازمٌ لا كافٍ: لا يُثبِت أنّ الحرف سابقةٌ، وتبقى شروطُ التقشير الأخرى. والمفكوك (كُنۡ|نَا) والساكنُ
+    #   البادئ (بِ|سۡمِ) مرخَّصان. تُسجَّل الأوجه الممنوعة في segment_word.blocked_faces.
+    if not (divine and len(slots) > 1):
+        _i = len(slots) - 1
+        while _i >= 1:
+            s = slots[_i]
+            s_toks = [(L, set(m)) for L, m in letters(s['text'])]
+            prev = slots[_i - 1]
+            p_toks = [(L, set(m)) for L, m in letters(prev['text'])]
+            if s_toks and SHADDA in s_toks[0][1] and \
+                    s['role'] not in ('divine', 'enclitic') and s['type'] != MABNI and not s.get('lexicon') and \
+                    prev['role'] != 'article' and 'لله' not in strip_marks(word) and \
+                    not (p_toks and (SUKUN in p_toks[-1][1] or not (p_toks[-1][1] & MOVING))):
+                # مُستثنى: اللاحقة (إدغام نون الوقاية مرخَّصٌ كال الشمسيّة: تَأۡمَنَّا)، ولفظ الجلالة (حمايةٌ دستورية)،
+                #   وال الشمسيّة، والجزءُ المحميّ/المعجميّ، والسابقُ المنتهي بقدٍّ ساكن.
+                BLOCKED_FACES.append(dict(
+                    rule_id='MASAQ-SEG-08', word=word, boundary=prev['span'][1],
+                    source_cells=[prev.get('text'), s.get('text')],
+                    violated_constraint='شدّة بادئة غير مفكوكة بلا قدٍّ سابق (CCVV)',
+                    evidence='الجزء «%s» يبدأ بشدّةٍ والسابق «%s» ينتهي بحركة' % (s['text'], prev['text'])))
+                a = prev['span'][0]; b = s['span'][1]
+                merged = _slot(word, offs, a, b, STEM, prev['role'] if prev['type'] == STEM else 'stem',
+                               note='حارس مقطعي: دُمج لمنع شدّةٍ بادئةٍ غير مفكوكة')
+                slots[_i - 1:_i + 1] = [merged]
+            _i -= 1
     # 4. الوحدات: تُضمّ الخانة إلى سابقتها إن بدأت بساكن، أو كانتا كلتاهما مما يُقطَّع
     units = []
     for i, s in enumerate(slots):
