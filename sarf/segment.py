@@ -138,6 +138,17 @@ def _host(word, toks, offs, a, b, lex, at_word_start):
         # أو لام «أل». فإن تحرّك ما بعد الألف فهي ألف مدٍّ من الكلمة (فَاطِرُ، فَارِضٌ، وَابِلٌ)
         slots.append(_slot(word, offs, a, a + 1, MABNI, 'conj', note='حرف عطف'))
         return slots + _host(word, toks, offs, a + 1, b, lex, False)
+    if at_word_start and b - a > 2 and toks[a][0] == 'س' and toks[a][1] == {FATHA} and \
+            toks[a + 1][0] in ('ي', 'ت') and SHADDA not in toks[a + 1][1]:
+        # MASAQ-SEG-02: سين الاستقبال سابقةٌ على المضارع المرخَّص (سَيَقُولُ ← سَ + يَقُولُ، سَتُدۡعَوۡنَ ← سَ + تُدۡعَوۡنَ)؛
+        #   شرطُها أن تُفتح السين، وأن يليها «ي» أو «ت» مضارعةٍ غير مشدَّدة (القاطعتان)، وأن تُرخَّص البقيّةُ فعلاً.
+        #   قُصِرت على ي/ت لأنّ «أ» و«ن» تلتبسان بالجذر (سَأَلَ جذره سأل، سَنَابِل جذره سنبل). فتُمنع السينُ الجذرية
+        #   والمضمومة (سُورَةٌ). لا تمسّ القاعدةُ صيغةَ الفعل، إنما تفصل سابقتَه. (سَأَ/سَنَ المستقبلتان: عائلة لاحقة.)
+        from .cells import stem_licence as _sl
+        _rest = word[offs[a + 1][0]:offs[b - 1][1]]
+        if any(x[0] in ('فعل', 'فعل محتمل', 'فعل بالكتابة') for x in _sl(_rest)):
+            slots.append(_slot(word, offs, a, a + 1, MABNI, 'proclitic', note='سين الاستقبال'))
+            return slots + _host(word, toks, offs, a + 1, b, lex, False)
     pro_entry = lex.attested(word[offs[a][0]:offs[a][1]]) if (lex and b - a > 3 and toks[a][0] in ('أ', 'ل')
                                                                 and toks[a][1] == {FATHA}) else None
     if at_word_start and b - a > 3 and toks[a][1] == {FATHA} and \
