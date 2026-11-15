@@ -118,14 +118,44 @@ def run_lam_contrast():
     return ok
 
 def run_fa_pronoun_positive():
-    # MASAQ-SEG-05: فَ/وَ before a detached pronoun -> [conj, separate_pronoun]
+    # MASAQ-SEG-05: فَ/وَ before a detached pronoun -> [conj, separate_pronoun]; verify entry_id too
     ok=True
-    for ref,skel in [('2:18','فهم'),('2:184','فهو'),('2:74','فهي')]:
+    for ref,skel,eid in [('2:18','فهم','mabniyat:separate_pronoun:0010'),
+                         ('2:184','فهو','mabniyat:separate_pronoun:0007'),
+                         ('2:74','فهي','mabniyat:separate_pronoun:0008')]:
         seg=seg_of(ref,skel)
         if seg is None: print('FAIL FPRON+',ref,skel,'-> WITNESS NOT FOUND'); ok=False; continue
         sl=[(x['text'],x['role']) for x in seg['slots']]
-        passed = len(sl)==2 and sk(sl[0][0])=='ف' and sl[0][1]=='conj' and sl[1][1]=='lexicon' and tiles(seg)
-        print(('PASS' if passed else 'FAIL'),'FPRON+',ref,skel,'->',sl); ok&=passed
+        id_ok = seg['slots'][-1].get('lexicon')==[eid]
+        passed = len(sl)==2 and sk(sl[0][0])=='ف' and sl[0][1]=='conj' and sl[1][1]=='lexicon' and tiles(seg) and id_ok
+        print(('PASS' if passed else 'FAIL'),'FPRON+',ref,skel,'| id=%s'%id_ok,'->',sl); ok&=passed
+    return ok
+
+def run_fa_pronoun_unit(WT):
+    # direct helper + synthetic engine checks (owner #2): فَهِمَ (root), harakat-differing forms, و-branch, entry ids
+    import sarf.segment as S
+    from sarf.stages import run_ref as _rr
+    cap={}; orig=S._host
+    def spy(w,t,o,a,b,lex,aws): cap['lex']=lex; return orig(w,t,o,a,b,lex,aws)
+    S._host=spy; _rr('2:18'); lex=cap['lex']; S._host=orig
+    ok=True
+    # _separate_pronoun: exact + connecting-vowel (هُمُ) accepted; root/internal-diff rejected
+    want_hit={'هُمۡ':'mabniyat:separate_pronoun:0010','هُوَ':'mabniyat:separate_pronoun:0007',
+              'هُمُ':'mabniyat:separate_pronoun:0010','هُنَّ':'mabniyat:separate_pronoun:0011'}
+    want_miss=['هِمَ','هَمَّ','هَمْ']          # فَهِمَ remainder, هَمَّ (همم root), هَمْ: internal harakat differ
+    for r,eid in want_hit.items():
+        m=S._separate_pronoun(r,lex); good=bool(m) and m[0]['entry_id']==eid
+        print(('PASS' if good else 'FAIL'),'FPRON-unit hit',r,'->',[h['entry_id'] for h in m]); ok&=good
+    for r in want_miss:
+        m=S._separate_pronoun(r,lex); good=(m==[])
+        print(('PASS' if good else 'FAIL'),'FPRON-unit miss',r,'->',[h.get('form') for h in m]); ok&=good
+    # synthetic engine: فَهِمَ (root فهم) must NOT be pronoun-peeled; وَهُمۡ (و-branch) must peel [conj, pronoun]
+    r1=S.segment_word('فَهِمَ',0,[],lex); s1=[(x['text'],x['role']) for x in r1['slots']]
+    g1 = not any(x.get('note')=='ضمير منفصل' for x in r1['slots'])
+    print(('PASS' if g1 else 'FAIL'),'FPRON-synthetic فَهِمَ ->',s1); ok&=g1
+    r2=S.segment_word('وَهُمۡ',0,[],lex); s2=[(x['text'],x['role']) for x in r2['slots']]
+    g2 = len(r2['slots'])==2 and sk(r2['slots'][0]['text'])=='و' and r2['slots'][0]['role']=='conj' and r2['slots'][1].get('note')=='ضمير منفصل'
+    print(('PASS' if g2 else 'FAIL'),'FPRON-synthetic وَهُمۡ (و-branch) ->',s2); ok&=g2
     return ok
 
 def run_fa_pronoun_contrast():
@@ -135,7 +165,6 @@ def run_fa_pronoun_contrast():
         seg=seg_of(ref,skel)
         if seg is None: print('FAIL FPRON-',ref,skel,'-> WITNESS NOT FOUND'); ok=False; continue
         sl=[(x['text'],x['role']) for x in seg['slots']]
-        # no slot should be a separate-pronoun lexicon piece from SEG-05 (note 'ضمير منفصل')
         no_pron = not any(x.get('note')=='ضمير منفصل' for x in seg['slots'])
         print(('PASS' if (no_pron and tiles(seg)) else 'FAIL'),'FPRON-',ref,skel,'->',sl); ok&=(no_pron and tiles(seg))
     return ok
@@ -164,5 +193,6 @@ def run_detector_no_competitor():
 if __name__=='__main__':
     ok = (run_positive() & run_negative() & run_fasa_positive() & run_fasa_contrast()
           & run_lam_positive() & run_lam_contrast()
-          & run_fa_pronoun_positive() & run_fa_pronoun_contrast() & run_detector_no_competitor())
+          & run_fa_pronoun_positive() & run_fa_pronoun_unit(WT) & run_fa_pronoun_contrast()
+          & run_detector_no_competitor())
     print('ALL_PASS:',ok); sys.exit(0 if ok else 1)

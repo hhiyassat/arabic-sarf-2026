@@ -42,6 +42,29 @@ MOVING = {FATHA, DAMMA, KASRA, FATHATAN, DAMMATAN, KASRATAN}
 STEM_SUFFIXES = [s for s in PRON_SUFFIXES if s != 'ي']      # ياء المتكلم وحدها ملتبسة بياء المدّ
 MIN_STEM = 3                                                # أقلّ حروف الجذع بعد نزع الضمير
 
+QURAN_SUKUN = 'ۡ'                                           # U+06E1 السكون القرآني؛ يُوحَّد إلى U+0652 القياسي
+_FINAL_CONNECTIVE = {FATHA, DAMMA, KASRA, SUKUN}            # الحركة الوصليّة/السكون النهائي، غير مميِّزٍ لهوية الضمير
+
+
+def _separate_pronoun(rest, lex):
+    """مطابقةٌ مشكولةٌ موثَّقةٌ لضميرٍ منفصلٍ تامّ: (1) توحيد السكون القرآني ۡ → القياسي ْ (تحويلٌ لا حذف)؛
+    (2) مطابقة صورة المدخل (form) تامّةً بالحركات، أو مع تطبيع الحركة الوصليّة النهائية وحدها (هُمُ ↔ هُمْ)؛
+    (3) التحقّق من الفئة (separate_pronoun) ومن الصورة نفسها، لا من تساهل lookup. يُرفض هِمَ (فَهِمَ) لاختلاف
+    الداخل، وهَمَّ لاختلاف حركته الداخلية. تُعاد مداخل الضمير المطابقة (بمعرّفاتها)، أو قائمةٌ فارغة."""
+    if not lex:
+        return []
+    norm = rest.replace(QURAN_SUKUN, SUKUN)
+    base = lambda s: s[:-1] if s and s[-1] in _FINAL_CONNECTIVE else s
+    nb = base(norm)
+    out = []
+    for h in (lex.lookup(norm) or []):
+        if h.get('category') != 'separate_pronoun':
+            continue
+        form = (h.get('form') or '').replace(QURAN_SUKUN, SUKUN)
+        if form == norm or base(form) == nb:          # تامّة، أو تختلف بالحركة النهائية الوصليّة وحدها
+            out.append(h)
+    return out
+
 # حكم المعمول بمجموعة العامل (الاسم بعد الجار، واسم إنّ، واسم كان؛ والفعل بعد الناصب والجازم)
 EXPECTED = {'1': 'جر', '2': 'نصب', '5': 'نصب', '6': 'جزم', '7': 'جزم', '10': 'رفع', '11': 'رفع', '13': 'نصب'}
 NO_JAZM = ('لَوْ', 'إِذَا')                                    # في باب الشرط ولا تجزم (الفهرس: «لا يجزم»)
@@ -177,12 +200,9 @@ def _host(word, toks, offs, a, b, lex, at_word_start):
             return slots + _host(word, toks, offs, a + 1, b, lex, False)
     if at_word_start and b - a > 1 and toks[a][0] in ('ف', 'و') and toks[a][1] == {FATHA} and lex:
         # MASAQ-SEG-05: فَ/وَ قبل ضميرٍ منفصل (فَهُمۡ، فَهُوَ، فَهِيَ، فَأَنتُمۡ) — حرفُ عطفٍ ثم ضميرٌ منفصلٌ مبني.
-        #   يسدّ عدمَ التماثل مع وَهُمۡ (التي تُقشَّر أصلاً): المجموعة مغلقةٌ، والمطابقة تامّةٌ لصورة الضمير في ملف
-        #   المبنيات (separate_pronoun)، مع تطبيع السكون القرآني (هُمۡ ← هُم). فَهِمَ (جذر فهم): هِمَ ليست ضميراً فلا تُفصل.
-        _rest = word[offs[a + 1][0]:offs[b - 1][1]]
-        _strip = ''.join(c for c in _rest if c not in (SUKUN, 'ۡ'))   # نزع السكون (العادي والقرآني ۡ) للمطابقة
-        _hit = lex.lookup(_rest) or (lex.lookup(_strip) if _strip != _rest else None)
-        _sep = [h for h in (_hit or []) if h.get('category') == 'separate_pronoun']
+        #   يسدّ عدمَ التماثل مع وَهُمۡ (التي تُقشَّر أصلاً). المطابقة مشكولةٌ موثَّقةٌ عبر _separate_pronoun: توحيدُ
+        #   السكون القرآني، ومطابقةُ صورة الضمير بالحركات (مع تطبيع الحركة الوصليّة النهائية). فَهِمَ (هِمَ) تُرفض.
+        _sep = _separate_pronoun(word[offs[a + 1][0]:offs[b - 1][1]], lex)
         if _sep:
             slots.append(_slot(word, offs, a, a + 1, MABNI, 'conj', note='حرف عطف'))
             slots.append(_slot(word, offs, a + 1, b, MABNI, 'lexicon',
