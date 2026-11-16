@@ -333,21 +333,35 @@ def segment_word(word, wi, cands, lex):
         sl.update(index=0, unit=0)
         return dict(word_index=wi, word=word, toks=toks, slots=[sl],
                     units=[dict(text=word, kind=FIXED, label='حروف مقطّعة', slots=[0], syllables=[])])
-    # MASAQ-SEG-07: حمايةُ المبنيّ المحميّ من التقشير الزائد. الكلمةُ التي تطابق بتمامها (بالحركات، مع توحيد
-    #   السكون القرآني) مبنيًّا مستقلًّا في الملف (أداة/إشارة/موصول/ضمير منفصل/ظرف/اسم شرط أو استفهام/اسم فعل)
-    #   وحدةٌ واحدةٌ محميّة، فلا يُقشَّر منها عاملٌ داخليّ (كَلَّا ليست كَ + لَّا). يُمنع فَلَا/أَلَا/هَلَّا (لا تطابق كاملاً).
+    # MASAQ-SEG-07 (ORDER_11-fixed): حمايةُ حدود الوحدة مستقلّةٌ عن وظيفتها وعملها. الكلمةُ التي تطابق بتمامها
+    #   (بالحركات، مع توحيد السكون القرآني) مبنيًّا مستقلًّا من فئة particle في الملف، **ولم يكن لها مرشّحُ عاملٍ
+    #   حيّ (غير مرفوض)**، وحدةٌ واحدةٌ محميّة لا يُقشَّر منها عاملٌ داخليّ (كَلَّا ليست كَ + لَّا). أمّا حروفُ المعاني
+    #   العاملة (في، من، على، إنّ، أنّ، لا، لعلّ...) فلها مرشّحُ عاملٍ حيّ، فتُترك لمسار العامل بوظيفتها وعلاقاتها،
+    #   ولا تُحوَّل إلى مبنيٍّ جامد. (إصلاحُ انحدار SEG-07: كان يُلغي عملَ العوامل قبل بناء خاناتها.) يُمنع فَلَا/أَلَا
+    #   (لا تطابق كاملاً). والتقشيرُ الداخليُّ غيرُ الصحيح للمبنيّ غير العامل يمنعه هذا، وللعامل يمنعه مسارُه وحارسُ SEG-08.
+    emap = _exp_map(word)
     if lex:
         _wn = word.replace(QURAN_SUKUN, SUKUN)
         _prot = [h for h in (lex.lookup(word) or [])
                  if h.get('category') == 'particle'
                  and (h.get('form') or '').replace(QURAN_SUKUN, SUKUN) == _wn]
-        if _prot:
+
+        def _op_span(c):
+            if c['method'] == 'multi_word':
+                return (0, n)
+            a, b = c['char_span']
+            if c.get('expanded', True):
+                a, b = emap[a], emap[b - 1] + 1
+            return (a, b)
+        # عاملٌ حيٌّ يشمل الكلمة كلّها = الكلمة عاملةٌ بذاتها (مِنْ، فِي، عَلَى، إِنَّ، لَا...): تُترك لمسار العامل.
+        #   أمّا عاملٌ حيٌّ جزئيٌّ داخليٌّ (لَا داخلَ كَلَّا) فلا يُسقِط الحماية؛ ذلك عينُ القصّ غير الصحيح الذي نمنعه.
+        _whole_word_operator = any(c.get('status') != BLOCKED and _op_span(c) == (0, n) for c in cands)
+        if _prot and not _whole_word_operator:
             sl = _slot(word, offs, 0, n, MABNI, 'lexicon', lexicon=[h['entry_id'] for h in _prot],
-                       note='مبنيٌّ محميٌّ كاملاً: لا يُقشَّر منه عامل')
+                       note='مبنيٌّ محميٌّ كاملاً (غير عامل): لا يُقشَّر، ولا عاملَ حيٌّ يشمل الكلمة كلّها')
             sl.update(index=0, unit=0)
             return dict(word_index=wi, word=word, toks=toks, slots=[sl],
                         units=[dict(text=word, kind=FIXED, label=_prot[0]['category'], slots=[0], syllables=[])])
-    emap = _exp_map(word)
     # 1. خانات العوامل (غير المرفوضة) بمواضعها في الحروف الأصلية
     by_span = {}
     for c in cands:
