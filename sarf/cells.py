@@ -551,10 +551,18 @@ def stem_licence(text, verbs=True):
                     cand = [(x['root'], x['form_class']) for x in m.get('licensed', []) if own(x['root'], x['form_class'])] + \
                         [(r, c) for r, c in m.get('candidates', []) if r in hfn().roots and own(r, c)]
                     if cand:
-                        # قالب فعلٍ والكتابةُ تثبت فعليته (ضمير رفعٍ بعد ساكن، أو حرف مضارعة بقرينته): شهادة أولى
-                        kind = 'فعل بالكتابة' if stem_info(t)['pos'] == 'verb' and m.get('status') == 'accepted' and \
-                            m.get('root') == cand[0][0] else 'فعل محتمل'
-                        out.append((kind, cand[0][0], cand[0][1]))
+                        # E1 (ORDER_11): لا يُختزَل المرشّحون إلى الأوّل. «قالب فعلٍ والكتابةُ تثبت فعليته» (ضمير رفعٍ
+                        #   بعد ساكن، أو حرف مضارعة بقرينته) شهادةٌ على فعليّة الجذع، لا حسمٌ لجذرٍ واحد. تُحفظ كلُّ
+                        #   مرشّحات الجذر (مرتَّبةً ثابتاً في morph)، فإن تعدّدت بقيت مؤجَّلةً بهوياتها؛ وتُرفع «بالكتابة»
+                        #   على الجذر الذي رجّحه morph وحده، والبقيّةُ «محتملة». فلا يُستعمل مرشّحٌ أوّلُ جذراً وحيداً بلا دليل.
+                        written_verb = stem_info(t)['pos'] == 'verb' and m.get('status') == 'accepted'
+                        seen = set()
+                        for r_, c_ in cand:
+                            if (r_, c_) in seen:
+                                continue
+                            seen.add((r_, c_))
+                            kind = 'فعل بالكتابة' if written_verb and m.get('root') == r_ else 'فعل محتمل'
+                            out.append((kind, r_, c_))
     return tuple(out)
 
 
