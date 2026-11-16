@@ -27,6 +27,18 @@ for ref,skel,why in [('4:97','كنا','operator-path كُنْ+نَا, not MASAQ-
                      ('25:15','جنة','noun'),('18:95','مكني','nun-wiqaya نِّي'),('2:230','ظنا','dual آ not نا'),('6:53','فتنا','root-فاء wrongly peeled -> E2 must NOT fire on remainder (word-start guard)')]:
     seg=seg_of(ref,skel)
     if seg is None: print('FAIL E2-',ref,skel,'-> NOT FOUND'); ok=False; continue
-    no_e2 = not any('MASAQ-E2' in (x.get('note') or '') for x in seg['slots'])
-    print(('PASS' if no_e2 else 'FAIL'),'E2-',ref,skel,'(%s) ->'%why,[(x['text'],x.get('role')) for x in seg['slots']]); ok&=no_e2
+    # «لم يُفكَّك» = لم تُقَدَّ الشدّة فعلاً (الملاحظة الخاصّة بالتفكيك)؛ المَعلم المؤجَّل ليس تفكيكاً
+    decomposed = any('تفكيك الشدّة' in (x.get('note') or '') for x in seg['slots'])
+    print(('PASS' if not decomposed else 'FAIL'),'E2-',ref,skel,'(%s) ->'%why,[(x['text'],x.get('role')) for x in seg['slots']]); ok&=(not decomposed)
+
+# DEFERRED-COVERAGE MARKER (owner #2): «نّا» غير بادئة تُوسَم في المخرج تحليلاً مؤجَّلاً، لا تُفكَّك ولا تُهمَل.
+#   فَتَنَّا (6:53، فاء مقشورة خطأً) يحمل deferred_analysis؛ وليس تفكيكاً.
+seg=seg_of('6:53','فتنا')
+if seg is None: print('FAIL E2-GAP 6:53 -> NOT FOUND'); ok=False
+else:
+    g=[x['deferred_analysis'] for x in seg['slots'] if x.get('deferred_analysis')]
+    good = bool(g) and g[0]['family']=='MASAQ-E2' and g[0]['reason']=='GEMINATE_NA_NON_INITIAL' \
+           and not any('تفكيك الشدّة' in (x.get('note') or '') for x in seg['slots'])
+    print(('PASS' if good else 'FAIL'),'E2-GAP 6:53 فتنا -> deferred_analysis (نقص تغطية، لا تفكيك):',g)
+    ok&=good
 print('ALL_PASS:',ok); sys.exit(0 if ok else 1)
