@@ -555,13 +555,16 @@ def stem_licence(text, verbs=True):
                         #   بعد ساكن، أو حرف مضارعة بقرينته) شهادةٌ على فعليّة الجذع، لا حسمٌ لجذرٍ واحد. تُحفظ كلُّ
                         #   مرشّحات الجذر (مرتَّبةً ثابتاً في morph)، فإن تعدّدت بقيت مؤجَّلةً بهوياتها؛ وتُرفع «بالكتابة»
                         #   على الجذر الذي رجّحه morph وحده، والبقيّةُ «محتملة». فلا يُستعمل مرشّحٌ أوّلُ جذراً وحيداً بلا دليل.
+                        # الشهادة «بالكتابة» مربوطةٌ بهوية الوجه المقبول كاملةً (الجذر والبناء معاً)، لا بالجذر وحده؛
+                        #   فوجهان يشتركان في الجذر ويختلفان في form_class لا تنتقل شهادةُ المقبول منهما إلى منافسه.
                         written_verb = stem_info(t)['pos'] == 'verb' and m.get('status') == 'accepted'
                         seen = set()
                         for r_, c_ in cand:
                             if (r_, c_) in seen:
                                 continue
                             seen.add((r_, c_))
-                            kind = 'فعل بالكتابة' if written_verb and m.get('root') == r_ else 'فعل محتمل'
+                            kind = 'فعل بالكتابة' if written_verb and (m.get('root'), m.get('form_class')) == (r_, c_) \
+                                else 'فعل محتمل'
                             out.append((kind, r_, c_))
     return tuple(out)
 
