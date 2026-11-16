@@ -184,6 +184,15 @@ MUDARI = {'I': 'RRR', 'II': 'RRXR', 'III': 'RاRR', 'IV': 'RRR', 'V': 'تRRXR', 
 AMR = {'I': 'RRR', 'II': 'RRXR', 'III': 'RاRR', 'IV': 'أRRR', 'V': 'تRRXR', 'VI': 'تRاRR',
        'VII': 'نRRR', 'VIII': 'RتRR', 'IX': 'RRRX', 'X': 'ستRRR', 'QI': 'RRRR'}
 WASL_FORMS = {'VII', 'VIII', 'IX', 'X', 'QIV'}
+# E1 (ORDER_11): مفتاح ترتيبٍ ثابتٍ للمرشّحات — باب الفعل I..X ثم الرباعيّ QI..QIV ثم أيُّ صنفٍ آخر، ثم الجذر.
+#   للتسلسل والعرض فقط؛ لا يُعدّ أوّلُ المرتَّب اختياراً لغويًّا.
+_FORM_SEQ = ('I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'QI', 'QII', 'QIII', 'QIV')
+
+
+def _form_root_key(rc):
+    root, cls = rc
+    i = _FORM_SEQ.index(cls) if cls in _FORM_SEQ else len(_FORM_SEQ)
+    return (i, str(cls), str(root))
 SUFFIX_LEN = {  # (الزمن، توقيع اللاحقة) ← عدد حروف اللاحقة في آخر الكلمة
     ('madi', 'وا'): 2, ('madi', 'تْ'): 1, ('madi', 'تُ'): 1, ('madi', 'تَ'): 1, ('madi', 'تِ'): 1,
     ('madi', 'تُمْ'): 2, ('madi', 'تُمَا'): 3, ('madi', 'تُنَّ'): 2, ('madi', 'نَا'): 2, ('madi', 'ا'): 1,
@@ -824,6 +833,10 @@ def _morph(text, info=None):
         text = text[:-1] + SUKUN
     base_c = candidates(text, info, any_pos=exact_only)
     cands = candidates(text, info, any_pos=exact_only, extended=True)
+    # E1 (ORDER_11): ترتيبٌ ثابتٌ للمرشّحات مفتاحُه (باب I..X ثم الجذر)، فلا يتعلّق ترتيبُها بـPYTHONHASHSEED.
+    #   هذا ترتيبُ تسلسلٍ وعرضٍ فقط (أجازه المالك)، لا اختيارُ جذرٍ أو وزن: التعادل يبقى مؤجَّلاً بمرشّحيه، ولا
+    #   يُعدّ أوّلُ المرتَّب حسماً. (dict.fromkeys يحفظ أوّل ظهورٍ بعد تثبيت المدخل.)
+    cands = list(dict.fromkeys(sorted(cands, key=_form_root_key)))
     # ما زادته القراءات الموسّعة (R2، R5) لا يُرخَّص إلا بمطابقة فعل HFN حرفاً وحركة، ولا يُعرض مرشّحاً بلا رخصة
     # (فلا يتسرّب إلى رخصة العامل «فعلاً محتملاً»: لِيُّنَا ليس «لين»)
     EXTENDED.clear()
