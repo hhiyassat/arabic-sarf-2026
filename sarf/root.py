@@ -691,6 +691,32 @@ def _contest_by_noun_template(text, info, out):
                        '، '.join(f"{r['root']} {r['pattern']} ({r['sid']})" for r in rivals[:3]) + f' — وقراءة الفعل: {out.get("root")}')
 
 
+def stem_root_verdict(text, root):
+    """E3 (MASAQ-E3): توافق الجذع مع مرشّح الجذر، بمحاذاة الأصول القائمة (align_radicals، تحقيق §٤)،
+    مربوطاً بهويّة الوجه (الجذر). لا محلّلٌ موازٍ: نحكم بما تحكم به المحاذاة نفسها.
+      SUPPORTED: تحاذت أصول الجذر بترتيبها في خلايا الجذع (مع إعلال/إدغام مرخَّصٍ إن وُجد؛ محفوظٌ في transformations).
+      CONTRADICTED: أصلٌ لا تقابله خليّة — دليلٌ موجبٌ على التعارض (السبب محفوظٌ في reason).
+      UNRESOLVED: تعذّرت المحاذاة (لا خلايا/لا جذر) — غياب الدعم تأجيلٌ لا خطأ.
+    لا يُعدّ قصورُ _verb_licensed أو غيابُ قاعدةٍ دليلَ خطأ: يُسجَّل UNRESOLVED (تأجيل)."""
+    from .algebra import align_radicals
+    from .cells import cells_of
+    if not root:
+        return {'state': 'UNRESOLVED', 'reason': 'لا جذر', 'basis': 'align_radicals'}
+    try:
+        cs, _ = cells_of(text, 't')
+    except Exception:
+        return {'state': 'UNRESOLVED', 'reason': 'تعذّر بناء خلايا الجذع', 'basis': 'align_radicals'}
+    if not cs:
+        return {'state': 'UNRESOLVED', 'reason': 'لا خلايا للجذع', 'basis': 'align_radicals'}
+    try:
+        alpha, ops = align_radicals(cs, root)
+    except Exception:
+        return {'state': 'UNRESOLVED', 'reason': 'تعذّرت المحاذاة', 'basis': 'align_radicals'}
+    if alpha is None:
+        return {'state': 'CONTRADICTED', 'reason': ops, 'basis': 'align_radicals'}
+    return {'state': 'SUPPORTED', 'transformations': list(ops), 'basis': 'align_radicals'}
+
+
 def morph_faces(text, out):
     """أوجه الكلمة (AR03 §٣): لكل (جذر، وزن، لمّة، صيغة HFN) وجهٌ مستقلٌّ بأدلته، فلا تُدمج لمّتان أو صيغتان في وجهٍ واحد؛
     ولكل (جذر، وزن) مولَّدٍ بلا رخصة وجهٌ GENERATED. ولا يُختار وجهٌ (SELECTED) إلا إذا انفرد بالجذر والوزن المقبولين، ولم
@@ -730,6 +756,7 @@ def morph_faces(text, out):
             face['lemma_spellings'], face['lemma_spelling_basis'] = spell[(root, cls, lemma, form)]
         face['realization'] = face_realization(text, root, cls, form, lemma)
         face['patterns'] = pattern_targets(text, cls, form, lemma, face['evidence_ids'])
+        face['stem_root'] = stem_root_verdict(text, root)
         if (root, cls) == sel_pair:
             conflict = 'REALIZATION_MISMATCH' if face['realization']['lemma']['status'] == 'MISMATCH' else \
                 'SUFFIX_NOT_LICENSED' if face['realization']['word']['status'] == 'SUFFIX_NOT_LICENSED' else None
@@ -751,7 +778,7 @@ def morph_faces(text, out):
         if acc and out.get('level') == 'root' and (root, cls) == sel_pair:
             st, ev = 'SELECTED_ROOT_LICENCE', [f'ROOT:{root}']
         faces.append(dict(analysis_id=analysis_id(analysis_key(text, root, cls, 'فعل', None)), root=root, form_class=cls, kind='فعل',
-                          lemma=None, hfn_forms=[], evidence_ids=ev, status=st))
+                          lemma=None, hfn_forms=[], evidence_ids=ev, status=st, stem_root=stem_root_verdict(text, root)))
     return faces
 
 
