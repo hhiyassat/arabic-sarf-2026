@@ -456,7 +456,9 @@ def segment_word(word, wi, cands, lex):
         if s['type'] != STEM:
             continue
         a, b = s['span']
-        if b - a >= 2 and toks[b - 2][0] == 'ن' and SHADDA in toks[b - 2][1] \
+        # قُصِر على الجذع الذي يبدأ الكلمة (a==0): لئلّا يُفكَّك بقيّةٌ معطوبةٌ من قصٍّ سابقٍ خاطئ، كفاء الجذر المقشورة
+        #   عطفاً في فَتَنَّا (= فتن + نا، لا فَ + تَنَّا). ذلك عيبُ واو/فاء الجذر الموثَّق، لا يضاعفه E2.
+        if a == 0 and b - a >= 2 and toks[b - 2][0] == 'ن' and SHADDA in toks[b - 2][1] \
                 and toks[b - 1][0] == 'ا' and not toks[b - 1][1]:
             _stem_txt = word[offs[a][0]:offs[b - 2][0]] + 'نْ'
             if _verb_licensed(_stem_txt):

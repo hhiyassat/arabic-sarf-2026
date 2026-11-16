@@ -24,7 +24,7 @@ for ref,skel in [('2:8','ءامنا'),('12:21','مكنا'),('6:108','زينا'),
     print(('PASS' if good else 'FAIL'),'E2+',ref,skel,'->',sl); ok&=good
 # CONTRAST: not decomposed — كُنَّا (existing operator path, not E2), جَنَّة (noun), nun-wiqaya مَكَّنِّي, dual ظَنَّا
 for ref,skel,why in [('4:97','كنا','operator-path كُنْ+نَا, not MASAQ-E2'),
-                     ('25:15','جنة','noun'),('18:95','مكني','nun-wiqaya نِّي'),('2:230','ظنا','dual آ not نا')]:
+                     ('25:15','جنة','noun'),('18:95','مكني','nun-wiqaya نِّي'),('2:230','ظنا','dual آ not نا'),('6:53','فتنا','root-فاء wrongly peeled -> E2 must NOT fire on remainder (word-start guard)')]:
     seg=seg_of(ref,skel)
     if seg is None: print('FAIL E2-',ref,skel,'-> NOT FOUND'); ok=False; continue
     no_e2 = not any('MASAQ-E2' in (x.get('note') or '') for x in seg['slots'])
