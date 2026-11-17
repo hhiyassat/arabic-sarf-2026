@@ -17,6 +17,9 @@ import check as ISO
 FAIL, PASSN = [], [0]
 EXP = 'config/hfn_target_v48_experimental.json'
 ROOTS = dict(release_v47=V47, release_v48=V48)
+# منذ 2026-11-17 (حكم المالك «اجعله إنتاجيّاً») الإنتاجي release_v52، وv47 تاريخيٌّ لا يُقرأ إلا بإذنٍ صريح؛
+# فتشغيل v47 في هذا الاختبار يحمل SARF_HFN_RELEASE_OK=release_v47، ومعنى العزل بين v47 وv48 لم يتغيّر
+E47 = dict(SARF_HFN=V47, SARF_HFN_RELEASE_OK='release_v47')
 TMP = tempfile.mkdtemp(prefix='hfn_iso_')
 OUT = os.environ.get('SARF_ISO_OUT')          # مجلّدٌ تُحفظ فيه سجلات الفتح والنتائج المنظَّمة (اختياري)
 RESULTS = []
@@ -67,9 +70,11 @@ def loads(res, fname, rel):
 
 
 # ── التشغيل السليم ──
-rc, out, err, recs = run('v47', dict(SARF_HFN=V47))
+rc, out, err, recs = run('v47_noperm', dict(SARF_HFN=V47))
+check('I00 v47 بلا إذنٍ صريح: مرفوض بالاسم (إصدارٌ تاريخي)', rc != 0 and 'إصدارٌ تاريخي' in err, err[-300:])
+rc, out, err, recs = run('v47', E47)
 r47 = audit('v47', recs, 'release_v47')
-check('I01 الإعداد الإنتاجي مع v47: يُقرأ release_v47 بالإعداد الإنتاجي', rc == 0 and 'PIN release_v47 PRODUCTION aca692e38785' in out, err[-400:] or out)
+check('I01 v47 بالإذن التاريخي: يُقرأ release_v47 تاريخياً (بصمة events.csv المسجّلة)', rc == 0 and 'PIN release_v47 None ' in out, err[-400:] or out)
 check('I02 تشغيل v47: صفر مخالفات بالمسار المحلول، ولا فتح لأي ملفٍّ من v48 (ولا ahdath_ajnas)',
       not r47['violations'] and r47['records'] and not any(r['release'] == 'release_v48' or 'ahdath_ajnas' in r['realpath'] for r in r47['records']),
       r47['violations'][:3] or 'لا سجلات')
@@ -94,9 +99,11 @@ for name, env, needle in (
     rc, out, err, recs = run('neg', env)
     check(name + ': إخفاق هويةٍ مسمّى', rc != 0 and needle in err, err[-300:])
 cfg = open(os.path.join(H, 'config', 'hfn_target.json'), encoding='utf-8').read()
-check('I13 الإعداد الإنتاجي لم يتغيّر (release_v47، التزام 22dcb06، MANIFEST aca692e3)',
-      cfg.count('aca692e38785573f811e93b4e2cab531a239642f3cac5d5225664645e987b919') == 1 and '"release": "release_v47"' in cfg
-      and '22dcb06e21221750b41879f2f598bb28a23f440a' in cfg, cfg[:300])
+cj = json.loads(cfg)
+check('I13 الإعداد الإنتاجي: release_v52 (التزام cf97e15، MANIFEST 15adf773)، وv47 تاريخيٌّ ببصمة events.csv',
+      cj['release'] == 'release_v52' and cj['manifest_sha256'] == '15adf7732ce649640b6538c247f4a3baef2e93aaa8e6469eb62fa8300f7456a4'
+      and cj['hfn_commit'] == 'cf97e15eebc63e45fbe91fdfaec4340320a51bcd'
+      and cj['historical']['release_v47']['events_sha256'] == 'c62e7232638e6d8bef5be4098b5cd3fc565ac88346e29a2f49fa29fa8ed06680', cfg[:300])
 
 # ── الإفساد: كل واحدٍ منها يجب أن يُسقطه الفاحص أو البوابة ──
 # X1 تشغيل v48 يفتح عمداً ملفاً من v47 بالاسم نفسه
@@ -106,7 +113,7 @@ x1 = audit('x1', recs, 'release_v48')
 check('X1 قراءةٌ محقونة من v47/events.csv في تشغيل v48: يسقطها الفاحص (READ_FROM_OTHER_RELEASE)',
       rc == 0 and any('READ_FROM_OTHER_RELEASE:release_v47' in v['why'] for v in x1['violations']), x1['violations'][:2] or 'لم تُكشف')
 # X2 تشغيل v47 يفتح ملفاً من v48
-rc, out, err, recs = run('x2', dict(SARF_HFN=V47), inject=os.path.join(V48, 'events.csv'))
+rc, out, err, recs = run('x2', E47, inject=os.path.join(V48, 'events.csv'))
 x2 = audit('x2', recs, 'release_v47')
 check('X2 قراءةٌ محقونة من v48/events.csv في تشغيل v47: يسقطها الفاحص',
       rc == 0 and any('READ_FROM_OTHER_RELEASE:release_v48' in v['why'] for v in x2['violations']), x2['violations'][:2] or 'لم تُكشف')
@@ -159,7 +166,7 @@ check('X6b بلا مسار إصدارٍ صريح لا يُخدم «أحدث إص
 res = {}
 def _t(tag, env, exp):
     res[tag] = (run(tag, env), exp)
-ts = [threading.Thread(target=_t, args=('p47', dict(SARF_HFN=V47), 'release_v47')),
+ts = [threading.Thread(target=_t, args=('p47', E47, 'release_v47')),
       threading.Thread(target=_t, args=('p48', dict(SARF_HFN=V48, SARF_HFN_TARGET_CONFIG=EXP, SARF_HFN_EXPERIMENTAL_OK='release_v48'), 'release_v48'))]
 [t.start() for t in ts]; [t.join() for t in ts]
 ok7 = all(res[t][0][0] == 0 and not audit(t, res[t][0][3], res[t][1])['violations'] for t in res)
