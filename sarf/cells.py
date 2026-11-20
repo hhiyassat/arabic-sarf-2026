@@ -292,6 +292,15 @@ _SIB = None
 SIB_PATHS = ['data/patterns/awzan_sibawayh_308.csv']
 
 
+def template_variants(pv):
+    """خانة الوزن في ملف سيبويه ← قوالبها وحدها: تُحذف الملاحظة بين قوسين («فُعْلُولٌ (رباعي)»، «أَفْعِلَاءُ (جمع)»)
+    ويُفصل البديلان بـ«/» («مَفَاعِلُ/مَفَاعِيلُ»)، فلا تدخل حروف الملاحظة خلايا القالب.
+    القسمة نفسها في wazn-net data/abniya_layer_v1 (template، template_variants)"""
+    import re
+    pv = re.sub(r'\s*\([^)]*\)\s*', ' ', pv or '').strip()
+    return [p.strip() for p in pv.split('/') if p.strip()]
+
+
 def sibawayh_patterns():
     """→ [(المعرِّف، الصفحة، البناء، القالب، الأمثلة)] من ملف أبنية سيبويه: الموجود والنادر المعيَّن الضبط،
     والقالب بخلايا البناء: ف ع ل ↦ R1 R2 R3 (والرباعي والخماسي لاماته R3…R5)، وآخر خلية حركتها حركة الإعراب"""
@@ -305,36 +314,39 @@ def sibawayh_patterns():
     if not path:
         return _SIB
     for x in csv.DictReader(open(path, encoding='utf-8-sig')):
-        pat = x['pattern_vocalized']
-        if x['status'] not in ('EXISTS', 'RARE') or x['vocalization_basis'] == 'UNDETERMINED' or '?' in pat:
+        if x['status'] not in ('EXISTS', 'RARE') or x['vocalization_basis'] == 'UNDETERMINED' or \
+                '?' in x['pattern_vocalized']:
             continue
-        cs, _ = cells_of(pat, 'p')
-        if not cs:
-            continue
-        quad = x['section'].startswith(('رباعي', 'خماسي'))
-        seen, tmpl = {}, []
-        lams = 0
-        for c in cs:
-            if c.C in 'فع':
-                C = 'R1' if c.C == 'ف' else 'R2'
-            elif c.C == 'ل':
-                if quad and not (c.H == 'a' and False):
-                    # الرباعي والخماسي: كل لامٍ أصلٌ جديد، إلا الشدة (اللام الثانية من خليتي الشدة)
-                    if c.O.get('role') == 'شدة: الثاني':
-                        C = f'R{2 + lams}'
+        # خانة الوزن قد تحمل ملاحظةً بين قوسين أو بديلين بـ«/»: القالب وحده يُبنى خلايا (template_variants)
+        for pat in template_variants(x['pattern_vocalized']):
+            cs, _ = cells_of(pat, 'p')
+            if not cs:
+                continue
+            quad = x['section'].startswith(('رباعي', 'خماسي'))
+            seen, tmpl = {}, []
+            lams = 0
+            for c in cs:
+                if c.C in 'فع':
+                    C = 'R1' if c.C == 'ف' else 'R2'
+                elif c.C == 'ل':
+                    if quad and not (c.H == 'a' and False):
+                        # الرباعي والخماسي: كل لامٍ أصلٌ جديد، إلا الشدة (اللام الثانية من خليتي الشدة)
+                        if c.O.get('role') == 'شدة: الثاني':
+                            C = f'R{2 + lams}'
+                        else:
+                            lams += 1
+                            C = f'R{2 + lams}'
                     else:
-                        lams += 1
-                        C = f'R{2 + lams}'
+                        C = 'R3'
                 else:
-                    C = 'R3'
-            else:
-                C = c.C
-            tmpl.append((C, c.H, c.L))
-        last = len(tmpl) - 1
-        if pat[-1] in '\u064C\u064F':                # الحركة الأخيرة إعراب
-            C, H_, L = tmpl[last]
-            tmpl[last] = (C, '*', '*' if L == 1 else L)
-        _SIB.append((x['id'], x['page'], pat, tmpl, x['examples']))
+                    C = c.C
+                # الألف المقصورة في القالب (فَعْلَى، فِعْلَى) لا تطابق إلا ألفاً مقصورة، لا ألف المدّ (جَنَّٰت، إِنْسَٰن)
+                tmpl.append((C, c.H, c.L, 'ى' if c.O.get('madd') == 'ى' else None))
+            last = len(tmpl) - 1
+            if pat[-1] in '\u064C\u064F':                # الحركة الأخيرة إعراب
+                C, H_, L, M = tmpl[last]
+                tmpl[last] = (C, '*', '*' if L == 1 else L, M)
+            _SIB.append((x['id'], x['page'], pat, tmpl, x['examples']))
     return _SIB
 
 
@@ -401,7 +413,9 @@ def _sibawayh_match(cells, H, weak):
         if len(cells) < len(tmpl):
             continue
         rad, alpha, ok = {}, [], True
-        for (C, Hh, L), c in zip(tmpl, cells):
+        for (C, Hh, L, M), c in zip(tmpl, cells):
+            if M == 'ى' and c.O.get('madd') != 'ى':
+                ok = False; break
             if C.startswith('R'):
                 if rad.get(C, c.C) != c.C or (c.C in 'وي' and c.H == '∅' and False):
                     ok = False; break
