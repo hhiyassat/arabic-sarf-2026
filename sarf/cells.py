@@ -340,11 +340,12 @@ def sibawayh_patterns():
                         C = 'R3'
                 else:
                     C = c.C
-                tmpl.append((C, c.H, c.L))
+                # الألف المقصورة في القالب (فَعْلَى، فِعْلَى) لا تطابق إلا ألفاً مقصورة، لا ألف المدّ (جَنَّٰت، إِنْسَٰن)
+                tmpl.append((C, c.H, c.L, 'ى' if c.O.get('madd') == 'ى' else None))
             last = len(tmpl) - 1
             if pat[-1] in '\u064C\u064F':                # الحركة الأخيرة إعراب
-                C, H_, L = tmpl[last]
-                tmpl[last] = (C, '*', '*' if L == 1 else L)
+                C, H_, L, M = tmpl[last]
+                tmpl[last] = (C, '*', '*' if L == 1 else L, M)
             _SIB.append((x['id'], x['page'], pat, tmpl, x['examples']))
     return _SIB
 
@@ -412,7 +413,9 @@ def _sibawayh_match(cells, H, weak):
         if len(cells) < len(tmpl):
             continue
         rad, alpha, ok = {}, [], True
-        for (C, Hh, L), c in zip(tmpl, cells):
+        for (C, Hh, L, M), c in zip(tmpl, cells):
+            if M == 'ى' and c.O.get('madd') != 'ى':
+                ok = False; break
             if C.startswith('R'):
                 if rad.get(C, c.C) != c.C or (c.C in 'وي' and c.H == '∅' and False):
                     ok = False; break
